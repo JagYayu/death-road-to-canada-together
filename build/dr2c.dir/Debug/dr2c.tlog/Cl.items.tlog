@@ -1,0 +1,13 @@
+D:\repos\dr2c_rm\src\event\EventManager.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\EventManager.obj
+D:\repos\dr2c_rm\src\graphic\GraphicEngine.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\GraphicEngine.obj
+D:\repos\dr2c_rm\src\graphic\Window.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\Window.obj
+D:\repos\dr2c_rm\src\main.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\main.obj
+D:\repos\dr2c_rm\src\mod\Mod.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\Mod.obj
+D:\repos\dr2c_rm\src\mod\ModManager.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\ModManager.obj
+D:\repos\dr2c_rm\src\mod\ScriptEngine.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\ScriptEngine.obj
+D:\repos\dr2c_rm\src\mod\ScriptLoader.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\ScriptLoader.obj
+D:\repos\dr2c_rm\src\mod\UnpackagedMod.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\UnpackagedMod.obj
+D:\repos\dr2c_rm\src\program\GameConfig.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\GameConfig.obj
+D:\repos\dr2c_rm\src\program\GameEngine.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\GameEngine.obj
+D:\repos\dr2c_rm\src\util\Log.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\Log.obj
+D:\repos\dr2c_rm\src\util\Version.cpp;D:\repos\dr2c_rm\build\dr2c.dir\Debug\Version.obj

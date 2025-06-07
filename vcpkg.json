@@ -1,0 +1,10 @@
+{
+	"name": "dr2c",
+	"version": "0.0.1",
+	"dependencies": [
+		"bgfx",
+		"luajit",
+		"sdl2",
+		"sol2"
+	]
+}
