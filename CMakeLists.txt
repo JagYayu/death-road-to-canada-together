@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15.0)
+cmake_minimum_required(VERSION 3.15)
 
 project(dr2c VERSION 0.1.0 LANGUAGES CXX)
 
@@ -20,10 +20,17 @@ find_package(bgfx CONFIG REQUIRED)
 target_link_libraries(dr2c PRIVATE bgfx::bx bgfx::bgfx bgfx::bimg bgfx::bimg_decode)
 
 # luajit
-set(LUA_INCLUDE_DIR "D:/vcpkg/installed/x64-windows/include/luajit")
-set(LUA_LIB_DIR "D:/vcpkg/installed/x64-windows/lib")
-include_directories(${LUA_INCLUDE_DIR})
-target_link_libraries(dr2c PRIVATE ${LUA_LIB_DIR}/lua51.lib)
+find_path(LUAJIT_INCLUDE_DIR luajit.h PATHS "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include" PATH_SUFFIXES luajit)
+find_library(LUAJIT_LIBRARY NAMES lua51 PATHS "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib")
+if(NOT LUAJIT_INCLUDE_DIR OR NOT LUAJIT_LIBRARY)
+  message(FATAL_ERROR "LuaJIT not found")
+endif()
+target_include_directories(dr2c PRIVATE ${LUAJIT_INCLUDE_DIR})
+target_link_libraries(dr2c PRIVATE ${LUAJIT_LIBRARY})
+# set(LUA_INCLUDE_DIR "D:/vcpkg/installed/x64-windows/include/luajit")
+# set(LUA_LIB_DIR "D:/vcpkg/installed/x64-windows/lib")
+# include_directories(${LUA_INCLUDE_DIR})
+# target_link_libraries(dr2c PRIVATE ${LUA_LIB_DIR}/lua51.lib)
 
 # SDL2
 find_package(SDL2 CONFIG REQUIRED)
