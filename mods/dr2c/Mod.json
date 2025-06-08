@@ -1,40 +1,41 @@
 {
-	"namespace": "DR2C",
+	"namespace": "Core",
 	"version": "1.0.0",
 	"name": "Death Road to Canada",
 	"author": "JagYayu",
-	"description": "Core mod for Tudov.",
+	"description": "Core mod for Death Road to Canada.",
 	"dependencies": {},
 	"scripts": {
 		"directory": "scripts",
 		"files": [
-			"*.lua"
+			".*\\.lua$"
 		],
 		"closedSource": false,
 		"permissions": [],
-		"privates": [
-			"_*.lua"
-		]
+		"preloads": [
+			".*"
+		],
+		"privates": []
 	},
 	"audios": {
 		"directory": "Audios",
 		"files": [
-			"*.mp3",
-			"*.ogg"
+			".*\\.mp3$",
+			".*\\.ogg$"
 		],
 		"preloads": [
-			"*"
+			".*"
 		]
 	},
 	"data": {
 		"directory": "Data",
 		"files": [
-			"*.json",
-			"*.txt",
-			"*.xml"
+			".*\\.json$",
+			".*\\.txt$",
+			".*\\.xml$"
 		],
 		"preloads": [
-			"*"
+			".*"
 		]
 	},
 	"custom": {}

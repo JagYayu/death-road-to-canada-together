@@ -29,6 +29,7 @@ Version::Version(const std::string &str)
 	_parts.shrink_to_fit();
 }
 
+
 int32_t Version::major() const
 {
 	return _parts[0];
@@ -42,6 +43,26 @@ int32_t Version::minor() const
 int32_t Version::patch() const
 {
 	return _parts[2];
+}
+
+int32_t Version::operator[](size_t i) const
+{
+	return _parts[i];
+}
+
+size_t Version::size() const
+{
+	return _parts.size();
+}
+
+std::vector<int32_t>::const_iterator Version::begin() const
+{
+	return _parts.begin();
+}
+
+std::vector<int32_t>::const_iterator Version::end() const
+{
+	return _parts.end();
 }
 
 auto Version::operator<=>(const Version &other) const

@@ -4,7 +4,6 @@
 
 #include "json.hpp"
 
-#include <filesystem>
 #include <string>
 #include <unordered_map>
 
@@ -15,7 +14,7 @@ namespace tudov
 		struct Data
 		{
 			bool autoload{};
-			std::filesystem::path directory{};
+			std::string directory{};
 			std::vector<std::string> files{};
 		};
 
@@ -63,4 +62,4 @@ namespace tudov
 		m.audios = j.value("audios", ModConfig::Data());
 		m.scripts = j.value("scripts", ModConfig::Scripts());
 	}
-}
+} // namespace tudov

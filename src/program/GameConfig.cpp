@@ -10,13 +10,14 @@ GameConfig::GameConfig()
 
 GameConfig::~GameConfig()
 {
+	Save();
 }
 
-void tudov::GameConfig::Save()
+void GameConfig::Save()
 {
 }
 
-void tudov::GameConfig::Load()
+void GameConfig::Load()
 {
 	std::ifstream f{std::string(file)};
 	if (f.is_open())
@@ -39,9 +40,9 @@ nlohmann::json GetWindow(nlohmann::json &config)
 	if (!window.is_object())
 	{
 		window = {
-			{"width", 1280},
-			{"height", 720},
-			{"fullscreen", false},
+		    {"width", 1280},
+		    {"height", 720},
+		    {"fullscreen", false},
 		};
 		config["window"] = window;
 	}

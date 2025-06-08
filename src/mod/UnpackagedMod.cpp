@@ -1,43 +1,69 @@
 #include "UnpackagedMod.h"
 
+#include "Mod.h"
+#include "ModManager.h"
+#include "util/StringUtils.hpp"
+
+#include <filesystem>
+#include <format>
 #include <regex>
+#include <string>
 
 using namespace tudov;
 
-ModConfig tudov::UnpackagedMod::LoadConfig(const std::filesystem::path &directory)
+const std::filesystem::path &file = "Mod.json";
+
+bool UnpackagedMod::IsValidDirectory(const std::filesystem::path &directory)
 {
-	std::ifstream file(directory / "Mod.json");
-	if (file)
+	return std::filesystem::exists(directory / file);
+}
+
+ModConfig UnpackagedMod::LoadConfig(const std::filesystem::path &directory)
+{
+	auto &&path = directory / file;
+	std::ifstream file{path};
+	if (!file)
 	{
-		nlohmann::json json;
-		file >> json;
-		tudov::ModConfig config = json.get<tudov::ModConfig>();
-		file.close();
+		return ModConfig();
 	}
-	return ModConfig();
+
+	nlohmann::json json;
+	file >> json;
+	tudov::ModConfig config = json.get<tudov::ModConfig>();
+	file.close();
+	return config;
 }
 
 UnpackagedMod::UnpackagedMod(ModManager &modManager, const std::filesystem::path &directory)
-	: Mod(modManager, LoadConfig(directory)),
-	  _directory(directory)
+    : Mod(modManager, LoadConfig(directory)),
+      _directory(directory)
 {
-	auto &&callback = [](const std::filesystem::path &path, const filewatch::Event change_type)
-	{
-		std::wcout << std::filesystem::absolute(path) << L"\n";
-	};
-
-	// bool test = std::filesystem::exists(directory);
-
-	// TODO 未知异常！
-	_watcher = std::make_shared<filewatch::FileWatch<std::wstring>>(directory, callback);
 }
 
 void UnpackagedMod::Load()
 {
+	auto &&callback = [](const std::string &path, const filewatch::Event change_type)
+	{
+		std::wcout << std::filesystem::absolute(path) << L"\n";
+	};
+
+	_watcher = std::make_shared<filewatch::FileWatch<std::string>>(_directory.string(), callback);
+
+	auto &&namespace_ = GetNamespace();
+	if (namespace_.empty())
+	{
+		_log.Debug(std::format("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.string(), std::string_view(namespace_)));
+		return;
+	}
+
+	auto &&dir = _directory.string();
+
+	_log.Debug(std::format("Loading unpacked mod from \"{}\" ...", dir));
+
 	auto &&scriptFilePatterns = std::vector<std::regex>(_config.scripts.files.size());
 	for (auto &&pattern : _config.scripts.files)
 	{
-		scriptFilePatterns.emplace_back(std::regex(pattern));
+		scriptFilePatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
 	}
 
 	for (const auto &entry : std::filesystem::recursive_directory_iterator(_directory))
@@ -47,33 +73,38 @@ void UnpackagedMod::Load()
 			continue;
 		}
 
-		auto &&fileName = entry.path().filename().string();
+		auto &&file = entry.path();
+		auto &&fileName = file.filename().string();
 		for (auto &&pattern : scriptFilePatterns)
 		{
 			if (std::regex_match(fileName, pattern))
 			{
+				std::ifstream ins{file};
+				std::ostringstream oss;
+				oss << ins.rdbuf();
+				ins.close();
+
+				auto &&relative = std::filesystem::relative(std::filesystem::relative(file, _directory), GetScriptsDirectory());
+				auto &&scriptName = toLuaRequirePath(std::format("{}.{}", namespace_, relative.string()));
+				_scripts.emplace_back(scriptName);
+				_modManager.scriptProvider.AddScript(scriptName, oss.str());
 			}
 		}
-
-		// if (fileName == ".lua" || fileName == ".ogg")
-		// {
-		// 	std::ifstream file(entry.path(), std::ios::binary);
-		// 	if (!file)
-		// 	{
-		// 		std::cerr << "无法打开文件: " << entry.path() << "\n";
-		// 		continue;
-		// 	}
-
-		// 	std::cout << "读取文件: " << entry.path().filename() << "\n";
-		// 	// 示例：读取文件内容到字符串
-		// 	std::string content((std::istreambuf_iterator<char>(file)),
-		// 						std::istreambuf_iterator<char>());
-
-		// 	// 可以对 content 做进一步处理，比如解析脚本或播放音频
-		// }
 	}
+
+	_log.Debug(std::format("Loaded unpacked mod from \"{}\"", dir));
 }
 
 void UnpackagedMod::Unload()
 {
+	auto &&dir = _directory.string();
+
+	_log.Debug(std::format("Unloading unpackaged mod from \"{}\"", dir));
+
+	for (auto &&scriptName : _scripts)
+	{
+		_modManager.scriptProvider.RemoveScript(scriptName);
+	}
+
+	_log.Debug(std::format("Unloaded unpackaged mod \"{}\"", dir));
 }

@@ -1,9 +1,18 @@
 #include "Log.h"
 
 #include <chrono>
+#include <cstdint>
 #include <format>
 
 using namespace tudov;
+
+static int32_t logCount = 0;
+static std::thread logWorker;
+
+std::queue<Log::Entry> Log::_queue;
+std::mutex Log::_mutex;
+std::condition_variable Log::_cv;
+std::atomic<bool> Log::_exit = false;
 
 Log Log::instance{"Log"};
 
@@ -23,60 +32,68 @@ Log::Verbosity Log::GetGlobalFlags(std::string module)
 
 void Log::Process()
 {
-	auto &&pred = [this]
+	auto &&pred = []
 	{
-		return !queue.empty() || exit;
+		return !_queue.empty() || _exit;
 	};
 
-	while (!exit)
+	while (!_exit)
 	{
-		std::unique_lock<std::mutex> lock{mutex};
-		cv.wait(lock, pred);
+		std::unique_lock<std::mutex> lock{_mutex};
+		_cv.wait(lock, pred);
 
-		while (!queue.empty())
+		while (!_queue.empty())
 		{
-			auto entry = std::move(queue.front());
-			queue.pop();
+			auto entry = std::move(_queue.front());
+			_queue.pop();
 			lock.unlock();
 
-			std::cout << std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}", entry.time, _module, entry.verbosity, entry.message) << std::endl;
+			std::cout << std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}", entry.time, std::string_view(entry.module), entry.verbosity, std::string_view(entry.message)) << std::endl;
 
 			lock.lock();
 		}
 	}
 }
 
-Log::Log(const std::string &module)
-	: _module(module),
-	  exit(false)
+void Log::Output(const std::string_view verb, const std::string &str)
 {
-	worker = std::thread(&Log::Process, this);
+	{
+		std::lock_guard<std::mutex> lock(_mutex);
+		auto &&entry = Entry();
+		entry.time = std::chrono::system_clock::now();
+		entry.verbosity = verb;
+		entry.module = _module;
+		entry.message = str;
+		_queue.push(entry);
+	}
+	_cv.notify_one();
+}
+
+Log::Log(const std::string &module)
+    : _module(module)
+{
+	if (logCount == 0)
+	{
+		logWorker = std::thread(Log::Process);
+	}
+	logCount++;
 }
 
 tudov::Log::~Log()
 {
+	logCount--;
+	if (logCount == 0)
 	{
-		std::lock_guard<std::mutex> lock{mutex};
-		exit = true;
+		{
+			std::lock_guard<std::mutex> lock{_mutex};
+			_exit = true;
+		}
+		_cv.notify_all();
+		logWorker.join();
 	}
-	cv.notify_all();
-	worker.join();
 }
 
 bool Log::CanDebug()
 {
 	return false;
-}
-
-void Log::Debug(const std::string &str)
-{
-	{
-		std::lock_guard<std::mutex> lock(mutex);
-		auto &&entry = Entry();
-		entry.time = std::chrono::system_clock::now();
-		entry.verbosity = "Debug";
-		entry.message = str;
-		queue.push(entry);
-	}
-	cv.notify_one();
 }

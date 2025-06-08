@@ -1,0 +1,14 @@
+BasedOnStyle: Microsoft
+UseTab: ForIndentation  
+IndentWidth: 4
+TabWidth: 4
+BreakBeforeBraces: Allman
+ColumnLimit: 0
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+NamespaceIndentation: All
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+AlignAfterOpenBracket: Align
+AlwaysBreakAfterReturnType: None
+SpaceBeforeParens: ControlStatements

@@ -2,15 +2,22 @@
 
 #include "Mod.h"
 #include "ModEntry.hpp"
+#include "ScriptEngine.h"
+#include "ScriptLoader.h"
+#include "ScriptProvider.h"
+#include "util/Log.h"
 
 #include <filesystem>
 #include <vector>
 
 namespace tudov
 {
+	class ScriptLoader;
+	class ScriptProvider;
+
 	class ModManager
 	{
-	private:
+	  private:
 		enum class ELoadState
 		{
 			None = 0,
@@ -19,22 +26,32 @@ namespace tudov
 			HotReloading = 1 << 2,
 		};
 
-		ELoadState _loadState = ELoadState::None;
+		Log _log;
+		ELoadState _loadState;
 
-		std::vector<std::filesystem::path> _directories = {"mods", "downloadedMods"};
-		std::vector<std::shared_ptr<Mod>> _loadedMods;
-		std::vector<ModEntry> _modEntries;
+		std::vector<std::filesystem::path> _directories;
+		std::vector<std::shared_ptr<Mod>> _mountedMods;
+		std::vector<ModEntry> _requiredMods;
+
+	  public:
+		ScriptEngine scriptEngine;
+		ScriptLoader scriptLoader;
+		ScriptProvider scriptProvider;
 
 		void AddMod(const std::filesystem::path &modRoot);
 
-	public:
+	  public:
 		ModManager();
 		~ModManager();
 
-		void LoadMods();
+		bool IsNoModMatch() const;
+		bool IsModMatched(const Mod &mod) const;
 
-		void SetModList(std::vector<ModEntry> modEntries);
+		void LoadMods();
+		void UnloadMods();
+
+		void SetModList(std::vector<ModEntry> requiredMods);
 
 		void Update();
 	};
-}
+} // namespace tudov
