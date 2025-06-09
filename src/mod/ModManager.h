@@ -12,8 +12,7 @@
 
 namespace tudov
 {
-	class ScriptLoader;
-	class ScriptProvider;
+	class GameEngine;
 
 	class ModManager
 	{
@@ -34,6 +33,7 @@ namespace tudov
 		std::vector<ModEntry> _requiredMods;
 
 	  public:
+		GameEngine& gameEngine;
 		ScriptEngine scriptEngine;
 		ScriptLoader scriptLoader;
 		ScriptProvider scriptProvider;
@@ -41,7 +41,7 @@ namespace tudov
 		void AddMod(const std::filesystem::path &modRoot);
 
 	  public:
-		ModManager();
+		ModManager(GameEngine &gameEngine);
 		~ModManager();
 
 		bool IsNoModMatch() const;

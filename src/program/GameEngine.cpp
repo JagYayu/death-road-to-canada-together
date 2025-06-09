@@ -7,6 +7,7 @@ using namespace tudov;
 GameEngine::GameEngine()
     : log("GameEngine"),
       eventManager(*this),
+      modManager(*this),
       graphicEngine(*this),
       window(*this)
 {
@@ -18,7 +19,13 @@ void GameEngine::Initialize(const MainArgs &args)
 
 	config.Load();
 	window.Initialize();
+
+	eventManager.Initialize(modManager.scriptEngine.GetState());
+
 	modManager.LoadMods();
+
+	modManager.scriptLoader.onPreLoadAllScripts += eventManager.ClearScriptHandlers;
+	modManager.scriptLoader.onPreLoadAllScripts += eventManager.ClearScriptHandlers;
 
 	log.Debug("Initialized game engine");
 }

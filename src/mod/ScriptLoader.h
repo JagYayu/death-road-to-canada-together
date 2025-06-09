@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ScriptEngine.h"
+#include "event/DelegateEvent.hpp"
 #include "util/Log.h"
 
 #include <sol/table.hpp>
@@ -24,11 +25,11 @@ namespace tudov
 			bool _isLoaded;
 			bool _isLoading;
 			sol::table _table;
-			sol::function _func;
+			sol::protected_function _func;
 
 		  public:
 			Module();
-			explicit Module(const sol::function &func);
+			explicit Module(const sol::protected_function &func);
 
 			bool IsLoaded() const;
 			bool IsLoading() const;
@@ -41,14 +42,17 @@ namespace tudov
 
 		std::string _loadingScript;
 		std::vector<std::string> _loadingScripts;
-		std::unordered_map<std::string, Module> _loadedScripts;
-		std::unordered_map<std::string, std::string> _scriptErrors;
-		std::unordered_map<std::string, std::string> _scriptErrorsCascaded;
+		std::unordered_map<std::string_view, Module> _loadedScripts;
+		std::unordered_map<std::string_view, std::string> _scriptErrors;
+		std::unordered_map<std::string_view, std::string> _scriptErrorsCascaded;
 
-		bool LoadScript(const std::string &scriptName, const std::string &code);
+		std::optional<std::reference_wrapper<Module>> LoadImpl(const std::string &scriptName, const std::string_view &code, bool immediate);
 
 	  public:
 		ModManager &modManager;
+
+		DelegateEvent onPreLoadAllScripts;
+		DelegateEvent onPostLoadAllScripts;
 
 		ScriptLoader(ModManager &modManager);
 
@@ -56,7 +60,11 @@ namespace tudov
 
 		void LoadAll();
 		void UnloadAll();
-		bool Load(const std::string &scriptName);
+		/*
+		 * @brief Lazy load a script.
+		 * @return Script module.
+		 */
+		std::optional<std::reference_wrapper<ScriptLoader::Module>> Load(const std::string &scriptName);
 		void Unload(const std::string &scriptName);
 	};
 } // namespace tudov

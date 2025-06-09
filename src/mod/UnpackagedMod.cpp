@@ -85,7 +85,7 @@ void UnpackagedMod::Load()
 				ins.close();
 
 				auto &&relative = std::filesystem::relative(std::filesystem::relative(file, _directory), GetScriptsDirectory());
-				auto &&scriptName = toLuaRequirePath(std::format("{}.{}", namespace_, relative.string()));
+				auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", namespace_, relative.string()));
 				_scripts.emplace_back(scriptName);
 				_modManager.scriptProvider.AddScript(scriptName, oss.str());
 			}

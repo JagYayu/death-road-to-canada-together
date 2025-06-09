@@ -4,6 +4,7 @@
 #include "ScriptEngine.h"
 #include "ScriptProvider.h"
 
+#include <optional>
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
@@ -41,17 +42,24 @@ bool ScriptLoader::Module::IsLoading() const
 
 const sol::table &ScriptLoader::Module::LazyLoad(ScriptLoader &scriptLoader)
 {
-	if (_isLoaded || _table.get_or(sol::metatable_key, false))
+	if (!_table.valid())
+	{
+		_table = scriptLoader.modManager.scriptEngine.CreateTable();
+	}
+
+	if (_isLoaded || _table[sol::metatable_key].valid())
 	{
 		return _table;
 	}
 
-	sol::table metatable{};
+	sol::table metatable = scriptLoader.modManager.scriptEngine.CreateTable();
+
+	_table[sol::metatable_key] = metatable;
+
 	metatable["__index"] = [&](sol::this_state ts, sol::object /*self*/, sol::object key)
 	{
 		return ImmediateLoad(scriptLoader)[key];
 	};
-	_table[sol::metatable_key] = metatable;
 
 	return _table;
 }
@@ -67,20 +75,21 @@ const sol::table &ScriptLoader::Module::ImmediateLoad(ScriptLoader &scriptLoader
 
 	auto &&scriptEngine = scriptLoader.modManager.scriptEngine;
 
-	sol::table tab = scriptEngine.CreateTable();
+	sol::table tab;
 	auto &&result = _func();
-	if (result.valid())
+	if (!result.valid())
+	{
+		sol::error cc = result;
+		scriptLoader._log.Error(std::string(cc.what()));
+		tab = scriptEngine.CreateTable();
+	}
+	else
 	{
 		auto &&value = result.get<sol::object>(0);
 		if (value.get_type() == sol::type::table)
 		{
 			tab = value.as<sol::table>();
 		}
-	}
-	else
-	{
-		sol::error cc = result;
-		scriptLoader._log.Error(std::string(cc.what()));
 	}
 
 	sol::table metatable = scriptEngine.CreateTable(0, 2);
@@ -124,32 +133,38 @@ void ScriptLoader::LoadAll()
 	auto &&count = provider.GetCount();
 	for (auto &&[name, data] : provider)
 	{
-		LoadScript(name, data);
+		LoadImpl(name, data, true);
 	}
 
 	_log.Debug("Loaded provided scripts");
 }
 
-bool ScriptLoader::Load(const std::string &scriptName)
+std::optional<std::reference_wrapper<ScriptLoader::Module>> ScriptLoader::Load(const std::string &scriptName)
 {
+	auto &&provider = modManager.scriptProvider;
+	if (!provider.ContainsScript(scriptName))
+	{
+		return std::nullopt;
+	}
 
-	return true;
+	auto &&scriptCode = provider.GetScript(scriptName);
+	return LoadImpl(scriptName, scriptCode, false);
 }
 
-bool ScriptLoader::LoadScript(const std::string &scriptName, const std::string &code)
+std::optional<std::reference_wrapper<ScriptLoader::Module>> ScriptLoader::LoadImpl(const std::string &scriptName, const std::string_view &code, bool immediate)
 {
 	_log.Debug(std::format("Loading script \"{}\" ...", std::string_view(scriptName)));
 
 	auto &&result = modManager.scriptEngine.LoadFunction(scriptName, code);
 	if (!result.valid())
 	{
-		_log.Debug(std::format("Failed to load script \"{}\": {}", std::string_view(scriptName), result.get<sol::error>().what()));
+		_log.Debug(std::format("Failed to load script \"{}\": {}", scriptName, result.get<sol::error>().what()));
 
-		return false;
+		return std::nullopt;
 	}
 
-	auto &&func = result.get<sol::function>();
-	modManager.scriptEngine.SetScriptEnv(scriptName, func);
+	auto &&func = result.get<sol::protected_function>();
+	modManager.scriptEngine.InitScriptFunc(scriptName, func);
 	Module module{func};
 
 	auto &&it = _loadedScripts.find(scriptName);
@@ -160,19 +175,29 @@ bool ScriptLoader::LoadScript(const std::string &scriptName, const std::string &
 
 	_scriptErrors.erase(scriptName);
 
-	module.ImmediateLoad(*this);
+	if (immediate)
+	{
+		module.ImmediateLoad(*this);
+	}
 
 	_log.Debug(std::format("Loaded script \"{}\"", std::string_view(scriptName)));
 
-	return true;
+	return _loadedScripts[scriptName];
 }
 
 void ScriptLoader::UnloadAll()
 {
-	// _modManager.scriptEngine
-
-	for (auto &&[name, module] : _loadedScripts)
+	auto &&scriptProvider = modManager.scriptProvider;
+	for (auto it = _loadedScripts.begin(); it != _loadedScripts.end();)
 	{
-		//
+		if (scriptProvider.ContainsScript(it->first))
+		{
+			++it;
+			continue;
+		}
+
+		_log.Trace(std::format("Unloading script \"{}\" ...", it->first));
+
+		it = _loadedScripts.erase(it);
 	}
 }

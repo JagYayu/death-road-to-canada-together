@@ -8,8 +8,9 @@
 
 using namespace tudov;
 
-ModManager::ModManager()
-    : scriptEngine(*this),
+ModManager::ModManager(GameEngine &gameEngine)
+    : gameEngine(gameEngine),
+      scriptEngine(*this),
       scriptLoader(*this),
       scriptProvider(*this),
       _log("ModManager"),
