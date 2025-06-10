@@ -10,7 +10,30 @@ namespace tudov
 	{
 		struct Key
 		{
-			Variant<Number, String> value;
+			struct Equal
+			{
+				bool operator()(const tudov::EventHandler::Key &lhs, const tudov::EventHandler::Key &rhs) const
+				{
+					return lhs == rhs;
+				}
+			};
+
+			struct Hash
+			{
+				size_t operator()(const EventHandler::Key &key) const
+				{
+					if (Is<Number>(key.value))
+					{
+						return std::hash<double>{}(Get<Number>(key.value));
+					}
+					else
+					{
+						return std::hash<String>{}(Get<String>(key.value));
+					}
+				}
+			};
+
+			Variant<Nullptr, Number, String> value;
 
 			bool operator==(const Key &other) const
 			{
@@ -18,28 +41,11 @@ namespace tudov
 			}
 		};
 
-		struct KeyEqual
-		{
-			bool operator()(const tudov::EventHandler::Key &lhs, const tudov::EventHandler::Key &rhs) const
-			{
-				return lhs == rhs;
-			}
-		};
+		using KeyEqual = Key::Equal;
+		using KeyHash = Key::Hash;
 
-		struct KeyHash
-		{
-			size_t operator()(const EventHandler::Key &key) const
-			{
-				if (Is<Number>(key.value))
-				{
-					return std::hash<double>{}(Get<Number>(key.value));
-				}
-				else
-				{
-					return std::hash<String>{}(Get<String>(key.value));
-				}
-			}
-		};
+		inline static Key emptyKey = Key(nullptr);
+		inline static Number defaultSequence = 0;
 
 		struct Function
 		{
@@ -72,9 +78,9 @@ namespace tudov
 
 		String scriptName;
 		String name;
-		String order;
-		Number sequence;
-		Key key;
 		Function function;
+		String order;
+		Key key;
+		Number sequence;
 	};
 } // namespace tudov

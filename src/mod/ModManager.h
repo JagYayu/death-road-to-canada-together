@@ -12,7 +12,7 @@
 
 namespace tudov
 {
-	class GameEngine;
+	class Engine;
 
 	class ModManager
 	{
@@ -25,7 +25,7 @@ namespace tudov
 			HotReloading = 1 << 2,
 		};
 
-		Log _log;
+		SharedPtr<Log> _log;
 		ELoadState _loadState;
 
 		std::vector<std::filesystem::path> _directories;
@@ -33,15 +33,14 @@ namespace tudov
 		std::vector<ModEntry> _requiredMods;
 
 	  public:
-		GameEngine& gameEngine;
+		Engine &engine;
 		ScriptEngine scriptEngine;
-		ScriptLoader scriptLoader;
 		ScriptProvider scriptProvider;
 
 		void AddMod(const std::filesystem::path &modRoot);
 
 	  public:
-		ModManager(GameEngine &gameEngine);
+		ModManager(Engine &engine);
 		~ModManager();
 
 		bool IsNoModMatch() const;

@@ -12,3 +12,5 @@ ConstructorInitializerAllOnOneLineOrOnePerLine: true
 AlignAfterOpenBracket: Align
 AlwaysBreakAfterReturnType: None
 SpaceBeforeParens: ControlStatements
+LambdaBodyIndentation: OuterScope
+BinPackArguments: true

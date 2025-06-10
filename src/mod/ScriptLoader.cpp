@@ -3,14 +3,13 @@
 #include "ModManager.h"
 #include "ScriptEngine.h"
 #include "ScriptProvider.h"
+#include "util/Defs.h"
 
-#include <optional>
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
 
-#include <format>
-#include <string_view>
+#include <optional>
 
 using namespace tudov;
 
@@ -44,7 +43,7 @@ const sol::table &ScriptLoader::Module::LazyLoad(ScriptLoader &scriptLoader)
 {
 	if (!_table.valid())
 	{
-		_table = scriptLoader.modManager.scriptEngine.CreateTable();
+		_table = scriptLoader.scriptEngine.modManager.scriptEngine.CreateTable();
 	}
 
 	if (_isLoaded || _table[sol::metatable_key].valid())
@@ -52,11 +51,11 @@ const sol::table &ScriptLoader::Module::LazyLoad(ScriptLoader &scriptLoader)
 		return _table;
 	}
 
-	sol::table metatable = scriptLoader.modManager.scriptEngine.CreateTable();
+	sol::table metatable = scriptLoader.scriptEngine.modManager.scriptEngine.CreateTable();
 
 	_table[sol::metatable_key] = metatable;
 
-	metatable["__index"] = [&](sol::this_state ts, sol::object /*self*/, sol::object key)
+	metatable["__index"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
 	{
 		return ImmediateLoad(scriptLoader)[key];
 	};
@@ -73,14 +72,14 @@ const sol::table &ScriptLoader::Module::ImmediateLoad(ScriptLoader &scriptLoader
 
 	_isLoaded = true;
 
-	auto &&scriptEngine = scriptLoader.modManager.scriptEngine;
+	auto &&scriptEngine = scriptLoader.scriptEngine.modManager.scriptEngine;
 
 	sol::table tab;
 	auto &&result = _func();
 	if (!result.valid())
 	{
 		sol::error cc = result;
-		scriptLoader._log.Error(std::string(cc.what()));
+		scriptLoader._log->Error(String(cc.what()));
 		tab = scriptEngine.CreateTable();
 	}
 	else
@@ -100,26 +99,38 @@ const sol::table &ScriptLoader::Module::ImmediateLoad(ScriptLoader &scriptLoader
 	_table = scriptEngine.CreateTable();
 	_table[sol::metatable_key] = metatable;
 
-	_isLoaded = true;
 	_isLoaded = false;
 
 	return _table;
 }
 
-ScriptLoader::ScriptLoader(ModManager &modManager)
-    : modManager(modManager),
-      _log("ScriptLoader")
+ScriptLoader::ScriptLoader(ScriptEngine &scriptEngine) noexcept
+    : scriptEngine(scriptEngine),
+      _log(Log::Get("ScriptLoader")),
+      onPreLoadAllScripts()
 {
 }
 
-const std::string &ScriptLoader::GetLoadingScript() const
+ScriptLoader::~ScriptLoader() noexcept
+{
+	for (auto &&it = _loadedScripts.begin(); it != _loadedScripts.end(); ++it)
+	{
+		_log->Trace(Format("Unloading script \"{}\" ...", it->first));
+
+		// TODO
+
+		_log->Trace(Format("Unloaded script \"{}\"", it->first));
+	}
+}
+
+Optional<String> ScriptLoader::GetLoadingScript() const
 {
 	return _loadingScript;
 }
 
 void ScriptLoader::LoadAll()
 {
-	_log.Debug("Loading provided scripts ...");
+	_log->Debug("Loading provided scripts ...");
 
 	if (!_loadedScripts.empty())
 	{
@@ -129,42 +140,44 @@ void ScriptLoader::LoadAll()
 	_loadedScripts.clear();
 	_scriptErrors.clear();
 
-	auto &&provider = modManager.scriptProvider;
-	auto &&count = provider.GetCount();
-	for (auto &&[name, data] : provider)
+	auto &&count = scriptEngine.modManager.scriptProvider.GetCount();
+	for (auto &&[name, data] : scriptEngine.modManager.scriptProvider)
 	{
 		LoadImpl(name, data, true);
 	}
 
-	_log.Debug("Loaded provided scripts");
+	_log->Debug("Loaded provided scripts");
 }
 
-std::optional<std::reference_wrapper<ScriptLoader::Module>> ScriptLoader::Load(const std::string &scriptName)
+Optional<Reference<ScriptLoader::Module>> ScriptLoader::Load(const String &scriptName)
 {
-	auto &&provider = modManager.scriptProvider;
-	if (!provider.ContainsScript(scriptName))
+	auto &&scriptCode = scriptEngine.modManager.scriptProvider.TryRequireScript(scriptName);
+	if (!scriptCode.has_value())
 	{
-		return std::nullopt;
+		return null;
 	}
 
-	auto &&scriptCode = provider.GetScript(scriptName);
-	return LoadImpl(scriptName, scriptCode, false);
+	return LoadImpl(scriptName, scriptCode.value(), false);
 }
 
-std::optional<std::reference_wrapper<ScriptLoader::Module>> ScriptLoader::LoadImpl(const std::string &scriptName, const std::string_view &code, bool immediate)
+Optional<Reference<ScriptLoader::Module>> ScriptLoader::LoadImpl(const String &scriptName, const StringView &code, bool immediate)
 {
-	_log.Debug(std::format("Loading script \"{}\" ...", std::string_view(scriptName)));
+	_log->Debug(Format("Loading script \"{}\" ...", scriptName));
 
-	auto &&result = modManager.scriptEngine.LoadFunction(scriptName, code);
+	_loadingScript = scriptName;
+
+	auto &&result = scriptEngine.modManager.scriptEngine.LoadFunction(scriptName, code);
 	if (!result.valid())
 	{
-		_log.Debug(std::format("Failed to load script \"{}\": {}", scriptName, result.get<sol::error>().what()));
+		_loadingScript = null;
 
-		return std::nullopt;
+		_log->Debug(Format("Failed to load script \"{}\": {}", scriptName, result.get<sol::error>().what()));
+
+		return null;
 	}
 
 	auto &&func = result.get<sol::protected_function>();
-	modManager.scriptEngine.InitScriptFunc(scriptName, func);
+	scriptEngine.modManager.scriptEngine.InitScriptFunc(scriptName, func);
 	Module module{func};
 
 	auto &&it = _loadedScripts.find(scriptName);
@@ -180,24 +193,27 @@ std::optional<std::reference_wrapper<ScriptLoader::Module>> ScriptLoader::LoadIm
 		module.ImmediateLoad(*this);
 	}
 
-	_log.Debug(std::format("Loaded script \"{}\"", std::string_view(scriptName)));
+	_loadingScript = null;
+
+	_log->Debug(Format("Loaded script \"{}\"", StringView(scriptName)));
 
 	return _loadedScripts[scriptName];
 }
 
 void ScriptLoader::UnloadAll()
 {
-	auto &&scriptProvider = modManager.scriptProvider;
 	for (auto it = _loadedScripts.begin(); it != _loadedScripts.end();)
 	{
-		if (scriptProvider.ContainsScript(it->first))
+		if (scriptEngine.modManager.scriptProvider.ContainsScript(it->first))
 		{
 			++it;
 			continue;
 		}
 
-		_log.Trace(std::format("Unloading script \"{}\" ...", it->first));
+		_log->Trace(Format("Unloading script \"{}\" ...", it->first));
 
 		it = _loadedScripts.erase(it);
+
+		_log->Trace(Format("Unloaded script \"{}\"", it->first));
 	}
 }

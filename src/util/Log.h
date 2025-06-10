@@ -1,6 +1,7 @@
 #pragma once
 
-#include "String.h"
+#include "Defs.h"
+#include "json.hpp"
 #include <sol/lua_value.hpp>
 
 #include <atomic>
@@ -20,64 +21,112 @@ namespace tudov
 		struct Entry
 		{
 			std::chrono::system_clock::time_point time;
-			std::string_view verbosity;
-			std::string module;
-			std::string message;
+			StringView verbosity;
+			String module;
+			String message;
 		};
 
 	  public:
 		enum class Verbosity
 		{
-			Trace,
-			Debug,
-			Info,
-			Warn,
-			Error,
+			All = -1,
+			None = 0,
+			Error = 1 << 0,
+			Warn = 1 << 1,
+			Info = 1 << 2,
+			Debug = 1 << 3,
+			Trace = 1 << 4,
+			Fatal = 1 << 5,
 		};
 
 	  private:
+		static Verbosity _globalVerbosity;
+		static UnorderedMap<String, Verbosity> _moduleVerbs;
+		static UnorderedMap<String, Verbosity> _moduleVerbOverrides;
+		static UnorderedMap<String, SharedPtr<Log>> _logInstances;
 		static std::queue<Entry> _queue;
 		static std::mutex _mutex;
 		static std::condition_variable _cv;
 		static std::atomic<bool> _exit;
 
-		std::string _module;
-
 	  public:
 		static Log instance;
-		static std::unordered_map<std::string, Verbosity> moduleVerbosityOverrides;
-		static Verbosity GetGlobalFlags(std::string module);
 
 	  private:
 		static void Process();
 
-		void Output(const std::string_view verb, const std::string &str);
+	  public:
+		static SharedPtr<Log> Get(const String &module);
+		static Verbosity GetVerbosity(const String &module);
+		static Optional<Verbosity> GetVerbosityOverride(const String &module);
+		static void SetVerbosityOverride(const String &module, Verbosity verb);
+		static void UpdateVerbosities(const nlohmann::json &config);
+
+	  private:
+		String _module;
+
+		bool CanOutput(const StringView &verb) const;
+		void Output(const StringView &verb, const String &str) const;
 
 	  public:
-		explicit Log(const std::string &module);
+		explicit Log(const String &module);
 		~Log();
 
-		bool CanDebug();
+		const String &GetModule() const;
 
-		inline void Trace(const std::string &str)
+		FORCEINLINE Verbosity GetVerbosity() const
 		{
-			Output("Info", str);
+			return GetVerbosity(_module);
 		}
-		inline void Debug(const std::string &str)
+
+		FORCEINLINE bool CanTrace() const
+		{
+			return CanOutput("Trace");
+		}
+		FORCEINLINE bool CanInfo() const
+		{
+			return CanOutput("Info");
+		}
+		FORCEINLINE bool CanDebug() const
+		{
+			return CanOutput("Debug");
+		}
+		FORCEINLINE bool CanWarn() const
+		{
+			return CanOutput("Warn");
+		}
+		FORCEINLINE bool CanError() const
+		{
+			return CanOutput("Error");
+		}
+		FORCEINLINE bool CanFatal() const
+		{
+			return CanOutput("Fatal");
+		}
+
+		FORCEINLINE void Trace(const String &str) const
+		{
+			Output("Trace", str);
+		}
+		FORCEINLINE void Debug(const String &str) const
 		{
 			Output("Debug", str);
 		}
-		inline void Info(const std::string &str)
+		FORCEINLINE void Info(const String &str) const
 		{
 			Output("Info", str);
 		}
-		inline void Warn(const std::string &str)
+		FORCEINLINE void Warn(const String &str) const
 		{
 			Output("Warn", str);
 		}
-		inline void Error(const std::string &str)
+		FORCEINLINE void Error(const String &str) const
 		{
 			Output("Error", str);
+		}
+		FORCEINLINE void Fatal(const String &str) const
+		{
+			Output("Fatal", str);
 		}
 	};
 } // namespace tudov

@@ -3,20 +3,25 @@
 #include "util/StringUtils.hpp"
 
 #include <filesystem>
-#include <format>
-#include <string>
-#include <string_view>
 
 using namespace tudov;
 
-ScriptProvider::ScriptProvider(ModManager &modManager)
-    : _modManager(modManager),
-      _log("ScriptProvider")
+String ToStaticNamespace(const String &path)
 {
+	return "#" + FilePathToLuaScriptName(path);
+}
+
+ScriptProvider::ScriptProvider(ModManager &modManager)
+    : modManager(modManager),
+      _log(Log::Get("ScriptProvider"))
+{
+	auto &&directory = "lua";
+	staticNamespace = ToStaticNamespace(directory);
+
 	for (const auto &entry : std::filesystem::recursive_directory_iterator("lua"))
 	{
 		auto &&path = entry.path().string();
-		_scriptMap["#" + FilePathToLuaScriptName(path)] = ReadFileToString(path);
+		_scriptMap[ToStaticNamespace(path)] = ReadFileToString(path);
 	}
 }
 
@@ -25,14 +30,14 @@ size_t ScriptProvider::GetCount() const
 	return _scriptMap.size();
 }
 
-bool ScriptProvider::ContainsScript(const std::string_view &name) const
+bool ScriptProvider::ContainsScript(const StringView &scriptName) const
 {
-	return _scriptMap.contains(name);
+	return _scriptMap.contains(scriptName);
 }
 
-const std::string &ScriptProvider::GetScript(const std::string &name) const
+const String &ScriptProvider::GetScript(const String &scriptName) const
 {
-	auto &&it = _scriptMap.find(name);
+	auto &&it = _scriptMap.find(scriptName);
 	if (it == _scriptMap.end())
 	{
 		return emptyString;
@@ -40,30 +45,58 @@ const std::string &ScriptProvider::GetScript(const std::string &name) const
 	return it->second;
 }
 
-void ScriptProvider::AddScript(const std::string_view &name, const std::string_view &data)
+Optional<String> ScriptProvider::TryRequireScript(const StringView &scriptName)
 {
-	if (_scriptMap.contains(name))
+	auto &&it = _scriptMap.find(scriptName);
+	if (it != _scriptMap.end())
 	{
-		_log.Info(std::format("Duplicated adding script: {}", std::string_view(name)));
+		return it->second;
 	}
-	_scriptMap[std::string(name)] = data;
+
+	it = _scriptMap.find(staticNamespace + String(scriptName));
+	if (it != _scriptMap.end())
+	{
+		return it->second;
+	}
+
+	return emptyString;
 }
 
-void ScriptProvider::RemoveScript(const std::string_view &name)
+void ScriptProvider::AddScript(const StringView &scriptName, const StringView &data)
 {
-	if (!_scriptMap.contains(name))
+	if (GetLuaNamespace(scriptName) == staticNamespace)
 	{
-		_log.Info(std::format("Attempt to remove non-exist script: {}", std::string_view(name)));
+		_log->Info("Attempt to add static script");
+		return;
 	}
-	_scriptMap.erase(std::string(name));
+	if (_scriptMap.contains(scriptName))
+	{
+		_log->Info(Format("Duplicated adding script: {}", StringView(scriptName)));
+	}
+	_scriptMap[String(scriptName)] = data;
 }
 
-std::unordered_map<std::string, std::string>::const_iterator ScriptProvider::begin() const
+void ScriptProvider::RemoveScript(const StringView &scriptName)
+{
+	if (!_scriptMap.contains(scriptName))
+	{
+		_log->Info(Format("Attempt to remove non-exist script: {}", scriptName));
+		return;
+	}
+	if (GetLuaNamespace(scriptName) == staticNamespace)
+	{
+		_log->Info("Attempt to remove static script");
+		return;
+	}
+	_scriptMap.erase(String(scriptName));
+}
+
+UnorderedMap<String, String>::const_iterator ScriptProvider::begin() const
 {
 	return _scriptMap.begin();
 }
 
-std::unordered_map<std::string, std::string>::const_iterator ScriptProvider::end() const
+UnorderedMap<String, String>::const_iterator ScriptProvider::end() const
 {
 	return _scriptMap.end();
 }

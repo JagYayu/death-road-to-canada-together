@@ -10,11 +10,11 @@ namespace tudov
 	struct ModEntry
 	{
 	  public:
-		std::string namespace_;
+		String namespace_;
 		std::optional<Version> version;
 		int32_t priority;
 
-		explicit ModEntry(const std::string &namespace_, const std::optional<Version> &version, int32_t priority)
+		explicit ModEntry(const String &namespace_, const std::optional<Version> &version, int32_t priority)
 		    : namespace_(namespace_),
 		      version(version),
 		      priority(priority)

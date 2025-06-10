@@ -5,6 +5,7 @@
 #include <array>
 #include <cstddef>
 #include <deque>
+#include <format>
 #include <functional>
 #include <list>
 #include <map>
@@ -26,9 +27,9 @@ namespace tudov
 {
 	// basic types
 
-	using Bool = bool;
 	using Int32 = std::int32_t;
-	using Null = std::nullptr_t;
+	using UInt32 = std::uint32_t;
+	using Nullptr = std::nullptr_t;
 	using Number = double;
 	using String = std::string;
 	using StringView = std::string_view;
@@ -50,11 +51,11 @@ namespace tudov
 	using Array = std::array<T, N>;
 	template <typename T>
 	using Set = std::set<T>;
-	template <typename T, typename Hash, typename Equal>
+	template <typename T, class Hash = std::hash<T>, class Equal = std::equal_to<T>>
 	using UnorderedSet = std::unordered_set<T, Hash, Equal>;
 	template <typename K, typename V>
 	using Map = std::map<K, V>;
-	template <typename K, typename V, typename Hash, typename Equal>
+	template <typename K, typename V, typename Hash = std::hash<K>, typename Equal = std::equal_to<K>>
 	using UnorderedMap = std::unordered_map<K, V, Hash, Equal>;
 	template <typename T>
 	using Stack = std::stack<T>;
@@ -125,6 +126,11 @@ namespace tudov
 	{
 		return std::find(begin, end, value);
 	}
+	template <typename It, typename Pred>
+	FORCEINLINE It FindIf(It begin, It end, Pred p)
+	{
+		return std::find_if(begin, end, p);
+	}
 	template <typename It, typename Func>
 	FORCEINLINE void ForEach(It begin, It end, Func f)
 	{
@@ -155,6 +161,11 @@ namespace tudov
 	{
 		return std::remove_if(begin, end, p);
 	}
+	template <typename Container, typename Predicate>
+	FORCEINLINE void EraseIf(Container &container, Predicate p)
+	{
+		container.erase(RemoveIf(container.begin(), container.end(), p), container.end());
+	}
 	template <typename InIt, typename OutIt, typename Func>
 	FORCEINLINE OutIt Transform(InIt begin, InIt end, OutIt dest, Func f)
 	{
@@ -163,6 +174,8 @@ namespace tudov
 
 	// utilities
 
+	template <typename... Args>
+	using Function = std::function<Args...>;
 	template <typename... Ts>
 	using Variant = std::variant<Ts...>;
 	template <typename T>
@@ -217,22 +230,19 @@ namespace tudov
 	}
 
 	template <typename... Args>
-	using Function = std::function<Args...>;
+	FORCEINLINE String Format(std::format_string<Args...> fmt, Args &&...args)
+	{
+		return std::format(fmt, Forward<Args>(args)...);
+	}
 
-	template <bool B, typename T = void>
-	using EnableIf = std::enable_if_t<B, T>;
-
-	template <typename T, typename U>
-	constexpr bool IsSame = std::is_same<T, U>::value;
-
-	template <typename Base, typename Derived>
-	constexpr bool IsBaseOf = std::is_base_of<Base, Derived>::value;
-
-	template <typename T>
-	using RemoveRef = std::remove_reference_t<T>;
-
-	template <typename T>
-	using Decay = std::decay_t<T>;
-
-	// engine types
+	template <typename... Args>
+	FORCEINLINE void FormatTo(OStringStream &os, std::format_string<Args...> fmt, Args &&...args)
+	{
+		os << Format(fmt, Forward<Args>(args)...);
+	}
+	template <typename... Args>
+	FORCEINLINE void FormatTo(OStringStream &os, std::locale loc, std::format_string<Args...> fmt, Args &&...args)
+	{
+		os << Format(loc, fmt, Forward<Args>(args)...);
+	}
 } // namespace tudov

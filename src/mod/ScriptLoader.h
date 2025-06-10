@@ -1,8 +1,10 @@
 #pragma once
 
-#include "ScriptEngine.h"
+#include "ScriptProvider.h"
 #include "event/DelegateEvent.hpp"
+#include "util/Defs.h"
 #include "util/Log.h"
+#include "util/StringUtils.hpp"
 
 #include <sol/table.hpp>
 
@@ -14,7 +16,7 @@
 
 namespace tudov
 {
-	class ModManager;
+	class ScriptEngine;
 
 	class ScriptLoader
 	{
@@ -38,25 +40,27 @@ namespace tudov
 			const sol::table &ImmediateLoad(ScriptLoader &scriptLoader);
 		};
 
-		Log _log;
+		SharedPtr<Log> _log;
 
-		std::string _loadingScript;
-		std::vector<std::string> _loadingScripts;
-		std::unordered_map<std::string_view, Module> _loadedScripts;
-		std::unordered_map<std::string_view, std::string> _scriptErrors;
-		std::unordered_map<std::string_view, std::string> _scriptErrorsCascaded;
+		Optional<String> _loadingScript;
+		Vector<String> _loadingScripts;
+		UnorderedMap<String, Module, StringSVHash, StringSVEqual> _loadedScripts;
+		UnorderedMap<StringView, String, StringSVHash, StringSVEqual> _scriptErrors;
+		UnorderedMap<StringView, String, StringSVHash, StringSVEqual> _scriptErrorsCascaded;
 
-		std::optional<std::reference_wrapper<Module>> LoadImpl(const std::string &scriptName, const std::string_view &code, bool immediate);
+		Optional<Reference<Module>> LoadImpl(const String &scriptName, const StringView &code, bool immediate);
 
 	  public:
-		ModManager &modManager;
+		ScriptEngine &scriptEngine;
 
-		DelegateEvent onPreLoadAllScripts;
-		DelegateEvent onPostLoadAllScripts;
+		DelegateEvent<> onPreLoadAllScripts;
+		DelegateEvent<> onPostLoadAllScripts;
 
-		ScriptLoader(ModManager &modManager);
+	  public:
+		ScriptLoader(ScriptEngine &scriptEngine) noexcept;
+		~ScriptLoader() noexcept;
 
-		const std::string &GetLoadingScript() const;
+		Optional<String> GetLoadingScript() const;
 
 		void LoadAll();
 		void UnloadAll();
@@ -64,7 +68,7 @@ namespace tudov
 		 * @brief Lazy load a script.
 		 * @return Script module.
 		 */
-		std::optional<std::reference_wrapper<ScriptLoader::Module>> Load(const std::string &scriptName);
-		void Unload(const std::string &scriptName);
+		Optional<Reference<ScriptLoader::Module>> Load(const String &scriptName);
+		void Unload(const String &scriptName);
 	};
 } // namespace tudov

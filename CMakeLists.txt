@@ -16,7 +16,7 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 add_executable(dr2c ${SRC_FILES})
 
 if (MSVC)
-    add_compile_options(/FS /MP)
+    add_compile_options(/FS /MP /Zc:preprocessor)
 endif()
 
 # bgfx

@@ -11,12 +11,13 @@ namespace tudov
 	class Mod
 	{
 	  protected:
-		ModManager &_modManager;
 		ModConfig _config;
 
-		std::vector<std::string> _scripts;
+		Vector<String> _scripts;
 
 	  public:
+		ModManager &modManager;
+
 		Mod(ModManager &modManager);
 		explicit Mod(ModManager &modManager, const ModConfig &config);
 
@@ -25,7 +26,7 @@ namespace tudov
 
 		void Reload();
 
-		const std::string &GetNamespace() const;
-		const std::string &GetScriptsDirectory() const;
+		const String &GetNamespace() const;
+		const String &GetScriptsDirectory() const;
 	};
 } // namespace tudov

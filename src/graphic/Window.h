@@ -1,24 +1,26 @@
 #pragma once
 
-#include <memory>
 #include <SDL2/SDL.h>
+#include <memory>
+
 
 class SDL_Window;
 
 namespace tudov
 {
-	class GameEngine;
+	class Engine;
 
 	class Window
 	{
-	private:
-		GameEngine &_gameEngine;
+	  private:
 		SDL_Window *_window;
 
-	public:
-		Window(GameEngine &engine);
+	  public:
+		Engine &engine;
+
+		Window(Engine &engine);
 
 		void Initialize();
 		void PoolEvents();
 	};
-}
+} // namespace tudov

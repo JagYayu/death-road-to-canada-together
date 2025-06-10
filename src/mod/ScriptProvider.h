@@ -1,5 +1,6 @@
 #pragma once
 
+#include "util/Defs.h"
 #include "util/Log.h"
 #include "util/StringUtils.hpp"
 
@@ -17,11 +18,13 @@ namespace tudov
 	class ScriptProvider
 	{
 	  private:
-		ModManager &_modManager;
+		SharedPtr<Log> _log;
 
-		Log _log;
+		UnorderedMap<String, String, StringSVHash, StringSVEqual> _scriptMap;
 
-		std::unordered_map<std::string, std::string, StringTransHash, StringTransEqual> _scriptMap;
+	  public:
+		ModManager &modManager;
+		String staticNamespace;
 
 	  public:
 		ScriptProvider(ModManager &modManager);
@@ -30,12 +33,13 @@ namespace tudov
 
 		size_t GetCount() const;
 
-		bool ContainsScript(const std::string_view &name) const;
-		const std::string &GetScript(const std::string &name) const;
-		void AddScript(const std::string_view &name, const std::string_view &data);
-		void RemoveScript(const std::string_view &name);
+		bool ContainsScript(const StringView &scriptName) const;
+		const String &GetScript(const String &scriptName) const;
+		Optional<String> TryRequireScript(const StringView &scriptName);
+		void AddScript(const StringView &name, const StringView &data);
+		void RemoveScript(const StringView &name);
 
-		std::unordered_map<std::string, std::string, StringTransHash, StringTransEqual>::const_iterator begin() const;
-		std::unordered_map<std::string, std::string, StringTransHash, StringTransEqual>::const_iterator end() const;
+		UnorderedMap<String, String, StringSVHash, StringSVEqual>::const_iterator begin() const;
+		UnorderedMap<String, String, StringSVHash, StringSVEqual>::const_iterator end() const;
 	};
 } // namespace tudov

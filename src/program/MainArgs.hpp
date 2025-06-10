@@ -1,21 +1,23 @@
 #pragma once
 
-#include <string>
-#include <vector>
+#include "util/Defs.h"
 
 namespace tudov
 {
 	class MainArgs
 	{
-	private:
-		std::vector<std::string> args;
+	  private:
+		Vector<String> args;
 
-	public:
+	  public:
 		explicit MainArgs(int argc, char **argv);
 
 		size_t size() const;
 
-		const std::string &operator[](size_t i) const { return args[i]; }
+		const String &operator[](size_t i) const
+		{
+			return args[i];
+		}
 
 		auto begin() const;
 		auto end() const;
@@ -43,4 +45,4 @@ namespace tudov
 	{
 		return args.end();
 	}
-}
+} // namespace tudov

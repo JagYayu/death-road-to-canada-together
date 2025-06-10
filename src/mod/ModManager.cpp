@@ -1,6 +1,7 @@
 #include "ModManager.h"
 
 #include "ScriptEngine.h"
+#include "ScriptProvider.h"
 #include "UnpackagedMod.h"
 #include "mod/ModEntry.hpp"
 
@@ -8,12 +9,11 @@
 
 using namespace tudov;
 
-ModManager::ModManager(GameEngine &gameEngine)
-    : gameEngine(gameEngine),
+ModManager::ModManager(Engine &engine)
+    : engine(engine),
       scriptEngine(*this),
-      scriptLoader(*this),
       scriptProvider(*this),
-      _log("ModManager"),
+      _log(Log::Get("ModManager")),
       _loadState(ELoadState::None)
 {
 	_directories = {
@@ -27,6 +27,7 @@ ModManager::ModManager(GameEngine &gameEngine)
 
 ModManager::~ModManager()
 {
+	UnloadMods();
 }
 
 void ModManager::AddMod(const std::filesystem::path &modRoot)
@@ -54,7 +55,7 @@ bool ModManager::IsModMatched(const Mod &mod) const
 
 void ModManager::LoadMods()
 {
-	_log.Debug("Loading all required mods ...");
+	_log->Debug("Loading all required mods ...");
 
 	if (!_requiredMods.empty())
 	{
@@ -63,7 +64,7 @@ void ModManager::LoadMods()
 
 	if (IsNoModMatch())
 	{
-		_log.Debug("Loaded all required mods: no required mod specified");
+		_log->Debug("Loaded all required mods: no required mod specified");
 		return;
 	}
 
@@ -101,16 +102,16 @@ void ModManager::LoadMods()
 		mod->Load();
 	}
 
-	scriptLoader.LoadAll();
+	scriptEngine.scriptLoader.LoadAll();
 
-	_log.Debug("Loaded all required mods");
+	_log->Debug("Loaded all required mods");
 }
 
 void ModManager::UnloadMods()
 {
-	_log.Debug("Unloading all mounted mods ...");
+	_log->Debug("Unloading all mounted mods ...");
 
-	scriptLoader.UnloadAll();
+	scriptEngine.scriptLoader.UnloadAll();
 
 	for (auto &&mod : _mountedMods)
 	{
@@ -118,7 +119,7 @@ void ModManager::UnloadMods()
 	}
 	_mountedMods.clear();
 
-	_log.Debug("Unloaded all mounted mods");
+	_log->Debug("Unloaded all mounted mods");
 }
 
 void ModManager::SetModList(std::vector<ModEntry> modEntries)

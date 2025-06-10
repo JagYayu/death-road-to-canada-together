@@ -1,35 +1,32 @@
 #pragma once
 
-#include "GameConfig.h"
-#include "IEngine.h"
+#include "EngineConfig.h"
+#include "MainArgs.hpp"
 #include "event/EventManager.h"
 #include "graphic/GraphicEngine.h"
 #include "graphic/Window.h"
 #include "mod/ModManager.h"
-#include "util/LogProvider.hpp"
-
 
 #include <memory>
 
 namespace tudov
 {
-	class GameEngine : public IEngine
+	class Engine
 	{
 	  private:
-		Log log;
-		bool running = true;
+		SharedPtr<Log> _log;
+		bool _running = true;
 
 	  public:
 		EventManager eventManager;
-		GameConfig config;
+		EngineConfig config;
 		GraphicEngine graphicEngine;
 		ModManager modManager;
 		Window window;
 
-		GameEngine();
+		Engine();
 
-		void Initialize(const MainArgs &args) override;
-		void Run() override;
-		void Quit() override;
+		void Run(const MainArgs &args);
+		void Quit();
 	};
 } // namespace tudov

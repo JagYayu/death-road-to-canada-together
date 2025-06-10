@@ -10,10 +10,10 @@ namespace tudov
 	class UnpackagedMod : public Mod
 	{
 	  private:
-		Log _log{"UnpackagedMod"};
+		SharedPtr<Log> _log;
 
 		std::filesystem::path _directory;
-		std::shared_ptr<filewatch::FileWatch<std::string>> _watcher;
+		std::shared_ptr<filewatch::FileWatch<String>> _watcher;
 
 	  public:
 		static bool IsValidDirectory(const std::filesystem::path &directory);

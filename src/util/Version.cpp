@@ -1,6 +1,5 @@
 #include "Version.h"
-
-#include <sstream>
+#include "Defs.h"
 
 using namespace tudov;
 
@@ -14,10 +13,10 @@ Version::Version(int32_t major, int32_t minor, int32_t patch)
 {
 }
 
-Version::Version(const std::string &str)
+Version::Version(const String &str)
 {
-	std::stringstream ss(str);
-	std::string token;
+	StringStream ss(str);
+	String token;
 	while (std::getline(ss, token, '.'))
 	{
 		_parts.push_back(std::stoi(token));
@@ -88,6 +87,6 @@ std::ostream &tudov::operator<<(std::ostream &os, const Version &v)
 void tudov::from_json(const nlohmann::json &j, Version &v)
 {
 	{
-		v = Version(j.get<std::string>());
+		v = Version(j.get<String>());
 	}
 }

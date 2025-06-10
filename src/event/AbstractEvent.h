@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EventHandler.hpp"
+#include "AddHandlerArgs.hpp"
 #include "util/Defs.h"
 
 namespace tudov
@@ -11,11 +11,15 @@ namespace tudov
 	{
 	  protected:
 		String _scriptName;
+		String _name;
 		Vector<String> _orders;
 
-		AbstractEvent(const String &scriptName);
+		AbstractEvent(const String &scriptName, const String &name);
 
 	  public:
-		virtual void Add(const EventHandler &handler) = 0;
+		const String &GetName() const noexcept;
+		const String &GetScriptName() const noexcept;
+
+		virtual void Add(const AddHandlerArgs &args) = 0;
 	};
 } // namespace tudov

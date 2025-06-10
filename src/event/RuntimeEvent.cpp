@@ -1,23 +1,54 @@
 #include "RuntimeEvent.h"
 
+#include "AbstractEvent.h"
 #include "EventHandler.hpp"
+#include "util/Defs.h"
 #include "util/StringUtils.hpp"
 
 using namespace tudov;
 
-void RuntimeEvent::Add(const EventHandler &handler)
+RuntimeEvent::RuntimeEvent(const String &name)
+    : AbstractEvent(emptyString, name),
+      _log(Log::Get("RuntimeEvent"))
 {
-	_handlers.emplace_back(handler);
+}
+
+RuntimeEvent::RuntimeEvent(const String &scriptName, const String &name)
+    : AbstractEvent(scriptName, name),
+      _log(Log::Get("RuntimeEvent"))
+{
+}
+
+void RuntimeEvent::Add(const AddHandlerArgs &args)
+{
+	auto &&argOrder = args.order;
+	auto &&order = argOrder.has_value() ? argOrder.value() : _orders[0];
+
+	auto &&argKey = args.key;
+	auto &&key = argKey.has_value() ? argKey.value() : EventHandler::emptyKey;
+
+	auto &&argSequence = args.sequence;
+	auto &&sequence = argSequence.has_value() ? argSequence.value() : EventHandler::defaultSequence;
+
+	_handlers.emplace_back(EventHandler{
+	    .scriptName = args.scriptName,
+	    .name = args.name,
+	    .function = args.function,
+	    .order = order,
+	    .key = key,
+	    .sequence = sequence,
+	});
+	ClearCaches();
 }
 
 Vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 {
-	if (_handlersSorted)
+	if (_handlersSortedCache)
 	{
 		return _handlers;
 	}
 
-	UnorderedMap<String, size_t, StringTransHash, StringTransEqual> orderSequenceMap;
+	UnorderedMap<String, size_t, StringSVHash, StringSVEqual> orderSequenceMap;
 	for (auto &&i = 0; i < _orders.size(); ++i)
 	{
 		orderSequenceMap[_orders[i]] = i;
@@ -25,16 +56,15 @@ Vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 
 	if (!orderSequenceMap.empty())
 	{
-		auto compare = [&](const EventHandler &lhs, const EventHandler &rhs)
+		Sort(_handlers.begin(), _handlers.end(), [&](const EventHandler &lhs, const EventHandler &rhs)
 		{
 			size_t lhsOrder = orderSequenceMap.count(lhs.name) ? orderSequenceMap[lhs.name] : SIZE_MAX;
 			size_t rhsOrder = orderSequenceMap.count(rhs.name) ? orderSequenceMap[rhs.name] : SIZE_MAX;
 			return lhsOrder < rhsOrder;
-		};
-		Sort(_handlers.begin(), _handlers.end(), compare);
+		});
 	}
 
-	_handlersSorted = true;
+	_handlersSortedCache = true;
 
 	return _handlers;
 }
@@ -91,7 +121,8 @@ void RuntimeEvent::Invoke(const sol::object &args, Optional<EventHandler::Key> k
 	}
 }
 
-void RuntimeEvent::InvokeUncached(const sol::object &args, Optional<EventHandler::Key> key)
+void RuntimeEvent::InvokeUncached(const sol::object &args,
+                                  Optional<EventHandler::Key> key)
 {
 	if (key.has_value())
 	{
@@ -111,4 +142,45 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, Optional<EventHandler
 			handler.function(args);
 		}
 	}
+}
+
+void RuntimeEvent::ClearCaches()
+{
+	_handlersSortedCache = false;
+	_invocationCache = null;
+	_invocationCaches.clear();
+}
+
+void RuntimeEvent::ClearScriptHandlersImpl(Function<bool(const EventHandler &)> pred)
+{
+	auto &&previousSize = _handlers.size();
+
+	EraseIf(_handlers, pred);
+
+	if (_handlers.size() != previousSize)
+	{
+		ClearCaches();
+	}
+}
+
+void RuntimeEvent::ClearScriptHandlers(const String &scriptName)
+{
+	if (scriptName == emptyString)
+	{
+		_log->Warn(Format("Clear script handlers named {} is not permitted", scriptName));
+		return;
+	}
+
+	ClearScriptHandlersImpl([&](const EventHandler &handler)
+	{
+		return handler.name == scriptName;
+	});
+}
+
+void RuntimeEvent::ClearScriptsHandlers()
+{
+	ClearScriptHandlersImpl([](const EventHandler &handler)
+	{
+		return handler.name != emptyString;
+	});
 }

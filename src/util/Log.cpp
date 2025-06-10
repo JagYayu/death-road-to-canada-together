@@ -1,33 +1,94 @@
 #include "Log.h"
 
 #include <chrono>
-#include <cstdint>
 #include <format>
 
 using namespace tudov;
 
-static int32_t logCount = 0;
+static Int32 logCount = 0;
 static std::thread logWorker;
 
+Log::Verbosity _globalVerbosity = tudov::Log::Verbosity::All;
+UnorderedMap<String, Log::Verbosity> Log::_moduleVerbs{};
+UnorderedMap<String, Log::Verbosity> Log::_moduleVerbOverrides{};
+UnorderedMap<String, SharedPtr<Log>> Log::_logInstances{};
 std::queue<Log::Entry> Log::_queue;
 std::mutex Log::_mutex;
 std::condition_variable Log::_cv;
 std::atomic<bool> Log::_exit = false;
-
 Log Log::instance{"Log"};
 
-std::unordered_map<std::string, Log::Verbosity> Log::moduleVerbosityOverrides{};
+SharedPtr<Log> Log::Get(const String &module)
+{
+	auto &&it = _logInstances.find(module);
+	if (it != _logInstances.end())
+	{
+		return it->second;
+	}
 
-Log::Verbosity Log::GetGlobalFlags(std::string module)
+	auto &&log = MakeShared<Log>(module);
+	_logInstances.emplace(module, log);
+	return log;
+}
+
+Log::Verbosity Log::GetVerbosity(const String &module)
 {
 	{
-		auto &&it = moduleVerbosityOverrides.find("key");
-		if (it != moduleVerbosityOverrides.end())
+		auto &&it = _moduleVerbOverrides.find("key");
+		if (it != _moduleVerbOverrides.end())
 		{
 			return it->second;
 		}
 	}
 	return (Log::Verbosity)0;
+}
+
+Optional<Log::Verbosity> Log::GetVerbosityOverride(const String &module)
+{
+	auto &&it = _moduleVerbOverrides.find("key");
+	if (it != _moduleVerbOverrides.end())
+	{
+		return it->second;
+	}
+	return null;
+}
+
+void Log::SetVerbosityOverride(const String &module, Verbosity verb)
+{
+	_moduleVerbOverrides[module] = verb;
+}
+
+void Log::UpdateVerbosities(const nlohmann::json &config)
+{
+	if (!config.is_object())
+	{
+		instance.Warn("Cannot update verbosities by receiving a variable that not a json object");
+		return;
+	}
+}
+
+Log::Log(const String &module)
+    : _module(module)
+{
+	if (logCount == 0)
+	{
+		logWorker = std::thread(Log::Process);
+	}
+	logCount++;
+}
+
+Log::~Log()
+{
+	logCount--;
+	if (logCount == 0)
+	{
+		{
+			std::lock_guard<std::mutex> lock{_mutex};
+			_exit = true;
+		}
+		_cv.notify_all();
+		logWorker.join();
+	}
 }
 
 void Log::Process()
@@ -48,52 +109,29 @@ void Log::Process()
 			_queue.pop();
 			lock.unlock();
 
-			std::cout << std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}", entry.time, std::string_view(entry.module), entry.verbosity, std::string_view(entry.message)) << std::endl;
+			std::cout << Format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}", entry.time, entry.module, entry.verbosity, entry.message) << std::endl;
 
 			lock.lock();
 		}
 	}
 }
 
-void Log::Output(const std::string_view verb, const std::string &str)
+bool Log::CanOutput(const StringView &verb) const
+{
+
+	return false;
+}
+
+void Log::Output(const StringView &verb, const String &str) const
 {
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		auto &&entry = Entry();
-		entry.time = std::chrono::system_clock::now();
-		entry.verbosity = verb;
-		entry.module = _module;
-		entry.message = str;
-		_queue.push(entry);
+		_queue.push(Entry{
+		    .time = std::chrono::system_clock::now(),
+		    .verbosity = verb,
+		    .module = _module,
+		    .message = str,
+		});
 	}
 	_cv.notify_one();
-}
-
-Log::Log(const std::string &module)
-    : _module(module)
-{
-	if (logCount == 0)
-	{
-		logWorker = std::thread(Log::Process);
-	}
-	logCount++;
-}
-
-tudov::Log::~Log()
-{
-	logCount--;
-	if (logCount == 0)
-	{
-		{
-			std::lock_guard<std::mutex> lock{_mutex};
-			_exit = true;
-		}
-		_cv.notify_all();
-		logWorker.join();
-	}
-}
-
-bool Log::CanDebug()
-{
-	return false;
 }

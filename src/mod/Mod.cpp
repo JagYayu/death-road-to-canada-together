@@ -1,15 +1,16 @@
 #include "Mod.h"
+
 #include <filesystem>
 
 using namespace tudov;
 
 Mod::Mod(ModManager &modManager)
-    : _modManager(modManager)
+    : modManager(modManager)
 {
 }
 
 Mod::Mod(ModManager &modManager, const ModConfig &config)
-    : _modManager(modManager),
+    : modManager(modManager),
       _config(config)
 {
 }
@@ -20,12 +21,12 @@ void Mod::Reload()
 	Load();
 }
 
-const std::string &Mod::GetNamespace() const
+const String &Mod::GetNamespace() const
 {
 	return _config.namespace_;
 }
 
-const std::string &Mod::GetScriptsDirectory() const
+const String &Mod::GetScriptsDirectory() const
 {
 	return _config.scripts.directory;
 }
