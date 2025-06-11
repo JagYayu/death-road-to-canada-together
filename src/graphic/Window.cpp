@@ -1,8 +1,13 @@
 #include "Window.h"
 
-#include <program/Engine.h>
+#include "SDL3/SDL_init.h"
+#include "SDL3/SDL_log.h"
+#include "SDL3/SDL_render.h"
+#include "SDL3/SDL_video.h"
+#include "program/Engine.h"
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_events.h>
 
 #include <stdexcept>
 
@@ -13,22 +18,28 @@ Window::Window(Engine &engine)
 {
 }
 
+SDL_Window *Window::GetHandle()
+{
+	return _window;
+}
+
 void Window::Initialize()
 {
 	auto &&title = engine.config.GetWindowTitle();
 	auto &&width = engine.config.GetWindowWidth();
 	auto &&height = engine.config.GetWindowHeight();
 
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-	{
-		throw std::runtime_error(String("SDL_Init Error: ") + SDL_GetError());
-	}
-
-	_window = SDL_CreateWindow(title.data(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
+	_window = SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE);
 	if (!_window)
 	{
-		SDL_Quit();
-		throw std::runtime_error(String("SDL_CreateWindow Error: ") + SDL_GetError());
+		SDL_Log("SDL_CreateWindow failed: %s", SDL_GetError());
+	}
+	SDL_SetWindowPosition(_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+
+	_renderer = SDL_CreateRenderer(_window, nullptr);
+	if (!_renderer)
+	{
+		SDL_Log("SDL_CreateRenderer failed: %s", SDL_GetError());
 	}
 }
 
@@ -42,100 +53,106 @@ void Window::PoolEvents()
 		switch (e.type)
 		{
 		// 窗口事件
-		case SDL_QUIT:
+		case SDL_EVENT_QUIT:
 			engine.Quit();
 			break;
-		case SDL_WINDOWEVENT:
-			break;
-		case SDL_KEYDOWN:
+		case SDL_EVENT_KEY_DOWN:
 
 			break;
-		case SDL_KEYUP:
+		case SDL_EVENT_KEY_UP:
 			break;
-		case SDL_TEXTEDITING:
+		case SDL_EVENT_TEXT_EDITING:
 			break;
-		case SDL_TEXTINPUT:
-			break;
-
-		case SDL_MOUSEMOTION:
-			break;
-		case SDL_MOUSEBUTTONDOWN:
-			break;
-		case SDL_MOUSEBUTTONUP:
-			break;
-		case SDL_MOUSEWHEEL:
+		case SDL_EVENT_TEXT_INPUT:
 			break;
 
-		case SDL_JOYAXISMOTION:
+		case SDL_EVENT_MOUSE_MOTION:
 			break;
-		case SDL_JOYBALLMOTION:
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
 			break;
-		case SDL_JOYHATMOTION:
+		case SDL_EVENT_MOUSE_BUTTON_UP:
 			break;
-		case SDL_JOYBUTTONDOWN:
-			break;
-		case SDL_JOYBUTTONUP:
-			break;
-		case SDL_JOYDEVICEADDED:
-			break;
-		case SDL_JOYDEVICEREMOVED:
-			break;
-		case SDL_CONTROLLERAXISMOTION:
-			break;
-		case SDL_CONTROLLERBUTTONDOWN:
-			break;
-		case SDL_CONTROLLERBUTTONUP:
-			break;
-		case SDL_CONTROLLERDEVICEADDED:
-			break;
-		case SDL_CONTROLLERDEVICEREMOVED:
-			break;
-		case SDL_CONTROLLERDEVICEREMAPPED:
+		case SDL_EVENT_MOUSE_WHEEL:
 			break;
 
-		case SDL_FINGERDOWN:
+		case SDL_EVENT_JOYSTICK_AXIS_MOTION:
 			break;
-		case SDL_FINGERUP:
+		case SDL_EVENT_JOYSTICK_BALL_MOTION:
 			break;
-		case SDL_FINGERMOTION:
+		case SDL_EVENT_JOYSTICK_HAT_MOTION:
 			break;
-		case SDL_MULTIGESTURE:
+		case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
 			break;
-		case SDL_DOLLARGESTURE:
+		case SDL_EVENT_JOYSTICK_BUTTON_UP:
 			break;
-		case SDL_DOLLARRECORD:
-			break;
+			// case SDL_EVENT_JOYDEVICEADDED:
+			// 	break;
+			// case SDL_EVENT_JOYDEVICEREMOVED:
+			// 	break;
+			// case SDL_EVENT_CONTROLLERAXISMOTION:
+			// 	break;
+			// case SDL_EVENT_CONTROLLERBUTTONDOWN:
+			// 	break;
+			// case SDL_EVENT_CONTROLLERBUTTONUP:
+			// 	break;
+			// case SDL_EVENT_CONTROLLERDEVICEADDED:
+			// 	break;
+			// case SDL_EVENT_CONTROLLERDEVICEREMOVED:
+			// 	break;
+			// case SDL_EVENT_CONTROLLERDEVICEREMAPPED:
+			// 	break;
 
-		case SDL_DROPFILE:
-			break;
-		case SDL_DROPTEXT:
-			break;
-		case SDL_DROPBEGIN:
-			break;
-		case SDL_DROPCOMPLETE:
-			break;
+			// case SDL_EVENT_FINGERDOWN:
+			// 	break;
+			// case SDL_EVENT_FINGERUP:
+			// 	break;
+			// case SDL_EVENT_FINGERMOTION:
+			// 	break;
+			// case SDL_EVENT_MULTIGESTURE:
+			// 	break;
+			// case SDL_EVENT_DOLLARGESTURE:
+			// 	break;
+			// case SDL_EVENT_DOLLARRECORD:
+			// 	break;
 
-		case SDL_CLIPBOARDUPDATE:
-			break;
+			// case SDL_EVENT_DROPFILE:
+			// 	break;
+			// case SDL_EVENT_DROPTEXT:
+			// 	break;
+			// case SDL_EVENT_DROPBEGIN:
+			// 	break;
+			// case SDL_EVENT_DROPCOMPLETE:
+			// 	break;
 
-		case SDL_APP_TERMINATING:
-			break;
-		case SDL_APP_LOWMEMORY:
-			break;
-		case SDL_APP_WILLENTERBACKGROUND:
-			break;
-		case SDL_APP_DIDENTERBACKGROUND:
-			break;
-		case SDL_APP_WILLENTERFOREGROUND:
-			break;
-		case SDL_APP_DIDENTERFOREGROUND:
-			break;
+			// case SDL_EVENT_CLIPBOARDUPDATE:
+			// 	break;
 
-		case SDL_USEREVENT:
-			break;
+			// case SDL_EVENT_APP_TERMINATING:
+			// 	break;
+			// case SDL_EVENT_APP_LOWMEMORY:
+			// 	break;
+			// case SDL_EVENT_APP_WILLENTERBACKGROUND:
+			// 	break;
+			// case SDL_EVENT_APP_DIDENTERBACKGROUND:
+			// 	break;
+			// case SDL_EVENT_APP_WILLENTERFOREGROUND:
+			// 	break;
+			// case SDL_EVENT_APP_DIDENTERFOREGROUND:
+			// 	break;
+
+			// case SDL_EVENT_USEREVENT:
+			// 	break;
 
 		default:
 			break;
 		}
 	}
+}
+
+void Window::Render()
+{
+	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
+	SDL_RenderClear(_renderer);
+
+	SDL_RenderPresent(_renderer);
 }

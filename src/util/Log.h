@@ -1,7 +1,8 @@
 #pragma once
 
 #include "Defs.h"
-#include "json.hpp"
+#include "lib/json.hpp"
+
 #include <sol/lua_value.hpp>
 
 #include <atomic>
@@ -65,8 +66,8 @@ namespace tudov
 	  private:
 		String _module;
 
-		bool CanOutput(const StringView &verb) const;
-		void Output(const StringView &verb, const String &str) const;
+		bool CanOutput(StringView verb) const;
+		void Output(StringView verb, const String &str) const;
 
 	  public:
 		explicit Log(const String &module);

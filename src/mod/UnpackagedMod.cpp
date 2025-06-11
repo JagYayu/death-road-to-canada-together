@@ -2,12 +2,12 @@
 
 #include "Mod.h"
 #include "ModManager.h"
+#include "lib/FileWatch.hpp"
 #include "util/StringUtils.hpp"
 
 #include <filesystem>
 #include <format>
 #include <regex>
-#include <string>
 
 using namespace tudov;
 
@@ -36,34 +36,97 @@ ModConfig UnpackagedMod::LoadConfig(const std::filesystem::path &directory)
 
 UnpackagedMod::UnpackagedMod(ModManager &modManager, const std::filesystem::path &directory)
     : Mod(modManager, LoadConfig(directory)),
-      _log(Log::Get("UnpackagedMod")),
+      log(Log::Get("UnpackagedMod")),
       _directory(directory)
 {
 }
 
+void UnpackagedMod::UpdateFilePatterns()
+{
+	_scriptFilePatterns = Vector<std::regex>(_config.scripts.files.size());
+	for (auto &&pattern : _config.scripts.files)
+	{
+		_scriptFilePatterns.emplace_back(std::regex(String(pattern), std::regex_constants::icase));
+	}
+}
+
+bool UnpackagedMod::IsScript(const String &fileName) const
+{
+	for (auto &&pattern : _scriptFilePatterns)
+	{
+		if (std::regex_match(fileName, pattern))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void UnpackagedMod::Load()
 {
-	_watcher = MakeShared<filewatch::FileWatch<String>>(_directory.string(), [](const String &path, const filewatch::Event changeType)
+	if (_fileWatcher)
 	{
-		std::wcout << std::filesystem::absolute(path) << L"\n";
+		log->Warn("Mod has already loaded");
+		return;
+	}
+
+	_fileWatcher = MakeShared<filewatch::FileWatch<String>>(_directory.string(), [&](const String &filePath, const filewatch::Event changeType)
+	{
+		if (IsScript(filePath))
+		{
+			switch (changeType)
+			{
+			case filewatch::Event::added:
+				break;
+			case filewatch::Event::removed:
+				break;
+			case filewatch::Event::modified:
+			{
+				log->Debug("Script modified, hot reloading ...");
+
+				auto &&relative = std::filesystem::relative(filePath, GetScriptsDirectory());
+				auto &&scriptName = FilePathToLuaScriptName(Format("{}.{}", _config.namespace_, relative.string()));
+				auto &&scriptID = modManager.scriptProvider.GetScriptID(scriptName);
+				auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
+
+				auto &&unloadedScripts = scriptLoader.Unload(scriptID);
+				modManager.scriptProvider.RemoveScript(scriptID);
+
+				std::ifstream ins{_directory / filePath};
+				std::ostringstream oss;
+				oss << ins.rdbuf();
+				ins.close();
+
+				scriptID = modManager.scriptProvider.AddScript(scriptName, oss.str());
+				scriptLoader.Load(scriptID);
+				for (auto &&dependScriptID : unloadedScripts)
+				{
+					scriptLoader.Load(dependScriptID);
+				}
+				scriptLoader.ProcessImmediateLoads();
+
+				log->Debug("Hot reloaded");
+				break;
+			}
+			case filewatch::Event::renamed_old:
+			case filewatch::Event::renamed_new:
+				break;
+			}
+		}
 	});
 
 	auto &&namespace_ = GetNamespace();
 	if (namespace_.empty())
 	{
-		_log->Debug(Format("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.string(), StringView(namespace_)));
+		log->Debug(Format("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.string(), StringView(namespace_)));
 		return;
 	}
 
 	auto &&dir = _directory.string();
 
-	_log->Debug(Format("Loading unpacked mod from \"{}\" ...", dir));
+	log->Debug(Format("Loading unpacked mod from \"{}\" ...", dir));
 
-	auto &&scriptFilePatterns = std::vector<std::regex>(_config.scripts.files.size());
-	for (auto &&pattern : _config.scripts.files)
-	{
-		scriptFilePatterns.emplace_back(std::regex(String(pattern), std::regex_constants::icase));
-	}
+	UpdateFilePatterns();
 
 	for (const auto &entry : std::filesystem::recursive_directory_iterator(_directory))
 	{
@@ -74,36 +137,39 @@ void UnpackagedMod::Load()
 
 		auto &&file = entry.path();
 		auto &&fileName = file.filename().string();
-		for (auto &&pattern : scriptFilePatterns)
+		if (IsScript(fileName))
 		{
-			if (std::regex_match(fileName, pattern))
-			{
-				std::ifstream ins{file};
-				std::ostringstream oss;
-				oss << ins.rdbuf();
-				ins.close();
+			std::ifstream ins{file};
+			std::ostringstream oss;
+			oss << ins.rdbuf();
+			ins.close();
 
-				auto &&relative = std::filesystem::relative(std::filesystem::relative(file, _directory), GetScriptsDirectory());
-				auto &&scriptName = FilePathToLuaScriptName(Format("{}.{}", namespace_, relative.string()));
-				_scripts.emplace_back(scriptName);
-				modManager.scriptProvider.AddScript(scriptName, oss.str());
-			}
+			auto &&relative = std::filesystem::relative(std::filesystem::relative(file, _directory), GetScriptsDirectory());
+			auto &&scriptName = FilePathToLuaScriptName(Format("{}.{}", namespace_, relative.string()));
+			auto &&scriptID = modManager.scriptProvider.AddScript(scriptName, oss.str());
+			_scripts.emplace_back(scriptID);
 		}
 	}
 
-	_log->Debug(Format("Loaded unpacked mod from \"{}\"", dir));
+	log->Debug(Format("Loaded unpacked mod from \"{}\"", dir));
 }
 
 void UnpackagedMod::Unload()
 {
-	auto &&dir = _directory.string();
-
-	_log->Debug(Format("Unloading unpackaged mod from \"{}\"", dir));
-
-	for (auto &&scriptName : _scripts)
+	if (!_fileWatcher)
 	{
-		modManager.scriptProvider.RemoveScript(scriptName);
+		log->Warn("Mod has not been loaded");
+		return;
 	}
 
-	_log->Debug(Format("Unloaded unpackaged mod \"{}\"", dir));
+	auto &&dir = _directory.string();
+
+	log->Debug(Format("Unloading unpackaged mod from \"{}\"", dir));
+
+	for (auto &&scriptID : _scripts)
+	{
+		modManager.scriptProvider.RemoveScript(scriptID);
+	}
+
+	log->Debug(Format("Unloaded unpackaged mod \"{}\"", dir));
 }

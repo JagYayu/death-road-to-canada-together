@@ -18,28 +18,49 @@ namespace tudov
 	class ScriptProvider
 	{
 	  private:
+		struct Entry
+		{
+			StringView name;
+			String code;
+		};
+
+	  public:
+		using ScriptID = UInt64;
+
+		static constexpr ScriptID invalidScriptID = 0;
+
+	  private:
 		SharedPtr<Log> _log;
 
-		UnorderedMap<String, String, StringSVHash, StringSVEqual> _scriptMap;
+		ScriptID _currentScriptID;
+		UnorderedMap<String, ScriptID> _scriptIDs;
+		UnorderedMap<ScriptID, Entry> _scriptMap;
 
 	  public:
 		ModManager &modManager;
-		String staticNamespace;
+
+	  public:
+		static bool IsStaticScript(StringView scriptName);
 
 	  public:
 		ScriptProvider(ModManager &modManager);
 
+	  private:
+		Tuple<ScriptID, StringView> AllocScript(StringView scriptName);
+
+	  public:
 		void Initialize();
 
-		size_t GetCount() const;
+		size_t GetCount() const noexcept;
+		ScriptID GetScriptID(StringView scriptName) const noexcept;
+		bool IsValidScriptID(ScriptID scriptID) const noexcept;
+		Optional<StringView> GetScriptName(ScriptID scriptID) const noexcept;
 
-		bool ContainsScript(const StringView &scriptName) const;
-		const String &GetScript(const String &scriptName) const;
-		Optional<String> TryRequireScript(const StringView &scriptName);
-		void AddScript(const StringView &name, const StringView &data);
-		void RemoveScript(const StringView &name);
+		ScriptID AddScript(StringView scriptName, StringView scriptCode) noexcept;
+		void RemoveScript(ScriptID scriptName) noexcept;
+		const String &GetScriptCode(ScriptID scriptID) const noexcept;
 
-		UnorderedMap<String, String, StringSVHash, StringSVEqual>::const_iterator begin() const;
-		UnorderedMap<String, String, StringSVHash, StringSVEqual>::const_iterator end() const;
+		UnorderedMap<ScriptID, Entry>::const_iterator begin() const;
+		UnorderedMap<ScriptID, Entry>::const_iterator end() const;
 	};
 } // namespace tudov

@@ -16,6 +16,15 @@ ModManager::ModManager(Engine &engine)
       _log(Log::Get("ModManager")),
       _loadState(ELoadState::None)
 {
+}
+
+ModManager::~ModManager()
+{
+	UnloadMods();
+}
+
+void ModManager::Initialize()
+{
 	_directories = {
 	    "mods",
 	    "downloadedMods",
@@ -23,11 +32,8 @@ ModManager::ModManager(Engine &engine)
 	_requiredMods = {
 	    ModEntry("Core", Version(1, 0, 0), 0),
 	};
-}
 
-ModManager::~ModManager()
-{
-	UnloadMods();
+	scriptEngine.Initialize();
 }
 
 void ModManager::AddMod(const std::filesystem::path &modRoot)
@@ -103,6 +109,7 @@ void ModManager::LoadMods()
 	}
 
 	scriptEngine.scriptLoader.LoadAll();
+	scriptEngine.CollectGarbage();
 
 	_log->Debug("Loaded all required mods");
 }
@@ -124,6 +131,11 @@ void ModManager::UnloadMods()
 
 void ModManager::SetModList(std::vector<ModEntry> modEntries)
 {
+}
+
+void ModManager::HotReload()
+{
+	
 }
 
 void ModManager::Update()

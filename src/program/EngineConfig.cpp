@@ -1,6 +1,6 @@
 #include "EngineConfig.h"
 
-#include "json.hpp"
+#include "lib/json.hpp"
 #include "util/Defs.h"
 #include "util/Log.h"
 
@@ -45,7 +45,7 @@ EngineConfig::EngineConfig()
 {
 	EngineConfig::Load();
 
-	_fileWatcher = MakeUnique<filewatch::FileWatch<String>>(String(file), [&](const StringView &path, const filewatch::Event changeType)
+	_fileWatcher = MakeUnique<filewatch::FileWatch<String>>(String(file), [&](StringView path, const filewatch::Event changeType)
 	{
 		EngineConfig::Load();
 	});

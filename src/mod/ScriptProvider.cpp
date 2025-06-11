@@ -1,102 +1,167 @@
 #include "ScriptProvider.h"
 
+#include "ScriptLoader.h"
+#include "util/Defs.h"
 #include "util/StringUtils.hpp"
 
 #include <filesystem>
 
 using namespace tudov;
 
-String ToStaticNamespace(const String &path)
+using ScriptID = ScriptProvider::ScriptID;
+
+String StaticScriptNamespace(const String &path)
 {
 	return "#" + FilePathToLuaScriptName(path);
 }
 
+static constexpr const char *staticScriptPrefix = "#";
+static constexpr const char *staticScriptDirectory = "lua";
+static constexpr const char *staticScriptNamespace = "#lua";
+static constexpr const char *staticScriptNamespacePrefix = "#lua.";
+
+bool ScriptProvider::IsStaticScript(StringView scriptName)
+{
+	return scriptName.starts_with(staticScriptPrefix);
+}
+
 ScriptProvider::ScriptProvider(ModManager &modManager)
     : modManager(modManager),
-      _log(Log::Get("ScriptProvider"))
+      _log(Log::Get("ScriptProvider")),
+      _currentScriptID(0)
 {
-	auto &&directory = "lua";
-	staticNamespace = ToStaticNamespace(directory);
-
 	for (const auto &entry : std::filesystem::recursive_directory_iterator("lua"))
 	{
 		auto &&path = entry.path().string();
-		_scriptMap[ToStaticNamespace(path)] = ReadFileToString(path);
+		auto &&scriptName = StaticScriptNamespace(path);
+
+		auto &&[id, name] = AllocScript(scriptName);
+		_scriptMap.emplace(id, Entry(StringView(name), ReadFileToString(path)));
 	}
 }
 
-size_t ScriptProvider::GetCount() const
+Tuple<ScriptID, StringView> ScriptProvider::AllocScript(StringView scriptName)
 {
-	return _scriptMap.size();
+	++_currentScriptID;
+	auto &&id = _currentScriptID;
+	return {id, _scriptIDs.emplace(scriptName, id).first->first};
 }
 
-bool ScriptProvider::ContainsScript(const StringView &scriptName) const
+size_t ScriptProvider::GetCount() const noexcept
 {
-	return _scriptMap.contains(scriptName);
+	return _scriptIDs.size();
 }
 
-const String &ScriptProvider::GetScript(const String &scriptName) const
+bool ScriptProvider::IsValidScriptID(ScriptID scriptID) const noexcept
 {
-	auto &&it = _scriptMap.find(scriptName);
-	if (it == _scriptMap.end())
-	{
-		return emptyString;
-	}
-	return it->second;
+	return _scriptMap.contains(scriptID);
 }
 
-Optional<String> ScriptProvider::TryRequireScript(const StringView &scriptName)
+ScriptID ScriptProvider::GetScriptID(StringView scriptName) const noexcept
 {
-	auto &&it = _scriptMap.find(scriptName);
-	if (it != _scriptMap.end())
-	{
-		return it->second;
-	}
-
-	it = _scriptMap.find(staticNamespace + String(scriptName));
-	if (it != _scriptMap.end())
+	String name{scriptName};
+	auto &&it = _scriptIDs.find(name);
+	if (it != _scriptIDs.end())
 	{
 		return it->second;
 	}
 
-	return emptyString;
+	name = staticScriptNamespacePrefix + String(scriptName);
+	it = _scriptIDs.find(name);
+	if (it != _scriptIDs.end())
+	{
+		return it->second;
+	}
+
+	return invalidScriptID;
 }
 
-void ScriptProvider::AddScript(const StringView &scriptName, const StringView &data)
+Optional<StringView> ScriptProvider::GetScriptName(ScriptID scriptID) const noexcept
 {
-	if (GetLuaNamespace(scriptName) == staticNamespace)
+	auto &&it = _scriptMap.find(scriptID);
+	if (it != _scriptMap.end())
+	{
+		return it->second.name;
+	}
+	return null;
+}
+
+ScriptID ScriptProvider::AddScript(StringView scriptName, StringView scriptCode) noexcept
+{
+	if (scriptName.starts_with(staticScriptNamespace))
 	{
 		_log->Info("Attempt to add static script");
-		return;
+		return invalidScriptID;
 	}
-	if (_scriptMap.contains(scriptName))
+
+	if (_scriptIDs.contains(String(scriptName)))
 	{
-		_log->Info(Format("Duplicated adding script: {}", StringView(scriptName)));
+		_log->Info(Format("Script has already been added: {}", scriptName));
 	}
-	_scriptMap[String(scriptName)] = data;
+
+	auto &&[id, name] = AllocScript(scriptName);
+	_scriptMap.emplace(id, Entry(name, String(scriptCode)));
+	return id;
 }
 
-void ScriptProvider::RemoveScript(const StringView &scriptName)
+void ScriptProvider::RemoveScript(ScriptID scriptID) noexcept
 {
-	if (!_scriptMap.contains(scriptName))
+	auto &&it = _scriptMap.find(scriptID);
+	if (!_scriptMap.contains(it->first))
 	{
-		_log->Info(Format("Attempt to remove non-exist script: {}", scriptName));
+		_log->Info(Format("Attempt to remove non-exist script: {}", scriptID));
 		return;
 	}
-	if (GetLuaNamespace(scriptName) == staticNamespace)
+
+	if (it->second.name.starts_with(staticScriptNamespace))
 	{
 		_log->Info("Attempt to remove static script");
 		return;
 	}
-	_scriptMap.erase(String(scriptName));
+
+	_scriptIDs.erase(String(it->second.name));
+	_scriptMap.erase(it);
 }
 
-UnorderedMap<String, String>::const_iterator ScriptProvider::begin() const
+const String &ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
+{
+	auto &&it = _scriptMap.find(scriptID);
+	if (it == _scriptMap.end())
+	{
+		return emptyString;
+	}
+	return it->second.code;
+}
+
+// bool ScriptProvider::ContainsScript(StringView scriptName) const
+// {
+// 	return _scriptCodes.contains(scriptName);
+// }
+
+// Optional<String> ScriptProvider::TryResolveScriptName(StringView scriptName)
+// {
+// 	auto &&it = _scriptCodes.find(scriptName);
+// 	if (it != _scriptCodes.end())
+// 	{
+// 		return it->first;
+// 	}
+
+// 	auto &&resolvedScriptName = staticScriptNamespacePrefix + String(scriptName);
+// 	it = _scriptCodes.find(resolvedScriptName);
+// 	if (it != _scriptCodes.end())
+// 	{
+// 		return resolvedScriptName;
+// 	}
+
+// 	return null;
+// }
+
+UnorderedMap<ScriptID, ScriptProvider::Entry>::const_iterator ScriptProvider::begin() const
 {
 	return _scriptMap.begin();
 }
 
-UnorderedMap<String, String>::const_iterator ScriptProvider::end() const
+UnorderedMap<ScriptID, ScriptProvider::Entry>::const_iterator ScriptProvider::end() const
 {
 	return _scriptMap.end();
 }

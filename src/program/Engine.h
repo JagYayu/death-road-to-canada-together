@@ -3,7 +3,6 @@
 #include "EngineConfig.h"
 #include "MainArgs.hpp"
 #include "event/EventManager.h"
-#include "graphic/GraphicEngine.h"
 #include "graphic/Window.h"
 #include "mod/ModManager.h"
 
@@ -20,7 +19,6 @@ namespace tudov
 	  public:
 		EventManager eventManager;
 		EngineConfig config;
-		GraphicEngine graphicEngine;
 		ModManager modManager;
 		Window window;
 
@@ -28,5 +26,6 @@ namespace tudov
 
 		void Run(const MainArgs &args);
 		void Quit();
+		
 	};
 } // namespace tudov

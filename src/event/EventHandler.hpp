@@ -77,8 +77,9 @@ namespace tudov
 		};
 
 		String scriptName;
-		String name;
+		String event;
 		Function function;
+		String name;
 		String order;
 		Key key;
 		Number sequence;

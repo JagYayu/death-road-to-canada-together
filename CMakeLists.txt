@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.10)
 
 project(dr2c VERSION 0.1.0 LANGUAGES CXX)
 
@@ -19,10 +19,6 @@ if (MSVC)
     add_compile_options(/FS /MP /Zc:preprocessor)
 endif()
 
-# bgfx
-find_package(bgfx CONFIG REQUIRED)
-target_link_libraries(dr2c PRIVATE bgfx::bx bgfx::bgfx bgfx::bimg bgfx::bimg_decode)
-
 # luajit
 find_path(LUAJIT_INCLUDE_DIR luajit.h PATHS "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include" PATH_SUFFIXES luajit)
 find_library(LUAJIT_LIBRARY NAMES lua51 PATHS "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib")
@@ -32,13 +28,22 @@ endif()
 target_include_directories(dr2c PRIVATE ${LUAJIT_INCLUDE_DIR})
 target_link_libraries(dr2c PRIVATE ${LUAJIT_LIBRARY})
 
-# SDL2
-find_package(SDL2 CONFIG REQUIRED)
-target_link_libraries(dr2c
-	PRIVATE
-	$<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
-	$<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
-)
+# SDL3
+set(SDL3_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3-3.2.16")
+target_include_directories(dr2c PRIVATE "${SDL3_DIR}/include")
+if(WIN32)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(SDL3_LIB_DIR "${SDL3_DIR}/lib/x64")
+    else()
+        set(SDL3_LIB_DIR "${SDL3_DIR}/lib/x86")
+    endif()
+    target_link_libraries(dr2c PRIVATE "${SDL3_LIB_DIR}/SDL3.lib")
+    add_custom_command(TARGET dr2c POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${SDL3_LIB_DIR}/SDL3.dll" "$<TARGET_FILE_DIR:dr2c>")
+elseif(UNIX AND NOT APPLE)
+    target_link_libraries(dr2c PRIVATE "${SDL3_DIR}/lib/libSDL3.so")
+elseif(APPLE)
+    target_link_libraries(dr2c PRIVATE "${SDL3_DIR}/lib/libSDL3.dylib")
+endif()
 
 # sol2
 find_package(sol2 CONFIG REQUIRED)

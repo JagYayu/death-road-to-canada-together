@@ -116,13 +116,13 @@ void Log::Process()
 	}
 }
 
-bool Log::CanOutput(const StringView &verb) const
+bool Log::CanOutput(StringView verb) const
 {
 
 	return false;
 }
 
-void Log::Output(const StringView &verb, const String &str) const
+void Log::Output(StringView verb, const String &str) const
 {
 	{
 		std::lock_guard<std::mutex> lock(_mutex);

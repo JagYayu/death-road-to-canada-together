@@ -8,18 +8,20 @@ Engine::Engine()
     : _log(Log::Get("Engine")),
       modManager(*this),
       eventManager(*this),
-      graphicEngine(*this),
       window(*this)
 {
 }
 
 void Engine::Run(const MainArgs &args)
 {
+	SDL_SetLogPriorities(SDL_LOG_PRIORITY_VERBOSE);
+
 	_log->Debug("Initializing game engine");
 	{
 		config.Load();
 		window.Initialize();
 		eventManager.Initialize();
+		modManager.Initialize();
 		modManager.LoadMods();
 	}
 	_log->Debug("Initialized game engine");
@@ -30,7 +32,7 @@ void Engine::Run(const MainArgs &args)
 
 		eventManager.update.Invoke();
 
-		graphicEngine.Render();
+		window.Render();
 	}
 }
 

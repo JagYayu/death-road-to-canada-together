@@ -2,6 +2,7 @@
 
 #include "ModManager.h"
 #include "ScriptLoader.h"
+#include "ScriptProvider.h"
 #include "program/Engine.h"
 #include "sol/variadic_args.hpp"
 #include "util/Defs.h"
@@ -17,7 +18,6 @@
 #include <sol/string_view.hpp>
 #include <sol/types.hpp>
 
-#include <optional>
 #include <unordered_map>
 
 using namespace tudov;
@@ -27,6 +27,17 @@ ScriptEngine::ScriptEngine(ModManager &modManager)
       scriptLoader(*this),
       _log(Log::Get("ScriptEngine")),
       _lua()
+{
+}
+
+ScriptEngine::~ScriptEngine()
+{
+	_persistVariables.clear();
+	_virtualGlobal = sol::nil;
+	_lua.collect_garbage();
+}
+
+void ScriptEngine::Initialize()
 {
 	_lua.open_libraries(sol::lib::base);
 	_lua.open_libraries(sol::lib::bit32);
@@ -40,33 +51,63 @@ ScriptEngine::ScriptEngine(ModManager &modManager)
 	_lua.open_libraries(sol::lib::table);
 	_lua.open_libraries(sol::lib::utf8);
 
-	_error = _lua["error"];
-	_traceback = _lua["debug"]["traceback"];
 	_throwModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::function>();
 
-	std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> visited;
-	MakeReadonlyGlobal(_lua.globals(), visited);
+	MakeReadonlyGlobal(_lua.globals());
+
+	modManager.engine.eventManager.RegisterScriptGlobal(*this);
 }
 
-ScriptEngine::~ScriptEngine()
+sol::state_view &ScriptEngine::GetState()
 {
-	_persistVariables.clear();
-	_virtualGlobal = sol::nil;
-	_error = sol::nil;
-	_traceback = sol::nil;
+	return _lua;
+}
+
+void ScriptEngine::Set(const sol::string_view &key, const sol::object &value)
+{
+	_lua[key] = value;
+}
+
+void ScriptEngine::CollectGarbage()
+{
 	_lua.collect_garbage();
 }
 
-sol::object ScriptEngine::MakeReadonlyGlobal(const sol::object &obj, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited)
+sol::table ScriptEngine::CreateTable(uint32_t arr, uint32_t hash)
+{
+	return _lua.create_table(arr, hash);
+}
+
+sol::load_result ScriptEngine::LoadFunction(const String &name, StringView code)
+{
+	return _lua.load(code, name, sol::load_mode::any);
+}
+
+void ScriptEngine::ThrowError(StringView message)
+{
+	luaL_error(_lua, "%s", message);
+}
+
+// void ScriptEngine::Require(StringView source, StringView target)
+// {
+// 	throw std::runtime_error("Permission denied");
+// }
+
+void ScriptEngine::OnFatalException(const std::exception &e)
+{
+	_log->Fatal(Format("Unhandled C++ exception occurred: {}", e.what()));
+}
+
+sol::object MakeReadonlyGlobalImpl(sol::state &lua, const sol::object &obj, const sol::function &newindex, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited)
 {
 	if (obj.get_type() != sol::type::table)
 	{
 		return obj;
 	}
 
-	auto table = obj.as<sol::table>();
+	auto &&table = obj.as<sol::table>();
 
-	auto it = visited.find(table);
+	auto &&it = visited.find(table);
 	if (it != visited.end())
 	{
 		return it->second;
@@ -77,79 +118,52 @@ sol::object ScriptEngine::MakeReadonlyGlobal(const sol::object &obj, std::unorde
 		return obj;
 	}
 
-	sol::table proxy = _lua.create_table();
-	sol::table metatable = _lua.create_table(0, 2);
+	sol::table &&proxy = lua.create_table();
+	sol::table &&metatable = lua.create_table(0, 2);
 
 	proxy[sol::metatable_key] = metatable;
 	visited[table] = proxy;
 
 	for (auto &&[key, value] : table)
 	{
-		table[key] = MakeReadonlyGlobal(value, visited);
+		table[key] = MakeReadonlyGlobalImpl(lua, value, newindex, visited);
 	}
 
 	metatable["__index"] = table;
-	metatable["__newindex"] = _throwModifyReadonlyGlobalError;
+	metatable["__newindex"] = newindex;
 
 	return proxy;
 }
 
-sol::state_view &ScriptEngine::GetState()
+sol::object ScriptEngine::MakeReadonlyGlobal(const sol::object &obj)
 {
-	return _lua;
+	std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> visited;
+	return MakeReadonlyGlobalImpl(_lua, obj, _throwModifyReadonlyGlobalError, visited);
 }
 
-sol::table ScriptEngine::CreateTable(uint32_t arr, uint32_t hash)
-{
-	return _lua.create_table(arr, hash);
-}
-sol::load_result ScriptEngine::LoadFunction(const String &name, const StringView &code)
-{
-	return _lua.load(code, name, sol::load_mode::any);
-}
-
-void ScriptEngine::ThrowError(const StringView &message, uint32_t level)
-{
-}
-
-// void ScriptEngine::Require(const StringView &source, const StringView &target)
-// {
-// 	throw std::runtime_error("Permission denied");
-// }
-
-void ScriptEngine::OnFatalException(const std::exception &e)
-{
-	_log->Fatal(Format("Unhandled C++ exception occurred: {}", e.what()));
-}
-
-void ScriptEngine::InitScriptFunc(const String &scriptName, sol::protected_function &func)
+void ScriptEngine::InitScriptFunc(ScriptID scriptID, const StringView scriptName, sol::protected_function &func)
 {
 	auto &&namespace_ = GetLuaNamespace(scriptName);
 
 	sol::environment env{_lua, sol::create, _lua.globals()};
 
-	auto &&log = Log::Get(scriptName);
+	auto &&log = Log::Get(String(scriptName));
 
 	env["print"] = [&, log](sol::variadic_args args)
 	{
 		try
 		{
+			auto &&inspect = scriptLoader.Load(modManager.scriptProvider.GetScriptID("#lua.inspect"))->GetTable()["inspect"];
+			String string;
 			for (auto &&arg : args)
 			{
-				if (arg.is<sol::string_view>())
+				if (!string.empty())
 				{
-					auto &&what = arg.as<sol::string_view>();
-					log->Debug(String(what));
+					string.append("\t");
 				}
-				else if (arg.is<int>())
-				{
-					log->Debug("// TODO");
-				}
-				else
-				{
-					log->Debug("// TODO");
-				}
+				string.append(inspect(arg.as<sol::table>()));
 			}
+			log->Debug(Move(string));
 		}
 		catch (const std::exception &e)
 		{
@@ -158,118 +172,22 @@ void ScriptEngine::InitScriptFunc(const String &scriptName, sol::protected_funct
 		}
 	};
 
-	env["require"] = [&, log](const String &scriptName) -> sol::object
+	env["require"] = [&, log, scriptID](sol::string_view targetScriptName) -> sol::object
 	{
 		try
 		{
-			auto &&scriptModule = scriptLoader.Load(scriptName);
-			if (!scriptModule.has_value())
+			auto &&targetScriptID = modManager.scriptProvider.GetScriptID(targetScriptName);
+
+			auto &&targetModule = scriptLoader.Load(targetScriptID);
+			if (!targetModule)
 			{
-				luaL_error(_lua, "Script module '%s' not found", scriptName.c_str());
+				luaL_error(_lua, "Script module '%s' not found", targetScriptName);
 				return sol::nil;
 			}
 
-			return scriptModule.value().get().LazyLoad(scriptLoader);
-		}
-		catch (const std::exception &e)
-		{
-			OnFatalException(e);
-			throw;
-		}
-	};
+			scriptLoader.AddReverseDependency(scriptID, targetScriptID);
 
-	env["Event_add"] = [&, log](const sol::table &args)
-	{
-		try
-		{
-			auto &&loadingScript = scriptLoader.GetLoadingScript();
-			if (!loadingScript.has_value())
-			{
-				_error("Failed to add event handler: must add at script load time");
-				return;
-			}
-
-			auto &&argName = args["name"];
-			if (!argName.valid() || !argName.is<sol::string_view>())
-			{
-				_error(Format("Failed to add event handler: invalid `name` type, expected string, got {}", GetLuaTypeStringView(argName.get_type())));
-				return;
-			}
-			auto &&argFunc = args["func"];
-			if (!argFunc.valid() || !argFunc.is<sol::function>())
-			{
-				_error(Format("Failed to add event handler: invalid `func` type, expected function, got {}", GetLuaTypeStringView(argFunc.get_type())));
-				return;
-			}
-
-			auto &&name = argName.get<sol::string_view>();
-			auto &&event = modManager.engine.eventManager.TryGetRegistryEvent(name);
-			if (!event.has_value())
-			{
-				_error(Format("Failed to add event handler: event named '{}' not found", name));
-				return;
-			}
-
-			auto &&argOrder = args["order"];
-			Optional<String> order;
-			if (!argOrder.valid() || argOrder.is<sol::nil_t>())
-			{
-				order = null;
-			}
-			else if (argOrder.is<sol::string_view>())
-			{
-				order = argOrder.get<sol::string_view>();
-			}
-			else
-			{
-				_error(Format("Failed to add event handler: invalid `order` type, nil or string expected, got {}", GetLuaTypeStringView(argOrder.get_type())));
-				return;
-			}
-
-			auto &&argKey = args["key"];
-			Optional<AddHandlerArgs::Key> key;
-			if (!argKey.valid() || argKey.is<sol::nil_t>())
-			{
-				key = null;
-			}
-			else if (argKey.is<Number>())
-			{
-				key = AddHandlerArgs::Key(argKey.get<Number>());
-			}
-			else if (argKey.is<sol::string_view>())
-			{
-				key = AddHandlerArgs::Key(String(argKey.get<sol::string_view>()));
-			}
-			else
-			{
-				_error(Format("Failed to add event handler: invalid `key` type, nil or number or string expected, got {}", GetLuaTypeStringView(argKey.get_type())));
-				return;
-			}
-
-			auto &&argSequence = args["sequence"];
-			Optional<Number> sequence;
-			if (!argSequence.valid() || argSequence.is<sol::nil_t>())
-			{
-				sequence = null;
-			}
-			else if (argSequence.is<Number>())
-			{
-				sequence = argSequence.get<Number>();
-			}
-			else
-			{
-				_error(Format("Failed to add event handler: invalid `sequence` type, nil or string expected, got {}", GetLuaTypeStringView(argOrder.get_type())));
-				return;
-			}
-
-			event->get().Add(AddHandlerArgs{
-			    .scriptName = loadingScript.value(),
-			    .name = String(name),
-			    .function = {argName.get<sol::function>()},
-			    .order = Move(order),
-			    .key = Move(key),
-			    .sequence = Move(sequence),
-			});
+			return targetModule->LazyLoad(scriptLoader);
 		}
 		catch (const std::exception &e)
 		{
@@ -281,7 +199,7 @@ void ScriptEngine::InitScriptFunc(const String &scriptName, sol::protected_funct
 	sol::set_environment(env, func);
 }
 
-sol::object ScriptEngine::GetPersistVariable(const StringView &key)
+sol::object ScriptEngine::GetPersistVariable(StringView key)
 {
 	auto &&it = _persistVariables.find(key);
 	if (it == _persistVariables.end())
@@ -291,7 +209,7 @@ sol::object ScriptEngine::GetPersistVariable(const StringView &key)
 	return it->second;
 }
 
-void ScriptEngine::SetPersistVariable(const StringView &key, const sol::object &value)
+void ScriptEngine::SetPersistVariable(StringView key, const sol::object &value)
 {
 	_persistVariables[key] = value;
 }

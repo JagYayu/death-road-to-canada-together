@@ -18,7 +18,7 @@ namespace tudov
 			return std::hash<String>{}(str);
 		}
 
-		size_t operator()(const StringView &str) const noexcept
+		size_t operator()(StringView str) const noexcept
 		{
 			return std::hash<StringView>{}(str);
 		}
@@ -33,17 +33,17 @@ namespace tudov
 			return lhs == rhs;
 		}
 
-		bool operator()(const StringView &lhs, const String &rhs) const noexcept
+		bool operator()(StringView lhs, const String &rhs) const noexcept
 		{
 			return lhs == rhs;
 		}
 
-		bool operator()(const String &lhs, const StringView &rhs) const noexcept
+		bool operator()(const String &lhs, StringView rhs) const noexcept
 		{
 			return lhs == rhs;
 		}
 
-		bool operator()(const StringView &lhs, const StringView &rhs) const noexcept
+		bool operator()(StringView lhs, StringView rhs) const noexcept
 		{
 			return lhs == rhs;
 		}
@@ -62,7 +62,7 @@ namespace tudov
 		return scriptName.substr(0, pos);
 	}
 
-	inline String GetLuaNamespace(const StringView &scriptName)
+	inline String GetLuaNamespace(StringView scriptName)
 	{
 		size_t pos = scriptName.find('.');
 		if (pos == String::npos)

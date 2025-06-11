@@ -21,11 +21,16 @@ namespace tudov
 	class ScriptLoader
 	{
 	  private:
+		enum class LoadType
+		{
+			Unsafe,
+			Lazy,
+			Immediate,
+		};
+
 		struct Module
 		{
 		  private:
-			bool _isLoaded;
-			bool _isLoading;
 			sol::table _table;
 			sol::protected_function _func;
 
@@ -34,21 +39,27 @@ namespace tudov
 			explicit Module(const sol::protected_function &func);
 
 			bool IsLoaded() const;
-			bool IsLoading() const;
 
+			const sol::table &GetTable();
+			const sol::table &RawLoad();
 			const sol::table &LazyLoad(ScriptLoader &scriptLoader);
 			const sol::table &ImmediateLoad(ScriptLoader &scriptLoader);
 		};
 
+	  public:
+		using ScriptID = ScriptProvider::ScriptID;
+
+	  private:
 		SharedPtr<Log> _log;
-
-		Optional<String> _loadingScript;
+		ScriptID _loadingScript;
 		Vector<String> _loadingScripts;
-		UnorderedMap<String, Module, StringSVHash, StringSVEqual> _loadedScripts;
-		UnorderedMap<StringView, String, StringSVHash, StringSVEqual> _scriptErrors;
-		UnorderedMap<StringView, String, StringSVHash, StringSVEqual> _scriptErrorsCascaded;
+		UnorderedMap<ScriptID, SharedPtr<Module>> _scriptModules;
+		UnorderedMap<ScriptID, UnorderedSet<ScriptID>> _scriptReverseDependencies;
+		UnorderedMap<ScriptID, String> _scriptErrors;
+		UnorderedMap<ScriptID, String> _scriptErrorsCascaded;
 
-		Optional<Reference<Module>> LoadImpl(const String &scriptName, const StringView &code, bool immediate);
+		SharedPtr<Module> LoadImpl(ScriptID scriptID, StringView scriptName, StringView code);
+		void UnloadImpl(ScriptID scriptID, Vector<ScriptID> &unloadedScripts);
 
 	  public:
 		ScriptEngine &scriptEngine;
@@ -60,15 +71,15 @@ namespace tudov
 		ScriptLoader(ScriptEngine &scriptEngine) noexcept;
 		~ScriptLoader() noexcept;
 
-		Optional<String> GetLoadingScript() const;
+		ScriptID GetLoadingScript() const noexcept;
+
+		Vector<ScriptID> GetDependencies(ScriptID scriptID) const;
+		void AddReverseDependency(ScriptID source, ScriptID target);
 
 		void LoadAll();
 		void UnloadAll();
-		/*
-		 * @brief Lazy load a script.
-		 * @return Script module.
-		 */
-		Optional<Reference<ScriptLoader::Module>> Load(const String &scriptName);
-		void Unload(const String &scriptName);
+		SharedPtr<ScriptLoader::Module> Load(ScriptID scriptID);
+		Vector<ScriptID> Unload(ScriptID scriptID);
+		void ProcessImmediateLoads();
 	};
 } // namespace tudov

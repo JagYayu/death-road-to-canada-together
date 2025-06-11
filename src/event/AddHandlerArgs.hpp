@@ -11,8 +11,9 @@ namespace tudov
 		using Key = EventHandler::Key;
 
 		String scriptName;
-		String name;
+		String event;
 		Function function;
+		Optional<String> name;
 		Optional<String> order;
 		Optional<Key> key;
 		Optional<Number> sequence;

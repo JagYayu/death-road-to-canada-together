@@ -43,13 +43,17 @@ namespace tudov
 		ModManager(Engine &engine);
 		~ModManager();
 
+		void Initialize();
+
 		bool IsNoModMatch() const;
 		bool IsModMatched(const Mod &mod) const;
 
 		void LoadMods();
 		void UnloadMods();
 
-		void SetModList(std::vector<ModEntry> requiredMods);
+		void SetModList(Vector<ModEntry> requiredMods);
+
+		void HotReload();
 
 		void Update();
 	};

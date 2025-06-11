@@ -12,13 +12,11 @@
 namespace tudov
 {
 	class Engine;
-	class ScriptLoader;
+	class ScriptEngine;
 
 	class EventManager
 	{
 	  private:
-		Engine &_engine;
-
 		UnorderedMap<StringView, LoadtimeEvent, StringSVHash, StringSVEqual> _loadtimeEvents;
 		UnorderedMap<StringView, RuntimeEvent, StringSVHash, StringSVEqual> _runtimeEvents;
 		Vector<Reference<RuntimeEvent>> _staticEvents;
@@ -27,20 +25,25 @@ namespace tudov
 		DelegateEvent<>::HandlerID _onPreLoadScriptHandlerID;
 
 	  public:
+		Engine &engine;
+
 		RuntimeEvent update;
 		RuntimeEvent render;
 
+	  public:
 		explicit EventManager(Engine &engine);
 		~EventManager();
 
 	  private:
-		void OnPreLoadScript(const StringView &scriptName);
+		void OnPreLoadScript(StringView scriptName);
 		void OnPreLoadScripts();
 		void OnScriptsLoaded();
 
 	  public:
 		void Initialize();
 
-		Optional<Reference<AbstractEvent>> TryGetRegistryEvent(const StringView &eventName);
+		void RegisterScriptGlobal(ScriptEngine &lua);
+
+		Optional<Reference<AbstractEvent>> TryGetRegistryEvent(StringView eventName);
 	};
 } // namespace tudov

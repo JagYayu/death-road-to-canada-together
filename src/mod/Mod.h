@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ModConfig.hpp"
+#include "ScriptProvider.h"
 
 #include <string>
 
@@ -13,7 +14,7 @@ namespace tudov
 	  protected:
 		ModConfig _config;
 
-		Vector<String> _scripts;
+		Vector<ScriptProvider::ScriptID> _scripts;
 
 	  public:
 		ModManager &modManager;

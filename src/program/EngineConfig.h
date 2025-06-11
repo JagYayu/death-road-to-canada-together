@@ -1,7 +1,7 @@
 #pragma once
 
-#include "FileWatch.hpp"
-#include "json.hpp"
+#include "lib/FileWatch.hpp"
+#include "lib/json.hpp"
 
 #include "util/Defs.h"
 #include "util/Log.h"

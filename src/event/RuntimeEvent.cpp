@@ -21,6 +21,9 @@ RuntimeEvent::RuntimeEvent(const String &scriptName, const String &name)
 
 void RuntimeEvent::Add(const AddHandlerArgs &args)
 {
+	auto &&argName = args.name;
+	auto &&name = argName.has_value() ? argName.value() : _orders[0];
+
 	auto &&argOrder = args.order;
 	auto &&order = argOrder.has_value() ? argOrder.value() : _orders[0];
 
@@ -32,8 +35,9 @@ void RuntimeEvent::Add(const AddHandlerArgs &args)
 
 	_handlers.emplace_back(EventHandler{
 	    .scriptName = args.scriptName,
-	    .name = args.name,
+	    .event = args.event,
 	    .function = args.function,
+	    .name = name,
 	    .order = order,
 	    .key = key,
 	    .sequence = sequence,
@@ -58,8 +62,8 @@ Vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 	{
 		Sort(_handlers.begin(), _handlers.end(), [&](const EventHandler &lhs, const EventHandler &rhs)
 		{
-			size_t lhsOrder = orderSequenceMap.count(lhs.name) ? orderSequenceMap[lhs.name] : SIZE_MAX;
-			size_t rhsOrder = orderSequenceMap.count(rhs.name) ? orderSequenceMap[rhs.name] : SIZE_MAX;
+			size_t lhsOrder = orderSequenceMap.count(lhs.event) ? orderSequenceMap[lhs.event] : SIZE_MAX;
+			size_t rhsOrder = orderSequenceMap.count(rhs.event) ? orderSequenceMap[rhs.event] : SIZE_MAX;
 			return lhsOrder < rhsOrder;
 		});
 	}
@@ -93,7 +97,7 @@ void RuntimeEvent::Invoke(const sol::object &args, Optional<EventHandler::Key> k
 	{
 		if (!_invocationCache.has_value())
 		{
-			_invocationCache = {};
+			_invocationCache = InvocationCache();
 
 			for (auto &&handler : GetSortedHandlers())
 			{
@@ -173,7 +177,7 @@ void RuntimeEvent::ClearScriptHandlers(const String &scriptName)
 
 	ClearScriptHandlersImpl([&](const EventHandler &handler)
 	{
-		return handler.name == scriptName;
+		return handler.event == scriptName;
 	});
 }
 
@@ -181,6 +185,6 @@ void RuntimeEvent::ClearScriptsHandlers()
 {
 	ClearScriptHandlersImpl([](const EventHandler &handler)
 	{
-		return handler.name != emptyString;
+		return handler.event != emptyString;
 	});
 }

@@ -3,7 +3,7 @@
 #include "util/StringUtils.hpp"
 #include "util/Version.h"
 
-#include "json.hpp"
+#include "lib/json.hpp"
 
 namespace tudov
 {

@@ -29,6 +29,7 @@ namespace tudov
 
 	using Int32 = std::int32_t;
 	using UInt32 = std::uint32_t;
+	using UInt64 = std::uint64_t;
 	using Nullptr = std::nullptr_t;
 	using Number = double;
 	using String = std::string;
@@ -245,4 +246,8 @@ namespace tudov
 	{
 		os << Format(loc, fmt, Forward<Args>(args)...);
 	}
+
+	// engine types
+
+	using ScriptID = UInt64;
 } // namespace tudov
