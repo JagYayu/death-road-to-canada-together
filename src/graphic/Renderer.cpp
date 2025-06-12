@@ -24,6 +24,7 @@ void Renderer::Initialize() noexcept
 
 	auto &&tbl = window.engine.modManager.scriptEngine.CreateTable();
 
+	// TODO
 	// tbl["drawSprite"] = [this](ResourceID texID, tudov::Number x, tudov::Number y, tudov::Number w, tudov::Number h, tudov::Number tx, tudov::Number ty)
 	// {
 	// 	DrawSprite(texID, x, y, w, h, tx, ty);
