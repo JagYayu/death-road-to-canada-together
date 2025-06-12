@@ -1,4 +1,6 @@
-# Death Road to Canada Remake Project
+# DR2C Together
+
+Death Road to Canada Remake Project
 
 HEAVILY WORK IN PROGRESS
 

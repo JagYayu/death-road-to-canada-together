@@ -2,27 +2,37 @@
 
 #include "AbstractEvent.h"
 #include "EventHandler.hpp"
+#include "mod/ScriptProvider.h"
 #include "util/Defs.h"
-#include "util/StringUtils.hpp"
+#include <cassert>
 
 using namespace tudov;
 
-RuntimeEvent::RuntimeEvent(const String &name)
-    : AbstractEvent(emptyString, name),
-      _log(Log::Get("RuntimeEvent"))
+RuntimeEvent::RuntimeEvent(EventID eventID, const Vector<String> &orders, const UnorderedSet<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> &keys, ScriptID scriptID)
+    : AbstractEvent(eventID, scriptID),
+      _log(Log::Get("RuntimeEvent")),
+      _orders(orders),
+      _keys(keys)
 {
-}
-
-RuntimeEvent::RuntimeEvent(const String &scriptName, const String &name)
-    : AbstractEvent(scriptName, name),
-      _log(Log::Get("RuntimeEvent"))
-{
+	if (_orders.empty())
+	{
+		_orders.emplace_back("");
+	}
 }
 
 void RuntimeEvent::Add(const AddHandlerArgs &args)
 {
 	auto &&argName = args.name;
-	auto &&name = argName.has_value() ? argName.value() : _orders[0];
+	String name;
+	if (argName.has_value())
+	{
+		name = argName.value();
+	}
+	else
+	{
+		static UInt64 autoID;
+		name = Format("{}-{}", args.scriptID, autoID++);
+	}
 
 	auto &&argOrder = args.order;
 	auto &&order = argOrder.has_value() ? argOrder.value() : _orders[0];
@@ -34,8 +44,8 @@ void RuntimeEvent::Add(const AddHandlerArgs &args)
 	auto &&sequence = argSequence.has_value() ? argSequence.value() : EventHandler::defaultSequence;
 
 	_handlers.emplace_back(EventHandler{
-	    .scriptName = args.scriptName,
-	    .event = args.event,
+	    .eventID = args.eventID,
+	    .scriptID = args.scriptID,
 	    .function = args.function,
 	    .name = name,
 	    .order = order,
@@ -52,7 +62,7 @@ Vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 		return _handlers;
 	}
 
-	UnorderedMap<String, size_t, StringSVHash, StringSVEqual> orderSequenceMap;
+	UnorderedMap<String, size_t> orderSequenceMap;
 	for (auto &&i = 0; i < _orders.size(); ++i)
 	{
 		orderSequenceMap[_orders[i]] = i;
@@ -62,9 +72,17 @@ Vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 	{
 		Sort(_handlers.begin(), _handlers.end(), [&](const EventHandler &lhs, const EventHandler &rhs)
 		{
-			size_t lhsOrder = orderSequenceMap.count(lhs.event) ? orderSequenceMap[lhs.event] : SIZE_MAX;
-			size_t rhsOrder = orderSequenceMap.count(rhs.event) ? orderSequenceMap[rhs.event] : SIZE_MAX;
-			return lhsOrder < rhsOrder;
+			auto &&lhsOrder = orderSequenceMap.count(lhs.order) ? orderSequenceMap[lhs.order] : SIZE_MAX;
+			auto &&rhsOrder = orderSequenceMap.count(rhs.order) ? orderSequenceMap[rhs.order] : SIZE_MAX;
+			if (lhsOrder != rhsOrder)
+			{
+				return lhsOrder < rhsOrder;
+			}
+			if (lhs.sequence != rhs.sequence)
+			{
+				return lhsOrder < rhsOrder;
+			}
+			return lhs.scriptID < rhs.scriptID;
 		});
 	}
 
@@ -125,8 +143,7 @@ void RuntimeEvent::Invoke(const sol::object &args, Optional<EventHandler::Key> k
 	}
 }
 
-void RuntimeEvent::InvokeUncached(const sol::object &args,
-                                  Optional<EventHandler::Key> key)
+void RuntimeEvent::InvokeUncached(const sol::object &args, Optional<EventHandler::Key> key)
 {
 	if (key.has_value())
 	{
@@ -157,7 +174,7 @@ void RuntimeEvent::ClearCaches()
 
 void RuntimeEvent::ClearScriptHandlersImpl(Function<bool(const EventHandler &)> pred)
 {
-	auto &&previousSize = _handlers.size();
+	auto previousSize = _handlers.size();
 
 	EraseIf(_handlers, pred);
 
@@ -167,17 +184,11 @@ void RuntimeEvent::ClearScriptHandlersImpl(Function<bool(const EventHandler &)> 
 	}
 }
 
-void RuntimeEvent::ClearScriptHandlers(const String &scriptName)
+void RuntimeEvent::ClearInvalidScriptsHandlers(const ScriptProvider &scriptProvider)
 {
-	if (scriptName == emptyString)
-	{
-		_log->Warn(Format("Clear script handlers named {} is not permitted", scriptName));
-		return;
-	}
-
 	ClearScriptHandlersImpl([&](const EventHandler &handler)
 	{
-		return handler.event == scriptName;
+		return !scriptProvider.IsValidScriptID(handler.scriptID);
 	});
 }
 
@@ -185,6 +196,7 @@ void RuntimeEvent::ClearScriptsHandlers()
 {
 	ClearScriptHandlersImpl([](const EventHandler &handler)
 	{
-		return handler.event != emptyString;
+		return !!handler.eventID;
 	});
+	ClearCaches();
 }

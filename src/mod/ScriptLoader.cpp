@@ -5,6 +5,7 @@
 #include "ScriptProvider.h"
 #include "util/Defs.h"
 
+#include <cassert>
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
@@ -13,23 +14,30 @@
 
 using namespace tudov;
 
-using ScriptID = ScriptLoader::ScriptID;
-
 ScriptLoader::Module::Module()
-    : _func(),
+    : _scriptID(),
+      _func(),
+      _fullyLoaded(),
       _table()
 {
 }
 
-ScriptLoader::Module::Module(const sol::protected_function &func)
-    : _func(func),
+ScriptLoader::Module::Module(ScriptID scriptID, const sol::protected_function &func)
+    : _scriptID(scriptID),
+      _func(func),
+      _fullyLoaded(),
       _table()
 {
 }
 
-bool ScriptLoader::Module::IsLoaded() const
+bool ScriptLoader::Module::IsLazyLoaded() const
 {
 	return _table.valid();
+}
+
+bool ScriptLoader::Module::IsFullyLoaded() const
+{
+	return _fullyLoaded;
 }
 
 const sol::table &ScriptLoader::Module::GetTable()
@@ -39,19 +47,20 @@ const sol::table &ScriptLoader::Module::GetTable()
 
 const sol::table &ScriptLoader::Module::RawLoad()
 {
-	if (_table.valid())
+	if (_fullyLoaded)
 	{
 		return _table;
 	}
 
 	auto &&result = _func();
 	_table = result.get<sol::object>(0);
+	_fullyLoaded = true;
 	return _table;
 }
 
 const sol::table &ScriptLoader::Module::LazyLoad(ScriptLoader &scriptLoader)
 {
-	if (!_table.valid())
+	if (!IsLazyLoaded())
 	{
 		_table = scriptLoader.scriptEngine.modManager.scriptEngine.CreateTable();
 	}
@@ -67,18 +76,22 @@ const sol::table &ScriptLoader::Module::LazyLoad(ScriptLoader &scriptLoader)
 
 	metatable["__index"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
 	{
-		return ImmediateLoad(scriptLoader)[key];
+		return FullLoad(scriptLoader)[key];
 	};
 
 	return _table;
 }
 
-const sol::table &ScriptLoader::Module::ImmediateLoad(ScriptLoader &scriptLoader)
+const sol::table &ScriptLoader::Module::FullLoad(ScriptLoader &scriptLoader)
 {
-	if (_table.valid())
+	if (_fullyLoaded)
 	{
 		return _table;
 	}
+
+	assert(_scriptID);
+	auto &&previousLoadingScript = scriptLoader._loadingScript;
+	scriptLoader._loadingScript = _scriptID;
 
 	auto &&scriptEngine = scriptLoader.scriptEngine.modManager.scriptEngine;
 
@@ -94,7 +107,7 @@ const sol::table &ScriptLoader::Module::ImmediateLoad(ScriptLoader &scriptLoader
 	if (!result.valid())
 	{
 		sol::error cc = result;
-		scriptLoader._log->Error(String(cc.what()));
+		scriptLoader._log->Error("{}", cc.what());
 		tab = scriptEngine.CreateTable();
 	}
 	else
@@ -108,12 +121,16 @@ const sol::table &ScriptLoader::Module::ImmediateLoad(ScriptLoader &scriptLoader
 
 	metatable["__index"] = tab;
 
+	scriptLoader._loadingScript = previousLoadingScript;
+	_fullyLoaded = true;
+
 	return _table;
 }
 
 ScriptLoader::ScriptLoader(ScriptEngine &scriptEngine) noexcept
     : scriptEngine(scriptEngine),
       _log(Log::Get("ScriptLoader")),
+      _loadingScript(),
       onPreLoadAllScripts(),
       _scriptReverseDependencies()
 {
@@ -123,8 +140,8 @@ ScriptLoader::~ScriptLoader() noexcept
 {
 	// for (auto &&it = _scriptModules.begin(); it != _scriptModules.end(); ++it)
 	// {
-	// 	_log->Trace(Format("Unloading script \"{}\" ...", it->first));
-	// 	_log->Trace(Format("Unloaded script \"{}\"", it->first));
+	// 	_log->Trace("Unloading script \"{}\" ...", it->first));
+	// 	_log->Trace("Unloaded script \"{}\"", it->first));
 	// }
 }
 
@@ -175,6 +192,8 @@ void ScriptLoader::LoadAll()
 {
 	_log->Debug("Loading provided scripts ...");
 
+	onPreLoadAllScripts();
+
 	if (!_scriptModules.empty())
 	{
 		UnloadAll();
@@ -186,77 +205,76 @@ void ScriptLoader::LoadAll()
 	auto &&count = scriptEngine.modManager.scriptProvider.GetCount();
 	for (auto &&[scriptID, entry] : scriptEngine.modManager.scriptProvider)
 	{
-		auto &&scriptName = scriptEngine.modManager.scriptProvider.GetScriptName(scriptID);
+		auto &&scriptName = scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID);
 		LoadImpl(scriptID, scriptName.value(), entry.code);
 	}
+
+	ProcessFullLoads();
+
+	onPreLoadAllScripts();
 
 	_log->Debug("Loaded provided scripts");
 }
 
 SharedPtr<ScriptLoader::Module> ScriptLoader::Load(ScriptID scriptID)
 {
-	if (!scriptID)
+	if (scriptID)
 	{
-		return nullptr;
+		auto &&scriptCode = scriptEngine.modManager.scriptProvider.GetScriptCode(scriptID);
+		auto &&scriptName = scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID);
+		return LoadImpl(scriptID, scriptName.value(), scriptCode);
 	}
 
-	auto &&scriptCode = scriptEngine.modManager.scriptProvider.GetScriptCode(scriptID);
-	auto &&scriptName = scriptEngine.modManager.scriptProvider.GetScriptName(scriptID);
-	return LoadImpl(scriptID, scriptName.value(), scriptCode);
+	_log->Warn("{}", "Attempt to load invalid script");
+	return nullptr;
 }
 
 SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, StringView scriptName, StringView scriptCode)
 {
-	auto &&it = _scriptModules.find(scriptID);
-	if (it != _scriptModules.end())
 	{
-		return _scriptModules[scriptID];
+		auto &&it = _scriptModules.find(scriptID);
+		if (it != _scriptModules.end())
+		{
+			return it->second;
+		}
 	}
 
-	_loadingScript = scriptID;
-
-	_log->Debug(Format("Loading script \"{}\" ...", scriptName));
+	_log->Debug("Loading script \"{}\" ...", scriptName);
 
 	_scriptErrors.erase(scriptID);
 
 	auto &&result = scriptEngine.modManager.scriptEngine.LoadFunction(String(scriptName), scriptCode);
 	if (!result.valid())
 	{
-		_loadingScript = ScriptProvider::invalidScriptID;
-
-		_log->Debug(Format("Failed to load script \"{}\": {}", scriptID, result.get<sol::error>().what()));
+		_log->Debug("Failed to load script \"{}\": {}", scriptID, result.get<sol::error>().what());
 
 		return nullptr;
 	}
 
 	auto &&func = result.get<sol::protected_function>();
-	auto &&module = MakeShared<Module>(func);
-
-	_scriptModules[scriptID] = module;
+	auto &&module = MakeShared<Module>(scriptID, func);
+	auto &&[it, inserted] = _scriptModules.try_emplace(scriptID, module);
+	assert(inserted);
 
 	if (ScriptProvider::IsStaticScript(scriptName))
 	{
 		module->RawLoad();
-		_log->Trace(Format("Raw loaded script \"{}\"", scriptName));
+		_log->Trace("Raw loaded script \"{}\"", scriptName);
 	}
 	else
 	{
 		scriptEngine.modManager.scriptEngine.InitScriptFunc(scriptID, scriptName, func);
-		_log->Trace(Format("Lazy loaded script \"{}\"", scriptName));
+		_log->Trace("Lazy loaded script \"{}\"", scriptName);
 	}
 
-	ProcessImmediateLoads();
-
-	_loadingScript = ScriptProvider::invalidScriptID;
-
-	return _scriptModules[scriptID];
+	return it->second;
 }
 
 void ScriptLoader::UnloadAll()
 {
 	for (auto &&it : _scriptModules)
 	{
-		if (!scriptEngine.modManager.scriptProvider.GetScriptName(it.first))
+		if (!scriptEngine.modManager.scriptProvider.GetScriptNameByID(it.first))
 		{
 			Unload(it.first);
 		}
@@ -272,8 +290,12 @@ Vector<ScriptID> ScriptLoader::Unload(ScriptID scriptID)
 
 void ScriptLoader::UnloadImpl(ScriptID scriptID, Vector<ScriptID> &unloadedScripts)
 {
+	_log->Trace("Unloading script <{}>", scriptID);
+
 	if (!_scriptModules.erase(scriptID))
 	{
+		_log->Trace("Unload script <{}> failed: script not found", scriptID);
+
 		return;
 	}
 
@@ -292,22 +314,43 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, Vector<ScriptID> &unloadedScrip
 	_scriptErrors.erase(scriptID);
 	_scriptErrorsCascaded.erase(scriptID);
 
-	auto &&name = scriptEngine.modManager.scriptProvider.GetScriptName(scriptID);
-	_log->Trace(Format("Unloaded script \"{}\"", name.value()));
+	auto &&name = scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID);
+	_log->Trace("Unloaded script \"{}\"", name.value());
 }
 
-void ScriptLoader::ProcessImmediateLoads()
+void ScriptLoader::HotReload(const Vector<ScriptID> &scriptIDs)
 {
-	_log->Debug("Processing immediate loads ...");
+	_log->Debug("Hot reloading scripts ...");
+
+	onPreHotReloadScripts(scriptIDs);
+
+	// auto &&scriptCode = scriptEngine.modManager.scriptProvider.GetScriptCode(scriptID);
+	// auto &&scriptName = scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID);
+	// auto &&scriptModule = LoadImpl(scriptID, scriptName.value(), scriptCode);
+
+	for (auto &&additionalScriptID : scriptIDs)
+	{
+		Load(additionalScriptID);
+	}
+	ProcessFullLoads();
+
+	onPostHotReloadScripts(scriptIDs);
+
+	_log->Debug("Hot reloaded scripts ...");
+}
+
+void ScriptLoader::ProcessFullLoads()
+{
+	_log->Debug("Processing full loads ...");
 
 	for (auto &&[scriptID, module] : _scriptModules)
 	{
-		if (!module->IsLoaded())
+		if (!module->IsFullyLoaded())
 		{
-			module->ImmediateLoad(*this);
-			_log->Trace(Format("Immediate loaded script \"{}\"", scriptEngine.modManager.scriptProvider.GetScriptName(scriptID).value()));
+			module->FullLoad(*this);
+			_log->Trace("Fully loaded script \"{}\"", scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID).value());
 		}
 	}
 
-	_log->Debug("Processed immediate loads");
+	_log->Debug("Processed full loads");
 }

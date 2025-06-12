@@ -9,9 +9,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.tpp"
 )
 add_executable(dr2c ${SRC_FILES})
 
@@ -40,9 +41,25 @@ if(WIN32)
     target_link_libraries(dr2c PRIVATE "${SDL3_LIB_DIR}/SDL3.lib")
     add_custom_command(TARGET dr2c POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${SDL3_LIB_DIR}/SDL3.dll" "$<TARGET_FILE_DIR:dr2c>")
 elseif(UNIX AND NOT APPLE)
-    target_link_libraries(dr2c PRIVATE "${SDL3_DIR}/lib/libSDL3.so")
+    target_link_libraries(dr2c PRIVATE "${SDL3_DIR}/lib/SDL3.so")
 elseif(APPLE)
-    target_link_libraries(dr2c PRIVATE "${SDL3_DIR}/lib/libSDL3.dylib")
+    target_link_libraries(dr2c PRIVATE "${SDL3_DIR}/lib/SDL3.dylib")
+endif()
+
+set(SDL3_image_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3_image-3.2.4")
+target_include_directories(dr2c PRIVATE "${SDL3_image_DIR}/include")
+if(WIN32)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(SDL3_image_DIR "${SDL3_image_DIR}/lib/x64")
+    else()
+        set(SDL3_image_DIR "${SDL3_image_DIR}/lib/x86")
+    endif()
+    target_link_libraries(dr2c PRIVATE "${SDL3_image_DIR}/SDL3_image.lib")
+    add_custom_command(TARGET dr2c POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${SDL3_image_DIR}/SDL3_image.dll" "$<TARGET_FILE_DIR:dr2c>")
+elseif(UNIX AND NOT APPLE)
+    target_link_libraries(dr2c PRIVATE "${SDL3_image_DIR}/lib/SDL3_image.so")
+elseif(APPLE)
+    target_link_libraries(dr2c PRIVATE "${SDL3_image_DIR}/lib/SDL3_image.dylib")
 endif()
 
 # sol2

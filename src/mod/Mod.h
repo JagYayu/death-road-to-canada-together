@@ -14,7 +14,7 @@ namespace tudov
 	  protected:
 		ModConfig _config;
 
-		Vector<ScriptProvider::ScriptID> _scripts;
+		Vector<ScriptID> _scripts;
 
 	  public:
 		ModManager &modManager;

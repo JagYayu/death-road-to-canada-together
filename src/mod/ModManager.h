@@ -5,6 +5,8 @@
 #include "ScriptEngine.h"
 #include "ScriptLoader.h"
 #include "ScriptProvider.h"
+#include "event/EventManager.h"
+#include "util/Defs.h"
 #include "util/Log.h"
 
 #include <filesystem>
@@ -32,10 +34,13 @@ namespace tudov
 		std::vector<std::shared_ptr<Mod>> _mountedMods;
 		std::vector<ModEntry> _requiredMods;
 
+		UniquePtr<UnorderedMap<String, String>> _hotReloadScriptsPending;
+
 	  public:
 		Engine &engine;
 		ScriptEngine scriptEngine;
 		ScriptProvider scriptProvider;
+		EventManager eventManager;
 
 		void AddMod(const std::filesystem::path &modRoot);
 
@@ -44,6 +49,7 @@ namespace tudov
 		~ModManager();
 
 		void Initialize();
+		void Deinitialize();
 
 		bool IsNoModMatch() const;
 		bool IsModMatched(const Mod &mod) const;
@@ -51,9 +57,10 @@ namespace tudov
 		void LoadMods();
 		void UnloadMods();
 
-		void SetModList(Vector<ModEntry> requiredMods);
+		Vector<ModEntry> &GetModList() noexcept;
+		const Vector<ModEntry> &GetModList() const noexcept;
 
-		void HotReload();
+		void HotReloadScriptPending(String scriptName, String scriptCode);
 
 		void Update();
 	};

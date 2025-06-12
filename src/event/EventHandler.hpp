@@ -12,7 +12,7 @@ namespace tudov
 		{
 			struct Equal
 			{
-				bool operator()(const tudov::EventHandler::Key &lhs, const tudov::EventHandler::Key &rhs) const
+				bool operator()(const EventHandler::Key &lhs, const EventHandler::Key &rhs) const
 				{
 					return lhs == rhs;
 				}
@@ -41,31 +41,38 @@ namespace tudov
 			}
 		};
 
-		using KeyEqual = Key::Equal;
-		using KeyHash = Key::Hash;
-
 		inline static Key emptyKey = Key(nullptr);
 		inline static Number defaultSequence = 0;
 
 		struct Function
 		{
-			Variant<sol::function, int> value;
+			Variant<sol::function, int> function;
+
+			explicit Function(const sol::function& function)
+			    : function(function)
+			{
+			}
 
 			void operator()(const sol::object &obj) const
 			{
-				if (auto &&func = GetIf<sol::function>(&value))
+				if (std::holds_alternative<sol::function>(function))
 				{
-					(*func)(obj);
+					const auto &func = std::get<sol::function>(function);
+					if (func.valid())
+					{
+						func();
+					}
 				}
 				else
 				{
-					// TODO
+					int i = std::get<int>(function);
+					// TODO:
 				}
 			}
 
 			void operator()(const sol::object &obj, const EventHandler::Key &key) const
 			{
-				if (auto &&func = GetIf<sol::function>(&value))
+				if (auto &&func = GetIf<sol::function>(&function))
 				{
 					(*func)(obj, key);
 				}
@@ -76,8 +83,8 @@ namespace tudov
 			}
 		};
 
-		String scriptName;
-		String event;
+		EventID eventID;
+		ScriptID scriptID;
 		Function function;
 		String name;
 		String order;

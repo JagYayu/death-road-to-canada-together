@@ -2,7 +2,7 @@
 
 #include "lib/FileWatch.hpp"
 #include "lib/json.hpp"
-
+#include "resource/ResourceType.hpp"
 #include "util/Defs.h"
 #include "util/Log.h"
 
@@ -10,7 +10,7 @@
 #include <string>
 
 namespace tudov
-{
+{	
 	class EngineConfig
 	{
 	  private:
@@ -28,9 +28,11 @@ namespace tudov
 		EngineConfig();
 		~EngineConfig();
 
-		void Save();
-		void Load();
+		void Save() noexcept;
+		void Load() noexcept;
 
+		Vector<String> GetMountDirectories();
+		UnorderedMap<String, ResourceType> GetMountFiles();
 		StringView GetWindowTitle();
 		UInt32 GetWindowWidth();
 		UInt32 GetWindowHeight();

@@ -8,14 +8,30 @@
 
 using namespace tudov;
 
+constexpr const char *keyDirectories = "directories";
+constexpr const char *keyFiles = "files";
 constexpr const char *keyFullscreen = "fullscreen";
 constexpr const char *keyHeight = "height";
 constexpr const char *keyLog = "log";
+constexpr const char *keyMount = "mount";
 constexpr const char *keyTitle = "title";
 constexpr const char *keyWidth = "width";
 constexpr const char *keyWindow = "window";
 
-nlohmann::json GetLog(nlohmann::json &config)
+static const auto valueWindowFullscreen = false;
+static const auto valueWindowHeight = 720;
+static const auto valueWindowTitle = "DR2C Together";
+static const auto valueWindowWidth = 1280;
+static const auto valueMountDirectories = Vector<String>{
+    "data",
+    "gfx",
+};
+static const auto valueMountFiles = UnorderedMap<String, ResourceType>{
+    {".png", ResourceType::Texture},
+    {".ogg", ResourceType::Audio},
+};
+
+nlohmann::json &GetLog(nlohmann::json &config)
 {
 	auto &&log = config[keyLog];
 	if (!log.is_object())
@@ -25,15 +41,29 @@ nlohmann::json GetLog(nlohmann::json &config)
 	return log;
 }
 
-nlohmann::json GetWindow(nlohmann::json &config)
+nlohmann::json &GetMount(nlohmann::json &config)
+{
+	auto &&mount = config[keyMount];
+	if (!mount.is_object())
+	{
+		mount = {
+		    {keyDirectories, valueMountDirectories},
+		};
+		config[keyMount] = mount;
+	}
+	return mount;
+}
+
+nlohmann::json &GetWindow(nlohmann::json &config)
 {
 	auto &&window = config[keyWindow];
 	if (!window.is_object())
 	{
 		window = {
-		    {keyWidth, 1280},
-		    {keyHeight, 720},
-		    {keyFullscreen, false},
+		    {keyWidth, valueWindowWidth},
+		    {keyHeight, valueWindowHeight},
+		    {keyFullscreen, valueWindowFullscreen},
+		    {keyTitle, valueWindowTitle},
 		};
 		config[keyWindow] = window;
 	}
@@ -56,55 +86,112 @@ EngineConfig::~EngineConfig()
 	Save();
 }
 
-void EngineConfig::Save()
+void EngineConfig::Save() noexcept
 {
-	std::ofstream out{String(file)};
-	if (out.is_open())
+	try
 	{
-		out << _config.dump(1, '\t');
-		out.close();
+		String f{file};
+		std::ofstream out{f};
+		if (out.is_open())
+		{
+			out << _config.dump(1, '\t');
+			out.close();
+			_log->Trace("Config file saved: ", f);
+		}
+		else
+		{
+			_log->Error("Failed to open config file for writing: ", f);
+		}
 	}
-	else
+	catch (const std::exception &e)
 	{
-		_log->Error(Format("Failed to open config file for writing: ", String(file)));
+		_log->Error("Exception occurred while saving config file: {}", e.what());
 	}
 }
 
-void EngineConfig::Load()
+void EngineConfig::Load() noexcept
 {
-	std::ifstream f{String(file)};
-	if (f.is_open())
+	try
 	{
-		_config = nlohmann::json::parse(f);
-		f.close();
+		std::ifstream f{String(file)};
+		if (f.is_open())
+		{
+			_config = nlohmann::json::parse(f);
+			f.close();
+		}
+		else
+		{
+			_config = nlohmann::json();
+			std::ofstream out{String(file)};
+			out << _config.dump(4);
+			out.close();
+		}
+		Log::UpdateVerbosities(GetLog(_config));
 	}
-	else
+	catch (const std::exception &e)
 	{
-		_config = nlohmann::json();
-		std::ofstream out{String(file)};
-		out << _config.dump(4);
-		out.close();
+		_log->Error("Exception occurred while loading config file: {}", e.what());
 	}
+}
 
-	Log::UpdateVerbosities(GetLog(_config));
+Vector<String> EngineConfig::GetMountDirectories()
+{
+	auto &&mount = GetMount(_config);
+	auto &&directories = mount[keyDirectories];
+	if (!directories.is_array())
+	{
+		directories = valueMountDirectories;
+		mount[keyDirectories] = directories;
+	}
+	return directories;
+}
+
+UnorderedMap<String, ResourceType> EngineConfig::GetMountFiles()
+{
+	auto &&mount = GetMount(_config);
+	auto &&files = mount[keyFiles];
+	if (!files.is_object())
+	{
+		files = valueMountFiles;
+		mount[keyFiles] = files;
+	}
+	return files;
 }
 
 StringView EngineConfig::GetWindowTitle()
 {
-	auto &&title = GetWindow(_config)[keyTitle];
-	return title.is_string() ? StringView(title) : defaultWindowTitle;
+	auto &&window = GetWindow(_config);
+	auto &&title = window[keyTitle];
+	if (!title.is_string())
+	{
+		title = defaultWindowTitle;
+		window[keyTitle] = title;
+	}
+	return title;
 }
 
 UInt32 EngineConfig::GetWindowWidth()
 {
-	auto &&width = GetWindow(_config)[keyWidth];
-	return width.is_number() ? width.get<UInt32>() : defaultWindowWidth;
+	auto &&window = GetWindow(_config);
+	auto &&width = window[keyWidth];
+	if (!width.is_number_integer())
+	{
+		width = defaultWindowWidth;
+		window[keyWidth] = width;
+	}
+	return width;
 }
 
 UInt32 EngineConfig::GetWindowHeight()
 {
-	auto &&width = GetWindow(_config)[keyHeight];
-	return width.is_number() ? width.get<UInt32>() : defaultWindowHeight;
+	auto &&window = GetWindow(_config);
+	auto &&height = window[keyHeight];
+	if (!height.is_number_integer())
+	{
+		height = defaultWindowHeight;
+		window[keyHeight] = height;
+	}
+	return height;
 }
 
 void EngineConfig::SetWindowTitle(const String &)

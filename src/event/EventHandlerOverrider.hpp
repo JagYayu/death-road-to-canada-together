@@ -13,7 +13,7 @@ namespace tudov
 		{
 		};
 
-		String scriptName;
+		ScriptID scriptName;
 		String name;
 		Function function;
 	};

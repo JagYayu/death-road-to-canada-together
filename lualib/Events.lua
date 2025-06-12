@@ -10,8 +10,9 @@
 Events = {}
 
 --- @class Events.AddHandlerArgs
---- @field name string
+--- @field event Events.EventName
 --- @field func fun(e: any)
+--- @field name string?
 --- @field order string?
 --- @field key integer?
 --- @field sequence integer?

@@ -13,7 +13,9 @@ namespace tudov
 	  protected:
 		using Operation = Variant<AddHandlerArgs, OverrideHandlerArgs>;
 
-		Vector<Operation> operations;
+		Vector<String> _orders;
+		UnorderedSet<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> _keys;
+		Vector<Operation> _operations;
 
 	  public:
 		virtual void Add(const AddHandlerArgs &handler) override;

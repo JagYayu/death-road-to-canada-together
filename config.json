@@ -1,8 +1,19 @@
 {
 	"log": {},
+	"mount": {
+		"directories": [
+			"data",
+			"gfx"
+		],
+		"files": {
+			".ogg": "Audio",
+			".png": "Texture"
+		}
+	},
 	"window": {
 		"fullscreen": false,
 		"height": 720,
+		"title": "DR2C",
 		"width": 1280
 	}
 }

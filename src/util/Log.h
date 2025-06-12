@@ -6,7 +6,6 @@
 #include <sol/lua_value.hpp>
 
 #include <atomic>
-#include <condition_variable>
 #include <iostream>
 #include <mutex>
 #include <queue>
@@ -57,7 +56,7 @@ namespace tudov
 		static void Process();
 
 	  public:
-		static SharedPtr<Log> Get(const String &module);
+		static SharedPtr<Log> Get(StringView module);
 		static Verbosity GetVerbosity(const String &module);
 		static Optional<Verbosity> GetVerbosityOverride(const String &module);
 		static void SetVerbosityOverride(const String &module, Verbosity verb);
@@ -67,7 +66,7 @@ namespace tudov
 		String _module;
 
 		bool CanOutput(StringView verb) const;
-		void Output(StringView verb, const String &str) const;
+		void Output(StringView verb, const StringView &str) const;
 
 	  public:
 		explicit Log(const String &module);
@@ -105,29 +104,35 @@ namespace tudov
 			return CanOutput("Fatal");
 		}
 
-		FORCEINLINE void Trace(const String &str) const
+		template <typename... Args>
+		FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Trace", str);
+			Output("Trace", Format(fmt, Forward<Args>(args)...));
 		}
-		FORCEINLINE void Debug(const String &str) const
+		template <typename... Args>
+		FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Debug", str);
+			Output("Debug", Format(fmt, Forward<Args>(args)...));
 		}
-		FORCEINLINE void Info(const String &str) const
+		template <typename... Args>
+		FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Info", str);
+			Output("Info", Format(fmt, Forward<Args>(args)...));
 		}
-		FORCEINLINE void Warn(const String &str) const
+		template <typename... Args>
+		FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Warn", str);
+			Output("Warn", Format(fmt, Forward<Args>(args)...));
 		}
-		FORCEINLINE void Error(const String &str) const
+		template <typename... Args>
+		FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Error", str);
+			Output("Error", Format(fmt, Forward<Args>(args)...));
 		}
-		FORCEINLINE void Fatal(const String &str) const
+		template <typename... Args>
+		FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Fatal", str);
+			Output("Fatal", Format(fmt, Forward<Args>(args)...));
 		}
 	};
 } // namespace tudov

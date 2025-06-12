@@ -1,6 +1,5 @@
 #include "LoadtimeEvent.h"
 
-#include "EventHandlerOverrider.hpp"
 #include "OverrideHandlerArgs.hpp"
 #include "RuntimeEvent.h"
 #include "util/Defs.h"
@@ -9,14 +8,14 @@ using namespace tudov;
 
 void LoadtimeEvent::Add(const AddHandlerArgs &handler)
 {
-	operations.emplace_back(handler);
+	_operations.emplace_back(handler);
 }
 
 RuntimeEvent LoadtimeEvent::ToRuntime()
 {
-	RuntimeEvent event{_scriptName, _name};
+	RuntimeEvent event{_id, _orders, _keys, _scriptID};
 
-	for (auto &&operation : operations)
+	for (auto &&operation : _operations)
 	{
 		if (Is<AddHandlerArgs>(operation))
 		{

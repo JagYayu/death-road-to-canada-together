@@ -1,20 +1,17 @@
 #include "Window.h"
 
-#include "SDL3/SDL_init.h"
 #include "SDL3/SDL_log.h"
-#include "SDL3/SDL_render.h"
 #include "SDL3/SDL_video.h"
 #include "program/Engine.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
 
-#include <stdexcept>
-
 using namespace tudov;
 
 Window::Window(Engine &engine)
-    : engine(engine)
+    : engine(engine),
+      renderer(*this)
 {
 }
 
@@ -36,16 +33,12 @@ void Window::Initialize()
 	}
 	SDL_SetWindowPosition(_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
-	_renderer = SDL_CreateRenderer(_window, nullptr);
-	if (!_renderer)
-	{
-		SDL_Log("SDL_CreateRenderer failed: %s", SDL_GetError());
-	}
+	renderer.Initialize();
 }
 
 void Window::PoolEvents()
 {
-	auto &&eventManager = engine.eventManager;
+	auto &&eventManager = engine.modManager.eventManager;
 
 	SDL_Event e;
 	while (SDL_PollEvent(&e))
@@ -151,8 +144,6 @@ void Window::PoolEvents()
 
 void Window::Render()
 {
-	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
-	SDL_RenderClear(_renderer);
-
-	SDL_RenderPresent(_renderer);
+	engine.modManager.eventManager.render->Invoke();
+	renderer.Render();
 }

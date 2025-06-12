@@ -12,6 +12,8 @@
 
 namespace tudov
 {
+	class ScriptProvider;
+
 	class RuntimeEvent : public AbstractEvent
 	{
 		using InvocationCache = Vector<EventHandler::Function>;
@@ -20,20 +22,19 @@ namespace tudov
 		SharedPtr<Log> _log;
 		bool _handlersSortedCache;
 		Optional<InvocationCache> _invocationCache;
-		UnorderedMap<EventHandler::Key, InvocationCache, EventHandler::KeyHash, EventHandler::KeyEqual> _invocationCaches;
-		Vector<String> _keys;
+		UnorderedMap<EventHandler::Key, InvocationCache, EventHandler::Key::Hash, EventHandler::Key::Equal> _invocationCaches;
+		Vector<String> _orders;
+		UnorderedSet<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> _keys;
 		Vector<EventHandler> _handlers;
 
 	  public:
-		explicit RuntimeEvent(const String &name);
-		RuntimeEvent(const String &scriptName, const String &name);
+		explicit RuntimeEvent(EventID eventID, const Vector<String> &orders = {""}, const UnorderedSet<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> &keys = {}, ScriptID scriptID = false);
 
 	  private:
+		void ClearCaches();
 		void ClearScriptHandlersImpl(Function<bool(const EventHandler &)> pred);
 
 	  protected:
-		void ClearCaches();
-
 		Vector<EventHandler> &GetSortedHandlers();
 
 	  public:
@@ -42,7 +43,7 @@ namespace tudov
 		void Invoke(const sol::object &args = sol::lua_nil, Optional<EventHandler::Key> key = null);
 		void InvokeUncached(const sol::object &args = sol::lua_nil, Optional<EventHandler::Key> key = null);
 
-		void ClearScriptHandlers(const String &scriptName);
+		void ClearInvalidScriptsHandlers(const ScriptProvider &scriptProvider);
 		void ClearScriptsHandlers();
 	};
 } // namespace tudov

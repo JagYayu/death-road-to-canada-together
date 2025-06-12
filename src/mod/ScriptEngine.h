@@ -36,9 +36,6 @@ namespace tudov
 		ScriptEngine(ModManager &modManager);
 		~ScriptEngine();
 
-	  private:
-		void OnFatalException(const std::exception &e);
-
 	  public:
 		void Initialize();
 
@@ -47,13 +44,13 @@ namespace tudov
 		void Set(const sol::string_view &key, const sol::object &value);
 		void CollectGarbage();
 		sol::table CreateTable(UInt32 arr = 0, UInt32 hash = 0);
-		void ThrowError(StringView message);
+		int ThrowError(StringView message);
 		sol::load_result LoadFunction(const String &name, StringView code);
 
 		sol::object MakeReadonlyGlobal(const sol::object &obj);
 
 		// void Require(StringView source, StringView target);
-		void InitScriptFunc(ScriptProvider::ScriptID scriptID, StringView scriptName, sol::protected_function &func);
+		void InitScriptFunc(ScriptID scriptID, StringView scriptName, sol::protected_function &func);
 
 		sol::object GetPersistVariable(StringView key);
 		void SetPersistVariable(StringView key, const sol::object &value);

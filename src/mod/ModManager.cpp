@@ -4,7 +4,9 @@
 #include "ScriptProvider.h"
 #include "UnpackagedMod.h"
 #include "mod/ModEntry.hpp"
+#include "util/Defs.h"
 
+#include <memory>
 #include <vector>
 
 using namespace tudov;
@@ -13,6 +15,7 @@ ModManager::ModManager(Engine &engine)
     : engine(engine),
       scriptEngine(*this),
       scriptProvider(*this),
+      eventManager(*this),
       _log(Log::Get("ModManager")),
       _loadState(ELoadState::None)
 {
@@ -34,6 +37,12 @@ void ModManager::Initialize()
 	};
 
 	scriptEngine.Initialize();
+	eventManager.Initialize();
+}
+
+void ModManager::Deinitialize()
+{
+	eventManager.Deinitialize();
 }
 
 void ModManager::AddMod(const std::filesystem::path &modRoot)
@@ -129,15 +138,50 @@ void ModManager::UnloadMods()
 	_log->Debug("Unloaded all mounted mods");
 }
 
-void ModManager::SetModList(std::vector<ModEntry> modEntries)
+Vector<ModEntry> &ModManager::GetModList() noexcept
 {
+	return _requiredMods;
 }
 
-void ModManager::HotReload()
+const Vector<ModEntry> &ModManager::GetModList() const noexcept
 {
-	
+	return _requiredMods;
+}
+
+void ModManager::HotReloadScriptPending(String scriptName, String scriptCode)
+{
+	if (!_hotReloadScriptsPending)
+	{
+		_hotReloadScriptsPending = std::make_unique<UnorderedMap<String, String>>();
+	}
+	(*_hotReloadScriptsPending)[scriptName] = scriptCode;
 }
 
 void ModManager::Update()
 {
+	eventManager.update->Invoke();
+
+	if (_hotReloadScriptsPending)
+	{
+		Vector<ScriptID> scriptIDs{};
+
+		for (auto &&[scriptName, scriptCode] : *_hotReloadScriptsPending)
+		{
+			auto scriptID = scriptProvider.GetScriptIDByName(scriptName);
+
+			auto &&pendingScripts = scriptEngine.scriptLoader.Unload(scriptID);
+			scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
+
+			scriptProvider.RemoveScript(scriptID);
+			scriptID = scriptProvider.AddScript(scriptName, scriptCode);
+
+			scriptIDs.emplace_back(scriptID);
+		}
+
+		std::sort(scriptIDs.begin(), scriptIDs.end());
+		scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
+
+		scriptEngine.scriptLoader.HotReload(scriptIDs);
+		_hotReloadScriptsPending = nullptr;
+	}
 }

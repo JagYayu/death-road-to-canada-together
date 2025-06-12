@@ -10,8 +10,8 @@ namespace tudov
 		using Function = EventHandler::Function;
 		using Key = EventHandler::Key;
 
-		String scriptName;
-		String event;
+		EventID eventID;
+		ScriptID scriptID;
 		Function function;
 		Optional<String> name;
 		Optional<String> order;

@@ -20,21 +20,19 @@ namespace tudov
 	  private:
 		struct Entry
 		{
-			StringView name;
+			String name;
 			String code;
 		};
 
 	  public:
 		using ScriptID = UInt64;
 
-		static constexpr ScriptID invalidScriptID = 0;
-
 	  private:
 		SharedPtr<Log> _log;
 
-		ScriptID _currentScriptID;
-		UnorderedMap<String, ScriptID> _scriptIDs;
-		UnorderedMap<ScriptID, Entry> _scriptMap;
+		ScriptID _latestScriptID;
+		UnorderedMap<StringView, ScriptID> _scriptName2ID;
+		UnorderedMap<ScriptID, Entry> _scriptID2Entry;
 
 	  public:
 		ModManager &modManager;
@@ -46,15 +44,17 @@ namespace tudov
 		ScriptProvider(ModManager &modManager);
 
 	  private:
-		Tuple<ScriptID, StringView> AllocScript(StringView scriptName);
+		ScriptID AllocScript(StringView scriptName, StringView scriptCode);
+		void DeallocScript(ScriptID scriptID);
 
 	  public:
 		void Initialize();
 
 		size_t GetCount() const noexcept;
-		ScriptID GetScriptID(StringView scriptName) const noexcept;
+		ScriptID GetScriptIDByName(StringView scriptName) const noexcept;
+		Optional<StringView> GetScriptNameByID(ScriptID scriptID) const noexcept;
 		bool IsValidScriptID(ScriptID scriptID) const noexcept;
-		Optional<StringView> GetScriptName(ScriptID scriptID) const noexcept;
+		bool IsStaticScript(ScriptID scriptID) const noexcept;
 
 		ScriptID AddScript(StringView scriptName, StringView scriptCode) noexcept;
 		void RemoveScript(ScriptID scriptName) noexcept;

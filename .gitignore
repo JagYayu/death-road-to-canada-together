@@ -1,7 +1,11 @@
 /.vscode
 /bin
+/data
+/deathforth
+/gfx
 /lib
 /log
 /build
 .clangd
+.gitignore
 config.json

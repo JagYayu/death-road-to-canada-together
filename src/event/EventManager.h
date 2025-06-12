@@ -11,39 +11,51 @@
 
 namespace tudov
 {
-	class Engine;
-	class ScriptEngine;
+	class ModManager;
 
 	class EventManager
 	{
 	  private:
-		UnorderedMap<StringView, LoadtimeEvent, StringSVHash, StringSVEqual> _loadtimeEvents;
-		UnorderedMap<StringView, RuntimeEvent, StringSVHash, StringSVEqual> _runtimeEvents;
-		Vector<Reference<RuntimeEvent>> _staticEvents;
+		SharedPtr<Log> _log;
+		EventID _latestEventID;
+		UnorderedMap<StringView, EventID> _eventName2ID;
+		UnorderedMap<EventID, String> _eventID2Name;
+		UnorderedMap<EventID, SharedPtr<LoadtimeEvent>> _loadtimeEvents;
+		UnorderedMap<EventID, SharedPtr<RuntimeEvent>> _runtimeEvents;
+		Vector<SharedPtr<RuntimeEvent>> _staticEvents;
 
-		bool _initialized;
-		DelegateEvent<>::HandlerID _onPreLoadScriptHandlerID;
+		DelegateEvent<>::HandlerID _onPreLoadAllScriptsHandlerID;
+		DelegateEvent<>::HandlerID _onPostLoadAllScriptsHandlerID;
+		DelegateEvent<ScriptID>::HandlerID _onPreHotReloadScriptsHandlerID;
+		DelegateEvent<ScriptID>::HandlerID _onPostHotReloadScriptsHandlerID;
 
 	  public:
-		Engine &engine;
-
-		RuntimeEvent update;
-		RuntimeEvent render;
+		ModManager &modManager;
+		SharedPtr<RuntimeEvent> update;
+		SharedPtr<RuntimeEvent> render;
 
 	  public:
-		explicit EventManager(Engine &engine);
+		explicit EventManager(ModManager &modManager);
 		~EventManager();
 
 	  private:
-		void OnPreLoadScript(StringView scriptName);
-		void OnPreLoadScripts();
+		[[nodiscard]]
+		EventID AllocEventID(StringView eventName) noexcept;
+		void DeallocEventID(EventID eventID) noexcept;
+
 		void OnScriptsLoaded();
 
 	  public:
 		void Initialize();
+		void Deinitialize();
 
-		void RegisterScriptGlobal(ScriptEngine &lua);
+		[[nodiscard]]
+		ScriptID GetEventIDByName(StringView scriptName) const noexcept;
+		[[nodiscard]]
+		Optional<StringView> GetEventNameByID(ScriptID scriptID) const noexcept;
+		[[nodiscard]]
+		bool IsValidEventID(ScriptID scriptID) const noexcept;
 
-		Optional<Reference<AbstractEvent>> TryGetRegistryEvent(StringView eventName);
+		Optional<Reference<AbstractEvent>> TryGetRegistryEvent(EventID eventID);
 	};
 } // namespace tudov

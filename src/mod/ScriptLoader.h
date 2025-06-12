@@ -21,33 +21,29 @@ namespace tudov
 	class ScriptLoader
 	{
 	  private:
-		enum class LoadType
-		{
-			Unsafe,
-			Lazy,
-			Immediate,
-		};
-
 		struct Module
 		{
 		  private:
+		  ScriptID _scriptID;
+		  sol::protected_function _func;
+		  bool _fullyLoaded;
 			sol::table _table;
-			sol::protected_function _func;
 
 		  public:
 			Module();
-			explicit Module(const sol::protected_function &func);
+			explicit Module(ScriptID scriptID, const sol::protected_function &func);
 
-			bool IsLoaded() const;
+			bool IsLazyLoaded() const;
+			bool IsFullyLoaded() const;
 
 			const sol::table &GetTable();
 			const sol::table &RawLoad();
 			const sol::table &LazyLoad(ScriptLoader &scriptLoader);
-			const sol::table &ImmediateLoad(ScriptLoader &scriptLoader);
+			const sol::table &FullLoad(ScriptLoader &scriptLoader);
 		};
 
 	  public:
-		using ScriptID = ScriptProvider::ScriptID;
+		using ScriptID = ScriptID;
 
 	  private:
 		SharedPtr<Log> _log;
@@ -66,6 +62,8 @@ namespace tudov
 
 		DelegateEvent<> onPreLoadAllScripts;
 		DelegateEvent<> onPostLoadAllScripts;
+		DelegateEvent<const Vector<ScriptID> &> onPreHotReloadScripts;
+		DelegateEvent<const Vector<ScriptID> &> onPostHotReloadScripts;
 
 	  public:
 		ScriptLoader(ScriptEngine &scriptEngine) noexcept;
@@ -80,6 +78,7 @@ namespace tudov
 		void UnloadAll();
 		SharedPtr<ScriptLoader::Module> Load(ScriptID scriptID);
 		Vector<ScriptID> Unload(ScriptID scriptID);
-		void ProcessImmediateLoads();
+		void HotReload(const Vector<ScriptID> &scriptIDs);
+		void ProcessFullLoads();
 	};
 } // namespace tudov

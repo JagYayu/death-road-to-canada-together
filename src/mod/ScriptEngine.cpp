@@ -54,8 +54,6 @@ void ScriptEngine::Initialize()
 	_throwModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::function>();
 
 	MakeReadonlyGlobal(_lua.globals());
-
-	modManager.engine.eventManager.RegisterScriptGlobal(*this);
 }
 
 sol::state_view &ScriptEngine::GetState()
@@ -83,20 +81,17 @@ sol::load_result ScriptEngine::LoadFunction(const String &name, StringView code)
 	return _lua.load(code, name, sol::load_mode::any);
 }
 
-void ScriptEngine::ThrowError(StringView message)
+int ScriptEngine::ThrowError(StringView message)
 {
-	luaL_error(_lua, "%s", message);
+	String str{message};
+	lua_pushlstring(_lua, str.data(), str.size());
+	return lua_error(_lua);
 }
 
 // void ScriptEngine::Require(StringView source, StringView target)
 // {
 // 	throw std::runtime_error("Permission denied");
 // }
-
-void ScriptEngine::OnFatalException(const std::exception &e)
-{
-	_log->Fatal(Format("Unhandled C++ exception occurred: {}", e.what()));
-}
 
 sol::object MakeReadonlyGlobalImpl(sol::state &lua, const sol::object &obj, const sol::function &newindex, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited)
 {
@@ -153,7 +148,9 @@ void ScriptEngine::InitScriptFunc(ScriptID scriptID, const StringView scriptName
 	{
 		try
 		{
-			auto &&inspect = scriptLoader.Load(modManager.scriptProvider.GetScriptID("#lua.inspect"))->GetTable()["inspect"];
+			auto &&a = modManager.scriptProvider.GetScriptIDByName("#lua.inspect");
+			auto &&b = scriptLoader.Load(a);
+			auto &&inspect = b->GetTable().raw_get<sol::function>("inspect");
 			String string;
 			for (auto &&arg : args)
 			{
@@ -161,13 +158,13 @@ void ScriptEngine::InitScriptFunc(ScriptID scriptID, const StringView scriptName
 				{
 					string.append("\t");
 				}
-				string.append(inspect(arg.as<sol::table>()));
+				string.append(inspect(arg));
 			}
-			log->Debug(Move(string));
+			log->Debug("{}", string.c_str());
 		}
 		catch (const std::exception &e)
 		{
-			OnFatalException(e);
+			UnhandledCppException(_log, e);
 			throw;
 		}
 	};
@@ -176,12 +173,12 @@ void ScriptEngine::InitScriptFunc(ScriptID scriptID, const StringView scriptName
 	{
 		try
 		{
-			auto &&targetScriptID = modManager.scriptProvider.GetScriptID(targetScriptName);
+			auto &&targetScriptID = modManager.scriptProvider.GetScriptIDByName(targetScriptName);
 
 			auto &&targetModule = scriptLoader.Load(targetScriptID);
 			if (!targetModule)
 			{
-				luaL_error(_lua, "Script module '%s' not found", targetScriptName);
+				luaL_error(_lua, "Script module '{}' not found", targetScriptName);
 				return sol::nil;
 			}
 
@@ -191,7 +188,7 @@ void ScriptEngine::InitScriptFunc(ScriptID scriptID, const StringView scriptName
 		}
 		catch (const std::exception &e)
 		{
-			OnFatalException(e);
+			UnhandledCppException(_log, e);
 			throw;
 		}
 	};

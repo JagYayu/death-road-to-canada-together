@@ -72,9 +72,9 @@ namespace tudov
 		return String(scriptName).substr(0, pos);
 	}
 
-	inline String ReadFileToString(const String &file)
+	inline String ReadFileToString(const String &file, bool binary = false)
 	{
-		std::ifstream stream{file};
+		std::ifstream stream{file, binary ? std::ios::binary : std::ios::in};
 		if (!stream)
 		{
 			throw std::runtime_error("Failed to open file: " + file);

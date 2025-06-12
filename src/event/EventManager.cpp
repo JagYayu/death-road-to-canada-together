@@ -2,46 +2,116 @@
 
 #include "AbstractEvent.h"
 #include "RuntimeEvent.h"
+#include "mod/ModManager.h"
 #include "mod/ScriptEngine.h"
 #include "mod/ScriptLoader.h"
-#include "program/Engine.h"
+#include "sol/forward.hpp"
 #include "util/Defs.h"
+#include "util/Utils.hpp"
 
 using namespace tudov;
 
-void EventManager::RegisterScriptGlobal(ScriptEngine &scriptEngine)
+EventManager::EventManager(ModManager &modManager)
+    : modManager(modManager),
+      _log(Log::Get("EventManager")),
+      _latestEventID(),
+      update(MakeShared<RuntimeEvent>(AllocEventID("Update"))),
+      render(MakeShared<RuntimeEvent>(AllocEventID("Render")))
 {
-	auto &&table = scriptEngine.CreateTable(0);
+	_runtimeEvents.emplace(update->GetID(), update);
+	_runtimeEvents.emplace(render->GetID(), render);
+}
+
+EventManager::~EventManager()
+{
+}
+
+EventID EventManager::AllocEventID(StringView eventName) noexcept
+{
+	{
+		auto &&it = _eventName2ID.find(eventName);
+		if (it != _eventName2ID.end())
+		{
+			_log->Warn("Event name already exists: {}", eventName);
+			return it->second;
+		}
+	}
+
+	_latestEventID++;
+	EventID id = _latestEventID;
+	auto &&name = _eventID2Name.emplace(id, String(eventName)).first->second;
+	_eventName2ID.emplace(name, id);
+	return id;
+}
+
+void EventManager::DeallocEventID(EventID eventID) noexcept
+{
+	auto &&it = _eventID2Name.find(eventID);
+	if (it != _eventID2Name.end())
+	{
+		_eventName2ID.erase(it->second);
+		_eventID2Name.erase(it);
+	}
+}
+
+void EventManager::OnScriptsLoaded()
+{
+	Vector<Reference<LoadtimeEvent>> invalidEvents;
+
+	for (auto &&[eventID, loadtimeEvent] : _loadtimeEvents)
+	{
+		auto &&it = _runtimeEvents.find(eventID);
+		if (it != _runtimeEvents.end())
+		{
+			_log->Error("Duplicated registering event named \"{}\": '{}' -> '{}'",
+			            GetEventNameByID(eventID).value(),
+			            modManager.scriptProvider.GetScriptNameByID(loadtimeEvent->GetScriptID()).value(),
+			            modManager.scriptProvider.GetScriptNameByID(it->second->GetScriptID()).value());
+		}
+		else
+		{
+			auto &&runtimeEvent = MakeShared<RuntimeEvent>(loadtimeEvent->ToRuntime());
+			_runtimeEvents.emplace(runtimeEvent->GetID(), runtimeEvent);
+		}
+	}
+
+	_loadtimeEvents = {};
+}
+
+void EventManager::Initialize()
+{
+	auto &&table = modManager.scriptEngine.CreateTable(0);
 
 	table["add"] = [&](const sol::table &args)
 	{
 		try
 		{
-			auto &&loadingScript = scriptEngine.scriptLoader.GetLoadingScript();
+			auto &&loadingScript = modManager.scriptEngine.scriptLoader.GetLoadingScript();
 			if (!loadingScript)
 			{
-				scriptEngine.ThrowError("Failed to add event handler: must add at script load time");
+				modManager.scriptEngine.ThrowError("Failed to add event handler: must add at script load time");
 				return;
 			}
 
 			auto &&argEvent = args["event"];
 			if (!argEvent.valid() || !argEvent.is<sol::string_view>())
 			{
-				scriptEngine.ThrowError(Format("Failed to add event handler: invalid `event` type, expected string, got {}", GetLuaTypeStringView(argEvent.get_type())));
+				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid `event` type, expected string, got {}", GetLuaTypeStringView(argEvent.get_type())));
 				return;
 			}
 			auto &&argFunc = args["func"];
 			if (!argFunc.valid() || !argFunc.is<sol::function>())
 			{
-				scriptEngine.ThrowError(Format("Failed to add event handler: invalid `func` type, expected function, got {}", GetLuaTypeStringView(argFunc.get_type())));
+				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid `func` type, expected function, got {}", GetLuaTypeStringView(argFunc.get_type())));
 				return;
 			}
 
 			auto &&eventName = argEvent.get<sol::string_view>();
-			auto &&event = TryGetRegistryEvent(eventName);
+			auto &&eventID = GetEventIDByName(eventName);
+			auto &&event = TryGetRegistryEvent(eventID);
 			if (!event.has_value())
 			{
-				scriptEngine.ThrowError(Format("Failed to add event handler: event named '{}' not found", eventName));
+				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: event named '{}' not found", eventName));
 				return;
 			}
 
@@ -57,7 +127,7 @@ void EventManager::RegisterScriptGlobal(ScriptEngine &scriptEngine)
 			}
 			else
 			{
-				scriptEngine.ThrowError(Format("Failed to add event handler: invalid `order` type, nil or string expected, got {}", GetLuaTypeStringView(argOrder.get_type())));
+				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid `order` type, nil or string expected, got {}", GetLuaTypeStringView(argOrder.get_type())));
 				return;
 			}
 
@@ -77,7 +147,7 @@ void EventManager::RegisterScriptGlobal(ScriptEngine &scriptEngine)
 			}
 			else
 			{
-				scriptEngine.ThrowError(Format("Failed to add event handler: invalid `key` type, nil or number or string expected, got {}", GetLuaTypeStringView(argKey.get_type())));
+				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid `key` type, nil or number or string expected, got {}", GetLuaTypeStringView(argKey.get_type())));
 				return;
 			}
 
@@ -93,14 +163,14 @@ void EventManager::RegisterScriptGlobal(ScriptEngine &scriptEngine)
 			}
 			else
 			{
-				scriptEngine.ThrowError(Format("Failed to add event handler: invalid `sequence` type, nil or string expected, got {}", GetLuaTypeStringView(argOrder.get_type())));
+				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid `sequence` type, nil or string expected, got {}", GetLuaTypeStringView(argOrder.get_type())));
 				return;
 			}
 
 			event->get().Add(AddHandlerArgs{
-			    .scriptName = String(engine.modManager.scriptProvider.GetScriptName(loadingScript).value()),
-			    .event = String(eventName),
-			    .function = {argEvent.get<sol::function>()},
+			    .eventID = eventID,
+			    .scriptID = loadingScript,
+			    .function = EventHandler::Function(argFunc.get<sol::function>()), // {argEvent.get<sol::function>()},
 			    .order = Move(order),
 			    .key = Move(key),
 			    .sequence = Move(sequence),
@@ -108,98 +178,123 @@ void EventManager::RegisterScriptGlobal(ScriptEngine &scriptEngine)
 		}
 		catch (const std::exception &e)
 		{
-			// OnFatalException(e);
+			UnhandledCppException(_log, e);
 			throw;
 		}
 	};
 
-	scriptEngine.Set("Events", scriptEngine.MakeReadonlyGlobal(table));
-}
+	modManager.scriptEngine.Set("Events", modManager.scriptEngine.MakeReadonlyGlobal(table));
 
-EventManager::EventManager(Engine &engine)
-    : engine(engine),
-      _staticEvents{update, render},
-      update("Update"),
-      render("Render")
-{
-}
-
-EventManager::~EventManager()
-{
-	if (_initialized)
+	_onPreLoadAllScriptsHandlerID = modManager.scriptEngine.scriptLoader.onPreLoadAllScripts += [&]()
 	{
-		engine.modManager.scriptEngine.scriptLoader.onPreLoadAllScripts -= _onPreLoadScriptHandlerID;
-	}
-}
-
-void EventManager::OnPreLoadScripts()
-{
-	_loadtimeEvents.clear();
-	_runtimeEvents.clear();
-	for (auto &&event : _staticEvents)
-	{
-		event.get().ClearScriptsHandlers();
-	}
-}
-
-void EventManager::OnPreLoadScript(StringView scriptName)
-{
-	MapRemoveIf(_runtimeEvents, [&](const Pair<StringView, RuntimeEvent> &pair)
-	{
-		return pair.second.GetScriptName() == scriptName;
-	});
-}
-
-void EventManager::OnScriptsLoaded()
-{
-	Vector<Reference<LoadtimeEvent>> invalidEvents;
-
-	for (auto &&[name, loadtimeEvent] : _loadtimeEvents)
-	{
-		if (_runtimeEvents.contains(name))
+		for (auto it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 		{
-			auto &&runtimeEvent = loadtimeEvent.ToRuntime();
-			_runtimeEvents.emplace(runtimeEvent.GetName(), runtimeEvent);
+			auto &&runtimeEvent = it->second;
+			if (runtimeEvent->GetScriptID())
+			{
+				DeallocEventID(it->first);
+				it = _runtimeEvents.erase(it);
+			}
+			else
+			{
+				++it;
+			}
 		}
-	}
-}
 
-void EventManager::Initialize()
-{
-	if (_initialized)
-	{
-		return;
-	}
-
-	_onPreLoadScriptHandlerID = engine.modManager.scriptEngine.scriptLoader.onPreLoadAllScripts += [&]()
-	{
-		OnPreLoadScripts();
+		for (auto &&event : _staticEvents)
+		{
+			event->ClearScriptsHandlers();
+		}
 	};
 
-	auto &&lua = engine.modManager.scriptEngine.GetState();
+	_onPostLoadAllScriptsHandlerID = modManager.scriptEngine.scriptLoader.onPostLoadAllScripts += [&]()
+	{
+		OnScriptsLoaded();
+	};
 
-	auto &&usertype = lua.new_usertype<EventManager>("EventManager");
+	_onPreHotReloadScriptsHandlerID = modManager.scriptEngine.scriptLoader.onPreHotReloadScripts += [this](const Vector<ScriptID> &scriptIDs)
+	{
+		for (auto it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
+		{
+			for (auto scriptID : scriptIDs)
+			{
+				auto &&event = it->second;
+				if (event->GetScriptID() == scriptID)
+				{
+					DeallocEventID(it->first);
+					it = _runtimeEvents.erase(it);
+				}
+				else
+				{
+					++it;
+				}
+			}
+		}
 
-	_initialized = true;
+		for (auto &&[_, event] : _runtimeEvents)
+		{
+			event->ClearInvalidScriptsHandlers(modManager.scriptProvider);
+		}
+	};
+
+	_onPreHotReloadScriptsHandlerID = modManager.scriptEngine.scriptLoader.onPostHotReloadScripts += [&](const Vector<ScriptID> &scriptIDs)
+	{
+		OnScriptsLoaded();
+	};
 }
 
-Optional<Reference<AbstractEvent>> EventManager::TryGetRegistryEvent(StringView eventName)
+void EventManager::Deinitialize()
 {
+	modManager.scriptEngine.scriptLoader.onPreLoadAllScripts -= _onPreLoadAllScriptsHandlerID;
+	modManager.scriptEngine.scriptLoader.onPostLoadAllScripts -= _onPostLoadAllScriptsHandlerID;
+	modManager.scriptEngine.scriptLoader.onPreHotReloadScripts -= _onPreHotReloadScriptsHandlerID;
+	modManager.scriptEngine.scriptLoader.onPostHotReloadScripts -= _onPreHotReloadScriptsHandlerID;
+}
+
+EventID EventManager::GetEventIDByName(StringView eventName) const noexcept
+{
+	auto &&it = _eventName2ID.find(String(eventName));
+	if (it == _eventName2ID.end())
 	{
-		auto &&it = _loadtimeEvents.find(eventName);
+		return false;
+	}
+	return it->second;
+}
+
+Optional<StringView> EventManager::GetEventNameByID(EventID eventID) const noexcept
+{
+	auto &&it = _eventID2Name.find(eventID);
+	if (it == _eventID2Name.end())
+	{
+		return null;
+	}
+	return it->second;
+}
+
+bool EventManager::IsValidEventID(EventID eventID) const noexcept
+{
+	return _eventID2Name.contains(eventID);
+}
+
+Optional<Reference<AbstractEvent>> EventManager::TryGetRegistryEvent(EventID eventID)
+{
+	if (!eventID)
+	{
+		return null;
+	}
+	{
+		auto &&it = _loadtimeEvents.find(eventID);
 		if (it != _loadtimeEvents.end())
 		{
-			return it->second;
+			return *(it->second);
 		}
 	}
-
 	{
-		auto &&it = _runtimeEvents.find(eventName);
+		auto &&it = _runtimeEvents.find(eventID);
 		if (it != _runtimeEvents.end())
 		{
-			return it->second;
+			return *(it->second);
 		}
 	}
-
 	return null;
 }

@@ -18,16 +18,17 @@ std::condition_variable Log::_cv;
 std::atomic<bool> Log::_exit = false;
 Log Log::instance{"Log"};
 
-SharedPtr<Log> Log::Get(const String &module)
+SharedPtr<Log> Log::Get(StringView module)
 {
-	auto &&it = _logInstances.find(module);
+	auto &&str = String(module);
+	auto &&it = _logInstances.find(str);
 	if (it != _logInstances.end())
 	{
 		return it->second;
 	}
 
-	auto &&log = MakeShared<Log>(module);
-	_logInstances.emplace(module, log);
+	auto &&log = MakeShared<Log>(str);
+	_logInstances.try_emplace(str, log);
 	return log;
 }
 
@@ -119,10 +120,10 @@ void Log::Process()
 bool Log::CanOutput(StringView verb) const
 {
 
-	return false;
+	return true;
 }
 
-void Log::Output(StringView verb, const String &str) const
+void Log::Output(StringView verb, const StringView &str) const
 {
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
@@ -130,7 +131,7 @@ void Log::Output(StringView verb, const String &str) const
 		    .time = std::chrono::system_clock::now(),
 		    .verbosity = verb,
 		    .module = _module,
-		    .message = str,
+		    .message = String(str),
 		});
 	}
 	_cv.notify_one();

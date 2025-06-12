@@ -72,6 +72,8 @@ void UnpackagedMod::Load()
 
 	_fileWatcher = MakeShared<filewatch::FileWatch<String>>(_directory.string(), [&](const String &filePath, const filewatch::Event changeType)
 	{
+		auto &&scriptProvider = modManager.scriptProvider;
+
 		if (IsScript(filePath))
 		{
 			switch (changeType)
@@ -82,30 +84,27 @@ void UnpackagedMod::Load()
 				break;
 			case filewatch::Event::modified:
 			{
-				log->Debug("Script modified, hot reloading ...");
+				log->Debug("Script modified");
 
 				auto &&relative = std::filesystem::relative(filePath, GetScriptsDirectory());
 				auto &&scriptName = FilePathToLuaScriptName(Format("{}.{}", _config.namespace_, relative.string()));
-				auto &&scriptID = modManager.scriptProvider.GetScriptID(scriptName);
-				auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
+				// auto &&scriptID = scriptProvider.GetScriptIDByName(scriptName);
+				// auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
 
-				auto &&unloadedScripts = scriptLoader.Unload(scriptID);
-				modManager.scriptProvider.RemoveScript(scriptID);
+				// auto &&pendingScripts = scriptLoader.Unload(scriptID);
+				// scriptProvider.RemoveScript(scriptID);
 
 				std::ifstream ins{_directory / filePath};
 				std::ostringstream oss;
 				oss << ins.rdbuf();
 				ins.close();
 
-				scriptID = modManager.scriptProvider.AddScript(scriptName, oss.str());
-				scriptLoader.Load(scriptID);
-				for (auto &&dependScriptID : unloadedScripts)
-				{
-					scriptLoader.Load(dependScriptID);
-				}
-				scriptLoader.ProcessImmediateLoads();
+				// scriptID = scriptProvider.AddScript(scriptName, oss.str());
+				// pendingScripts.emplace_back(scriptID);
+				// scriptLoader.HotReload(pendingScripts);
 
-				log->Debug("Hot reloaded");
+				modManager.HotReloadScriptPending(scriptName, oss.str());
+
 				break;
 			}
 			case filewatch::Event::renamed_old:
@@ -118,13 +117,13 @@ void UnpackagedMod::Load()
 	auto &&namespace_ = GetNamespace();
 	if (namespace_.empty())
 	{
-		log->Debug(Format("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.string(), StringView(namespace_)));
+		log->Debug("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.string(), StringView(namespace_));
 		return;
 	}
 
 	auto &&dir = _directory.string();
 
-	log->Debug(Format("Loading unpacked mod from \"{}\" ...", dir));
+	log->Debug("Loading unpacked mod from \"{}\" ...", dir);
 
 	UpdateFilePatterns();
 
@@ -151,7 +150,7 @@ void UnpackagedMod::Load()
 		}
 	}
 
-	log->Debug(Format("Loaded unpacked mod from \"{}\"", dir));
+	log->Debug("Loaded unpacked mod from \"{}\"", dir);
 }
 
 void UnpackagedMod::Unload()
@@ -164,12 +163,12 @@ void UnpackagedMod::Unload()
 
 	auto &&dir = _directory.string();
 
-	log->Debug(Format("Unloading unpackaged mod from \"{}\"", dir));
+	log->Debug("Unloading unpackaged mod from \"{}\"", dir);
 
 	for (auto &&scriptID : _scripts)
 	{
 		modManager.scriptProvider.RemoveScript(scriptID);
 	}
 
-	log->Debug(Format("Unloaded unpackaged mod \"{}\"", dir));
+	log->Debug("Unloaded unpackaged mod \"{}\"", dir);
 }

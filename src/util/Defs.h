@@ -249,5 +249,6 @@ namespace tudov
 
 	// engine types
 
+	using EventID = UInt64;
 	using ScriptID = UInt64;
 } // namespace tudov

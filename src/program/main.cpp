@@ -47,20 +47,20 @@ void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority
 	{
 	case SDL_LOG_PRIORITY_TRACE:
 	case SDL_LOG_PRIORITY_VERBOSE:
-		log->Trace(message);
+		log->Trace("{}", message);
 	case SDL_LOG_PRIORITY_DEBUG:
-		log->Debug(message);
+		log->Debug("{}", message);
 		break;
 	case SDL_LOG_PRIORITY_INFO:
-		log->Info(message);
+		log->Info("{}", message);
 		break;
 	case SDL_LOG_PRIORITY_WARN:
-		log->Warn(message);
+		log->Warn("{}", message);
 		break;
 	case SDL_LOG_PRIORITY_ERROR:
-		log->Error(message);
+		log->Error("{}", message);
 	case SDL_LOG_PRIORITY_CRITICAL:
-		log->Fatal(message);
+		log->Fatal("{}", message);
 		break;
 	default:
 		break;
@@ -73,7 +73,7 @@ int main(int argc, char **args)
 	SDL_SetLogPriorities(SDL_LOG_PRIORITY_INVALID);
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
 	{
-		SDL_Log("SDL_Init failed: %s", SDL_GetError());
+		SDL_Log("SDL_Init failed: {}", SDL_GetError());
 		return -1;
 	}
 

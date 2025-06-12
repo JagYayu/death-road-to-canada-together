@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Log.h"
 #include "util/Defs.h"
 
 #include "sol/sol.hpp"
@@ -27,6 +28,7 @@ namespace tudov
 	{
 		switch (luaType)
 		{
+		case sol::type::none:
 		case sol::type::lua_nil:
 			return "nil";
 		case sol::type::string:
@@ -40,17 +42,12 @@ namespace tudov
 		case sol::type::function:
 			return "function";
 		case sol::type::userdata:
+		case sol::type::lightuserdata:
 			return "userdata";
 		case sol::type::table:
 			return "table";
-		case sol::type::none:
-			return "sol::type::none";
-		case sol::type::lightuserdata:
-			return "sol::type::lightuserdata";
-		case sol::type::poly:
-			return "sol::type::poly";
 		default:
-			return "sol::type";
+			return "unknown";
 		}
 	}
 
@@ -61,12 +58,22 @@ namespace tudov
 	} && (std::is_same_v<T, std::map<typename T::key_type, typename T::mapped_type, typename T::key_compare, typename T::allocator_type>> || std::is_same_v<T, std::unordered_map<typename T::key_type, typename T::mapped_type, typename T::hasher, typename T::key_equal, typename T::allocator_type>>);
 
 	template <TypenameMapLike TMap, typename TPred>
-	void MapRemoveIf(TMap &map, TPred pred)
+	void MapEraseIf(TMap &map, const TPred &pred)
+	{
+		MapEraseIf(map, pred, [](const auto &, const auto &) {});
+	}
+
+	template <TypenameMapLike TMap, typename TPred, typename TCallback>
+	[[deprecated("nah")]]
+	void MapEraseIf(TMap &map, const TPred &pred, const TCallback &callback)
 	{
 		for (auto it = map.begin(); it != map.end();)
 		{
-			if (pred(*it))
+			auto &&key = it->first;
+			auto &&value = it->second;
+			if (pred(key, value))
 			{
+				callback(key, value);
 				it = map.erase(it);
 			}
 			else
@@ -74,5 +81,10 @@ namespace tudov
 				++it;
 			}
 		}
+	}
+
+	FORCEINLINE void UnhandledCppException(SharedPtr<Log> &log, const std::exception &e)
+	{
+		log->Fatal("Unhandled C++ exception occurred: {}", e.what());
 	}
 } // namespace tudov

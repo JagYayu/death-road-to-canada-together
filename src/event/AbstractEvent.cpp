@@ -4,17 +4,18 @@
 
 using namespace tudov;
 
-AbstractEvent::AbstractEvent(const String &scriptName, const String &name)
-    : _scriptName(scriptName),
-      _name(name)
+AbstractEvent::AbstractEvent(EventID eventID, ScriptID scriptID)
+    : _id(eventID),
+      _scriptID(scriptID)
 {
-}
-const String &AbstractEvent::GetName() const noexcept
-{
-	return _name;
 }
 
-const String &AbstractEvent::GetScriptName() const noexcept
+EventID AbstractEvent::GetID() const noexcept
 {
-	return _scriptName;
+	return _id;
+}
+
+ScriptID AbstractEvent::GetScriptID() const noexcept
+{
+	return _scriptID;
 }

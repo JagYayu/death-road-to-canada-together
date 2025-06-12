@@ -10,15 +10,15 @@ namespace tudov
 	class AbstractEvent
 	{
 	  protected:
-		String _scriptName;
-		String _name;
-		Vector<String> _orders;
+		EventID _id;
+		ScriptID _scriptID;
 
-		AbstractEvent(const String &scriptName, const String &name);
+		explicit AbstractEvent(EventID eventID, ScriptID scriptID = false);
 
 	  public:
-		const String &GetName() const noexcept;
-		const String &GetScriptName() const noexcept;
+		void IsValid() const noexcept;
+		EventID GetID() const noexcept;
+		ScriptID GetScriptID() const noexcept;
 
 		virtual void Add(const AddHandlerArgs &args) = 0;
 	};
