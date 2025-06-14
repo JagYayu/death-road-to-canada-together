@@ -1,17 +1,19 @@
+#pragma once
+
 #include "IDebugElement.h"
 
 namespace tudov
 {
-	class EventManager;
+	class Engine;
 
 	class DebugProfiler : public IDebugElement
 	{
 		UInt64 _prevPrefCounter;
 
 	  public:
-		EventManager &eventManager;
+		Engine &engine;
 
-		DebugProfiler(EventManager &eventManager) noexcept;
+		DebugProfiler(Engine &engine) noexcept;
 
 		StringView GetName() noexcept override;
 		void UpdateAndRender() noexcept override;

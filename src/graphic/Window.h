@@ -22,6 +22,10 @@ namespace tudov
 
 	  private:
 		SDL_Window *_window;
+		UInt32 _prevTick;
+		UInt32 _frame;
+		float _framerate;
+		float framerateTimer;
 
 	  public:
 		Engine &engine;
@@ -31,6 +35,8 @@ namespace tudov
 		Window(Engine &engine);
 
 		SDL_Window *GetHandle();
+
+		float GetFramerate() const noexcept;
 
 		void Initialize();
 		void PoolEvents();

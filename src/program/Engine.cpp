@@ -1,6 +1,5 @@
 #include "Engine.h"
 
-#include "SDL3/SDL_timer.h"
 #include "resource/ResourceType.hpp"
 #include "util/Defs.h"
 #include "util/Log.h"
@@ -35,8 +34,6 @@ void Engine::Run(const MainArgs &args)
 		window.PoolEvents();
 		modManager.Update();
 		window.Render();
-
-		SDL_DelayNS(1);
 	}
 
 	_log->Debug("Deinitializing engine ...");

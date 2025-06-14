@@ -1,9 +1,9 @@
 #include "DebugProfiler.h"
 
 #include "EventProfiler.h"
-#include "SDL3/SDL_timer.h"
 #include "event/EventManager.h"
 #include "event/RuntimeEvent.h"
+#include "program/Engine.h"
 #include "util/Defs.h"
 #include "util/Utils.hpp"
 
@@ -13,8 +13,8 @@
 
 using namespace tudov;
 
-DebugProfiler::DebugProfiler(EventManager &eventManager) noexcept
-    : eventManager(eventManager)
+DebugProfiler::DebugProfiler(Engine &engine) noexcept
+    : engine(engine)
 {
 }
 
@@ -40,15 +40,11 @@ void DebugProfiler::UpdateAndRender() noexcept
 {
 	if (ImGui::Begin("Event Profilers"))
 	{
-		{
-			Uint64 prefCounter = SDL_GetPerformanceCounter();
-			double delta = (double)(prefCounter - _prevPrefCounter) / (double)SDL_GetPerformanceFrequency();
-			_prevPrefCounter = prefCounter;
-			ImGui::Text("FPS: %.1f", delta > 0.0 ? 1.0 / delta : 0.0);
-		}
+		ImGui::Text("FPS: %.1f", engine.window.GetFramerate());
 
 		Vector<DebugProfilerEntry> entries{};
 
+		auto &&eventManager = engine.modManager.eventManager;
 		for (auto &&it = eventManager.BeginRuntimeEvents(); it != eventManager.EndRuntimeEvents(); ++it)
 		{
 			auto &&event = *it->second;

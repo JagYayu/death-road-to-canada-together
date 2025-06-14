@@ -11,6 +11,7 @@
 		}
 	},
 	"window": {
+		"framelimit": 60,
 		"fullscreen": false,
 		"height": 720,
 		"title": "DR2C",

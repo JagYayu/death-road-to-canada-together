@@ -29,6 +29,7 @@ namespace tudov
 
 	using Char = char;
 	using Int32 = std::int32_t;
+	using Int64 = std::int64_t;
 	using UInt32 = std::uint32_t;
 	using UInt64 = std::uint64_t;
 	using Nullptr = std::nullptr_t;

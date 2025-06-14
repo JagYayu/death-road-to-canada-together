@@ -34,6 +34,7 @@ namespace tudov
 		Vector<String> GetMountDirectories() noexcept;
 		UnorderedMap<String, ResourceType> GetMountFiles() noexcept;
 		void GetDebugProfiling() noexcept;
+		UInt32 GetWindowFramelimit() noexcept;
 		StringView GetWindowTitle() noexcept;
 		UInt32 GetWindowWidth() noexcept;
 		UInt32 GetWindowHeight() noexcept;

@@ -14,7 +14,7 @@ using namespace tudov;
 DebugManager::DebugManager(Window &window) noexcept
     : window(window),
       console(MakeShared<DebugConsole>()),
-      profiler(MakeShared<DebugProfiler>(window.engine.modManager.eventManager)),
+      profiler(MakeShared<DebugProfiler>(window.engine)),
       _elements(),
       _shownElements()
 {

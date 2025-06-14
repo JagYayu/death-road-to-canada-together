@@ -11,6 +11,7 @@ using namespace tudov;
 
 constexpr const char *keyDirectories = "directories";
 constexpr const char *keyFiles = "files";
+constexpr const char *keyFramelimit = "framelimit";
 constexpr const char *keyFullscreen = "fullscreen";
 constexpr const char *keyHeight = "height";
 constexpr const char *keyLog = "log";
@@ -19,6 +20,7 @@ constexpr const char *keyTitle = "title";
 constexpr const char *keyWidth = "width";
 constexpr const char *keyWindow = "window";
 
+static const auto valueWindowFramelimit = 60;
 static const auto valueWindowFullscreen = false;
 static const auto valueWindowHeight = 720;
 static const auto valueWindowTitle = "DR2C Together";
@@ -157,6 +159,18 @@ UnorderedMap<String, ResourceType> EngineConfig::GetMountFiles() noexcept
 		mount[keyFiles] = files;
 	}
 	return files;
+}
+
+UInt32 EngineConfig::GetWindowFramelimit() noexcept
+{
+	auto &&window = GetWindow(_config);
+	auto &&framelimit = window[keyFramelimit];
+	if (!framelimit.is_string())
+	{
+		framelimit = valueWindowFramelimit;
+		window[keyFramelimit] = framelimit;
+	}
+	return framelimit;
 }
 
 StringView EngineConfig::GetWindowTitle() noexcept

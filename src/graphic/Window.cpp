@@ -1,7 +1,9 @@
 #include "Window.h"
 
+#include "SDL3/SDL_timer.h"
 #include "imgui_impl_sdl3.h"
 #include "program/Engine.h"
+#include "util/Defs.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
@@ -14,13 +16,21 @@ using namespace tudov;
 Window::Window(Engine &engine)
     : engine(engine),
       debugManager(*this),
-      renderer(*this)
+      renderer(*this),
+      _prevTick(),
+      _frame(),
+      _framerate()
 {
 }
 
 SDL_Window *Window::GetHandle()
 {
 	return _window;
+}
+
+float Window::GetFramerate() const noexcept
+{
+	return _framerate;
 }
 
 void Window::Initialize()
@@ -151,8 +161,20 @@ void Window::PoolEvents()
 
 void Window::Render()
 {
+	++_frame;
+
+	Uint64 target = 1e9 / engine.config.GetWindowFramelimit();
+	Uint64 begin = SDL_GetTicksNS();
+
 	renderer.Begin();
 	engine.modManager.eventManager.render->Invoke();
 	debugManager.UpdateAndRender();
 	renderer.End();
+
+	Uint64 delta = SDL_GetTicksNS() - begin;
+	if (delta < target)
+	{
+		SDL_DelayNS(target - delta);
+	}
+	_framerate = 1e9 / double(SDL_GetTicksNS() - begin);
 }
