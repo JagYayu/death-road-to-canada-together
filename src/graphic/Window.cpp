@@ -1,16 +1,19 @@
 #include "Window.h"
 
-#include "SDL3/SDL_log.h"
-#include "SDL3/SDL_video.h"
+#include "imgui_impl_sdl3.h"
 #include "program/Engine.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_log.h>
+#include <SDL3/SDL_video.h>
+#include <imgui.h>
 
 using namespace tudov;
 
 Window::Window(Engine &engine)
     : engine(engine),
+      debugManager(*this),
       renderer(*this)
 {
 }
@@ -33,6 +36,8 @@ void Window::Initialize()
 	}
 	SDL_SetWindowPosition(_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
+	ImGui::GetIO().DisplaySize = ImVec2(width, height);
+
 	renderer.Initialize();
 }
 
@@ -43,6 +48,8 @@ void Window::PoolEvents()
 	SDL_Event e;
 	while (SDL_PollEvent(&e))
 	{
+		ImGui_ImplSDL3_ProcessEvent(&e);
+
 		switch (e.type)
 		{
 		// 窗口事件
@@ -144,6 +151,8 @@ void Window::PoolEvents()
 
 void Window::Render()
 {
+	renderer.Begin();
 	engine.modManager.eventManager.render->Invoke();
-	renderer.Render();
+	debugManager.UpdateAndRender();
+	renderer.End();
 }

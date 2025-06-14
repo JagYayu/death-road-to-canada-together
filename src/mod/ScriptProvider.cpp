@@ -110,7 +110,7 @@ Optional<StringView> ScriptProvider::GetScriptNameByID(ScriptID scriptID) const 
 	{
 		return it->second.name;
 	}
-	return null;
+	return nullopt;
 }
 
 ScriptID ScriptProvider::AddScript(StringView scriptName, StringView scriptCode) noexcept
@@ -169,7 +169,7 @@ const String &ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
 // 		return resolvedScriptName;
 // 	}
 
-// 	return null;
+// 	return nullopt;
 // }
 
 UnorderedMap<ScriptID, ScriptProvider::Entry>::const_iterator ScriptProvider::begin() const

@@ -12,8 +12,6 @@ namespace tudov
 
 	class Renderer
 	{
-		friend Texture;
-		
 	  private:
 		struct Draw
 		{
@@ -30,10 +28,14 @@ namespace tudov
 	  public:
 		Renderer(Window &window);
 
-		void Initialize()noexcept;
+		SDL_Renderer *GetRaw() noexcept;
+		const SDL_Renderer *GetRaw() const noexcept;
+
+		void Initialize() noexcept;
 
 		void DrawSprite(ResourceID texID, Number x, Number y, Number w, Number h, Number tw, Number th);
 
-		void Render();
+		void Begin();
+		void End();
 	};
 } // namespace tudov

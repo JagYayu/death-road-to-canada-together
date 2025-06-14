@@ -1,10 +1,10 @@
 #pragma once
 
-#include "lib/json.hpp"
 #include "util/Defs.h"
 
 #include <compare>
 #include <iostream>
+#include <json.hpp>
 #include <sstream>
 #include <string>
 #include <vector>

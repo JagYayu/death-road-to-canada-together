@@ -45,14 +45,23 @@ const sol::table &ScriptLoader::Module::GetTable()
 	return _table;
 }
 
-const sol::table &ScriptLoader::Module::RawLoad()
+const sol::table &ScriptLoader::Module::RawLoad(ScriptLoader &scriptLoader)
 {
 	if (_fullyLoaded)
 	{
 		return _table;
 	}
 
+	assert(_scriptID);
+	auto previousLoadingScript = scriptLoader._loadingScript;
+	scriptLoader._loadingScript = _scriptID;
 	auto &&result = _func();
+	if (result.get<sol::object>(1))
+	{
+		scriptLoader._log->Warn("'{}': Does not support receiving multiple return values", scriptLoader.GetLoadingScriptName().value());
+	}
+
+	scriptLoader._loadingScript = previousLoadingScript;
 	_table = result.get<sol::object>(0);
 	_fullyLoaded = true;
 	return _table;
@@ -78,6 +87,11 @@ const sol::table &ScriptLoader::Module::LazyLoad(ScriptLoader &scriptLoader)
 	{
 		return FullLoad(scriptLoader)[key];
 	};
+	metatable["__newindex"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	{
+		scriptLoader.scriptEngine.ThrowError("Attempt to modify readonly table");
+		return;
+	};
 
 	return _table;
 }
@@ -90,7 +104,7 @@ const sol::table &ScriptLoader::Module::FullLoad(ScriptLoader &scriptLoader)
 	}
 
 	assert(_scriptID);
-	auto &&previousLoadingScript = scriptLoader._loadingScript;
+	auto previousLoadingScript = scriptLoader._loadingScript;
 	scriptLoader._loadingScript = _scriptID;
 
 	auto &&scriptEngine = scriptLoader.scriptEngine.modManager.scriptEngine;
@@ -100,10 +114,9 @@ const sol::table &ScriptLoader::Module::FullLoad(ScriptLoader &scriptLoader)
 
 	_table[sol::metatable_key] = metatable;
 
-	metatable["__newindex"] = []() {};
-
 	sol::table tab;
 	auto &&result = _func();
+
 	if (!result.valid())
 	{
 		sol::error cc = result;
@@ -112,14 +125,32 @@ const sol::table &ScriptLoader::Module::FullLoad(ScriptLoader &scriptLoader)
 	}
 	else
 	{
+		if (result.get<sol::object>(1))
+		{
+			scriptLoader._log->Warn("'{}': Does not support receiving multiple return values", scriptLoader.GetLoadingScriptName().value());
+		}
+
 		auto &&value = result.get<sol::object>(0);
 		if (value.get_type() == sol::type::table)
 		{
 			tab = value.as<sol::table>();
 		}
+		else
+		{
+			if (value.get_type() != sol::type::nil)
+			{
+				scriptLoader._log->Warn("'{}': Does not support receiving non-table values", scriptLoader.GetLoadingScriptName().value());
+			}
+			tab = scriptLoader.scriptEngine.CreateTable();
+		}
 	}
 
 	metatable["__index"] = tab;
+	metatable["__newindex"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	{
+		scriptLoader.scriptEngine.ThrowError("Attempt to modify readonly module");
+		return;
+	};
 
 	scriptLoader._loadingScript = previousLoadingScript;
 	_fullyLoaded = true;
@@ -145,9 +176,14 @@ ScriptLoader::~ScriptLoader() noexcept
 	// }
 }
 
-ScriptID ScriptLoader::GetLoadingScript() const noexcept
+ScriptID ScriptLoader::GetLoadingScriptID() const noexcept
 {
 	return _loadingScript;
+}
+
+Optional<StringView> ScriptLoader::GetLoadingScriptName() const noexcept
+{
+	return scriptEngine.modManager.scriptProvider.GetScriptNameByID(_loadingScript);
 }
 
 void GetScriptDependencies(const UnorderedMap<ScriptID, UnorderedSet<ScriptID>> &scriptDependencies, ScriptID scriptID, Vector<ScriptID> &sources, UnorderedSet<ScriptID> &visited)
@@ -246,7 +282,7 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, String
 	auto &&result = scriptEngine.modManager.scriptEngine.LoadFunction(String(scriptName), scriptCode);
 	if (!result.valid())
 	{
-		_log->Debug("Failed to load script \"{}\": {}", scriptID, result.get<sol::error>().what());
+		_log->Debug("Failed to load script <{}>: {}", scriptID, result.get<sol::error>().what());
 
 		return nullptr;
 	}
@@ -258,7 +294,7 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, String
 
 	if (ScriptProvider::IsStaticScript(scriptName))
 	{
-		module->RawLoad();
+		module->RawLoad(*this);
 		_log->Trace("Raw loaded script \"{}\"", scriptName);
 	}
 	else

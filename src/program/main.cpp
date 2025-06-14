@@ -1,7 +1,10 @@
 #include "program/Engine.h"
 
-#include "SDL3/SDL_init.h"
-#include "SDL3/SDL_log.h"
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_log.h>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_sdlrenderer3.h>
 
 using namespace tudov;
 
@@ -73,11 +76,26 @@ int main(int argc, char **args)
 	SDL_SetLogPriorities(SDL_LOG_PRIORITY_INVALID);
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
 	{
-		SDL_Log("SDL_Init failed: {}", SDL_GetError());
+		SDL_Log("SDL_Init failed: %s", SDL_GetError());
 		return -1;
 	}
 
-	Engine engine;
-	engine.Run(MainArgs{argc, args});
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+	{
+		ImGuiIO &io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+	}
+
+	Engine().Run(MainArgs{argc, args});
+
+	ImGui_ImplSDLRenderer3_Shutdown();
+	ImGui_ImplSDL3_Shutdown();
+	ImGui::DestroyContext();
+
+	SDL_Quit();
+
 	return 0;
 }

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "lib/json.hpp"
 #include "util/Defs.h"
+
+#include <json.hpp>
 
 namespace tudov
 {

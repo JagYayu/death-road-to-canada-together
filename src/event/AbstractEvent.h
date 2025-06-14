@@ -5,6 +5,7 @@
 
 namespace tudov
 {
+	class EventManager;
 	class RuntimeEvent;
 
 	class AbstractEvent
@@ -13,7 +14,11 @@ namespace tudov
 		EventID _id;
 		ScriptID _scriptID;
 
-		explicit AbstractEvent(EventID eventID, ScriptID scriptID = false);
+	  public:
+		EventManager &eventManager;
+
+	  protected:
+		explicit AbstractEvent(EventManager &eventManager, EventID eventID, ScriptID scriptID = false);
 
 	  public:
 		void IsValid() const noexcept;

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Defs.h"
-#include "lib/json.hpp"
 
+#include <json.hpp>
 #include <sol/lua_value.hpp>
 
 #include <atomic>
@@ -57,6 +57,7 @@ namespace tudov
 
 	  public:
 		static SharedPtr<Log> Get(StringView module);
+		static void CleanupExpired();
 		static Verbosity GetVerbosity(const String &module);
 		static Optional<Verbosity> GetVerbosityOverride(const String &module);
 		static void SetVerbosityOverride(const String &module, Verbosity verb);

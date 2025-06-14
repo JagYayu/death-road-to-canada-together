@@ -2,9 +2,9 @@
 
 #include "Mod.h"
 #include "ModManager.h"
-#include "lib/FileWatch.hpp"
 #include "util/StringUtils.hpp"
 
+#include <FileWatch.hpp>
 #include <filesystem>
 #include <format>
 #include <regex>

@@ -14,12 +14,14 @@ namespace tudov
 		using Operation = Variant<AddHandlerArgs, OverrideHandlerArgs>;
 
 		Vector<String> _orders;
-		UnorderedSet<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> _keys;
+		Vector<EventHandler::Key> _keys;
 		Vector<Operation> _operations;
 
 	  public:
+		explicit LoadtimeEvent(EventManager &eventManager, EventID eventID, const Vector<String> &orders, const Vector<EventHandler::Key> &keys, ScriptID scriptID) noexcept;
+
 		virtual void Add(const AddHandlerArgs &handler) override;
 
-		RuntimeEvent ToRuntime();
+		RuntimeEvent ToRuntime() noexcept;
 	};
 } // namespace tudov

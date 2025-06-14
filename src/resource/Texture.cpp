@@ -12,7 +12,7 @@
 
 using namespace tudov;
 
-Texture::Texture(const Renderer &renderer, StringView data)
+Texture::Texture(Renderer &renderer, StringView data)
 {
 	SDL_IOStream *rw = SDL_IOFromConstMem(data.data(), data.size());
 	SDL_Surface *surf = IMG_Load_IO(rw, 1);
@@ -20,10 +20,13 @@ Texture::Texture(const Renderer &renderer, StringView data)
 	{
 		throw std::exception("Failed to load texture");
 	}
-	SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer._renderer, surf);
+
+	auto ptr = renderer.GetRaw();
+
+	SDL_Texture *tex = SDL_CreateTextureFromSurface(ptr, surf);
 	SDL_DestroySurface(surf);
 
-	_texture = SDL_CreateTextureFromSurface(renderer._renderer, surf);
+	_texture = SDL_CreateTextureFromSurface(ptr, surf);
 }
 
 Texture::~Texture() noexcept

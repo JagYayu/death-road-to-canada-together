@@ -2,14 +2,14 @@
 
 #include "ScriptLoader.h"
 #include "ScriptProvider.h"
-#include "sol/forward.hpp"
-#include "sol/load_result.hpp"
-#include "sol/string_view.hpp"
-#include "sol/table.hpp"
 #include "util/Defs.h"
 #include "util/Utils.hpp"
 
+#include <sol/forward.hpp>
+#include <sol/load_result.hpp>
 #include <sol/sol.hpp>
+#include <sol/string_view.hpp>
+#include <sol/table.hpp>
 
 #include <memory>
 #include <string_view>
@@ -41,16 +41,17 @@ namespace tudov
 
 		sol::state_view &GetState();
 
-		void Set(const sol::string_view &key, const sol::object &value);
+		void SetReadonlyGlobal(const sol::string_view &key, const sol::table &value);
 		void CollectGarbage();
 		sol::table CreateTable(UInt32 arr = 0, UInt32 hash = 0);
+		size_t GetMemory()const noexcept;
 		int ThrowError(StringView message);
 		sol::load_result LoadFunction(const String &name, StringView code);
 
 		sol::object MakeReadonlyGlobal(const sol::object &obj);
 
 		// void Require(StringView source, StringView target);
-		void InitScriptFunc(ScriptID scriptID, StringView scriptName, sol::protected_function &func);
+		void InitScriptFunc(ScriptID scriptID, StringView scriptName, sol::protected_function &func)noexcept;
 
 		sol::object GetPersistVariable(StringView key);
 		void SetPersistVariable(StringView key, const sol::object &value);

@@ -1,8 +1,9 @@
 #include "EngineConfig.h"
 
-#include "lib/json.hpp"
 #include "util/Defs.h"
 #include "util/Log.h"
+
+#include <json.hpp>
 
 #include <fstream>
 
@@ -31,7 +32,7 @@ static const auto valueMountFiles = UnorderedMap<String, ResourceType>{
     {".ogg", ResourceType::Audio},
 };
 
-nlohmann::json &GetLog(nlohmann::json &config)
+nlohmann::json &GetLog(nlohmann::json &config) noexcept
 {
 	auto &&log = config[keyLog];
 	if (!log.is_object())
@@ -41,7 +42,7 @@ nlohmann::json &GetLog(nlohmann::json &config)
 	return log;
 }
 
-nlohmann::json &GetMount(nlohmann::json &config)
+nlohmann::json &GetMount(nlohmann::json &config) noexcept
 {
 	auto &&mount = config[keyMount];
 	if (!mount.is_object())
@@ -54,7 +55,7 @@ nlohmann::json &GetMount(nlohmann::json &config)
 	return mount;
 }
 
-nlohmann::json &GetWindow(nlohmann::json &config)
+nlohmann::json &GetWindow(nlohmann::json &config) noexcept
 {
 	auto &&window = config[keyWindow];
 	if (!window.is_object())
@@ -70,7 +71,7 @@ nlohmann::json &GetWindow(nlohmann::json &config)
 	return window;
 }
 
-EngineConfig::EngineConfig()
+EngineConfig::EngineConfig() noexcept
     : _log(Log::Get("EngineConfig"))
 {
 	EngineConfig::Load();
@@ -81,7 +82,7 @@ EngineConfig::EngineConfig()
 	});
 }
 
-EngineConfig::~EngineConfig()
+EngineConfig::~EngineConfig() noexcept
 {
 	Save();
 }
@@ -96,11 +97,11 @@ void EngineConfig::Save() noexcept
 		{
 			out << _config.dump(1, '\t');
 			out.close();
-			_log->Trace("Config file saved: ", f);
+			_log->Trace("Config file saved: \"{}\"", f);
 		}
 		else
 		{
-			_log->Error("Failed to open config file for writing: ", f);
+			_log->Error("Failed to open config file for writing: \"{}\"", f);
 		}
 	}
 	catch (const std::exception &e)
@@ -134,7 +135,7 @@ void EngineConfig::Load() noexcept
 	}
 }
 
-Vector<String> EngineConfig::GetMountDirectories()
+Vector<String> EngineConfig::GetMountDirectories() noexcept
 {
 	auto &&mount = GetMount(_config);
 	auto &&directories = mount[keyDirectories];
@@ -146,7 +147,7 @@ Vector<String> EngineConfig::GetMountDirectories()
 	return directories;
 }
 
-UnorderedMap<String, ResourceType> EngineConfig::GetMountFiles()
+UnorderedMap<String, ResourceType> EngineConfig::GetMountFiles() noexcept
 {
 	auto &&mount = GetMount(_config);
 	auto &&files = mount[keyFiles];
@@ -158,7 +159,7 @@ UnorderedMap<String, ResourceType> EngineConfig::GetMountFiles()
 	return files;
 }
 
-StringView EngineConfig::GetWindowTitle()
+StringView EngineConfig::GetWindowTitle() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&title = window[keyTitle];
@@ -170,7 +171,7 @@ StringView EngineConfig::GetWindowTitle()
 	return title;
 }
 
-UInt32 EngineConfig::GetWindowWidth()
+UInt32 EngineConfig::GetWindowWidth() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&width = window[keyWidth];
@@ -182,7 +183,7 @@ UInt32 EngineConfig::GetWindowWidth()
 	return width;
 }
 
-UInt32 EngineConfig::GetWindowHeight()
+UInt32 EngineConfig::GetWindowHeight() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&height = window[keyHeight];
@@ -194,14 +195,14 @@ UInt32 EngineConfig::GetWindowHeight()
 	return height;
 }
 
-void EngineConfig::SetWindowTitle(const String &)
+void EngineConfig::SetWindowTitle(const String &) noexcept
 {
 }
 
-void EngineConfig::SetWindowWidth(UInt32)
+void EngineConfig::SetWindowWidth(UInt32) noexcept
 {
 }
 
-void EngineConfig::SetWindowHeight(UInt32)
+void EngineConfig::SetWindowHeight(UInt32) noexcept
 {
 }

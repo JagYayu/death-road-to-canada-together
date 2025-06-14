@@ -4,6 +4,8 @@
 #include "program/Engine.h"
 
 #include "SDL3/SDL_render.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
 
 #include <algorithm>
 
@@ -14,6 +16,16 @@ Renderer::Renderer(Window &window)
 {
 }
 
+SDL_Renderer *Renderer::GetRaw() noexcept
+{
+	return _renderer;
+}
+
+const SDL_Renderer *Renderer::GetRaw() const noexcept
+{
+	return _renderer;
+}
+
 void Renderer::Initialize() noexcept
 {
 	_renderer = SDL_CreateRenderer(window._window, nullptr);
@@ -22,15 +34,18 @@ void Renderer::Initialize() noexcept
 		SDL_Log("SDL_CreateRenderer failed: %s", SDL_GetError());
 	}
 
-	auto &&tbl = window.engine.modManager.scriptEngine.CreateTable();
+	ImGui_ImplSDL3_InitForSDLRenderer(window._window, _renderer);
+	ImGui_ImplSDLRenderer3_Init(_renderer);
+
+	auto &&render = window.engine.modManager.scriptEngine.CreateTable();
 
 	// TODO
-	// tbl["drawSprite"] = [this](ResourceID texID, tudov::Number x, tudov::Number y, tudov::Number w, tudov::Number h, tudov::Number tx, tudov::Number ty)
-	// {
-	// 	DrawSprite(texID, x, y, w, h, tx, ty);
-	// };
+	render["drawSprite"] = [this](ResourceID texID, tudov::Number x, tudov::Number y, tudov::Number w, tudov::Number h, tudov::Number tx, tudov::Number ty)
+	{
+		DrawSprite(texID, x, y, w, h, tx, ty);
+	};
 
-	window.engine.modManager.scriptEngine.Set("Renderer", tbl);
+	window.engine.modManager.scriptEngine.SetReadonlyGlobal("Render", render);
 }
 
 void Renderer::DrawSprite(ResourceID texID, Number x, Number y, Number w, Number h, Number tw, Number th)
@@ -48,11 +63,14 @@ void Renderer::DrawSprite(ResourceID texID, Number x, Number y, Number w, Number
 	_drawQueue.push_back(draw);
 }
 
-void Renderer::Render()
+void Renderer::Begin()
 {
 	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
 	SDL_RenderClear(_renderer);
+}
 
+void Renderer::End()
+{
 	std::sort(_drawQueue.begin(), _drawQueue.end(), [](const auto &lhs, const auto &rhs)
 	{
 		return lhs.tex < rhs.tex;
@@ -73,5 +91,12 @@ void Renderer::Render()
 
 	_drawQueue.clear();
 
-	SDL_RenderPresent(_renderer);
+	auto &&io = ImGui::GetIO();
+	auto &&ptr = window.renderer.GetRaw();
+
+	SDL_SetRenderScale(ptr, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+	SDL_SetRenderDrawColorFloat(ptr, 0, 0, 0, 255);
+	SDL_RenderClear(ptr);
+	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), ptr);
+	SDL_RenderPresent(ptr);
 }

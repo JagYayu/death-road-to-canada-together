@@ -4,7 +4,6 @@
 #include "ScriptLoader.h"
 #include "ScriptProvider.h"
 #include "program/Engine.h"
-#include "sol/variadic_args.hpp"
 #include "util/Defs.h"
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
@@ -17,6 +16,7 @@
 #include <sol/sol.hpp>
 #include <sol/string_view.hpp>
 #include <sol/types.hpp>
+#include <sol/variadic_args.hpp>
 
 #include <unordered_map>
 
@@ -61,14 +61,26 @@ sol::state_view &ScriptEngine::GetState()
 	return _lua;
 }
 
-void ScriptEngine::Set(const sol::string_view &key, const sol::object &value)
+void ScriptEngine::SetReadonlyGlobal(const sol::string_view &key, const sol::table &value)
 {
-	_lua[key] = value;
+	if (value.is<sol::table>())
+	{
+		_lua[key] = modManager.scriptEngine.MakeReadonlyGlobal(value.as<sol::table>());
+	}
+	else
+	{
+		_lua[key] = value;
+	}
 }
 
 void ScriptEngine::CollectGarbage()
 {
 	_lua.collect_garbage();
+}
+
+size_t ScriptEngine::GetMemory() const noexcept
+{
+	return _lua.memory_used();
 }
 
 sol::table ScriptEngine::CreateTable(uint32_t arr, uint32_t hash)
@@ -132,11 +144,11 @@ sol::object MakeReadonlyGlobalImpl(sol::state &lua, const sol::object &obj, cons
 
 sol::object ScriptEngine::MakeReadonlyGlobal(const sol::object &obj)
 {
-	std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> visited;
+	UnorderedMap<sol::table, sol::table, LuaTableHash, LuaTableEqual> visited;
 	return MakeReadonlyGlobalImpl(_lua, obj, _throwModifyReadonlyGlobalError, visited);
 }
 
-void ScriptEngine::InitScriptFunc(ScriptID scriptID, const StringView scriptName, sol::protected_function &func)
+void ScriptEngine::InitScriptFunc(ScriptID scriptID, const StringView scriptName, sol::protected_function &func) noexcept
 {
 	auto &&namespace_ = GetLuaNamespace(scriptName);
 
@@ -178,7 +190,7 @@ void ScriptEngine::InitScriptFunc(ScriptID scriptID, const StringView scriptName
 			auto &&targetModule = scriptLoader.Load(targetScriptID);
 			if (!targetModule)
 			{
-				luaL_error(_lua, "Script module '{}' not found", targetScriptName);
+				luaL_error(_lua, "Script module '%s' not found", targetScriptName);
 				return sol::nil;
 			}
 

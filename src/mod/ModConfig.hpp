@@ -1,9 +1,8 @@
 #pragma once
 
-#include "util/StringUtils.hpp"
 #include "util/Version.h"
 
-#include "lib/json.hpp"
+#include <json.hpp>
 
 namespace tudov
 {

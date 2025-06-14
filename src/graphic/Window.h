@@ -3,6 +3,7 @@
 #include "Renderer.h"
 
 #include "SDL3/SDL_render.h"
+#include "debug/DebugManager.h"
 #include <SDL3/SDL.h>
 
 #include <memory>
@@ -24,6 +25,7 @@ namespace tudov
 
 	  public:
 		Engine &engine;
+		DebugManager debugManager;
 		Renderer renderer;
 
 		Window(Engine &engine);

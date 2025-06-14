@@ -1,4 +1,5 @@
 #include "Log.h"
+#include "Utils.hpp"
 
 #include <chrono>
 #include <format>
@@ -32,6 +33,22 @@ SharedPtr<Log> Log::Get(StringView module)
 	return log;
 }
 
+void Log::CleanupExpired()
+{
+	for (auto &&it = _logInstances.begin(); it != _logInstances.end();)
+	{
+		if (it->second.use_count() <= 1)
+		{
+			it = _logInstances.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+	ShrinkUnorderedMap(_logInstances);
+}
+
 Log::Verbosity Log::GetVerbosity(const String &module)
 {
 	{
@@ -51,7 +68,7 @@ Optional<Log::Verbosity> Log::GetVerbosityOverride(const String &module)
 	{
 		return it->second;
 	}
-	return null;
+	return nullopt;
 }
 
 void Log::SetVerbosityOverride(const String &module, Verbosity verb)
@@ -119,7 +136,6 @@ void Log::Process()
 
 bool Log::CanOutput(StringView verb) const
 {
-
 	return true;
 }
 

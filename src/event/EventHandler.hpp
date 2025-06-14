@@ -2,7 +2,7 @@
 
 #include "util/Defs.h"
 
-#include "sol/sol.hpp"
+#include <sol/sol.hpp>
 
 namespace tudov
 {
@@ -41,14 +41,11 @@ namespace tudov
 			}
 		};
 
-		inline static Key emptyKey = Key(nullptr);
-		inline static Number defaultSequence = 0;
-
 		struct Function
 		{
 			Variant<sol::function, int> function;
 
-			explicit Function(const sol::function& function)
+			explicit Function(const sol::function &function)
 			    : function(function)
 			{
 			}
@@ -70,7 +67,7 @@ namespace tudov
 				}
 			}
 
-			void operator()(const sol::object &obj, const EventHandler::Key &key) const
+			void operator()(const sol::object &obj, const Key &key) const
 			{
 				if (auto &&func = GetIf<sol::function>(&function))
 				{
@@ -82,6 +79,9 @@ namespace tudov
 				}
 			}
 		};
+
+		inline static constexpr Number defaultSequence = 0;
+		inline static const Key emptyKey = Key(nullptr);
 
 		EventID eventID;
 		ScriptID scriptID;

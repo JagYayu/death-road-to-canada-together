@@ -37,12 +37,12 @@ void ModManager::Initialize()
 	};
 
 	scriptEngine.Initialize();
-	eventManager.Initialize();
+	eventManager.RegisterGlobal(scriptEngine);
 }
 
 void ModManager::Deinitialize()
 {
-	eventManager.Deinitialize();
+	eventManager.UnregisterGlobal(scriptEngine);
 }
 
 void ModManager::AddMod(const std::filesystem::path &modRoot)

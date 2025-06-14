@@ -3,10 +3,12 @@
 #include "DelegateEvent.hpp"
 #include "LoadtimeEvent.h"
 #include "RuntimeEvent.h"
+#include "event/AddHandlerArgs.hpp"
 #include "util/Defs.h"
 #include "util/StringUtils.hpp"
 
-#include "sol/sol.hpp"
+#include <sol/sol.hpp>
+
 #include <string_view>
 
 namespace tudov
@@ -46,16 +48,19 @@ namespace tudov
 		void OnScriptsLoaded();
 
 	  public:
-		void Initialize();
-		void Deinitialize();
+		void RegisterGlobal(ScriptEngine &scriptEngine);
+		void UnregisterGlobal(ScriptEngine &scriptEngine);
 
 		[[nodiscard]]
 		ScriptID GetEventIDByName(StringView scriptName) const noexcept;
 		[[nodiscard]]
-		Optional<StringView> GetEventNameByID(ScriptID scriptID) const noexcept;
+		Optional<StringView> GetEventNameByID(EventID eventID) const noexcept;
 		[[nodiscard]]
-		bool IsValidEventID(ScriptID scriptID) const noexcept;
+		bool IsValidEventID(EventID eventID) const noexcept;
 
 		Optional<Reference<AbstractEvent>> TryGetRegistryEvent(EventID eventID);
+
+		UnorderedMap<EventID, SharedPtr<RuntimeEvent>>::const_iterator BeginRuntimeEvents() const;
+		UnorderedMap<EventID, SharedPtr<RuntimeEvent>>::const_iterator EndRuntimeEvents() const;
 	};
 } // namespace tudov

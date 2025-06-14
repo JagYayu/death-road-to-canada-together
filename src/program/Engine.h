@@ -2,6 +2,7 @@
 
 #include "EngineConfig.h"
 #include "MainArgs.hpp"
+#include "debug/DebugManager.h"
 #include "graphic/Window.h"
 #include "mod/ModManager.h"
 #include "resource/TextureManager.hpp"
@@ -26,9 +27,9 @@ namespace tudov
 
 	  public:
 		EngineConfig config;
-		TextureManager textureManager;
 		Window window;
 		ModManager modManager;
+		TextureManager textureManager;
 
 	  public:
 		Engine();

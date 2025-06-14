@@ -24,9 +24,9 @@ namespace tudov
 		struct Module
 		{
 		  private:
-		  ScriptID _scriptID;
-		  sol::protected_function _func;
-		  bool _fullyLoaded;
+			ScriptID _scriptID;
+			sol::protected_function _func;
+			bool _fullyLoaded;
 			sol::table _table;
 
 		  public:
@@ -37,7 +37,7 @@ namespace tudov
 			bool IsFullyLoaded() const;
 
 			const sol::table &GetTable();
-			const sol::table &RawLoad();
+			const sol::table &RawLoad(ScriptLoader &scriptLoader);
 			const sol::table &LazyLoad(ScriptLoader &scriptLoader);
 			const sol::table &FullLoad(ScriptLoader &scriptLoader);
 		};
@@ -69,7 +69,8 @@ namespace tudov
 		ScriptLoader(ScriptEngine &scriptEngine) noexcept;
 		~ScriptLoader() noexcept;
 
-		ScriptID GetLoadingScript() const noexcept;
+		ScriptID GetLoadingScriptID() const noexcept;
+		Optional<StringView> GetLoadingScriptName() const noexcept;
 
 		Vector<ScriptID> GetDependencies(ScriptID scriptID) const;
 		void AddReverseDependency(ScriptID source, ScriptID target);

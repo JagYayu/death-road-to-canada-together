@@ -4,8 +4,9 @@
 
 using namespace tudov;
 
-AbstractEvent::AbstractEvent(EventID eventID, ScriptID scriptID)
-    : _id(eventID),
+AbstractEvent::AbstractEvent(EventManager &eventManager, EventID eventID, ScriptID scriptID)
+    : eventManager(eventManager),
+      _id(eventID),
       _scriptID(scriptID)
 {
 }

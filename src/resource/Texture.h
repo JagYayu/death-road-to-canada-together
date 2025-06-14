@@ -16,7 +16,7 @@ namespace tudov
 		SDL_Texture *_texture;
 
 	  public:
-		Texture(const Renderer &renderer, StringView data);
+		Texture(Renderer &renderer, StringView data);
 		~Texture() noexcept;
 	};
 } // namespace tudov

@@ -3,8 +3,8 @@
 #include "Log.h"
 #include "util/Defs.h"
 
-#include "sol/sol.hpp"
-#include "sol/types.hpp"
+#include <sol/sol.hpp>
+#include <sol/types.hpp>
 
 namespace tudov
 {
@@ -23,6 +23,27 @@ namespace tudov
 			return lhs.pointer() == rhs.pointer();
 		}
 	};
+
+	template <typename T>
+	inline T Average(const Vector<T> &data) noexcept
+	{
+		if (data.empty())
+		{
+			return T();
+		}
+		return std::accumulate(data.begin(), data.end(), T()) / data.size();
+	}
+
+	template <typename T, size_t N>
+	inline T Average(const T (&data)[N])
+	{
+		T sum{};
+		for (auto i = 0; i < N; ++i)
+		{
+			sum += data[i];
+		}
+		return sum / N;
+	}
 
 	inline StringView GetLuaTypeStringView(sol::type luaType) noexcept
 	{
@@ -81,6 +102,25 @@ namespace tudov
 				++it;
 			}
 		}
+	}
+
+	template <typename K, typename V, typename Hash = std::hash<K>, typename KeyEqual = std::equal_to<K>, typename Alloc = std::allocator<Pair<const K, V>>>
+	void ShrinkUnorderedMap(UnorderedMap<K, V, Hash, KeyEqual, Alloc> &unorderedMap) noexcept
+	{
+		if (unorderedMap.empty())
+		{
+			std::unordered_map<K, V, Hash, KeyEqual, Alloc>().swap(unorderedMap);
+			return;
+		}
+
+		std::unordered_map<K, V, Hash, KeyEqual, Alloc> trimmed;
+		trimmed.reserve(unorderedMap.size());
+		for (auto &pair : unorderedMap)
+		{
+			trimmed.emplace(pair.first, pair.second);
+		}
+
+		unorderedMap.swap(trimmed);
 	}
 
 	FORCEINLINE void UnhandledCppException(SharedPtr<Log> &log, const std::exception &e)

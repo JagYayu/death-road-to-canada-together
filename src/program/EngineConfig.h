@@ -1,16 +1,16 @@
 #pragma once
 
-#include "lib/FileWatch.hpp"
-#include "lib/json.hpp"
 #include "resource/ResourceType.hpp"
 #include "util/Defs.h"
 #include "util/Log.h"
 
+#include <FileWatch.hpp>
+#include <json.hpp>
 #include <memory>
 #include <string>
 
 namespace tudov
-{	
+{
 	class EngineConfig
 	{
 	  private:
@@ -25,20 +25,21 @@ namespace tudov
 		static constexpr UInt32 defaultWindowWidth = 1280;
 		static constexpr UInt32 defaultWindowHeight = 720;
 
-		EngineConfig();
-		~EngineConfig();
+		EngineConfig() noexcept;
+		~EngineConfig() noexcept;
 
 		void Save() noexcept;
 		void Load() noexcept;
 
-		Vector<String> GetMountDirectories();
-		UnorderedMap<String, ResourceType> GetMountFiles();
-		StringView GetWindowTitle();
-		UInt32 GetWindowWidth();
-		UInt32 GetWindowHeight();
+		Vector<String> GetMountDirectories() noexcept;
+		UnorderedMap<String, ResourceType> GetMountFiles() noexcept;
+		void GetDebugProfiling() noexcept;
+		StringView GetWindowTitle() noexcept;
+		UInt32 GetWindowWidth() noexcept;
+		UInt32 GetWindowHeight() noexcept;
 
-		void SetWindowTitle(const String &);
-		void SetWindowWidth(UInt32);
-		void SetWindowHeight(UInt32);
+		void SetWindowTitle(const String &) noexcept;
+		void SetWindowWidth(UInt32) noexcept;
+		void SetWindowHeight(UInt32) noexcept;
 	};
 } // namespace tudov

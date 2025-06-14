@@ -2,14 +2,18 @@
 
 #include "AbstractEvent.h"
 #include "EventHandler.hpp"
+#include "EventManager.h"
+#include "event/RuntimeEvent.h"
+#include "mod/ModManager.h"
 #include "mod/ScriptProvider.h"
 #include "util/Defs.h"
+
 #include <cassert>
 
 using namespace tudov;
 
-RuntimeEvent::RuntimeEvent(EventID eventID, const Vector<String> &orders, const UnorderedSet<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> &keys, ScriptID scriptID)
-    : AbstractEvent(eventID, scriptID),
+RuntimeEvent::RuntimeEvent(EventManager &eventManager, EventID eventID, const Vector<String> &orders, const UnorderedSet<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> &keys, ScriptID scriptID)
+    : AbstractEvent(eventManager, eventID, scriptID),
       _log(Log::Get("RuntimeEvent")),
       _orders(orders),
       _keys(keys)
@@ -18,6 +22,32 @@ RuntimeEvent::RuntimeEvent(EventID eventID, const Vector<String> &orders, const 
 	{
 		_orders.emplace_back("");
 	}
+}
+
+Optional<Reference<RuntimeEvent::Profile>> RuntimeEvent::GetProfile() const noexcept
+{
+	if (_profile)
+	{
+		return *_profile;
+	}
+	return nullopt;
+}
+
+void RuntimeEvent::EnableProfiler(bool traceHandlers) noexcept
+{
+	if (!_profile)
+	{
+		_profile = MakeUnique<Profile>(traceHandlers);
+	}
+	else
+	{
+		_profile->traceHandlers = traceHandlers;
+	}
+}
+
+void RuntimeEvent::DisableProfiler() noexcept
+{
+	_profile = nullptr;
 }
 
 void RuntimeEvent::Add(const AddHandlerArgs &args)
@@ -70,7 +100,7 @@ Vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 
 	if (!orderSequenceMap.empty())
 	{
-		Sort(_handlers.begin(), _handlers.end(), [&](const EventHandler &lhs, const EventHandler &rhs)
+		std::sort(_handlers.begin(), _handlers.end(), [&](const EventHandler &lhs, const EventHandler &rhs)
 		{
 			auto &&lhsOrder = orderSequenceMap.count(lhs.order) ? orderSequenceMap[lhs.order] : SIZE_MAX;
 			auto &&rhsOrder = orderSequenceMap.count(rhs.order) ? orderSequenceMap[rhs.order] : SIZE_MAX;
@@ -93,6 +123,12 @@ Vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 
 void RuntimeEvent::Invoke(const sol::object &args, Optional<EventHandler::Key> key)
 {
+	if (_profile && _profile->traceHandlers)
+	{
+		InvokeUncached(args, key);
+		return;
+	}
+
 	InvocationCache *cache;
 	if (key.has_value())
 	{
@@ -126,6 +162,11 @@ void RuntimeEvent::Invoke(const sol::object &args, Optional<EventHandler::Key> k
 		cache = &_invocationCache.value();
 	}
 
+	if (_profile)
+	{
+		_profile->eventProfiler.BeginEvent(eventManager.modManager.scriptEngine);
+	}
+
 	if (key.has_value())
 	{
 		auto &&keyVal = key.value();
@@ -141,10 +182,20 @@ void RuntimeEvent::Invoke(const sol::object &args, Optional<EventHandler::Key> k
 			function(args);
 		}
 	}
+
+	if (_profile)
+	{
+		_profile->eventProfiler.EndEvent(eventManager.modManager.scriptEngine);
+	}
 }
 
 void RuntimeEvent::InvokeUncached(const sol::object &args, Optional<EventHandler::Key> key)
 {
+	if (_profile)
+	{
+		_profile->eventProfiler.BeginEvent(eventManager.modManager.scriptEngine);
+	}
+
 	if (key.has_value())
 	{
 		auto &&keyVal = key.value();
@@ -153,6 +204,11 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, Optional<EventHandler
 			if (handler.key == keyVal)
 			{
 				handler.function(args, keyVal);
+
+				if (_profile)
+				{
+					_profile->eventProfiler.TraceHandler(eventManager.modManager.scriptEngine, handler.name);
+				}
 			}
 		}
 	}
@@ -161,14 +217,24 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, Optional<EventHandler
 		for (auto &&handler : _handlers)
 		{
 			handler.function(args);
+
+			if (_profile)
+			{
+				_profile->eventProfiler.TraceHandler(eventManager.modManager.scriptEngine, handler.name);
+			}
 		}
+	}
+
+	if (_profile)
+	{
+		_profile->eventProfiler.EndEvent(eventManager.modManager.scriptEngine);
 	}
 }
 
 void RuntimeEvent::ClearCaches()
 {
 	_handlersSortedCache = false;
-	_invocationCache = null;
+	_invocationCache = nullopt;
 	_invocationCaches.clear();
 }
 
@@ -176,7 +242,7 @@ void RuntimeEvent::ClearScriptHandlersImpl(Function<bool(const EventHandler &)> 
 {
 	auto previousSize = _handlers.size();
 
-	EraseIf(_handlers, pred);
+	std::erase_if(_handlers, pred);
 
 	if (_handlers.size() != previousSize)
 	{

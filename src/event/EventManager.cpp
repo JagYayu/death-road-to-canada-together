@@ -1,13 +1,19 @@
 #include "EventManager.h"
 
 #include "AbstractEvent.h"
+#include "EventHandler.hpp"
 #include "RuntimeEvent.h"
+#include "event/LoadtimeEvent.h"
 #include "mod/ModManager.h"
 #include "mod/ScriptEngine.h"
 #include "mod/ScriptLoader.h"
-#include "sol/forward.hpp"
+#include "sol/string_view.hpp"
+#include "sol/types.hpp"
 #include "util/Defs.h"
 #include "util/Utils.hpp"
+
+#include <sol/forward.hpp>
+#include <string_view>
 
 using namespace tudov;
 
@@ -15,8 +21,8 @@ EventManager::EventManager(ModManager &modManager)
     : modManager(modManager),
       _log(Log::Get("EventManager")),
       _latestEventID(),
-      update(MakeShared<RuntimeEvent>(AllocEventID("Update"))),
-      render(MakeShared<RuntimeEvent>(AllocEventID("Render")))
+      update(MakeShared<RuntimeEvent>(*this, AllocEventID("Update"))),
+      render(MakeShared<RuntimeEvent>(*this, AllocEventID("Render")))
 {
 	_runtimeEvents.emplace(update->GetID(), update);
 	_runtimeEvents.emplace(render->GetID(), render);
@@ -78,102 +84,117 @@ void EventManager::OnScriptsLoaded()
 	_loadtimeEvents = {};
 }
 
-void EventManager::Initialize()
+void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 {
-	auto &&table = modManager.scriptEngine.CreateTable(0);
+	auto &&table = scriptEngine.CreateTable(0);
 
-	table["add"] = [&](const sol::table &args)
+	auto &&scriptLoader = scriptEngine.scriptLoader;
+
+	table["add"] = [&](const sol::object &event, const sol::object &func, const sol::object &name, const sol::object &order, const sol::object &key, const sol::object &sequence)
 	{
 		try
 		{
-			auto &&loadingScript = modManager.scriptEngine.scriptLoader.GetLoadingScript();
+			auto loadingScript = scriptLoader.GetLoadingScriptID();
 			if (!loadingScript)
 			{
-				modManager.scriptEngine.ThrowError("Failed to add event handler: must add at script load time");
+				scriptEngine.ThrowError("Failed to add event handler: must add at script load time");
 				return;
 			}
 
-			auto &&argEvent = args["event"];
-			if (!argEvent.valid() || !argEvent.is<sol::string_view>())
+			if (!event.valid() || !event.is<sol::string_view>())
 			{
-				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid `event` type, expected string, got {}", GetLuaTypeStringView(argEvent.get_type())));
+				scriptEngine.ThrowError(Format("Failed to add event handler: invalid arg#1 `event` type, expected string, got {}", GetLuaTypeStringView(event.get_type())));
 				return;
 			}
-			auto &&argFunc = args["func"];
-			if (!argFunc.valid() || !argFunc.is<sol::function>())
+			StringView event_ = event.as<sol::string_view>();
+
+			auto &&eventID = GetEventIDByName(event_);
+			auto &&eventInstance = TryGetRegistryEvent(eventID);
+			if (!eventInstance.has_value())
 			{
-				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid `func` type, expected function, got {}", GetLuaTypeStringView(argFunc.get_type())));
+				scriptEngine.ThrowError(Format("Failed to add event handler: event named '{}' not found", event_));
 				return;
 			}
 
-			auto &&eventName = argEvent.get<sol::string_view>();
-			auto &&eventID = GetEventIDByName(eventName);
-			auto &&event = TryGetRegistryEvent(eventID);
-			if (!event.has_value())
+			if (!func.valid() || !func.is<sol::function>())
 			{
-				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: event named '{}' not found", eventName));
+				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid arg#2 `func` type, expected function, got {}", GetLuaTypeStringView(func.get_type())));
 				return;
 			}
+			sol::function func_ = func.as<sol::function>();
 
-			auto &&argOrder = args["order"];
-			Optional<String> order;
-			if (!argOrder.valid() || argOrder.is<sol::nil_t>())
+			Optional<String> name_;
+			if (name.is<sol::nil_t>())
 			{
-				order = null;
+				name_ = nullopt;
 			}
-			else if (argOrder.is<sol::string_view>())
+			else if (name.is<sol::string_view>())
 			{
-				order = argOrder.get<sol::string_view>();
+				name_ = name.as<sol::string_view>();
 			}
 			else
 			{
-				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid `order` type, nil or string expected, got {}", GetLuaTypeStringView(argOrder.get_type())));
+				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid arg#3 `name` type, nil or string expected, got {}", GetLuaTypeStringView(name.get_type())));
 				return;
 			}
 
-			auto &&argKey = args["key"];
-			Optional<AddHandlerArgs::Key> key;
-			if (!argKey.valid() || argKey.is<sol::nil_t>())
+			Optional<String> order_;
+			if (order.is<sol::nil_t>())
 			{
-				key = null;
+				order_ = nullopt;
 			}
-			else if (argKey.is<Number>())
+			else if (order.is<sol::string_view>())
 			{
-				key = AddHandlerArgs::Key(argKey.get<Number>());
-			}
-			else if (argKey.is<sol::string_view>())
-			{
-				key = AddHandlerArgs::Key(String(argKey.get<sol::string_view>()));
+				order_ = order.as<sol::string_view>();
 			}
 			else
 			{
-				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid `key` type, nil or number or string expected, got {}", GetLuaTypeStringView(argKey.get_type())));
+				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid arg#4 `order` type, nil or string expected, got {}", GetLuaTypeStringView(order.get_type())));
 				return;
 			}
 
-			auto &&argSequence = args["sequence"];
-			Optional<Number> sequence;
-			if (!argSequence.valid() || argSequence.is<sol::nil_t>())
+			Optional<AddHandlerArgs::Key> key_;
+			if (!key.valid() || key.is<sol::nil_t>())
 			{
-				sequence = null;
+				key_ = nullopt;
 			}
-			else if (argSequence.is<Number>())
+			else if (key.is<Number>())
 			{
-				sequence = argSequence.get<Number>();
+				key_ = AddHandlerArgs::Key(key.as<Number>());
+			}
+			else if (key.is<sol::string_view>())
+			{
+				key_ = AddHandlerArgs::Key(String(key.as<sol::string_view>()));
 			}
 			else
 			{
-				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid `sequence` type, nil or string expected, got {}", GetLuaTypeStringView(argOrder.get_type())));
+				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid arg#5 `key` type, nil or number or number expected, got {}", GetLuaTypeStringView(key.get_type())));
 				return;
 			}
 
-			event->get().Add(AddHandlerArgs{
+			Optional<Number> sequence_;
+			if (sequence.is<sol::nil_t>())
+			{
+				sequence_ = nullopt;
+			}
+			else if (sequence.is<Number>())
+			{
+				sequence_ = sequence.as<Number>();
+			}
+			else
+			{
+				modManager.scriptEngine.ThrowError(Format("Failed to add event handler: invalid arg#6 `sequence` type, nil or string expected, got {}", GetLuaTypeStringView(sequence.get_type())));
+				return;
+			}
+
+			eventInstance->get().Add({
 			    .eventID = eventID,
 			    .scriptID = loadingScript,
-			    .function = EventHandler::Function(argFunc.get<sol::function>()), // {argEvent.get<sol::function>()},
-			    .order = Move(order),
-			    .key = Move(key),
-			    .sequence = Move(sequence),
+			    .function = EventHandler::Function(func),
+			    .name = name_,
+			    .order = order_,
+			    .key = key_,
+			    .sequence = sequence_,
 			});
 		}
 		catch (const std::exception &e)
@@ -183,9 +204,89 @@ void EventManager::Initialize()
 		}
 	};
 
-	modManager.scriptEngine.Set("Events", modManager.scriptEngine.MakeReadonlyGlobal(table));
+	table["new"] = [&](const sol::object &event, const sol::object &orders, const sol::object &keys)
+	{
+		try
+		{
+			auto &&scriptID = scriptLoader.GetLoadingScriptID();
+			if (!scriptID)
+			{
+				scriptEngine.ThrowError("Failed to new event: must call at script load time");
+				return;
+			}
 
-	_onPreLoadAllScriptsHandlerID = modManager.scriptEngine.scriptLoader.onPreLoadAllScripts += [&]()
+			EventID eventID = false;
+			if (event.is<sol::string_view>())
+			{
+				eventID = GetEventIDByName(event.as<sol::string_view>());
+				if (eventID)
+				{
+					scriptEngine.ThrowError(Format("Failed to new event: invalid arg#1 `event` type, event already exists"));
+					return;
+				}
+			}
+			else
+			{
+				scriptEngine.ThrowError(Format("Failed to new event: invalid arg#1 `event` type, string expected, got {}", GetLuaTypeStringView(event.get_type())));
+				return;
+			}
+
+			Vector<String> orders_;
+			if (orders.is<sol::table>())
+			{
+				orders_ = {};
+				auto &&tbl = orders.as<sol::table>();
+				for (size_t i = 0; i < tbl.size(); ++i)
+				{
+					if (!tbl[i].is<sol::string_view>())
+					{
+						scriptEngine.ThrowError(Format("Failed to new event: invalid arg#2 'orders' type, table must be a string array, contains {}", GetLuaTypeStringView(tbl[i].get_type())));
+						return;
+					}
+					orders_.emplace_back(tbl[i].get<sol::string_view>());
+				}
+			}
+			else
+			{
+				scriptEngine.ThrowError(Format("Failed to new event: invalid arg#2 'orders' type, table expected, got {}", GetLuaTypeStringView(orders.get_type())));
+				return;
+			}
+
+			Vector<EventHandler::Key> keys_;
+			if (keys.is<sol::table>())
+			{
+				keys_ = {};
+				auto &&tbl = keys.as<sol::table>();
+				for (size_t i = 0; i < tbl.size(); ++i)
+				{
+					if (!tbl[i].is<Number>() && !tbl[i].is<sol::string_view>())
+					{
+						scriptEngine.ThrowError(Format("Failed to new event: invalid arg#2 'keys' type, table must be a number/string array, contains {}", GetLuaTypeStringView(tbl[i].get_type())));
+						return;
+					}
+					keys_.emplace_back(EventHandler::Key{
+					    .value = tbl[i],
+					});
+				}
+			}
+			else
+			{
+				scriptEngine.ThrowError(Format("Failed to new event: invalid arg#2 'keys' type, table expected, got {}", GetLuaTypeStringView(keys.get_type())));
+				return;
+			}
+
+			_loadtimeEvents.try_emplace(eventID, MakeShared<LoadtimeEvent>(*this, eventID, orders_, keys_, scriptID));
+		}
+		catch (const std::exception &e)
+		{
+			UnhandledCppException(_log, e);
+			throw;
+		}
+	};
+
+	scriptEngine.SetReadonlyGlobal("Events", table);
+
+	_onPreLoadAllScriptsHandlerID = scriptLoader.onPreLoadAllScripts += [&]()
 	{
 		for (auto it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 		{
@@ -207,13 +308,18 @@ void EventManager::Initialize()
 		}
 	};
 
-	_onPostLoadAllScriptsHandlerID = modManager.scriptEngine.scriptLoader.onPostLoadAllScripts += [&]()
+	_onPostLoadAllScriptsHandlerID = scriptLoader.onPostLoadAllScripts += [&]()
 	{
 		OnScriptsLoaded();
 	};
 
-	_onPreHotReloadScriptsHandlerID = modManager.scriptEngine.scriptLoader.onPreHotReloadScripts += [this](const Vector<ScriptID> &scriptIDs)
+	_onPreHotReloadScriptsHandlerID = scriptLoader.onPreHotReloadScripts += [this](const Vector<ScriptID> &scriptIDs)
 	{
+		if (scriptIDs.empty())
+		{
+			return;
+		}
+
 		for (auto it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 		{
 			for (auto scriptID : scriptIDs)
@@ -237,18 +343,18 @@ void EventManager::Initialize()
 		}
 	};
 
-	_onPreHotReloadScriptsHandlerID = modManager.scriptEngine.scriptLoader.onPostHotReloadScripts += [&](const Vector<ScriptID> &scriptIDs)
+	_onPreHotReloadScriptsHandlerID = scriptLoader.onPostHotReloadScripts += [&](const Vector<ScriptID> &scriptIDs)
 	{
 		OnScriptsLoaded();
 	};
 }
 
-void EventManager::Deinitialize()
+void EventManager::UnregisterGlobal(ScriptEngine &scriptEngine)
 {
-	modManager.scriptEngine.scriptLoader.onPreLoadAllScripts -= _onPreLoadAllScriptsHandlerID;
-	modManager.scriptEngine.scriptLoader.onPostLoadAllScripts -= _onPostLoadAllScriptsHandlerID;
-	modManager.scriptEngine.scriptLoader.onPreHotReloadScripts -= _onPreHotReloadScriptsHandlerID;
-	modManager.scriptEngine.scriptLoader.onPostHotReloadScripts -= _onPreHotReloadScriptsHandlerID;
+	scriptEngine.scriptLoader.onPreLoadAllScripts -= _onPreLoadAllScriptsHandlerID;
+	scriptEngine.scriptLoader.onPostLoadAllScripts -= _onPostLoadAllScriptsHandlerID;
+	scriptEngine.scriptLoader.onPreHotReloadScripts -= _onPreHotReloadScriptsHandlerID;
+	scriptEngine.scriptLoader.onPostHotReloadScripts -= _onPreHotReloadScriptsHandlerID;
 }
 
 EventID EventManager::GetEventIDByName(StringView eventName) const noexcept
@@ -266,7 +372,7 @@ Optional<StringView> EventManager::GetEventNameByID(EventID eventID) const noexc
 	auto &&it = _eventID2Name.find(eventID);
 	if (it == _eventID2Name.end())
 	{
-		return null;
+		return nullopt;
 	}
 	return it->second;
 }
@@ -280,7 +386,7 @@ Optional<Reference<AbstractEvent>> EventManager::TryGetRegistryEvent(EventID eve
 {
 	if (!eventID)
 	{
-		return null;
+		return nullopt;
 	}
 	{
 		auto &&it = _loadtimeEvents.find(eventID);
@@ -296,5 +402,15 @@ Optional<Reference<AbstractEvent>> EventManager::TryGetRegistryEvent(EventID eve
 			return *(it->second);
 		}
 	}
-	return null;
+	return nullopt;
+}
+
+UnorderedMap<EventID, SharedPtr<RuntimeEvent>>::const_iterator EventManager::BeginRuntimeEvents() const
+{
+	return _runtimeEvents.begin();
+}
+
+UnorderedMap<EventID, SharedPtr<RuntimeEvent>>::const_iterator EventManager::EndRuntimeEvents() const
+{
+	return _runtimeEvents.end();
 }

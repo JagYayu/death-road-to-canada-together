@@ -1,9 +1,10 @@
 #pragma once
 
 #include "Mod.h"
-
-#include "lib/FileWatch.hpp"
 #include "util/Log.h"
+
+#include <FileWatch.hpp>
+
 
 namespace tudov
 {
