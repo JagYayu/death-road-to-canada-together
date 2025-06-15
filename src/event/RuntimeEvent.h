@@ -51,6 +51,8 @@ namespace tudov
 		void ClearCaches();
 		void ClearScriptHandlersImpl(Function<bool(const EventHandler &)> pred);
 
+		void InvokeFunction() noexcept;
+
 	  protected:
 		Vector<EventHandler> &GetSortedHandlers();
 

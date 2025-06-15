@@ -2,6 +2,7 @@
 
 #include "ModConfig.hpp"
 #include "ScriptProvider.h"
+#include "util/Defs.h"
 
 #include <string>
 
@@ -27,7 +28,9 @@ namespace tudov
 
 		void Reload();
 
-		const String &GetNamespace() const;
-		const String &GetScriptsDirectory() const;
+		ModConfig &GetConfig() noexcept;
+		const ModConfig &GetConfig() const noexcept;
+		const String &GetNamespace() const noexcept;
+		const String &GetScriptsDirectory() const noexcept;
 	};
 } // namespace tudov

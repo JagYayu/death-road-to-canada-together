@@ -28,8 +28,8 @@ namespace tudov
 	  public:
 		explicit DebugManager(Window &window) noexcept;
 
-		void RegisterGlobals(StringView name, ScriptEngine &scriptEngine) noexcept;
-		void UnregisterGlobals(StringView name, ScriptEngine &scriptEngine) noexcept;
+		void RegisterGlobalsTo(StringView name, ScriptEngine &scriptEngine) noexcept;
+		void UnregisterGlobalsFrom(StringView name, ScriptEngine &scriptEngine) noexcept;
 
 		void UpdateAndRender() noexcept;
 	};

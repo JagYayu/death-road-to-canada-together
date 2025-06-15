@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mod/Mod.h"
 #include "util/Defs.h"
 #include "util/Log.h"
 #include "util/StringUtils.hpp"
@@ -13,6 +14,7 @@
 
 namespace tudov
 {
+	class Mod;
 	class ModManager;
 
 	class ScriptProvider
@@ -22,6 +24,7 @@ namespace tudov
 		{
 			String name;
 			String code;
+			StringView namespace_;
 		};
 
 	  public:
@@ -44,7 +47,7 @@ namespace tudov
 		ScriptProvider(ModManager &modManager);
 
 	  private:
-		ScriptID AllocScript(StringView scriptName, StringView scriptCode);
+		ScriptID AllocScript(StringView scriptName, StringView scriptCode, StringView namespace_ = emptyString);
 		void DeallocScript(ScriptID scriptID);
 
 	  public:
@@ -56,9 +59,10 @@ namespace tudov
 		bool IsValidScriptID(ScriptID scriptID) const noexcept;
 		bool IsStaticScript(ScriptID scriptID) const noexcept;
 
-		ScriptID AddScript(StringView scriptName, StringView scriptCode) noexcept;
+		ScriptID AddScript(StringView scriptName, StringView scriptCode, StringView namespace_) noexcept;
 		void RemoveScript(ScriptID scriptName) noexcept;
 		const String &GetScriptCode(ScriptID scriptID) const noexcept;
+		StringView GetScriptNamespace(ScriptID scriptID) noexcept;
 
 		UnorderedMap<ScriptID, Entry>::const_iterator begin() const;
 		UnorderedMap<ScriptID, Entry>::const_iterator end() const;

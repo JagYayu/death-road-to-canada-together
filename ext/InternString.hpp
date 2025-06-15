@@ -239,7 +239,7 @@ namespace std
 	};
 } // namespace std
 
-#include "lib/json.hpp"
+#include "json.hpp"
 
 namespace intern_string
 {

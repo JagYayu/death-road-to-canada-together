@@ -18,6 +18,7 @@ namespace tudov
 		struct Scripts : public Data
 		{
 			bool closedSource{};
+			bool sandbox{};
 			Vector<String> permissions{};
 			Vector<String> privates{};
 		};
@@ -44,6 +45,7 @@ namespace tudov
 	{
 		from_json(j, static_cast<ModConfig::Data &>(s));
 		s.closedSource = j.value("closedSource", false);
+		s.sandbox = j.value("sandbox", false);
 		s.permissions = j.value("permissions", Vector<String>());
 		s.privates = j.value("privates", Vector<String>());
 	}

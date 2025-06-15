@@ -21,12 +21,22 @@ void Mod::Reload()
 	Load();
 }
 
-const String &Mod::GetNamespace() const
+ModConfig &Mod::GetConfig() noexcept
+{
+	return _config;
+}
+
+const ModConfig &Mod::GetConfig() const noexcept
+{
+	return _config;
+}
+
+const String &Mod::GetNamespace() const noexcept
 {
 	return _config.namespace_;
 }
 
-const String &Mod::GetScriptsDirectory() const
+const String &Mod::GetScriptsDirectory() const noexcept
 {
 	return _config.scripts.directory;
 }

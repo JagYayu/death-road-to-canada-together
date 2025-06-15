@@ -50,7 +50,7 @@ void DebugManager::RemoveElement(StringView element) noexcept
 	_shownElements.erase(element);
 }
 
-void DebugManager::RegisterGlobals(StringView name, ScriptEngine &scriptEngine) noexcept
+void DebugManager::RegisterGlobalsTo(StringView name, ScriptEngine &scriptEngine) noexcept
 {
 	auto &&debugs = scriptEngine.CreateTable();
 
@@ -59,7 +59,7 @@ void DebugManager::RegisterGlobals(StringView name, ScriptEngine &scriptEngine) 
 	scriptEngine.SetReadonlyGlobal(name, debugs);
 }
 
-void DebugManager::UnregisterGlobals(StringView name, ScriptEngine &scriptEngine) noexcept
+void DebugManager::UnregisterGlobalsFrom(StringView name, ScriptEngine &scriptEngine) noexcept
 {
 }
 

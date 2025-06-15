@@ -167,20 +167,27 @@ void RuntimeEvent::Invoke(const sol::object &args, Optional<EventHandler::Key> k
 		_profile->eventProfiler.BeginEvent(eventManager.modManager.scriptEngine);
 	}
 
-	if (key.has_value())
+	try
 	{
-		auto &&keyVal = key.value();
-		for (auto &&function : *cache)
+		if (key.has_value())
 		{
-			function(args, keyVal);
+			auto &&keyVal = key.value();
+			for (auto &&function : *cache)
+			{
+				function(args, keyVal);
+			}
+		}
+		else
+		{
+			for (auto &&function : *cache)
+			{
+				function(args);
+			}
 		}
 	}
-	else
+	catch (std::exception &e)
 	{
-		for (auto &&function : *cache)
-		{
-			function(args);
-		}
+		_log->Error("{}", e.what());
 	}
 
 	if (_profile)
@@ -196,14 +203,29 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, Optional<EventHandler
 		_profile->eventProfiler.BeginEvent(eventManager.modManager.scriptEngine);
 	}
 
-	if (key.has_value())
+	try
 	{
-		auto &&keyVal = key.value();
-		for (auto &&handler : _handlers)
+		if (key.has_value())
 		{
-			if (handler.key == keyVal)
+			auto &&keyVal = key.value();
+			for (auto &&handler : _handlers)
 			{
-				handler.function(args, keyVal);
+				if (handler.key == keyVal)
+				{
+					handler.function(args, keyVal);
+
+					if (_profile)
+					{
+						_profile->eventProfiler.TraceHandler(eventManager.modManager.scriptEngine, handler.name);
+					}
+				}
+			}
+		}
+		else
+		{
+			for (auto &&handler : _handlers)
+			{
+				handler.function(args);
 
 				if (_profile)
 				{
@@ -212,17 +234,9 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, Optional<EventHandler
 			}
 		}
 	}
-	else
+	catch (std::exception &e)
 	{
-		for (auto &&handler : _handlers)
-		{
-			handler.function(args);
-
-			if (_profile)
-			{
-				_profile->eventProfiler.TraceHandler(eventManager.modManager.scriptEngine, handler.name);
-			}
-		}
+		_log->Error("{}", e.what());
 	}
 
 	if (_profile)
@@ -230,7 +244,6 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, Optional<EventHandler
 		_profile->eventProfiler.EndEvent(eventManager.modManager.scriptEngine);
 	}
 }
-
 void RuntimeEvent::ClearCaches()
 {
 	_handlersSortedCache = false;

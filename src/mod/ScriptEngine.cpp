@@ -4,6 +4,7 @@
 #include "ScriptLoader.h"
 #include "ScriptProvider.h"
 #include "program/Engine.h"
+#include "sol/table.hpp"
 #include "util/Defs.h"
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
@@ -26,19 +27,25 @@ ScriptEngine::ScriptEngine(ModManager &modManager)
     : modManager(modManager),
       scriptLoader(*this),
       _log(Log::Get("ScriptEngine")),
-      _lua()
+      _lua(),
+      _luaInit()
 {
 }
 
 ScriptEngine::~ScriptEngine()
 {
 	_persistVariables.clear();
-	_virtualGlobal = sol::nil;
 	_lua.collect_garbage();
 }
 
 void ScriptEngine::Initialize()
 {
+	if (_luaInit)
+	{
+		return;
+	}
+	_luaInit = true;
+
 	_lua.open_libraries(sol::lib::base);
 	_lua.open_libraries(sol::lib::bit32);
 	_lua.open_libraries(sol::lib::coroutine);
@@ -51,7 +58,11 @@ void ScriptEngine::Initialize()
 	_lua.open_libraries(sol::lib::table);
 	_lua.open_libraries(sol::lib::utf8);
 
-	_throwModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::function>();
+	_luaThrowModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::function>();
+	_luaInspect = scriptLoader.Load("#lua.inspect")->GetTable().raw_get<sol::function>("inspect");
+	auto &&scriptEngineModule = scriptLoader.Load("#lua.ScriptEngine")->GetTable();
+	_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
+	_luaPostProcessSandboxing = scriptEngineModule.raw_get<sol::function>("postProcessSandboxing");
 
 	MakeReadonlyGlobal(_lua.globals());
 }
@@ -105,7 +116,7 @@ int ScriptEngine::ThrowError(StringView message)
 // 	throw std::runtime_error("Permission denied");
 // }
 
-sol::object MakeReadonlyGlobalImpl(sol::state &lua, const sol::object &obj, const sol::function &newindex, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited)
+sol::object MakeReadonlyGlobalImpl(sol::state &lua, const sol::object &obj, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited, const sol::function &newindex, const sol::function mark)
 {
 	if (obj.get_type() != sol::type::table)
 	{
@@ -133,36 +144,88 @@ sol::object MakeReadonlyGlobalImpl(sol::state &lua, const sol::object &obj, cons
 
 	for (auto &&[key, value] : table)
 	{
-		table[key] = MakeReadonlyGlobalImpl(lua, value, newindex, visited);
+		table[key] = MakeReadonlyGlobalImpl(lua, value, visited, newindex, mark);
 	}
 
 	metatable["__index"] = table;
 	metatable["__newindex"] = newindex;
+	mark(metatable);
 
 	return proxy;
 }
 
 sol::object ScriptEngine::MakeReadonlyGlobal(const sol::object &obj)
 {
-	UnorderedMap<sol::table, sol::table, LuaTableHash, LuaTableEqual> visited;
-	return MakeReadonlyGlobalImpl(_lua, obj, _throwModifyReadonlyGlobalError, visited);
+	Initialize();
+	UnorderedMap<sol::table, sol::table, LuaTableHash, LuaTableEqual> visited{};
+	return MakeReadonlyGlobalImpl(_lua, obj, visited, _luaThrowModifyReadonlyGlobalError, _luaMarkAsLocked);
 }
 
-void ScriptEngine::InitScriptFunc(ScriptID scriptID, const StringView scriptName, sol::protected_function &func) noexcept
+sol::table &ScriptEngine::GetSandboxedGlobals(StringView sandboxKey) noexcept
+{
+	{
+		auto &&it = _sandboxedGlobals.find(sandboxKey);
+		if (it != _sandboxedGlobals.end())
+		{
+			return it->second;
+		}
+	}
+
+	auto &&globals = _lua.globals();
+	auto &&sandbox = CreateTable();
+
+	static constexpr const char *keys[] = {
+	    // lua51
+	    "_VERSION",
+	    "assert",
+	    "collectgarbage",
+	    "coroutine",
+	    "error",
+	    "ipairs",
+	    "math",
+	    "next",
+	    "pairs",
+	    "pcall",
+	    "print",
+	    "select",
+	    "setmetatable",
+	    "string",
+	    "table",
+	    "tonumber",
+	    "tostring",
+	    "type",
+	    "unpack",
+	    "utf8",
+	    "xpcall",
+	    // C++
+	    "Events",
+	    "Render",
+	};
+
+	for (auto &&key : keys)
+	{
+		sandbox[key] = globals[key];
+	}
+
+	sandbox["_G"] = sandbox;
+
+	_luaPostProcessSandboxing(sandbox, globals);
+
+	return _sandboxedGlobals.try_emplace(sandboxKey, sandbox).first->second;
+}
+
+void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const StringView scriptName, sol::protected_function &func, StringView sandboxKey) noexcept
 {
 	auto &&namespace_ = GetLuaNamespace(scriptName);
 
-	sol::environment env{_lua, sol::create, _lua.globals()};
+	sol::environment env{_lua, sol::create, sandboxKey.empty() ? _lua.globals().as<sol::table>() : GetSandboxedGlobals(sandboxKey)};
 
 	auto &&log = Log::Get(String(scriptName));
 
-	env["print"] = [&, log](sol::variadic_args args)
+	env["print"] = [&, log](const sol::variadic_args &args)
 	{
 		try
 		{
-			auto &&a = modManager.scriptProvider.GetScriptIDByName("#lua.inspect");
-			auto &&b = scriptLoader.Load(a);
-			auto &&inspect = b->GetTable().raw_get<sol::function>("inspect");
 			String string;
 			for (auto &&arg : args)
 			{
@@ -170,7 +233,7 @@ void ScriptEngine::InitScriptFunc(ScriptID scriptID, const StringView scriptName
 				{
 					string.append("\t");
 				}
-				string.append(inspect(arg));
+				string.append(_luaInspect(arg));
 			}
 			log->Debug("{}", string.c_str());
 		}
@@ -181,16 +244,21 @@ void ScriptEngine::InitScriptFunc(ScriptID scriptID, const StringView scriptName
 		}
 	};
 
-	env["require"] = [&, log, scriptID](sol::string_view targetScriptName) -> sol::object
+	env["require"] = [&, env, log, scriptID](const sol::string_view &targetScriptName) -> sol::object
 	{
 		try
 		{
 			auto &&targetScriptID = modManager.scriptProvider.GetScriptIDByName(targetScriptName);
-
 			auto &&targetModule = scriptLoader.Load(targetScriptID);
 			if (!targetModule)
 			{
-				luaL_error(_lua, "Script module '%s' not found", targetScriptName);
+				auto &&virtualModule = env[targetScriptName];
+				if (virtualModule.valid())
+				{
+					return virtualModule;
+				}
+
+				luaL_error(_lua, "Script module '%s' not found", targetScriptName.data());
 				return sol::nil;
 			}
 

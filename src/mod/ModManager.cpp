@@ -100,10 +100,10 @@ void ModManager::LoadMods()
 			auto &&dir = entry.path();
 			if (UnpackagedMod::IsValidDirectory(dir))
 			{
-				auto &&mod = std::make_shared<UnpackagedMod>(*this, dir);
+				auto &&mod = MakeShared<UnpackagedMod>(*this, dir);
 				if (IsModMatched(*mod))
 				{
-					_mountedMods.emplace_back(mod);
+					_loadedMods.emplace_back(mod);
 				}
 				it.disable_recursion_pending();
 			}
@@ -112,7 +112,7 @@ void ModManager::LoadMods()
 		++it;
 	}
 
-	for (auto &&mod : _mountedMods)
+	for (auto &&mod : _loadedMods)
 	{
 		mod->Load();
 	}
@@ -125,25 +125,37 @@ void ModManager::LoadMods()
 
 void ModManager::UnloadMods()
 {
-	_log->Debug("Unloading all mounted mods ...");
+	_log->Debug("Unloading all loaded mods ...");
 
 	scriptEngine.scriptLoader.UnloadAll();
 
-	for (auto &&mod : _mountedMods)
+	for (auto &&mod : _loadedMods)
 	{
 		mod->Unload();
 	}
-	_mountedMods.clear();
+	_loadedMods.clear();
 
-	_log->Debug("Unloaded all mounted mods");
+	_log->Debug("Unloaded all loaded mods");
 }
 
-Vector<ModEntry> &ModManager::GetModList() noexcept
+WeakPtr<Mod> ModManager::GetLoadedMod(StringView namespace_) noexcept
+{
+	for (auto &&mod : _loadedMods)
+	{
+		if (mod->GetNamespace() == namespace_)
+		{
+			return mod;
+		}
+	}
+	return std::weak_ptr<Mod>();
+}
+
+Vector<ModEntry> &ModManager::GetRequiredMods() noexcept
 {
 	return _requiredMods;
 }
 
-const Vector<ModEntry> &ModManager::GetModList() const noexcept
+const Vector<ModEntry> &ModManager::GetRequiredMods() const noexcept
 {
 	return _requiredMods;
 }
@@ -172,8 +184,9 @@ void ModManager::Update()
 			auto &&pendingScripts = scriptEngine.scriptLoader.Unload(scriptID);
 			scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
 
+			auto &&namespace_ = scriptProvider.GetScriptNamespace(scriptID);
 			scriptProvider.RemoveScript(scriptID);
-			scriptID = scriptProvider.AddScript(scriptName, scriptCode);
+			scriptID = scriptProvider.AddScript(scriptName, scriptCode, namespace_);
 
 			scriptIDs.emplace_back(scriptID);
 		}

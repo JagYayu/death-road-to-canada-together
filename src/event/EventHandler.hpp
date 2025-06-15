@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sol/error.hpp"
 #include "util/Defs.h"
 
 #include <sol/sol.hpp>
@@ -57,7 +58,12 @@ namespace tudov
 					const auto &func = std::get<sol::function>(function);
 					if (func.valid())
 					{
-						func();
+						auto &&result = func();
+						if (!result.valid())
+						{
+							sol::error err = result;
+							throw err;
+						}
 					}
 				}
 				else
@@ -71,7 +77,12 @@ namespace tudov
 			{
 				if (auto &&func = GetIf<sol::function>(&function))
 				{
-					(*func)(obj, key);
+					auto &&result = (*func)(obj, key);
+					if (!result.valid())
+					{
+						sol::error err = result;
+						throw err;
+					}
 				}
 				else
 				{

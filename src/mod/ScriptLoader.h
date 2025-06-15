@@ -54,7 +54,7 @@ namespace tudov
 		UnorderedMap<ScriptID, String> _scriptErrors;
 		UnorderedMap<ScriptID, String> _scriptErrorsCascaded;
 
-		SharedPtr<Module> LoadImpl(ScriptID scriptID, StringView scriptName, StringView code);
+		SharedPtr<Module> LoadImpl(ScriptID scriptID, StringView scriptName, StringView code, StringView mod);
 		void UnloadImpl(ScriptID scriptID, Vector<ScriptID> &unloadedScripts);
 
 	  public:
@@ -77,7 +77,11 @@ namespace tudov
 
 		void LoadAll();
 		void UnloadAll();
+		/*
+		 * Try load script's module, do nothing if already loaded.
+		 */
 		SharedPtr<ScriptLoader::Module> Load(ScriptID scriptID);
+		SharedPtr<ScriptLoader::Module> Load(StringView scriptName);
 		Vector<ScriptID> Unload(ScriptID scriptID);
 		void HotReload(const Vector<ScriptID> &scriptIDs);
 		void ProcessFullLoads();

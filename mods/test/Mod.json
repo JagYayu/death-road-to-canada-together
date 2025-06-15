@@ -1,9 +1,9 @@
 {
-	"namespace": "Core",
+	"namespace": "Test",
 	"version": "1.0.0",
-	"name": "Death Road to Canada",
+	"name": "A testing mod",
 	"author": "JagYayu",
-	"description": "Core mod for Death Road to Canada.",
+	"description": "test test test test",
 	"dependencies": {},
 	"scripts": {
 		"directory": "scripts",

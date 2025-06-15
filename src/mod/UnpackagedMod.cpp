@@ -1,12 +1,15 @@
 #include "UnpackagedMod.h"
 
 #include "Mod.h"
+#include "ModConfig.hpp"
 #include "ModManager.h"
+#include "util/Defs.h"
 #include "util/StringUtils.hpp"
 
 #include <FileWatch.hpp>
 #include <filesystem>
 #include <format>
+#include <memory>
 #include <regex>
 
 using namespace tudov;
@@ -29,7 +32,16 @@ ModConfig UnpackagedMod::LoadConfig(const std::filesystem::path &directory)
 
 	nlohmann::json json;
 	file >> json;
-	tudov::ModConfig config = json.get<tudov::ModConfig>();
+	ModConfig config;
+	try
+	{
+		config = json.get<tudov::ModConfig>();
+	}
+	catch (...)
+	{
+		Log::Get("UnpackagedMod")->Error("Error parsing mod config file at: {}", path.string());
+		config = ModConfig();
+	}
 	file.close();
 	return config;
 }
@@ -145,7 +157,7 @@ void UnpackagedMod::Load()
 
 			auto &&relative = std::filesystem::relative(std::filesystem::relative(file, _directory), GetScriptsDirectory());
 			auto &&scriptName = FilePathToLuaScriptName(Format("{}.{}", namespace_, relative.string()));
-			auto &&scriptID = modManager.scriptProvider.AddScript(scriptName, oss.str());
+			auto &&scriptID = modManager.scriptProvider.AddScript(scriptName, oss.str(), namespace_);
 			_scripts.emplace_back(scriptID);
 		}
 	}

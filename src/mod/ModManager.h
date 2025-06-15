@@ -30,9 +30,9 @@ namespace tudov
 		SharedPtr<Log> _log;
 		ELoadState _loadState;
 
-		std::vector<std::filesystem::path> _directories;
-		std::vector<std::shared_ptr<Mod>> _mountedMods;
-		std::vector<ModEntry> _requiredMods;
+		Vector<std::filesystem::path> _directories;
+		Vector<SharedPtr<Mod>> _loadedMods;
+		Vector<ModEntry> _requiredMods;
 
 		UniquePtr<UnorderedMap<String, String>> _hotReloadScriptsPending;
 
@@ -57,8 +57,10 @@ namespace tudov
 		void LoadMods();
 		void UnloadMods();
 
-		Vector<ModEntry> &GetModList() noexcept;
-		const Vector<ModEntry> &GetModList() const noexcept;
+		WeakPtr<Mod> GetLoadedMod(StringView namespace_) noexcept;
+
+		Vector<ModEntry> &GetRequiredMods() noexcept;
+		const Vector<ModEntry> &GetRequiredMods() const noexcept;
 
 		void HotReloadScriptPending(String scriptName, String scriptCode);
 

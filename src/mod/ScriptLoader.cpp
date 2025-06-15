@@ -4,6 +4,7 @@
 #include "ScriptEngine.h"
 #include "ScriptProvider.h"
 #include "util/Defs.h"
+#include "util/StringUtils.hpp"
 
 #include <cassert>
 #include <sol/error.hpp>
@@ -62,7 +63,15 @@ const sol::table &ScriptLoader::Module::RawLoad(ScriptLoader &scriptLoader)
 	}
 
 	scriptLoader._loadingScript = previousLoadingScript;
-	_table = result.get<sol::object>(0);
+	if (result.get<sol::object>(0).get_type() == sol::type::table)
+	{
+		_table = result.get<sol::object>(0);
+	}
+	else
+	{
+		_table = scriptLoader.scriptEngine.CreateTable();
+	}
+
 	_fullyLoaded = true;
 	return _table;
 }
@@ -238,11 +247,12 @@ void ScriptLoader::LoadAll()
 	_scriptModules.clear();
 	_scriptErrors.clear();
 
-	auto &&count = scriptEngine.modManager.scriptProvider.GetCount();
-	for (auto &&[scriptID, entry] : scriptEngine.modManager.scriptProvider)
+	auto &&scriptProvider = scriptEngine.modManager.scriptProvider;
+
+	auto &&count = scriptProvider.GetCount();
+	for (auto &&[scriptID, entry] : scriptProvider)
 	{
-		auto &&scriptName = scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID);
-		LoadImpl(scriptID, scriptName.value(), entry.code);
+		LoadImpl(scriptID, entry.name, entry.code, entry.namespace_);
 	}
 
 	ProcessFullLoads();
@@ -252,20 +262,31 @@ void ScriptLoader::LoadAll()
 	_log->Debug("Loaded provided scripts");
 }
 
+SharedPtr<ScriptLoader::Module> ScriptLoader::Load(StringView scriptName)
+{
+	auto&& scriptID = scriptEngine.modManager.scriptProvider.GetScriptIDByName(scriptName);
+	if (!scriptID)
+	{
+		return nullptr;
+	}
+	return Load(scriptID);
+}
+
 SharedPtr<ScriptLoader::Module> ScriptLoader::Load(ScriptID scriptID)
 {
 	if (scriptID)
 	{
 		auto &&scriptCode = scriptEngine.modManager.scriptProvider.GetScriptCode(scriptID);
 		auto &&scriptName = scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID);
-		return LoadImpl(scriptID, scriptName.value(), scriptCode);
+		auto &&scriptNamespace = scriptEngine.modManager.scriptProvider.GetScriptNamespace(scriptID);
+		return LoadImpl(scriptID, scriptName.value(), scriptCode, scriptNamespace);
 	}
 
 	_log->Warn("{}", "Attempt to load invalid script");
 	return nullptr;
 }
 
-SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, StringView scriptName, StringView scriptCode)
+SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, StringView scriptName, StringView scriptCode, StringView namespace_)
 {
 	{
 		auto &&it = _scriptModules.find(scriptID);
@@ -279,7 +300,7 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, String
 
 	_scriptErrors.erase(scriptID);
 
-	auto &&result = scriptEngine.modManager.scriptEngine.LoadFunction(String(scriptName), scriptCode);
+	auto &&result = scriptEngine.LoadFunction(String(scriptName), scriptCode);
 	if (!result.valid())
 	{
 		_log->Debug("Failed to load script <{}>: {}", scriptID, result.get<sol::error>().what());
@@ -287,8 +308,8 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, String
 		return nullptr;
 	}
 
-	auto &&func = result.get<sol::protected_function>();
-	auto &&module = MakeShared<Module>(scriptID, func);
+	auto &&function = result.get<sol::protected_function>();
+	auto &&module = MakeShared<Module>(scriptID, function);
 	auto &&[it, inserted] = _scriptModules.try_emplace(scriptID, module);
 	assert(inserted);
 
@@ -299,7 +320,16 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, String
 	}
 	else
 	{
-		scriptEngine.modManager.scriptEngine.InitScriptFunc(scriptID, scriptName, func);
+		StringView sandboxKey = emptyString;
+		if (namespace_ != emptyString)
+		{
+			auto &&mod = scriptEngine.modManager.GetLoadedMod(namespace_);
+			if (!mod.expired() && mod.lock()->GetConfig().scripts.sandbox)
+			{
+				sandboxKey = namespace_;
+			}
+		}
+		scriptEngine.InitializeScriptFunction(scriptID, scriptName, function, sandboxKey);
 		_log->Trace("Lazy loaded script \"{}\"", scriptName);
 	}
 

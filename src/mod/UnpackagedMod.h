@@ -1,16 +1,18 @@
 #pragma once
 
 #include "Mod.h"
+#include "util/Defs.h"
 #include "util/Log.h"
 
 #include <FileWatch.hpp>
-
 
 namespace tudov
 {
 	class UnpackagedMod : public Mod
 	{
 	  private:
+		SharedPtr<Log> _log;
+
 		SharedPtr<filewatch::FileWatch<String>> _fileWatcher;
 		std::filesystem::path _directory;
 
@@ -28,8 +30,8 @@ namespace tudov
 		void UpdateFilePatterns();
 
 	  public:
-	  bool IsScript(const String& fileName) const;
-	  
+		bool IsScript(const String &fileName) const;
+
 		void Load() override;
 		void Unload() override;
 	};

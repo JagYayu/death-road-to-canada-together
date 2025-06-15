@@ -38,7 +38,7 @@ ScriptProvider::ScriptProvider(ModManager &modManager)
 	}
 }
 
-ScriptID ScriptProvider::AllocScript(StringView scriptName, StringView scriptCode)
+ScriptID ScriptProvider::AllocScript(StringView scriptName, StringView scriptCode, StringView namespace_)
 {
 	{
 		auto &&it = _scriptName2ID.find(scriptName);
@@ -51,7 +51,7 @@ ScriptID ScriptProvider::AllocScript(StringView scriptName, StringView scriptCod
 
 	++_latestScriptID;
 	auto &&id = _latestScriptID;
-	auto &&name = _scriptID2Entry.emplace(id, Entry(String(scriptName), String(scriptCode))).first->second.name;
+	auto &&name = _scriptID2Entry.emplace(id, Entry(String(scriptName), String(scriptCode), namespace_)).first->second.name;
 	_scriptName2ID.emplace(name, id);
 	return id;
 }
@@ -113,7 +113,7 @@ Optional<StringView> ScriptProvider::GetScriptNameByID(ScriptID scriptID) const 
 	return nullopt;
 }
 
-ScriptID ScriptProvider::AddScript(StringView scriptName, StringView scriptCode) noexcept
+ScriptID ScriptProvider::AddScript(StringView scriptName, StringView scriptCode, StringView namespace_) noexcept
 {
 	if (scriptName.starts_with(staticScriptNamespace))
 	{
@@ -121,12 +121,12 @@ ScriptID ScriptProvider::AddScript(StringView scriptName, StringView scriptCode)
 		return false;
 	}
 
-	if (_scriptName2ID.contains(String(scriptName)))
+	if (_scriptName2ID.contains(scriptName))
 	{
 		_log->Info("Script has already been added: {}", scriptName);
 	}
 
-	return AllocScript(scriptName, String(scriptCode));
+	return AllocScript(scriptName, scriptCode, namespace_);
 }
 
 void ScriptProvider::RemoveScript(ScriptID scriptID) noexcept
@@ -147,6 +147,16 @@ const String &ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
 		return emptyString;
 	}
 	return it->second.code;
+}
+
+StringView ScriptProvider::GetScriptNamespace(ScriptID scriptID) noexcept
+{
+	auto &&it = _scriptID2Entry.find(scriptID);
+	if (it == _scriptID2Entry.end())
+	{
+		return emptyString;
+	}
+	return it->second.namespace_;
 }
 
 // bool ScriptProvider::ContainsScript(StringView scriptName) const
