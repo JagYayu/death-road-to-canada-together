@@ -29,12 +29,12 @@ namespace tudov
 					}
 					else
 					{
-						return std::hash<String>{}(Get<String>(key.value));
+						return std::hash<std::string>{}(Get<std::string>(key.value));
 					}
 				}
 			};
 
-			Variant<Nullptr, Number, String> value;
+			std::variant<Nullptr, Number, std::string> value;
 
 			bool operator==(const Key &other) const
 			{
@@ -44,7 +44,7 @@ namespace tudov
 
 		struct Function
 		{
-			Variant<sol::function, int> function;
+			std::variant<sol::function, int> function;
 
 			explicit Function(const sol::function &function)
 			    : function(function)
@@ -97,8 +97,8 @@ namespace tudov
 		EventID eventID;
 		ScriptID scriptID;
 		Function function;
-		String name;
-		String order;
+		std::string name;
+		std::string order;
 		Key key;
 		Number sequence;
 	};

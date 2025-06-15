@@ -48,31 +48,31 @@ namespace tudov
 	  private:
 		SharedPtr<Log> _log;
 		ScriptID _loadingScript;
-		Vector<String> _loadingScripts;
-		UnorderedMap<ScriptID, SharedPtr<Module>> _scriptModules;
-		UnorderedMap<ScriptID, UnorderedSet<ScriptID>> _scriptReverseDependencies;
-		UnorderedMap<ScriptID, String> _scriptErrors;
-		UnorderedMap<ScriptID, String> _scriptErrorsCascaded;
+		std::vector<std::string> _loadingScripts;
+		std::unordered_map<ScriptID, SharedPtr<Module>> _scriptModules;
+		std::unordered_map<ScriptID, std::unordered_set<ScriptID>> _scriptReverseDependencies;
+		std::unordered_map<ScriptID, std::string> _scriptErrors;
+		std::unordered_map<ScriptID, std::string> _scriptErrorsCascaded;
 
-		SharedPtr<Module> LoadImpl(ScriptID scriptID, StringView scriptName, StringView code, StringView mod);
-		void UnloadImpl(ScriptID scriptID, Vector<ScriptID> &unloadedScripts);
+		SharedPtr<Module> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
+		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
 
 	  public:
 		ScriptEngine &scriptEngine;
 
 		DelegateEvent<> onPreLoadAllScripts;
 		DelegateEvent<> onPostLoadAllScripts;
-		DelegateEvent<const Vector<ScriptID> &> onPreHotReloadScripts;
-		DelegateEvent<const Vector<ScriptID> &> onPostHotReloadScripts;
+		DelegateEvent<const std::vector<ScriptID> &> onPreHotReloadScripts;
+		DelegateEvent<const std::vector<ScriptID> &> onPostHotReloadScripts;
 
 	  public:
 		ScriptLoader(ScriptEngine &scriptEngine) noexcept;
 		~ScriptLoader() noexcept;
 
 		ScriptID GetLoadingScriptID() const noexcept;
-		Optional<StringView> GetLoadingScriptName() const noexcept;
+		std::optional<std::string_view> GetLoadingScriptName() const noexcept;
 
-		Vector<ScriptID> GetDependencies(ScriptID scriptID) const;
+		std::vector<ScriptID> GetDependencies(ScriptID scriptID) const;
 		void AddReverseDependency(ScriptID source, ScriptID target);
 
 		void LoadAll();
@@ -81,9 +81,9 @@ namespace tudov
 		 * Try load script's module, do nothing if already loaded.
 		 */
 		SharedPtr<ScriptLoader::Module> Load(ScriptID scriptID);
-		SharedPtr<ScriptLoader::Module> Load(StringView scriptName);
-		Vector<ScriptID> Unload(ScriptID scriptID);
-		void HotReload(const Vector<ScriptID> &scriptIDs);
+		SharedPtr<ScriptLoader::Module> Load(std::string_view scriptName);
+		std::vector<ScriptID> Unload(ScriptID scriptID);
+		void HotReload(const std::vector<ScriptID> &scriptIDs);
 		void ProcessFullLoads();
 	};
 } // namespace tudov

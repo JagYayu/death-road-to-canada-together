@@ -1,5 +1,6 @@
 #include "EngineConfig.h"
 
+#include "graphic/ERenderBackend.h"
 #include "util/Defs.h"
 #include "util/Log.h"
 
@@ -16,20 +17,22 @@ constexpr const char *keyFullscreen = "fullscreen";
 constexpr const char *keyHeight = "height";
 constexpr const char *keyLog = "log";
 constexpr const char *keyMount = "mount";
+constexpr const char *keyRenderBackend = "renderBackend";
 constexpr const char *keyTitle = "title";
 constexpr const char *keyWidth = "width";
 constexpr const char *keyWindow = "window";
 
+static const auto valueRenderBackend = ERenderBackend::SDL;
 static const auto valueWindowFramelimit = 60;
 static const auto valueWindowFullscreen = false;
 static const auto valueWindowHeight = 720;
 static const auto valueWindowTitle = "DR2C Together";
 static const auto valueWindowWidth = 1280;
-static const auto valueMountDirectories = Vector<String>{
+static const auto valueMountDirectories = std::vector<std::string>{
     "data",
     "gfx",
 };
-static const auto valueMountFiles = UnorderedMap<String, ResourceType>{
+static const auto valueMountFiles = std::unordered_map<std::string, ResourceType>{
     {".png", ResourceType::Texture},
     {".ogg", ResourceType::Audio},
 };
@@ -78,7 +81,7 @@ EngineConfig::EngineConfig() noexcept
 {
 	EngineConfig::Load();
 
-	_fileWatcher = MakeUnique<filewatch::FileWatch<String>>(String(file), [&](StringView path, const filewatch::Event changeType)
+	_fileWatcher = std::make_unique<filewatch::FileWatch<std::string>>(std::string(file), [&](std::string_view path, const filewatch::Event changeType)
 	{
 		EngineConfig::Load();
 	});
@@ -93,7 +96,7 @@ void EngineConfig::Save() noexcept
 {
 	try
 	{
-		String f{file};
+		std::string f{file};
 		std::ofstream out{f};
 		if (out.is_open())
 		{
@@ -116,7 +119,7 @@ void EngineConfig::Load() noexcept
 {
 	try
 	{
-		std::ifstream f{String(file)};
+		std::ifstream f{std::string(file)};
 		if (f.is_open())
 		{
 			_config = nlohmann::json::parse(f);
@@ -125,7 +128,7 @@ void EngineConfig::Load() noexcept
 		else
 		{
 			_config = nlohmann::json();
-			std::ofstream out{String(file)};
+			std::ofstream out{std::string(file)};
 			out << _config.dump(4);
 			out.close();
 		}
@@ -137,7 +140,7 @@ void EngineConfig::Load() noexcept
 	}
 }
 
-Vector<String> EngineConfig::GetMountDirectories() noexcept
+std::vector<std::string> EngineConfig::GetMountDirectories() noexcept
 {
 	auto &&mount = GetMount(_config);
 	auto &&directories = mount[keyDirectories];
@@ -149,7 +152,7 @@ Vector<String> EngineConfig::GetMountDirectories() noexcept
 	return directories;
 }
 
-UnorderedMap<String, ResourceType> EngineConfig::GetMountFiles() noexcept
+std::unordered_map<std::string, ResourceType> EngineConfig::GetMountFiles() noexcept
 {
 	auto &&mount = GetMount(_config);
 	auto &&files = mount[keyFiles];
@@ -159,6 +162,17 @@ UnorderedMap<String, ResourceType> EngineConfig::GetMountFiles() noexcept
 		mount[keyFiles] = files;
 	}
 	return files;
+}
+
+ERenderBackend EngineConfig::GetRenderBackend() noexcept
+{
+	auto &&renderBackend = _config[keyRenderBackend];
+	if (!renderBackend.is_string())
+	{
+		renderBackend = valueRenderBackend;
+		_config[keyRenderBackend] = renderBackend;
+	}
+	return renderBackend;
 }
 
 UInt32 EngineConfig::GetWindowFramelimit() noexcept
@@ -173,7 +187,7 @@ UInt32 EngineConfig::GetWindowFramelimit() noexcept
 	return framelimit;
 }
 
-StringView EngineConfig::GetWindowTitle() noexcept
+std::string_view EngineConfig::GetWindowTitle() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&title = window[keyTitle];
@@ -209,7 +223,7 @@ UInt32 EngineConfig::GetWindowHeight() noexcept
 	return height;
 }
 
-void EngineConfig::SetWindowTitle(const String &) noexcept
+void EngineConfig::SetWindowTitle(const std::string &) noexcept
 {
 }
 

@@ -5,6 +5,7 @@
 #include "util/Defs.h"
 #include "util/Log.h"
 
+#include <optional>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
 
@@ -19,7 +20,7 @@ namespace tudov
 
 	class RuntimeEvent : public AbstractEvent
 	{
-		using InvocationCache = Vector<EventHandler::Function>;
+		using InvocationCache = std::vector<EventHandler::Function>;
 
 		struct Profile
 		{
@@ -38,33 +39,33 @@ namespace tudov
 		SharedPtr<Log> _log;
 		UniquePtr<Profile> _profile;
 		bool _handlersSortedCache;
-		Optional<InvocationCache> _invocationCache;
-		UnorderedMap<EventHandler::Key, InvocationCache, EventHandler::Key::Hash, EventHandler::Key::Equal> _invocationCaches;
-		Vector<String> _orders;
-		UnorderedSet<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> _keys;
-		Vector<EventHandler> _handlers;
+		std::optional<InvocationCache> _invocationCache;
+		std::unordered_map<EventHandler::Key, InvocationCache, EventHandler::Key::Hash, EventHandler::Key::Equal> _invocationCaches;
+		std::vector<std::string> _orders;
+		std::unordered_set<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> _keys;
+		std::vector<EventHandler> _handlers;
 
 	  public:
-		explicit RuntimeEvent(EventManager &eventManager, EventID eventID, const Vector<String> &orders = {""}, const UnorderedSet<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> &keys = {}, ScriptID scriptID = false);
+		explicit RuntimeEvent(EventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = {""}, const std::unordered_set<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> &keys = {}, ScriptID scriptID = false);
 
 	  private:
 		void ClearCaches();
-		void ClearScriptHandlersImpl(Function<bool(const EventHandler &)> pred);
+		void ClearScriptHandlersImpl(std::function<bool(const EventHandler &)> pred);
 
 		void InvokeFunction() noexcept;
 
 	  protected:
-		Vector<EventHandler> &GetSortedHandlers();
+		std::vector<EventHandler> &GetSortedHandlers();
 
 	  public:
-		Optional<Reference<RuntimeEvent::Profile>> GetProfile() const noexcept;
+		std::optional<Reference<RuntimeEvent::Profile>> GetProfile() const noexcept;
 		void EnableProfiler(bool traceHandlers) noexcept;
 		void DisableProfiler() noexcept;
 
 		void Add(const AddHandlerArgs &args) override;
 
-		void Invoke(const sol::object &args = sol::lua_nil, Optional<EventHandler::Key> key = nullopt);
-		void InvokeUncached(const sol::object &args = sol::lua_nil, Optional<EventHandler::Key> key = nullopt);
+		void Invoke(const sol::object &args = sol::lua_nil, std::optional<EventHandler::Key> key = nullopt);
+		void InvokeUncached(const sol::object &args = sol::lua_nil, std::optional<EventHandler::Key> key = nullopt);
 
 		void ClearInvalidScriptsHandlers(const ScriptProvider &scriptProvider);
 		void ClearScriptsHandlers();

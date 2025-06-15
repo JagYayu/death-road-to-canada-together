@@ -11,14 +11,14 @@ namespace tudov
 	class LoadtimeEvent : public AbstractEvent
 	{
 	  protected:
-		using Operation = Variant<AddHandlerArgs, OverrideHandlerArgs>;
+		using Operation = std::variant<AddHandlerArgs, OverrideHandlerArgs>;
 
-		Vector<String> _orders;
-		Vector<EventHandler::Key> _keys;
-		Vector<Operation> _operations;
+		std::vector<std::string> _orders;
+		std::vector<EventHandler::Key> _keys;
+		std::vector<Operation> _operations;
 
 	  public:
-		explicit LoadtimeEvent(EventManager &eventManager, EventID eventID, const Vector<String> &orders, const Vector<EventHandler::Key> &keys, ScriptID scriptID) noexcept;
+		explicit LoadtimeEvent(EventManager &eventManager, EventID eventID, const std::vector<std::string> &orders, const std::vector<EventHandler::Key> &keys, ScriptID scriptID) noexcept;
 
 		virtual void Add(const AddHandlerArgs &handler) override;
 

@@ -100,7 +100,7 @@ void ModManager::LoadMods()
 			auto &&dir = entry.path();
 			if (UnpackagedMod::IsValidDirectory(dir))
 			{
-				auto &&mod = MakeShared<UnpackagedMod>(*this, dir);
+				auto &&mod = std::make_shared<UnpackagedMod>(*this, dir);
 				if (IsModMatched(*mod))
 				{
 					_loadedMods.emplace_back(mod);
@@ -138,7 +138,7 @@ void ModManager::UnloadMods()
 	_log->Debug("Unloaded all loaded mods");
 }
 
-WeakPtr<Mod> ModManager::GetLoadedMod(StringView namespace_) noexcept
+WeakPtr<Mod> ModManager::GetLoadedMod(std::string_view namespace_) noexcept
 {
 	for (auto &&mod : _loadedMods)
 	{
@@ -150,21 +150,21 @@ WeakPtr<Mod> ModManager::GetLoadedMod(StringView namespace_) noexcept
 	return std::weak_ptr<Mod>();
 }
 
-Vector<ModEntry> &ModManager::GetRequiredMods() noexcept
+std::vector<ModEntry> &ModManager::GetRequiredMods() noexcept
 {
 	return _requiredMods;
 }
 
-const Vector<ModEntry> &ModManager::GetRequiredMods() const noexcept
+const std::vector<ModEntry> &ModManager::GetRequiredMods() const noexcept
 {
 	return _requiredMods;
 }
 
-void ModManager::HotReloadScriptPending(String scriptName, String scriptCode)
+void ModManager::HotReloadScriptPending(std::string scriptName, std::string scriptCode)
 {
 	if (!_hotReloadScriptsPending)
 	{
-		_hotReloadScriptsPending = std::make_unique<UnorderedMap<String, String>>();
+		_hotReloadScriptsPending = std::make_unique<std::unordered_map<std::string, std::string>>();
 	}
 	(*_hotReloadScriptsPending)[scriptName] = scriptCode;
 }
@@ -175,7 +175,7 @@ void ModManager::Update()
 
 	if (_hotReloadScriptsPending)
 	{
-		Vector<ScriptID> scriptIDs{};
+		std::vector<ScriptID> scriptIDs{};
 
 		for (auto &&[scriptName, scriptCode] : *_hotReloadScriptsPending)
 		{

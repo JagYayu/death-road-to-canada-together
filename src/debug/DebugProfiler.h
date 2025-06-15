@@ -15,7 +15,7 @@ namespace tudov
 
 		DebugProfiler(Engine &engine) noexcept;
 
-		StringView GetName() noexcept override;
+		std::string_view GetName() noexcept override;
 		void UpdateAndRender() noexcept override;
 	};
 } // namespace tudov

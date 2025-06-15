@@ -14,7 +14,7 @@ namespace tudov
 		};
 
 		ScriptID scriptName;
-		String name;
+		std::string name;
 		Function function;
 	};
 } // namespace tudov

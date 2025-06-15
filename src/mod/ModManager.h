@@ -30,11 +30,11 @@ namespace tudov
 		SharedPtr<Log> _log;
 		ELoadState _loadState;
 
-		Vector<std::filesystem::path> _directories;
-		Vector<SharedPtr<Mod>> _loadedMods;
-		Vector<ModEntry> _requiredMods;
+		std::vector<std::filesystem::path> _directories;
+		std::vector<SharedPtr<Mod>> _loadedMods;
+		std::vector<ModEntry> _requiredMods;
 
-		UniquePtr<UnorderedMap<String, String>> _hotReloadScriptsPending;
+		UniquePtr<std::unordered_map<std::string, std::string>> _hotReloadScriptsPending;
 
 	  public:
 		Engine &engine;
@@ -57,12 +57,12 @@ namespace tudov
 		void LoadMods();
 		void UnloadMods();
 
-		WeakPtr<Mod> GetLoadedMod(StringView namespace_) noexcept;
+		WeakPtr<Mod> GetLoadedMod(std::string_view namespace_) noexcept;
 
-		Vector<ModEntry> &GetRequiredMods() noexcept;
-		const Vector<ModEntry> &GetRequiredMods() const noexcept;
+		std::vector<ModEntry> &GetRequiredMods() noexcept;
+		const std::vector<ModEntry> &GetRequiredMods() const noexcept;
 
-		void HotReloadScriptPending(String scriptName, String scriptCode);
+		void HotReloadScriptPending(std::string scriptName, std::string scriptCode);
 
 		void Update();
 	};

@@ -25,7 +25,7 @@ namespace tudov
 	};
 
 	template <typename T>
-	inline T Average(const Vector<T> &data) noexcept
+	inline T Average(const std::vector<T> &data) noexcept
 	{
 		if (data.empty())
 		{
@@ -45,7 +45,7 @@ namespace tudov
 		return sum / N;
 	}
 
-	inline StringView GetLuaTypeStringView(sol::type luaType) noexcept
+	inline std::string_view GetLuaTypeStringView(sol::type luaType) noexcept
 	{
 		switch (luaType)
 		{
@@ -104,8 +104,8 @@ namespace tudov
 		}
 	}
 
-	template <typename K, typename V, typename Hash = std::hash<K>, typename KeyEqual = std::equal_to<K>, typename Alloc = std::allocator<Pair<const K, V>>>
-	void ShrinkUnorderedMap(UnorderedMap<K, V, Hash, KeyEqual, Alloc> &unorderedMap) noexcept
+	template <typename K, typename V, typename Hash = std::hash<K>, typename KeyEqual = std::equal_to<K>, typename Alloc = std::allocator<std::pair<const K, V>>>
+	void ShrinkUnorderedMap(std::unordered_map<K, V, Hash, KeyEqual, Alloc> &unorderedMap) noexcept
 	{
 		if (unorderedMap.empty())
 		{

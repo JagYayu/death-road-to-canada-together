@@ -13,8 +13,8 @@ namespace tudov
 	class DebugManager
 	{
 	  private:
-		Vector<SharedPtr<IDebugElement>> _elements;
-		Set<StringView> _shownElements;
+		std::vector<SharedPtr<IDebugElement>> _elements;
+		std::set<std::string_view> _shownElements;
 
 	  public:
 		Window &window;
@@ -23,13 +23,13 @@ namespace tudov
 
 	  private:
 		void AddElement(const SharedPtr<IDebugElement> &element) noexcept;
-		void RemoveElement(StringView element) noexcept;
+		void RemoveElement(std::string_view element) noexcept;
 
 	  public:
 		explicit DebugManager(Window &window) noexcept;
 
-		void RegisterGlobalsTo(StringView name, ScriptEngine &scriptEngine) noexcept;
-		void UnregisterGlobalsFrom(StringView name, ScriptEngine &scriptEngine) noexcept;
+		void RegisterGlobalsTo(std::string_view name, ScriptEngine &scriptEngine) noexcept;
+		void UnregisterGlobalsFrom(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 
 		void UpdateAndRender() noexcept;
 	};

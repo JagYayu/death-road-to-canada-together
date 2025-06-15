@@ -27,8 +27,8 @@ namespace tudov
 		sol::state _lua;
 		bool _luaInit;
 
-		UnorderedMap<StringView, sol::object> _persistVariables;
-		UnorderedMap<StringView, sol::table> _sandboxedGlobals;
+		std::unordered_map<std::string_view, sol::object> _persistVariables;
+		std::unordered_map<std::string_view, sol::table> _sandboxedGlobals;
 		
 		sol::function _luaThrowModifyReadonlyGlobalError;
 		sol::function _luaInspect;
@@ -48,21 +48,21 @@ namespace tudov
 
 		sol::state_view &GetState();
 
-		void SetReadonlyGlobal(const sol::string_view &key, const sol::table &value);
+		void SetReadonlyGlobal(const sol::string_view &key, sol::object value);
 		void CollectGarbage();
 		sol::table CreateTable(UInt32 arr = 0, UInt32 hash = 0);
 		size_t GetMemory() const noexcept;
-		int ThrowError(StringView message);
-		sol::load_result LoadFunction(const String &name, StringView code);
+		int ThrowError(std::string_view message);
+		sol::load_result LoadFunction(const std::string &name, std::string_view code);
 
 		void MarkLockedMetatable();
 		sol::object MakeReadonlyGlobal(const sol::object &obj);
 
-		sol::table &GetSandboxedGlobals(StringView sandboxKey) noexcept;
+		sol::table &GetSandboxedGlobals(std::string_view sandboxKey) noexcept;
 		// void ResetSandboxedGlobal() noexcept;
-		void InitializeScriptFunction(ScriptID scriptID, StringView scriptName, sol::protected_function &function, StringView sandboxKey = emptyString) noexcept;
+		void InitializeScriptFunction(ScriptID scriptID, std::string_view scriptName, sol::protected_function &function, std::string_view sandboxKey = emptyString) noexcept;
 
-		sol::object GetPersistVariable(StringView key);
-		void SetPersistVariable(StringView key, const sol::object &value);
+		sol::object GetPersistVariable(std::string_view key);
+		void SetPersistVariable(std::string_view key, const sol::object &value);
 	};
 } // namespace tudov

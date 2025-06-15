@@ -9,7 +9,7 @@ using namespace tudov;
 
 using ScriptID = ScriptID;
 
-String StaticScriptNamespace(const String &path)
+std::string StaticScriptNamespace(const std::string &path)
 {
 	return "#" + FilePathToLuaScriptName(path);
 }
@@ -19,7 +19,7 @@ static constexpr const char *staticScriptDirectory = "lua";
 static constexpr const char *staticScriptNamespace = "#lua";
 static constexpr const char *staticScriptNamespacePrefix = "#lua.";
 
-bool ScriptProvider::IsStaticScript(StringView scriptName)
+bool ScriptProvider::IsStaticScript(std::string_view scriptName)
 {
 	return scriptName.starts_with(staticScriptPrefix);
 }
@@ -38,7 +38,7 @@ ScriptProvider::ScriptProvider(ModManager &modManager)
 	}
 }
 
-ScriptID ScriptProvider::AllocScript(StringView scriptName, StringView scriptCode, StringView namespace_)
+ScriptID ScriptProvider::AllocScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_)
 {
 	{
 		auto &&it = _scriptName2ID.find(scriptName);
@@ -51,7 +51,7 @@ ScriptID ScriptProvider::AllocScript(StringView scriptName, StringView scriptCod
 
 	++_latestScriptID;
 	auto &&id = _latestScriptID;
-	auto &&name = _scriptID2Entry.emplace(id, Entry(String(scriptName), String(scriptCode), namespace_)).first->second.name;
+	auto &&name = _scriptID2Entry.emplace(id, Entry(std::string(scriptName), std::string(scriptCode), namespace_)).first->second.name;
 	_scriptName2ID.emplace(name, id);
 	return id;
 }
@@ -84,16 +84,16 @@ bool ScriptProvider::IsStaticScript(ScriptID scriptID) const noexcept
 	return it != _scriptID2Entry.end() && it->second.name.starts_with(staticScriptNamespace);
 }
 
-ScriptID ScriptProvider::GetScriptIDByName(StringView scriptName) const noexcept
+ScriptID ScriptProvider::GetScriptIDByName(std::string_view scriptName) const noexcept
 {
-	String name{scriptName};
+	std::string name{scriptName};
 	auto &&it = _scriptName2ID.find(name);
 	if (it != _scriptName2ID.end())
 	{
 		return it->second;
 	}
 
-	name = staticScriptNamespacePrefix + String(scriptName);
+	name = staticScriptNamespacePrefix + std::string(scriptName);
 	it = _scriptName2ID.find(name);
 	if (it != _scriptName2ID.end())
 	{
@@ -103,7 +103,7 @@ ScriptID ScriptProvider::GetScriptIDByName(StringView scriptName) const noexcept
 	return false;
 }
 
-Optional<StringView> ScriptProvider::GetScriptNameByID(ScriptID scriptID) const noexcept
+std::optional<std::string_view> ScriptProvider::GetScriptNameByID(ScriptID scriptID) const noexcept
 {
 	auto &&it = _scriptID2Entry.find(scriptID);
 	if (it != _scriptID2Entry.end())
@@ -113,7 +113,7 @@ Optional<StringView> ScriptProvider::GetScriptNameByID(ScriptID scriptID) const 
 	return nullopt;
 }
 
-ScriptID ScriptProvider::AddScript(StringView scriptName, StringView scriptCode, StringView namespace_) noexcept
+ScriptID ScriptProvider::AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_) noexcept
 {
 	if (scriptName.starts_with(staticScriptNamespace))
 	{
@@ -139,7 +139,7 @@ void ScriptProvider::RemoveScript(ScriptID scriptID) noexcept
 	DeallocScript(scriptID);
 }
 
-const String &ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
+const std::string &ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
 {
 	auto &&it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())
@@ -149,7 +149,7 @@ const String &ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
 	return it->second.code;
 }
 
-StringView ScriptProvider::GetScriptNamespace(ScriptID scriptID) noexcept
+std::string_view ScriptProvider::GetScriptNamespace(ScriptID scriptID) noexcept
 {
 	auto &&it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())
@@ -159,12 +159,12 @@ StringView ScriptProvider::GetScriptNamespace(ScriptID scriptID) noexcept
 	return it->second.namespace_;
 }
 
-// bool ScriptProvider::ContainsScript(StringView scriptName) const
+// bool ScriptProvider::ContainsScript(std::string_view scriptName) const
 // {
 // 	return _scriptCodes.contains(scriptName);
 // }
 
-// Optional<String> ScriptProvider::TryResolveScriptName(StringView scriptName)
+// std::optional<std::string> ScriptProvider::TryResolveScriptName(std::string_view scriptName)
 // {
 // 	auto &&it = _scriptCodes.find(scriptName);
 // 	if (it != _scriptCodes.end())
@@ -172,7 +172,7 @@ StringView ScriptProvider::GetScriptNamespace(ScriptID scriptID) noexcept
 // 		return it->first;
 // 	}
 
-// 	auto &&resolvedScriptName = staticScriptNamespacePrefix + String(scriptName);
+// 	auto &&resolvedScriptName = staticScriptNamespacePrefix + std::string(scriptName);
 // 	it = _scriptCodes.find(resolvedScriptName);
 // 	if (it != _scriptCodes.end())
 // 	{
@@ -182,12 +182,12 @@ StringView ScriptProvider::GetScriptNamespace(ScriptID scriptID) noexcept
 // 	return nullopt;
 // }
 
-UnorderedMap<ScriptID, ScriptProvider::Entry>::const_iterator ScriptProvider::begin() const
+std::unordered_map<ScriptID, ScriptProvider::Entry>::const_iterator ScriptProvider::begin() const
 {
 	return _scriptID2Entry.begin();
 }
 
-UnorderedMap<ScriptID, ScriptProvider::Entry>::const_iterator ScriptProvider::end() const
+std::unordered_map<ScriptID, ScriptProvider::Entry>::const_iterator ScriptProvider::end() const
 {
 	return _scriptID2Entry.end();
 }

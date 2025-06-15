@@ -7,14 +7,14 @@ namespace tudov
 	class MainArgs
 	{
 	  private:
-		Vector<String> args;
+		std::vector<std::string> args;
 
 	  public:
 		explicit MainArgs(int argc, char **argv);
 
 		size_t size() const;
 
-		const String &operator[](size_t i) const
+		const std::string &operator[](size_t i) const
 		{
 			return args[i];
 		}

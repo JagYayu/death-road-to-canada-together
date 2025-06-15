@@ -12,7 +12,7 @@
 
 using namespace tudov;
 
-RuntimeEvent::RuntimeEvent(EventManager &eventManager, EventID eventID, const Vector<String> &orders, const UnorderedSet<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> &keys, ScriptID scriptID)
+RuntimeEvent::RuntimeEvent(EventManager &eventManager, EventID eventID, const std::vector<std::string> &orders, const std::unordered_set<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> &keys, ScriptID scriptID)
     : AbstractEvent(eventManager, eventID, scriptID),
       _log(Log::Get("RuntimeEvent")),
       _orders(orders),
@@ -24,7 +24,7 @@ RuntimeEvent::RuntimeEvent(EventManager &eventManager, EventID eventID, const Ve
 	}
 }
 
-Optional<Reference<RuntimeEvent::Profile>> RuntimeEvent::GetProfile() const noexcept
+std::optional<Reference<RuntimeEvent::Profile>> RuntimeEvent::GetProfile() const noexcept
 {
 	if (_profile)
 	{
@@ -37,7 +37,7 @@ void RuntimeEvent::EnableProfiler(bool traceHandlers) noexcept
 {
 	if (!_profile)
 	{
-		_profile = MakeUnique<Profile>(traceHandlers);
+		_profile = std::make_unique<Profile>(traceHandlers);
 	}
 	else
 	{
@@ -53,7 +53,7 @@ void RuntimeEvent::DisableProfiler() noexcept
 void RuntimeEvent::Add(const AddHandlerArgs &args)
 {
 	auto &&argName = args.name;
-	String name;
+	std::string name;
 	if (argName.has_value())
 	{
 		name = argName.value();
@@ -85,14 +85,14 @@ void RuntimeEvent::Add(const AddHandlerArgs &args)
 	ClearCaches();
 }
 
-Vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
+std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 {
 	if (_handlersSortedCache)
 	{
 		return _handlers;
 	}
 
-	UnorderedMap<String, size_t> orderSequenceMap;
+	std::unordered_map<std::string, size_t> orderSequenceMap;
 	for (auto &&i = 0; i < _orders.size(); ++i)
 	{
 		orderSequenceMap[_orders[i]] = i;
@@ -121,7 +121,7 @@ Vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 	return _handlers;
 }
 
-void RuntimeEvent::Invoke(const sol::object &args, Optional<EventHandler::Key> key)
+void RuntimeEvent::Invoke(const sol::object &args, std::optional<EventHandler::Key> key)
 {
 	if (_profile && _profile->traceHandlers)
 	{
@@ -196,7 +196,7 @@ void RuntimeEvent::Invoke(const sol::object &args, Optional<EventHandler::Key> k
 	}
 }
 
-void RuntimeEvent::InvokeUncached(const sol::object &args, Optional<EventHandler::Key> key)
+void RuntimeEvent::InvokeUncached(const sol::object &args, std::optional<EventHandler::Key> key)
 {
 	if (_profile)
 	{
@@ -251,7 +251,7 @@ void RuntimeEvent::ClearCaches()
 	_invocationCaches.clear();
 }
 
-void RuntimeEvent::ClearScriptHandlersImpl(Function<bool(const EventHandler &)> pred)
+void RuntimeEvent::ClearScriptHandlersImpl(std::function<bool(const EventHandler &)> pred)
 {
 	auto previousSize = _handlers.size();
 

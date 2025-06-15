@@ -13,7 +13,7 @@ DebugConsole::DebugConsole() noexcept
 {
 }
 
-StringView DebugConsole::GetName() noexcept
+std::string_view DebugConsole::GetName() noexcept
 {
 	return "Console";
 }
@@ -25,7 +25,7 @@ void DebugConsole::Clear()
 	_lineOffsets.push_back(0);
 }
 
-void DebugConsole::Log(StringView message)
+void DebugConsole::Log(std::string_view message)
 {
 	int old_size = _buffer.size();
 	_buffer.append(message.data());

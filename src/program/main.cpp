@@ -45,7 +45,7 @@ void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority
 		break;
 	}
 
-	auto &&log = Log::Get(String("@SDL.") + cate);
+	auto &&log = Log::Get(std::string("@SDL.") + cate);
 	switch (priority)
 	{
 	case SDL_LOG_PRIORITY_TRACE:
@@ -74,7 +74,7 @@ int main(int argc, char **args)
 {
 	SDL_SetLogOutputFunction(SDLLogOutputCallback, nullptr);
 	SDL_SetLogPriorities(SDL_LOG_PRIORITY_INVALID);
-	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
+	if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS | SDL_INIT_SENSOR | SDL_INIT_CAMERA))
 	{
 		SDL_Log("SDL_Init failed: %s", SDL_GetError());
 		return -1;
@@ -85,8 +85,8 @@ int main(int argc, char **args)
 	ImGui::StyleColorsDark();
 	{
 		ImGuiIO &io = ImGui::GetIO();
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	}
 
 	Engine().Run(MainArgs{argc, args});
@@ -96,6 +96,8 @@ int main(int argc, char **args)
 	ImGui::DestroyContext();
 
 	SDL_Quit();
+
+	Log::Exit();
 
 	return 0;
 }

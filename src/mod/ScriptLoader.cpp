@@ -190,12 +190,12 @@ ScriptID ScriptLoader::GetLoadingScriptID() const noexcept
 	return _loadingScript;
 }
 
-Optional<StringView> ScriptLoader::GetLoadingScriptName() const noexcept
+std::optional<std::string_view> ScriptLoader::GetLoadingScriptName() const noexcept
 {
 	return scriptEngine.modManager.scriptProvider.GetScriptNameByID(_loadingScript);
 }
 
-void GetScriptDependencies(const UnorderedMap<ScriptID, UnorderedSet<ScriptID>> &scriptDependencies, ScriptID scriptID, Vector<ScriptID> &sources, UnorderedSet<ScriptID> &visited)
+void GetScriptDependencies(const std::unordered_map<ScriptID, std::unordered_set<ScriptID>> &scriptDependencies, ScriptID scriptID, std::vector<ScriptID> &sources, std::unordered_set<ScriptID> &visited)
 {
 	if (visited.contains(scriptID))
 	{
@@ -214,10 +214,10 @@ void GetScriptDependencies(const UnorderedMap<ScriptID, UnorderedSet<ScriptID>> 
 	}
 }
 
-Vector<ScriptID> ScriptLoader::GetDependencies(ScriptID scriptID) const
+std::vector<ScriptID> ScriptLoader::GetDependencies(ScriptID scriptID) const
 {
-	auto &&sources = Vector<ScriptID>();
-	auto &&visited = UnorderedSet<ScriptID>();
+	auto &&sources = std::vector<ScriptID>();
+	auto &&visited = std::unordered_set<ScriptID>();
 	GetScriptDependencies(_scriptReverseDependencies, scriptID, sources, visited);
 	return Move(sources);
 }
@@ -257,12 +257,14 @@ void ScriptLoader::LoadAll()
 
 	ProcessFullLoads();
 
-	onPreLoadAllScripts();
+	onPostLoadAllScripts();
 
 	_log->Debug("Loaded provided scripts");
+
+	Log::CleanupExpired();
 }
 
-SharedPtr<ScriptLoader::Module> ScriptLoader::Load(StringView scriptName)
+SharedPtr<ScriptLoader::Module> ScriptLoader::Load(std::string_view scriptName)
 {
 	auto&& scriptID = scriptEngine.modManager.scriptProvider.GetScriptIDByName(scriptName);
 	if (!scriptID)
@@ -286,7 +288,7 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::Load(ScriptID scriptID)
 	return nullptr;
 }
 
-SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, StringView scriptName, StringView scriptCode, StringView namespace_)
+SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_)
 {
 	{
 		auto &&it = _scriptModules.find(scriptID);
@@ -300,7 +302,7 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, String
 
 	_scriptErrors.erase(scriptID);
 
-	auto &&result = scriptEngine.LoadFunction(String(scriptName), scriptCode);
+	auto &&result = scriptEngine.LoadFunction(std::string(scriptName), scriptCode);
 	if (!result.valid())
 	{
 		_log->Debug("Failed to load script <{}>: {}", scriptID, result.get<sol::error>().what());
@@ -309,7 +311,7 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, String
 	}
 
 	auto &&function = result.get<sol::protected_function>();
-	auto &&module = MakeShared<Module>(scriptID, function);
+	auto &&module = std::make_shared<Module>(scriptID, function);
 	auto &&[it, inserted] = _scriptModules.try_emplace(scriptID, module);
 	assert(inserted);
 
@@ -320,7 +322,7 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, String
 	}
 	else
 	{
-		StringView sandboxKey = emptyString;
+		std::string_view sandboxKey = emptyString;
 		if (namespace_ != emptyString)
 		{
 			auto &&mod = scriptEngine.modManager.GetLoadedMod(namespace_);
@@ -347,14 +349,14 @@ void ScriptLoader::UnloadAll()
 	}
 }
 
-Vector<ScriptID> ScriptLoader::Unload(ScriptID scriptID)
+std::vector<ScriptID> ScriptLoader::Unload(ScriptID scriptID)
 {
-	Vector<ScriptID> unloadedScripts{};
+	std::vector<ScriptID> unloadedScripts{};
 	UnloadImpl(scriptID, unloadedScripts);
 	return Move(unloadedScripts);
 }
 
-void ScriptLoader::UnloadImpl(ScriptID scriptID, Vector<ScriptID> &unloadedScripts)
+void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts)
 {
 	_log->Trace("Unloading script <{}>", scriptID);
 
@@ -384,7 +386,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, Vector<ScriptID> &unloadedScrip
 	_log->Trace("Unloaded script \"{}\"", name.value());
 }
 
-void ScriptLoader::HotReload(const Vector<ScriptID> &scriptIDs)
+void ScriptLoader::HotReload(const std::vector<ScriptID> &scriptIDs)
 {
 	_log->Debug("Hot reloading scripts ...");
 
@@ -403,6 +405,8 @@ void ScriptLoader::HotReload(const Vector<ScriptID> &scriptIDs)
 	onPostHotReloadScripts(scriptIDs);
 
 	_log->Debug("Hot reloaded scripts ...");
+
+	Log::CleanupExpired();
 }
 
 void ScriptLoader::ProcessFullLoads()

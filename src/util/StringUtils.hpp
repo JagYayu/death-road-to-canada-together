@@ -1,7 +1,5 @@
 #pragma once
 
-#include "util/Defs.h"
-
 #include <algorithm>
 #include <fstream>
 #include <iterator>
@@ -13,14 +11,14 @@ namespace tudov
 	{
 		using is_transparent = void;
 
-		size_t operator()(const String &str) const noexcept
+		size_t operator()(const std::string &str) const noexcept
 		{
-			return std::hash<String>{}(str);
+			return std::hash<std::string>{}(str);
 		}
 
-		size_t operator()(StringView str) const noexcept
+		size_t operator()(std::string_view str) const noexcept
 		{
-			return std::hash<StringView>{}(str);
+			return std::hash<std::string_view>{}(str);
 		}
 	};
 
@@ -28,63 +26,63 @@ namespace tudov
 	{
 		using is_transparent = void;
 
-		bool operator()(const String &lhs, const String &rhs) const noexcept
+		bool operator()(const std::string &lhs, const std::string &rhs) const noexcept
 		{
 			return lhs == rhs;
 		}
 
-		bool operator()(StringView lhs, const String &rhs) const noexcept
+		bool operator()(std::string_view lhs, const std::string &rhs) const noexcept
 		{
 			return lhs == rhs;
 		}
 
-		bool operator()(const String &lhs, StringView rhs) const noexcept
+		bool operator()(const std::string &lhs, std::string_view rhs) const noexcept
 		{
 			return lhs == rhs;
 		}
 
-		bool operator()(StringView lhs, StringView rhs) const noexcept
+		bool operator()(std::string_view lhs, std::string_view rhs) const noexcept
 		{
 			return lhs == rhs;
 		}
 	};
 
-	inline static const String emptyString = "";
-	inline static const String luaFileExtension = ".lua";
+	inline static const std::string emptyString = "";
+	inline static const std::string luaFileExtension = ".lua";
 
-	inline String GetLuaNamespace(const String &scriptName)
+	inline std::string GetLuaNamespace(const std::string &scriptName)
 	{
 		size_t pos = scriptName.find('.');
-		if (pos == String::npos)
+		if (pos == std::string::npos)
 		{
 			return emptyString;
 		}
 		return scriptName.substr(0, pos);
 	}
 
-	inline String GetLuaNamespace(StringView scriptName)
+	inline std::string GetLuaNamespace(std::string_view scriptName)
 	{
 		size_t pos = scriptName.find('.');
-		if (pos == String::npos)
+		if (pos == std::string::npos)
 		{
 			return emptyString;
 		}
-		return String(scriptName).substr(0, pos);
+		return std::string(scriptName).substr(0, pos);
 	}
 
-	inline String ReadFileToString(const String &file, bool binary = false)
+	inline std::string ReadFileToString(const std::string &file, bool binary = false)
 	{
 		std::ifstream stream{file, binary ? std::ios::binary : std::ios::in};
 		if (!stream)
 		{
 			throw std::runtime_error("Failed to open file: " + file);
 		}
-		return String{std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
+		return std::string{std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
 	}
 
-	inline String FilePathToLuaScriptName(const String &filePath)
+	inline std::string FilePathToLuaScriptName(const std::string &filePath)
 	{
-		String result = filePath;
+		std::string result = filePath;
 
 		std::replace(result.begin(), result.end(), '/', '.');
 		std::replace(result.begin(), result.end(), '\\', '.');

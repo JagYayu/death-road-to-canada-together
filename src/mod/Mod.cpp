@@ -31,12 +31,12 @@ const ModConfig &Mod::GetConfig() const noexcept
 	return _config;
 }
 
-const String &Mod::GetNamespace() const noexcept
+const std::string &Mod::GetNamespace() const noexcept
 {
 	return _config.namespace_;
 }
 
-const String &Mod::GetScriptsDirectory() const noexcept
+const std::string &Mod::GetScriptsDirectory() const noexcept
 {
 	return _config.scripts.directory;
 }

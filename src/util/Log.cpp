@@ -6,29 +6,29 @@
 
 using namespace tudov;
 
-static Int32 logCount = 0;
+static uint32_t logCount = 0;
 static std::thread logWorker;
 
 Log::Verbosity _globalVerbosity = tudov::Log::Verbosity::All;
-UnorderedMap<String, Log::Verbosity> Log::_moduleVerbs{};
-UnorderedMap<String, Log::Verbosity> Log::_moduleVerbOverrides{};
-UnorderedMap<String, SharedPtr<Log>> Log::_logInstances{};
+std::unordered_map<std::string, Log::Verbosity> Log::_moduleVerbs{};
+std::unordered_map<std::string, Log::Verbosity> Log::_moduleVerbOverrides{};
+std::unordered_map<std::string, SharedPtr<Log>> Log::_logInstances{};
 std::queue<Log::Entry> Log::_queue;
 std::mutex Log::_mutex;
 std::condition_variable Log::_cv;
 std::atomic<bool> Log::_exit = false;
 Log Log::instance{"Log"};
 
-SharedPtr<Log> Log::Get(StringView module)
+SharedPtr<Log> Log::Get(std::string_view module)
 {
-	auto &&str = String(module);
+	auto &&str = std::string(module);
 	auto &&it = _logInstances.find(str);
 	if (it != _logInstances.end())
 	{
 		return it->second;
 	}
 
-	auto &&log = MakeShared<Log>(str);
+	auto &&log = std::make_shared<Log>(str);
 	_logInstances.try_emplace(str, log);
 	return log;
 }
@@ -37,7 +37,7 @@ void Log::CleanupExpired()
 {
 	for (auto &&it = _logInstances.begin(); it != _logInstances.end();)
 	{
-		if (it->second.use_count() <= 1)
+		if (it->first.empty() || it->second.use_count() <= 1)
 		{
 			it = _logInstances.erase(it);
 		}
@@ -49,7 +49,7 @@ void Log::CleanupExpired()
 	ShrinkUnorderedMap(_logInstances);
 }
 
-Log::Verbosity Log::GetVerbosity(const String &module)
+Log::Verbosity Log::GetVerbosity(const std::string &module)
 {
 	{
 		auto &&it = _moduleVerbOverrides.find("key");
@@ -61,7 +61,7 @@ Log::Verbosity Log::GetVerbosity(const String &module)
 	return (Log::Verbosity)0;
 }
 
-Optional<Log::Verbosity> Log::GetVerbosityOverride(const String &module)
+std::optional<Log::Verbosity> Log::GetVerbosityOverride(const std::string &module)
 {
 	auto &&it = _moduleVerbOverrides.find("key");
 	if (it != _moduleVerbOverrides.end())
@@ -71,7 +71,7 @@ Optional<Log::Verbosity> Log::GetVerbosityOverride(const String &module)
 	return nullopt;
 }
 
-void Log::SetVerbosityOverride(const String &module, Verbosity verb)
+void Log::SetVerbosityOverride(const std::string &module, Verbosity verb)
 {
 	_moduleVerbOverrides[module] = verb;
 }
@@ -85,7 +85,17 @@ void Log::UpdateVerbosities(const nlohmann::json &config)
 	}
 }
 
-Log::Log(const String &module)
+void Log::Exit() noexcept
+{
+	{
+		std::lock_guard<std::mutex> lock{_mutex};
+		_exit = true;
+	}
+	_cv.notify_all();
+	logWorker.join();
+}
+
+Log::Log(const std::string &module) noexcept
     : _module(module)
 {
 	if (logCount == 0)
@@ -95,17 +105,12 @@ Log::Log(const String &module)
 	logCount++;
 }
 
-Log::~Log()
+Log::~Log() noexcept
 {
 	logCount--;
 	if (logCount == 0)
 	{
-		{
-			std::lock_guard<std::mutex> lock{_mutex};
-			_exit = true;
-		}
-		_cv.notify_all();
-		logWorker.join();
+		Exit();
 	}
 }
 
@@ -134,12 +139,12 @@ void Log::Process()
 	}
 }
 
-bool Log::CanOutput(StringView verb) const
+bool Log::CanOutput(std::string_view verb) const
 {
 	return true;
 }
 
-void Log::Output(StringView verb, const StringView &str) const
+void Log::Output(std::string_view verb, const std::string_view &str) const
 {
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
@@ -147,7 +152,7 @@ void Log::Output(StringView verb, const StringView &str) const
 		    .time = std::chrono::system_clock::now(),
 		    .verbosity = verb,
 		    .module = _module,
-		    .message = String(str),
+		    .message = std::string(str),
 		});
 	}
 	_cv.notify_one();

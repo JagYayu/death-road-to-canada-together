@@ -13,9 +13,9 @@ namespace tudov
 		EventID eventID;
 		ScriptID scriptID;
 		Function function;
-		Optional<String> name;
-		Optional<String> order;
-		Optional<Key> key;
-		Optional<Number> sequence;
+		std::optional<std::string> name;
+		std::optional<std::string> order;
+		std::optional<Key> key;
+		std::optional<Number> sequence;
 	};
 } // namespace tudov

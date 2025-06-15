@@ -14,22 +14,22 @@ namespace tudov
 	class Version
 	{
 	  private:
-		Vector<Int32> _parts;
+		std::vector<int32_t> _parts;
 
 	  public:
 		Version();
-		explicit Version(Int32 major, Int32 minor = 0, Int32 patch = 0);
-		explicit Version(const String &str);
+		explicit Version(int32_t major, int32_t minor = 0, int32_t patch = 0);
+		explicit Version(const std::string &str);
 
-		Int32 major() const;
-		Int32 minor() const;
-		Int32 patch() const;
+		int32_t major() const;
+		int32_t minor() const;
+		int32_t patch() const;
 
-		Int32 operator[](size_t i) const;
+		int32_t operator[](size_t i) const;
 		size_t size() const;
 
-		Vector<Int32>::const_iterator begin() const;
-		Vector<Int32>::const_iterator end() const;
+		std::vector<int32_t>::const_iterator begin() const;
+		std::vector<int32_t>::const_iterator end() const;
 
 		auto operator<=>(const Version &other) const;
 		bool operator==(const Version &other) const;
@@ -50,7 +50,7 @@ namespace std
 			std::size_t h = 0;
 			for (auto &&part : v)
 			{
-				h ^= std::hash<tudov::Int32>()(part) + 0x9e3779b9 + (h << 6) + (h >> 2);
+				h ^= std::hash<int32_t>()(part) + 0x9e3779b9 + (h << 6) + (h >> 2);
 			}
 			return h;
 		}

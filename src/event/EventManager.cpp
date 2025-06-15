@@ -21,8 +21,8 @@ EventManager::EventManager(ModManager &modManager)
     : modManager(modManager),
       _log(Log::Get("EventManager")),
       _latestEventID(),
-      update(MakeShared<RuntimeEvent>(*this, AllocEventID("Update"))),
-      render(MakeShared<RuntimeEvent>(*this, AllocEventID("Render")))
+      update(std::make_shared<RuntimeEvent>(*this, AllocEventID("Update"))),
+      render(std::make_shared<RuntimeEvent>(*this, AllocEventID("Render")))
 {
 	_runtimeEvents.emplace(update->GetID(), update);
 	_runtimeEvents.emplace(render->GetID(), render);
@@ -32,7 +32,7 @@ EventManager::~EventManager()
 {
 }
 
-EventID EventManager::AllocEventID(StringView eventName) noexcept
+EventID EventManager::AllocEventID(std::string_view eventName) noexcept
 {
 	{
 		auto &&it = _eventName2ID.find(eventName);
@@ -45,7 +45,7 @@ EventID EventManager::AllocEventID(StringView eventName) noexcept
 
 	_latestEventID++;
 	EventID id = _latestEventID;
-	auto &&name = _eventID2Name.emplace(id, String(eventName)).first->second;
+	auto &&name = _eventID2Name.emplace(id, std::string(eventName)).first->second;
 	_eventName2ID.emplace(name, id);
 	return id;
 }
@@ -62,7 +62,7 @@ void EventManager::DeallocEventID(EventID eventID) noexcept
 
 void EventManager::OnScriptsLoaded()
 {
-	Vector<Reference<LoadtimeEvent>> invalidEvents;
+	std::vector<Reference<LoadtimeEvent>> invalidEvents;
 
 	for (auto &&[eventID, loadtimeEvent] : _loadtimeEvents)
 	{
@@ -76,7 +76,7 @@ void EventManager::OnScriptsLoaded()
 		}
 		else
 		{
-			auto &&runtimeEvent = MakeShared<RuntimeEvent>(loadtimeEvent->ToRuntime());
+			auto &&runtimeEvent = std::make_shared<RuntimeEvent>(loadtimeEvent->ToRuntime());
 			_runtimeEvents.emplace(runtimeEvent->GetID(), runtimeEvent);
 		}
 	}
@@ -106,7 +106,7 @@ void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 				scriptEngine.ThrowError(Format("Failed to add event handler: invalid arg#1 `event` type, expected string, got {}", GetLuaTypeStringView(event.get_type())));
 				return;
 			}
-			StringView event_ = event.as<sol::string_view>();
+			std::string_view event_ = event.as<sol::string_view>();
 
 			auto &&eventID = GetEventIDByName(event_);
 			auto &&eventInstance = TryGetRegistryEvent(eventID);
@@ -123,7 +123,7 @@ void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 			}
 			sol::function func_ = func.as<sol::function>();
 
-			Optional<String> name_;
+			std::optional<std::string> name_;
 			if (name.is<sol::nil_t>())
 			{
 				name_ = nullopt;
@@ -138,7 +138,7 @@ void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 				return;
 			}
 
-			Optional<String> order_;
+			std::optional<std::string> order_;
 			if (order.is<sol::nil_t>())
 			{
 				order_ = nullopt;
@@ -153,7 +153,7 @@ void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 				return;
 			}
 
-			Optional<AddHandlerArgs::Key> key_;
+			std::optional<AddHandlerArgs::Key> key_;
 			if (!key.valid() || key.is<sol::nil_t>())
 			{
 				key_ = nullopt;
@@ -164,7 +164,7 @@ void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 			}
 			else if (key.is<sol::string_view>())
 			{
-				key_ = AddHandlerArgs::Key(String(key.as<sol::string_view>()));
+				key_ = AddHandlerArgs::Key(std::string(key.as<sol::string_view>()));
 			}
 			else
 			{
@@ -172,7 +172,7 @@ void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 				return;
 			}
 
-			Optional<Number> sequence_;
+			std::optional<Number> sequence_;
 			if (sequence.is<sol::nil_t>())
 			{
 				sequence_ = nullopt;
@@ -231,7 +231,7 @@ void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 				return;
 			}
 
-			Vector<String> orders_;
+			std::vector<std::string> orders_;
 			if (orders.is<sol::table>())
 			{
 				orders_ = {};
@@ -252,7 +252,7 @@ void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 				return;
 			}
 
-			Vector<EventHandler::Key> keys_;
+			std::vector<EventHandler::Key> keys_;
 			if (keys.is<sol::table>())
 			{
 				keys_ = {};
@@ -275,7 +275,7 @@ void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 				return;
 			}
 
-			_loadtimeEvents.try_emplace(eventID, MakeShared<LoadtimeEvent>(*this, eventID, orders_, keys_, scriptID));
+			_loadtimeEvents.try_emplace(eventID, std::make_shared<LoadtimeEvent>(*this, eventID, orders_, keys_, scriptID));
 		}
 		catch (const std::exception &e)
 		{
@@ -313,7 +313,7 @@ void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 		OnScriptsLoaded();
 	};
 
-	_onPreHotReloadScriptsHandlerID = scriptLoader.onPreHotReloadScripts += [this](const Vector<ScriptID> &scriptIDs)
+	_onPreHotReloadScriptsHandlerID = scriptLoader.onPreHotReloadScripts += [this](const std::vector<ScriptID> &scriptIDs)
 	{
 		if (scriptIDs.empty())
 		{
@@ -343,7 +343,7 @@ void EventManager::RegisterGlobal(ScriptEngine &scriptEngine)
 		}
 	};
 
-	_onPreHotReloadScriptsHandlerID = scriptLoader.onPostHotReloadScripts += [&](const Vector<ScriptID> &scriptIDs)
+	_onPreHotReloadScriptsHandlerID = scriptLoader.onPostHotReloadScripts += [&](const std::vector<ScriptID> &scriptIDs)
 	{
 		OnScriptsLoaded();
 	};
@@ -357,9 +357,9 @@ void EventManager::UnregisterGlobal(ScriptEngine &scriptEngine)
 	scriptEngine.scriptLoader.onPostHotReloadScripts -= _onPreHotReloadScriptsHandlerID;
 }
 
-EventID EventManager::GetEventIDByName(StringView eventName) const noexcept
+EventID EventManager::GetEventIDByName(std::string_view eventName) const noexcept
 {
-	auto &&it = _eventName2ID.find(String(eventName));
+	auto &&it = _eventName2ID.find(std::string(eventName));
 	if (it == _eventName2ID.end())
 	{
 		return false;
@@ -367,7 +367,7 @@ EventID EventManager::GetEventIDByName(StringView eventName) const noexcept
 	return it->second;
 }
 
-Optional<StringView> EventManager::GetEventNameByID(EventID eventID) const noexcept
+std::optional<std::string_view> EventManager::GetEventNameByID(EventID eventID) const noexcept
 {
 	auto &&it = _eventID2Name.find(eventID);
 	if (it == _eventID2Name.end())
@@ -382,7 +382,7 @@ bool EventManager::IsValidEventID(EventID eventID) const noexcept
 	return _eventID2Name.contains(eventID);
 }
 
-Optional<Reference<AbstractEvent>> EventManager::TryGetRegistryEvent(EventID eventID)
+std::optional<Reference<AbstractEvent>> EventManager::TryGetRegistryEvent(EventID eventID)
 {
 	if (!eventID)
 	{
@@ -405,12 +405,12 @@ Optional<Reference<AbstractEvent>> EventManager::TryGetRegistryEvent(EventID eve
 	return nullopt;
 }
 
-UnorderedMap<EventID, SharedPtr<RuntimeEvent>>::const_iterator EventManager::BeginRuntimeEvents() const
+std::unordered_map<EventID, SharedPtr<RuntimeEvent>>::const_iterator EventManager::BeginRuntimeEvents() const
 {
 	return _runtimeEvents.begin();
 }
 
-UnorderedMap<EventID, SharedPtr<RuntimeEvent>>::const_iterator EventManager::EndRuntimeEvents() const
+std::unordered_map<EventID, SharedPtr<RuntimeEvent>>::const_iterator EventManager::EndRuntimeEvents() const
 {
 	return _runtimeEvents.end();
 }

@@ -20,16 +20,16 @@ namespace tudov
 
 		ImGuiTextBuffer _buffer;
 		ImGuiTextFilter _filter;
-		Vector<Int32> _lineOffsets;
-		Array<Char, 256> _input;
+		std::vector<uint32_t> _lineOffsets;
+		std::array<Char, 256> _input;
 
 	  public:
 		explicit DebugConsole() noexcept;
 
-		StringView GetName() noexcept override;
+		std::string_view GetName() noexcept override;
 		void UpdateAndRender() noexcept override;
 
-		void Log(StringView message);
+		void Log(std::string_view message);
 		void Clear();
 	};
 } // namespace tudov

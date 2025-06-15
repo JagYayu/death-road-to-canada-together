@@ -55,14 +55,14 @@ UnpackagedMod::UnpackagedMod(ModManager &modManager, const std::filesystem::path
 
 void UnpackagedMod::UpdateFilePatterns()
 {
-	_scriptFilePatterns = Vector<std::regex>(_config.scripts.files.size());
+	_scriptFilePatterns = std::vector<std::regex>(_config.scripts.files.size());
 	for (auto &&pattern : _config.scripts.files)
 	{
-		_scriptFilePatterns.emplace_back(std::regex(String(pattern), std::regex_constants::icase));
+		_scriptFilePatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
 	}
 }
 
-bool UnpackagedMod::IsScript(const String &fileName) const
+bool UnpackagedMod::IsScript(const std::string &fileName) const
 {
 	for (auto &&pattern : _scriptFilePatterns)
 	{
@@ -82,7 +82,7 @@ void UnpackagedMod::Load()
 		return;
 	}
 
-	_fileWatcher = MakeShared<filewatch::FileWatch<String>>(_directory.string(), [&](const String &filePath, const filewatch::Event changeType)
+	_fileWatcher = std::make_shared<filewatch::FileWatch<std::string>>(_directory.string(), [&](const std::string &filePath, const filewatch::Event changeType)
 	{
 		auto &&scriptProvider = modManager.scriptProvider;
 
@@ -129,7 +129,7 @@ void UnpackagedMod::Load()
 	auto &&namespace_ = GetNamespace();
 	if (namespace_.empty())
 	{
-		log->Debug("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.string(), StringView(namespace_));
+		log->Debug("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.string(), std::string_view(namespace_));
 		return;
 	}
 

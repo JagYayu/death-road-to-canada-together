@@ -13,8 +13,8 @@ using namespace tudov;
 
 DebugManager::DebugManager(Window &window) noexcept
     : window(window),
-      console(MakeShared<DebugConsole>()),
-      profiler(MakeShared<DebugProfiler>(window.engine)),
+      console(std::make_shared<DebugConsole>()),
+      profiler(std::make_shared<DebugProfiler>(window.engine)),
       _elements(),
       _shownElements()
 {
@@ -37,7 +37,7 @@ void DebugManager::AddElement(const SharedPtr<IDebugElement> &element) noexcept
 	_elements.emplace_back(element);
 }
 
-void DebugManager::RemoveElement(StringView element) noexcept
+void DebugManager::RemoveElement(std::string_view element) noexcept
 {
 	for (auto &&it = _elements.begin(); it != _elements.end(); ++it)
 	{
@@ -50,7 +50,7 @@ void DebugManager::RemoveElement(StringView element) noexcept
 	_shownElements.erase(element);
 }
 
-void DebugManager::RegisterGlobalsTo(StringView name, ScriptEngine &scriptEngine) noexcept
+void DebugManager::RegisterGlobalsTo(std::string_view name, ScriptEngine &scriptEngine) noexcept
 {
 	auto &&debugs = scriptEngine.CreateTable();
 
@@ -59,7 +59,7 @@ void DebugManager::RegisterGlobalsTo(StringView name, ScriptEngine &scriptEngine
 	scriptEngine.SetReadonlyGlobal(name, debugs);
 }
 
-void DebugManager::UnregisterGlobalsFrom(StringView name, ScriptEngine &scriptEngine) noexcept
+void DebugManager::UnregisterGlobalsFrom(std::string_view name, ScriptEngine &scriptEngine) noexcept
 {
 }
 

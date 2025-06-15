@@ -8,11 +8,11 @@ namespace tudov
 	class DelegateEvent
 	{
 	  public:
-		using HandlerType = Function<void(Args...)>;
+		using HandlerType = std::function<void(Args...)>;
 		using HandlerID = size_t;
 
 	  private:
-		Vector<Pair<HandlerID, HandlerType>> _handlers;
+		std::vector<std::pair<HandlerID, HandlerType>> _handlers;
 		HandlerID _handlerID;
 
 	  public:

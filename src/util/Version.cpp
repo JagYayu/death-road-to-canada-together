@@ -1,22 +1,25 @@
 #include "Version.h"
 #include "Defs.h"
 
+#include <cstdint>
+#include <sstream>
+
 using namespace tudov;
 
 Version::Version()
-	: _parts{0, 0, 0}
+    : _parts{0, 0, 0}
 {
 }
 
 Version::Version(int32_t major, int32_t minor, int32_t patch)
-	: _parts{major, minor, patch}
+    : _parts{major, minor, patch}
 {
 }
 
-Version::Version(const String &str)
+Version::Version(const std::string &str)
 {
-	StringStream ss(str);
-	String token;
+	std::stringstream ss(str);
+	std::string token;
 	while (std::getline(ss, token, '.'))
 	{
 		_parts.push_back(std::stoi(token));
@@ -27,7 +30,6 @@ Version::Version(const String &str)
 	}
 	_parts.shrink_to_fit();
 }
-
 
 int32_t Version::major() const
 {
@@ -71,7 +73,9 @@ auto Version::operator<=>(const Version &other) const
 		int lhs = (i < _parts.size()) ? _parts[i] : 0;
 		int rhs = (i < other._parts.size()) ? other._parts[i] : 0;
 		if (lhs != rhs)
+		{
 			return lhs <=> rhs;
+		}
 	}
 	return std::strong_ordering::equal;
 }
@@ -84,9 +88,7 @@ std::ostream &tudov::operator<<(std::ostream &os, const Version &v)
 	return os;
 }
 
-void tudov::from_json(const nlohmann::json &j, Version &v)
+void from_json(const nlohmann::json &j, Version &v)
 {
-	{
-		v = Version(j.get<String>());
-	}
+	v = Version(j.get<std::string>());
 }

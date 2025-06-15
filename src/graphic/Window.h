@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Renderer.h"
+#include "IRenderer.h"
 
 #include "SDL3/SDL_render.h"
 #include "debug/DebugManager.h"
@@ -13,12 +13,12 @@ class SDL_Window;
 namespace tudov
 {
 	class Engine;
-	class Renderer;
+	class SDLRenderer;
 	class Texture;
 
 	class Window
 	{
-		friend Renderer;
+		friend SDLRenderer;
 
 	  private:
 		SDL_Window *_window;
@@ -30,15 +30,17 @@ namespace tudov
 	  public:
 		Engine &engine;
 		DebugManager debugManager;
-		Renderer renderer;
+		std::unique_ptr<IRenderer> renderer;
 
-		Window(Engine &engine);
+		Window(Engine &engine) ;
+		~Window() noexcept;
 
 		SDL_Window *GetHandle();
 
 		float GetFramerate() const noexcept;
 
 		void Initialize();
+		void Deinitialize() noexcept;
 		void PoolEvents();
 		void Render();
 	};

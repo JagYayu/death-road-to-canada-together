@@ -13,10 +13,10 @@ namespace tudov
 	  private:
 		SharedPtr<Log> _log;
 
-		SharedPtr<filewatch::FileWatch<String>> _fileWatcher;
+		SharedPtr<filewatch::FileWatch<std::string>> _fileWatcher;
 		std::filesystem::path _directory;
 
-		Vector<std::regex> _scriptFilePatterns;
+		std::vector<std::regex> _scriptFilePatterns;
 
 	  public:
 		SharedPtr<Log> log;
@@ -30,7 +30,7 @@ namespace tudov
 		void UpdateFilePatterns();
 
 	  public:
-		bool IsScript(const String &fileName) const;
+		bool IsScript(const std::string &fileName) const;
 
 		void Load() override;
 		void Unload() override;

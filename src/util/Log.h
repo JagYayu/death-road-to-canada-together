@@ -21,9 +21,9 @@ namespace tudov
 		struct Entry
 		{
 			std::chrono::system_clock::time_point time;
-			StringView verbosity;
-			String module;
-			String message;
+			std::string_view verbosity;
+			std::string module;
+			std::string message;
 		};
 
 	  public:
@@ -41,9 +41,9 @@ namespace tudov
 
 	  private:
 		static Verbosity _globalVerbosity;
-		static UnorderedMap<String, Verbosity> _moduleVerbs;
-		static UnorderedMap<String, Verbosity> _moduleVerbOverrides;
-		static UnorderedMap<String, SharedPtr<Log>> _logInstances;
+		static std::unordered_map<std::string, Verbosity> _moduleVerbs;
+		static std::unordered_map<std::string, Verbosity> _moduleVerbOverrides;
+		static std::unordered_map<std::string, SharedPtr<Log>> _logInstances;
 		static std::queue<Entry> _queue;
 		static std::mutex _mutex;
 		static std::condition_variable _cv;
@@ -56,24 +56,25 @@ namespace tudov
 		static void Process();
 
 	  public:
-		static SharedPtr<Log> Get(StringView module);
+		static SharedPtr<Log> Get(std::string_view module);
 		static void CleanupExpired();
-		static Verbosity GetVerbosity(const String &module);
-		static Optional<Verbosity> GetVerbosityOverride(const String &module);
-		static void SetVerbosityOverride(const String &module, Verbosity verb);
+		static Verbosity GetVerbosity(const std::string &module);
+		static std::optional<Verbosity> GetVerbosityOverride(const std::string &module);
+		static void SetVerbosityOverride(const std::string &module, Verbosity verb);
 		static void UpdateVerbosities(const nlohmann::json &config);
+		static void Exit() noexcept;
 
 	  private:
-		String _module;
+		std::string _module;
 
-		bool CanOutput(StringView verb) const;
-		void Output(StringView verb, const StringView &str) const;
+		bool CanOutput(std::string_view verb) const;
+		void Output(std::string_view verb, const std::string_view &str) const;
 
 	  public:
-		explicit Log(const String &module);
-		~Log();
+		explicit Log(const std::string &module) noexcept;
+		~Log() noexcept;
 
-		const String &GetModule() const;
+		const std::string &GetModule() const;
 
 		FORCEINLINE Verbosity GetVerbosity() const
 		{

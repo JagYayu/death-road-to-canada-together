@@ -15,7 +15,7 @@ namespace tudov
 	  protected:
 		ModConfig _config;
 
-		Vector<ScriptID> _scripts;
+		std::vector<ScriptID> _scripts;
 
 	  public:
 		ModManager &modManager;
@@ -30,7 +30,7 @@ namespace tudov
 
 		ModConfig &GetConfig() noexcept;
 		const ModConfig &GetConfig() const noexcept;
-		const String &GetNamespace() const noexcept;
-		const String &GetScriptsDirectory() const noexcept;
+		const std::string &GetNamespace() const noexcept;
+		const std::string &GetScriptsDirectory() const noexcept;
 	};
 } // namespace tudov

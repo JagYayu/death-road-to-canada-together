@@ -7,7 +7,7 @@
 
 using namespace tudov;
 
-LoadtimeEvent::LoadtimeEvent(EventManager &eventManager, EventID eventID, const Vector<String> &orders, const Vector<EventHandler::Key> &keys, ScriptID scriptID) noexcept
+LoadtimeEvent::LoadtimeEvent(EventManager &eventManager, EventID eventID, const std::vector<std::string> &orders, const std::vector<EventHandler::Key> &keys, ScriptID scriptID) noexcept
     : AbstractEvent(eventManager, eventID, scriptID),
       _orders(orders),
       _keys(keys)
@@ -21,7 +21,7 @@ void LoadtimeEvent::Add(const AddHandlerArgs &handler)
 
 RuntimeEvent LoadtimeEvent::ToRuntime() noexcept
 {
-	UnorderedSet<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> keys{};
+	std::unordered_set<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> keys{};
 	for (auto &&key : _keys)
 	{
 		keys.emplace(key);

@@ -28,50 +28,13 @@ namespace tudov
 	// basic types
 
 	using Char = char;
-	using Int32 = std::int32_t;
 	using Int64 = std::int64_t;
 	using UInt32 = std::uint32_t;
 	using UInt64 = std::uint64_t;
 	using Nullptr = std::nullptr_t;
 	using Number = double;
-	using String = std::string;
-	using StringView = std::string_view;
-	using StringStream = std::stringstream;
-	using OStringStream = std::ostringstream;
-	using IStringStream = std::istringstream;
 
 	inline constexpr auto &&nullopt = std::nullopt;
-
-	// containers
-
-	template <typename T>
-	using Vector = std::vector<T>;
-	template <typename T>
-	using List = std::list<T>;
-	template <typename T>
-	using Deque = std::deque<T>;
-	template <typename T, std::size_t N>
-	using Array = std::array<T, N>;
-	template <typename T>
-	using Set = std::set<T>;
-	template <typename T, class Hash = std::hash<T>, class Equal = std::equal_to<T>>
-	using UnorderedSet = std::unordered_set<T, Hash, Equal>;
-	template <typename K, typename V>
-	using Map = std::map<K, V>;
-	template <typename K, typename V, typename Hash = std::hash<K>, typename Equal = std::equal_to<K>, typename Alloc = std::allocator<std::pair<const K, V>>>
-	using UnorderedMap = std::unordered_map<K, V, Hash, Equal, Alloc>;
-	template <typename T>
-	using Stack = std::stack<T>;
-	template <typename T>
-	using Queue = std::queue<T>;
-	template <typename T>
-	using PriorityQueue = std::priority_queue<T>;
-	template <typename T1, typename T2>
-	using Pair = std::pair<T1, T2>;
-	template <typename... Ts>
-	using Tuple = std::tuple<Ts...>;
-	template <typename... Types>
-	using Variant = std::variant<Types...>;
 
 	// pointers
 
@@ -83,18 +46,6 @@ namespace tudov
 	using WeakPtr = std::weak_ptr<T>;
 	template <typename T>
 	using Reference = std::reference_wrapper<T>;
-
-	template <typename T, typename... Args>
-	FORCEINLINE SharedPtr<T> MakeShared(Args &&...args)
-	{
-		return std::make_shared<T>(std::forward<Args>(args)...);
-	}
-
-	template <typename T, typename... Args>
-	FORCEINLINE UniquePtr<T> MakeUnique(Args &&...args)
-	{
-		return std::make_unique<T>(std::forward<Args>(args)...);
-	}
 
 	template <typename T>
 	FORCEINLINE Reference<T> Ref(T &t)
@@ -109,40 +60,33 @@ namespace tudov
 
 	// utilities
 
-	template <typename... Args>
-	using Function = std::function<Args...>;
-	template <typename... Ts>
-	using Variant = std::variant<Ts...>;
-	template <typename T>
-	using Optional = std::optional<T>;
-
 	template <typename T, typename... Ts>
-	FORCEINLINE bool Is(const Variant<Ts...> &v)
+	FORCEINLINE bool Is(const std::variant<Ts...> &v)
 	{
 		return std::holds_alternative<T>(v);
 	}
 	template <typename T, typename... Ts>
-	FORCEINLINE T &Get(Variant<Ts...> &v)
+	FORCEINLINE T &Get(std::variant<Ts...> &v)
 	{
 		return std::get<T>(v);
 	}
 	template <typename T, typename... Ts>
-	FORCEINLINE const T &Get(const Variant<Ts...> &v)
+	FORCEINLINE const T &Get(const std::variant<Ts...> &v)
 	{
 		return std::get<T>(v);
 	}
 	template <typename T, typename... Ts>
-	FORCEINLINE T *GetIf(Variant<Ts...> *v) noexcept
+	FORCEINLINE T *GetIf(std::variant<Ts...> *v) noexcept
 	{
 		return std::get_if<T>(v);
 	}
 	template <typename T, typename... Ts>
-	FORCEINLINE const T *GetIf(const Variant<Ts...> *v) noexcept
+	FORCEINLINE const T *GetIf(const std::variant<Ts...> *v) noexcept
 	{
 		return std::get_if<T>(v);
 	}
 	template <typename... Ts, typename Visitor>
-	FORCEINLINE decltype(auto) Visit(const Variant<Ts...> &v, Visitor &&visitor)
+	FORCEINLINE decltype(auto) Visit(const std::variant<Ts...> &v, Visitor &&visitor)
 	{
 		return std::visit(std::forward<Visitor>(visitor), v);
 	}
@@ -165,24 +109,14 @@ namespace tudov
 	}
 
 	template <typename... Args>
-	FORCEINLINE String Format(std::format_string<Args...> fmt, Args &&...args)
+	FORCEINLINE std::string Format(std::format_string<Args...> fmt, Args &&...args)
 	{
 		return std::format(fmt, Forward<Args>(args)...);
-	}
-
-	template <typename... Args>
-	FORCEINLINE void FormatTo(OStringStream &os, std::format_string<Args...> fmt, Args &&...args)
-	{
-		os << Format(fmt, Forward<Args>(args)...);
-	}
-	template <typename... Args>
-	FORCEINLINE void FormatTo(OStringStream &os, std::locale loc, std::format_string<Args...> fmt, Args &&...args)
-	{
-		os << Format(loc, fmt, Forward<Args>(args)...);
 	}
 
 	// engine types
 
 	using EventID = UInt64;
+	using ResourceID = UInt64;
 	using ScriptID = UInt64;
 } // namespace tudov

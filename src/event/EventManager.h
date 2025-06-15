@@ -20,11 +20,11 @@ namespace tudov
 	  private:
 		SharedPtr<Log> _log;
 		EventID _latestEventID;
-		UnorderedMap<StringView, EventID> _eventName2ID;
-		UnorderedMap<EventID, String> _eventID2Name;
-		UnorderedMap<EventID, SharedPtr<LoadtimeEvent>> _loadtimeEvents;
-		UnorderedMap<EventID, SharedPtr<RuntimeEvent>> _runtimeEvents;
-		Vector<SharedPtr<RuntimeEvent>> _staticEvents;
+		std::unordered_map<std::string_view, EventID> _eventName2ID;
+		std::unordered_map<EventID, std::string> _eventID2Name;
+		std::unordered_map<EventID, SharedPtr<LoadtimeEvent>> _loadtimeEvents;
+		std::unordered_map<EventID, SharedPtr<RuntimeEvent>> _runtimeEvents;
+		std::vector<SharedPtr<RuntimeEvent>> _staticEvents;
 
 		DelegateEvent<>::HandlerID _onPreLoadAllScriptsHandlerID;
 		DelegateEvent<>::HandlerID _onPostLoadAllScriptsHandlerID;
@@ -42,7 +42,7 @@ namespace tudov
 
 	  private:
 		[[nodiscard]]
-		EventID AllocEventID(StringView eventName) noexcept;
+		EventID AllocEventID(std::string_view eventName) noexcept;
 		void DeallocEventID(EventID eventID) noexcept;
 
 		void OnScriptsLoaded();
@@ -52,15 +52,15 @@ namespace tudov
 		void UnregisterGlobal(ScriptEngine &scriptEngine);
 
 		[[nodiscard]]
-		ScriptID GetEventIDByName(StringView scriptName) const noexcept;
+		ScriptID GetEventIDByName(std::string_view scriptName) const noexcept;
 		[[nodiscard]]
-		Optional<StringView> GetEventNameByID(EventID eventID) const noexcept;
+		std::optional<std::string_view> GetEventNameByID(EventID eventID) const noexcept;
 		[[nodiscard]]
 		bool IsValidEventID(EventID eventID) const noexcept;
 
-		Optional<Reference<AbstractEvent>> TryGetRegistryEvent(EventID eventID);
+		std::optional<Reference<AbstractEvent>> TryGetRegistryEvent(EventID eventID);
 
-		UnorderedMap<EventID, SharedPtr<RuntimeEvent>>::const_iterator BeginRuntimeEvents() const;
-		UnorderedMap<EventID, SharedPtr<RuntimeEvent>>::const_iterator EndRuntimeEvents() const;
+		std::unordered_map<EventID, SharedPtr<RuntimeEvent>>::const_iterator BeginRuntimeEvents() const;
+		std::unordered_map<EventID, SharedPtr<RuntimeEvent>>::const_iterator EndRuntimeEvents() const;
 	};
 } // namespace tudov

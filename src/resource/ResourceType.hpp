@@ -12,7 +12,7 @@ namespace tudov
 		Audio,
 	};
 
-	inline StringView ResourceTypeToStringView(ResourceType resourceType)
+	inline std::string_view ResourceTypeToStringView(ResourceType resourceType)
 	{
 		switch (resourceType)
 		{

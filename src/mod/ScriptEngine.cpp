@@ -72,7 +72,7 @@ sol::state_view &ScriptEngine::GetState()
 	return _lua;
 }
 
-void ScriptEngine::SetReadonlyGlobal(const sol::string_view &key, const sol::table &value)
+void ScriptEngine::SetReadonlyGlobal(const sol::string_view &key, sol::object value)
 {
 	if (value.is<sol::table>())
 	{
@@ -99,19 +99,19 @@ sol::table ScriptEngine::CreateTable(uint32_t arr, uint32_t hash)
 	return _lua.create_table(arr, hash);
 }
 
-sol::load_result ScriptEngine::LoadFunction(const String &name, StringView code)
+sol::load_result ScriptEngine::LoadFunction(const std::string &name, std::string_view code)
 {
 	return _lua.load(code, name, sol::load_mode::any);
 }
 
-int ScriptEngine::ThrowError(StringView message)
+int ScriptEngine::ThrowError(std::string_view message)
 {
-	String str{message};
+	std::string str{message};
 	lua_pushlstring(_lua, str.data(), str.size());
 	return lua_error(_lua);
 }
 
-// void ScriptEngine::Require(StringView source, StringView target)
+// void ScriptEngine::Require(std::string_view source, std::string_view target)
 // {
 // 	throw std::runtime_error("Permission denied");
 // }
@@ -157,11 +157,11 @@ sol::object MakeReadonlyGlobalImpl(sol::state &lua, const sol::object &obj, std:
 sol::object ScriptEngine::MakeReadonlyGlobal(const sol::object &obj)
 {
 	Initialize();
-	UnorderedMap<sol::table, sol::table, LuaTableHash, LuaTableEqual> visited{};
+	std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> visited{};
 	return MakeReadonlyGlobalImpl(_lua, obj, visited, _luaThrowModifyReadonlyGlobalError, _luaMarkAsLocked);
 }
 
-sol::table &ScriptEngine::GetSandboxedGlobals(StringView sandboxKey) noexcept
+sol::table &ScriptEngine::GetSandboxedGlobals(std::string_view sandboxKey) noexcept
 {
 	{
 		auto &&it = _sandboxedGlobals.find(sandboxKey);
@@ -214,19 +214,19 @@ sol::table &ScriptEngine::GetSandboxedGlobals(StringView sandboxKey) noexcept
 	return _sandboxedGlobals.try_emplace(sandboxKey, sandbox).first->second;
 }
 
-void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const StringView scriptName, sol::protected_function &func, StringView sandboxKey) noexcept
+void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string_view scriptName, sol::protected_function &func, std::string_view sandboxKey) noexcept
 {
 	auto &&namespace_ = GetLuaNamespace(scriptName);
 
 	sol::environment env{_lua, sol::create, sandboxKey.empty() ? _lua.globals().as<sol::table>() : GetSandboxedGlobals(sandboxKey)};
 
-	auto &&log = Log::Get(String(scriptName));
+	auto &&log = Log::Get(std::string(scriptName));
 
 	env["print"] = [&, log](const sol::variadic_args &args)
 	{
 		try
 		{
-			String string;
+			std::string string;
 			for (auto &&arg : args)
 			{
 				if (!string.empty())
@@ -276,7 +276,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const StringView 
 	sol::set_environment(env, func);
 }
 
-sol::object ScriptEngine::GetPersistVariable(StringView key)
+sol::object ScriptEngine::GetPersistVariable(std::string_view key)
 {
 	auto &&it = _persistVariables.find(key);
 	if (it == _persistVariables.end())
@@ -286,7 +286,7 @@ sol::object ScriptEngine::GetPersistVariable(StringView key)
 	return it->second;
 }
 
-void ScriptEngine::SetPersistVariable(StringView key, const sol::object &value)
+void ScriptEngine::SetPersistVariable(std::string_view key, const sol::object &value)
 {
 	_persistVariables[key] = value;
 }

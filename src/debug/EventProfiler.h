@@ -17,7 +17,7 @@ namespace tudov
 	  public:
 		using TClock = std::chrono::time_point<std::chrono::high_resolution_clock>;
 		using TDuration = std::chrono::nanoseconds;
-		using THandlers = UnorderedMap<StringView, Tuple<TDuration, size_t>>;
+		using THandlers = std::unordered_map<std::string_view, std::tuple<TDuration, size_t>>;
 
 		struct PerfEntry
 		{
@@ -41,8 +41,8 @@ namespace tudov
 		void BeginEvent(ScriptEngine &engine) noexcept;
 		void EndEvent(ScriptEngine &engine) noexcept;
 
-		void TraceHandler(ScriptEngine &engine, StringView handlerName) noexcept;
-		void EndHandler(ScriptEngine &engine, StringView handlerName) noexcept;
+		void TraceHandler(ScriptEngine &engine, std::string_view handlerName) noexcept;
+		void EndHandler(ScriptEngine &engine, std::string_view handlerName) noexcept;
 
 		const PerfEntries &GetPerfEntries() const noexcept;
 	};

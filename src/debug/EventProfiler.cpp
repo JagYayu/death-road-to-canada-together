@@ -33,12 +33,12 @@ void EventProfiler::EndEvent(ScriptEngine &engine) noexcept
 	});
 }
 
-void EventProfiler::TraceHandler(ScriptEngine &engine, StringView handlerName) noexcept
+void EventProfiler::TraceHandler(ScriptEngine &engine, std::string_view handlerName) noexcept
 {
 	auto &&time = std::chrono::high_resolution_clock::now();
 	auto &&memory = engine.GetMemory();
 
-	_handlers.try_emplace(handlerName, Tuple<TDuration, size_t>(time - _time, _memory - memory));
+	_handlers.try_emplace(handlerName, std::tuple<TDuration, size_t>(time - _time, _memory - memory));
 
 	_time = time;
 	_memory = memory;

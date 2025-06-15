@@ -1,25 +1,39 @@
 #include "Window.h"
 
-#include "SDL3/SDL_timer.h"
+#include "ERenderBackend.h"
+#include "SDLRenderer.h"
 #include "imgui_impl_sdl3.h"
 #include "program/Engine.h"
-#include "util/Defs.h"
 
+#include "SDL3/SDL_timer.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_video.h>
 #include <imgui.h>
+#include <memory>
 
 using namespace tudov;
 
 Window::Window(Engine &engine)
     : engine(engine),
       debugManager(*this),
-      renderer(*this),
+      renderer(),
       _prevTick(),
       _frame(),
       _framerate()
+{
+	switch (engine.config.GetRenderBackend())
+	{
+	case tudov::ERenderBackend::SDL:
+		renderer = std::make_unique<SDLRenderer>(*this);
+		break;
+	default:
+		throw std::exception("Invalid render backend");
+	}
+}
+
+Window::~Window() noexcept
 {
 }
 
@@ -48,7 +62,12 @@ void Window::Initialize()
 
 	ImGui::GetIO().DisplaySize = ImVec2(width, height);
 
-	renderer.Initialize();
+	renderer->Initialize();
+	renderer->RegisterGlobalsTo("Render", engine.modManager.scriptEngine);
+}
+
+void Window::Deinitialize() noexcept
+{
 }
 
 void Window::PoolEvents()
@@ -166,10 +185,10 @@ void Window::Render()
 	Uint64 target = 1e9 / engine.config.GetWindowFramelimit();
 	Uint64 begin = SDL_GetTicksNS();
 
-	renderer.Begin();
+	renderer->Begin();
 	engine.modManager.eventManager.render->Invoke();
 	debugManager.UpdateAndRender();
-	renderer.End();
+	renderer->End();
 
 	Uint64 delta = SDL_GetTicksNS() - begin;
 	if (delta < target)

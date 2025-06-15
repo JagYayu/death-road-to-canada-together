@@ -1,5 +1,7 @@
 #include "Engine.h"
 
+#include "graphic/SDLRenderer.h"
+#include "graphic/SDLTexture.h"
 #include "resource/ResourceType.hpp"
 #include "util/Defs.h"
 #include "util/Log.h"
@@ -22,8 +24,8 @@ void Engine::Run(const MainArgs &args)
 	_log->Debug("Initializing engine ...");
 	{
 		config.Load();
-		InitializeResources();
 		window.Initialize();
+		InitializeResources();
 		modManager.Initialize();
 		modManager.LoadMods();
 	}
@@ -52,7 +54,15 @@ void Engine::InitializeResources()
 {
 	_log->Debug("Mounting resource files");
 
-	UnorderedMap<ResourceType, UInt32> fileCounts{};
+	auto &&renderBackend = config.GetRenderBackend();
+
+	// auto &&loadTexture = [this, renderBackend]() {
+	// 	switch (renderBackend) {
+	// 		textureManager.Load<>(file, window.renderer, std::string_view(data))
+	// 	}
+	// };
+
+	std::unordered_map<ResourceType, UInt32> fileCounts{};
 
 	auto &&mountDirectories = config.GetMountFiles();
 	for (auto &&mountDirectory : config.GetMountDirectories())
@@ -76,10 +86,14 @@ void Engine::InitializeResources()
 			{
 				auto &&file = path.string();
 				auto &&data = ReadFileToString(file, true);
-				if (textureManager.Load(file, window.renderer, StringView(data)))
+
+				if (auto &&sdlRenderer = dynamic_cast<SDLRenderer *>(window.renderer.get()))
 				{
-					fileCounts.try_emplace(it->second, 0).first->second++;
-					_log->Trace("{}", file);
+					if (textureManager.Load<SDLTexture>(file, *sdlRenderer, std::string_view(data)))
+					{
+						fileCounts.try_emplace(it->second, 0).first->second++;
+						_log->Trace("{}", file);
+					}
 				}
 			}
 		}

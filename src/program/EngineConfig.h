@@ -11,17 +11,19 @@
 
 namespace tudov
 {
+	enum class ERenderBackend;
+
 	class EngineConfig
 	{
 	  private:
 		SharedPtr<Log> _log;
 		nlohmann::json _config;
-		UniquePtr<filewatch::FileWatch<String>> _fileWatcher;
+		UniquePtr<filewatch::FileWatch<std::string>> _fileWatcher;
 
 	  public:
-		static constexpr StringView file = "config.json";
+		static constexpr std::string_view file = "config.json";
 
-		static constexpr StringView defaultWindowTitle = "DR2C";
+		static constexpr std::string_view defaultWindowTitle = "DR2C";
 		static constexpr UInt32 defaultWindowWidth = 1280;
 		static constexpr UInt32 defaultWindowHeight = 720;
 
@@ -31,15 +33,16 @@ namespace tudov
 		void Save() noexcept;
 		void Load() noexcept;
 
-		Vector<String> GetMountDirectories() noexcept;
-		UnorderedMap<String, ResourceType> GetMountFiles() noexcept;
+		std::vector<std::string> GetMountDirectories() noexcept;
+		std::unordered_map<std::string, ResourceType> GetMountFiles() noexcept;
 		void GetDebugProfiling() noexcept;
+		ERenderBackend GetRenderBackend() noexcept;
 		UInt32 GetWindowFramelimit() noexcept;
-		StringView GetWindowTitle() noexcept;
+		std::string_view GetWindowTitle() noexcept;
 		UInt32 GetWindowWidth() noexcept;
 		UInt32 GetWindowHeight() noexcept;
 
-		void SetWindowTitle(const String &) noexcept;
+		void SetWindowTitle(const std::string &) noexcept;
 		void SetWindowWidth(UInt32) noexcept;
 		void SetWindowHeight(UInt32) noexcept;
 	};

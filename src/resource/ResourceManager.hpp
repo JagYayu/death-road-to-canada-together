@@ -7,27 +7,24 @@
 
 namespace tudov
 {
-	using ResourceID = UInt64;
-
 	template <typename T>
 	class ResourceManager
 	{
-		// using T = Texture;
 	  private:
 		struct Entry
 		{
-			String path;
+			std::string path;
 			SharedPtr<T> resource;
 		};
 
-		Log _log;
+		SharedPtr<Log> _log;
 		ResourceID _latestID = 0;
 
-		UnorderedMap<StringView, ResourceID> _path2ID;
-		UnorderedMap<ResourceID, Entry> _id2Entry;
+		std::unordered_map<std::string_view, ResourceID> _path2ID;
+		std::unordered_map<ResourceID, Entry> _id2Entry;
 
 	  public:
-		explicit ResourceManager();
+		explicit ResourceManager() noexcept;
 
 		inline SharedPtr<T> GetResource(ResourceID id) const noexcept
 		{
@@ -35,35 +32,37 @@ namespace tudov
 			return it != _id2Entry.end() ? it->second.resource : nullptr;
 		}
 
-		inline ResourceID GetResourceID(StringView path) const noexcept
+		inline ResourceID GetResourceID(std::string_view path) const noexcept
 		{
 			auto &&it = _path2ID.find(path);
 			return it != _id2Entry.end() ? it->first : false;
 		}
 
-		template <typename... Args>
-		inline ResourceID Load(StringView path, Args &&...args)
+		template <typename TDerived = T, typename... Args>
+		inline ResourceID Load(std::string_view path, Args &&...args)
 		{
+			static_assert(std::is_base_of_v<T, TDerived>, "TDerived must inherit from T");
+
 			_latestID++;
 			auto id = _latestID;
 
 			SharedPtr<T> resource;
 			try
 			{
-				resource = MakeShared<T>(Forward<Args>(args)...);
+				resource = std::static_pointer_cast<T>(std::make_shared<TDerived>(std::forward<Args>(args)...));
 			}
 			catch (const std::exception &e)
 			{
-				_log.Error("Exception occurred while loading \"{}\": {}", path, e.what());
+				_log->Error("Exception occurred while loading \"{}\": {}", path, e.what());
 			}
 
 			Entry entry{
-			    .path = String(path),
+			    .path = std::string(path),
 			    .resource = resource,
 			};
 
 			_id2Entry.emplace(id, entry);
-			_path2ID[StringView(entry.path)] = id;
+			_path2ID[std::string_view(entry.path)] = id;
 
 			return id;
 		}

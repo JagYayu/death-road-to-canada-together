@@ -18,7 +18,7 @@ DebugProfiler::DebugProfiler(Engine &engine) noexcept
 {
 }
 
-StringView DebugProfiler::GetName() noexcept
+std::string_view DebugProfiler::GetName() noexcept
 {
 	return "Profiler";
 }
@@ -27,7 +27,7 @@ struct DebugProfilerEntry
 {
 	RuntimeEvent *event;
 	UInt64 index;
-	String header;
+	std::string header;
 	float (*durations)[EventProfiler::EntrySize];
 	float (*memories)[EventProfiler::EntrySize];
 	float avgDuration;
@@ -42,7 +42,7 @@ void DebugProfiler::UpdateAndRender() noexcept
 	{
 		ImGui::Text("FPS: %.1f", engine.window.GetFramerate());
 
-		Vector<DebugProfilerEntry> entries{};
+		std::vector<DebugProfilerEntry> entries{};
 
 		auto &&eventManager = engine.modManager.eventManager;
 		for (auto &&it = eventManager.BeginRuntimeEvents(); it != eventManager.EndRuntimeEvents(); ++it)

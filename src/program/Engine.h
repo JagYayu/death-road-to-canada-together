@@ -5,7 +5,7 @@
 #include "debug/DebugManager.h"
 #include "graphic/Window.h"
 #include "mod/ModManager.h"
-#include "resource/TextureManager.hpp"
+#include "resource/TextureManager.h"
 #include "util/Defs.h"
 
 #include <memory>
