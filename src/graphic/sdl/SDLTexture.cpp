@@ -1,9 +1,9 @@
 #include "SDLTexture.h"
 
-#include "IRenderer.h"
-#include "ITexture.h"
+#include "../IRenderer.h"
+#include "../ITexture.h"
 #include "SDLRenderer.h"
-#include "Window.h"
+#include "../Window.h"
 
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_surface.h"

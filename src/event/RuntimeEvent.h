@@ -30,14 +30,14 @@ namespace tudov
 			template <typename... TArgs>
 			explicit Profile(bool traceHandlers, TArgs &&...args) noexcept
 			    : traceHandlers(traceHandlers),
-			      eventProfiler(Move<TArgs>(args)...)
+			      eventProfiler(std::move<TArgs>(args)...)
 			{
 			}
 		};
 
 	  private:
-		SharedPtr<Log> _log;
-		UniquePtr<Profile> _profile;
+		std::shared_ptr<Log> _log;
+		std::unique_ptr<Profile> _profile;
 		bool _handlersSortedCache;
 		std::optional<InvocationCache> _invocationCache;
 		std::unordered_map<EventHandler::Key, InvocationCache, EventHandler::Key::Hash, EventHandler::Key::Equal> _invocationCaches;
@@ -58,16 +58,20 @@ namespace tudov
 		std::vector<EventHandler> &GetSortedHandlers();
 
 	  public:
-		std::optional<Reference<RuntimeEvent::Profile>> GetProfile() const noexcept;
+		std::vector<EventHandler>::const_iterator BeginHandlers() const noexcept;
+		std::vector<EventHandler>::const_iterator EndHandlers() const noexcept;
+
+		std::optional<std::reference_wrapper<RuntimeEvent::Profile>> GetProfile() const noexcept;
 		void EnableProfiler(bool traceHandlers) noexcept;
 		void DisableProfiler() noexcept;
 
 		void Add(const AddHandlerArgs &args) override;
 
-		void Invoke(const sol::object &args = sol::lua_nil, std::optional<EventHandler::Key> key = nullopt);
-		void InvokeUncached(const sol::object &args = sol::lua_nil, std::optional<EventHandler::Key> key = nullopt);
+		void Invoke(const sol::object &args = sol::lua_nil, EventHandler::Key key = {});
+		void InvokeUncached(const sol::object &args = sol::lua_nil, EventHandler::Key key = {});
 
 		void ClearInvalidScriptsHandlers(const ScriptProvider &scriptProvider);
+		void ClearSpecificScriptHandlers(const ScriptProvider &scriptProvider, ScriptID scriptID);
 		void ClearScriptsHandlers();
 	};
 } // namespace tudov

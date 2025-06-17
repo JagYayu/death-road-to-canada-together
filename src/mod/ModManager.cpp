@@ -33,16 +33,18 @@ void ModManager::Initialize()
 	    "downloadedMods",
 	};
 	_requiredMods = {
-	    ModEntry("Core", Version(1, 0, 0), 0),
+	    ModEntry("dr2c", Version(1, 0, 0), 0),
 	};
 
 	scriptEngine.Initialize();
-	eventManager.RegisterGlobal(scriptEngine);
+	eventManager.InstallToScriptEngine(scriptEngine);
+	eventManager.AttachToScriptLoader(scriptEngine.scriptLoader);
 }
 
 void ModManager::Deinitialize()
 {
-	eventManager.UnregisterGlobal(scriptEngine);
+	eventManager.DetachFromScriptLoader(scriptEngine.scriptLoader);
+	eventManager.UninstallFromScriptEngine(scriptEngine);
 }
 
 void ModManager::AddMod(const std::filesystem::path &modRoot)
@@ -70,6 +72,12 @@ bool ModManager::IsModMatched(const Mod &mod) const
 
 void ModManager::LoadMods()
 {
+	if ((_loadState & ELoadState::AllLoading) != ELoadState::None)
+	{
+		return;
+	}
+	_loadState |= ELoadState::AllLoading;
+
 	_log->Debug("Loading all required mods ...");
 
 	if (!_requiredMods.empty())
@@ -121,10 +129,18 @@ void ModManager::LoadMods()
 	scriptEngine.CollectGarbage();
 
 	_log->Debug("Loaded all required mods");
+
+	_loadState &= ~ELoadState::AllLoading;
 }
 
 void ModManager::UnloadMods()
 {
+	if ((_loadState & ELoadState::AllUnloading) != ELoadState::None)
+	{
+		return;
+	}
+	_loadState |= ELoadState::AllUnloading;
+
 	_log->Debug("Unloading all loaded mods ...");
 
 	scriptEngine.scriptLoader.UnloadAll();
@@ -136,9 +152,11 @@ void ModManager::UnloadMods()
 	_loadedMods.clear();
 
 	_log->Debug("Unloaded all loaded mods");
+
+	_loadState &= ~ELoadState::AllUnloading;
 }
 
-WeakPtr<Mod> ModManager::GetLoadedMod(std::string_view namespace_) noexcept
+std::weak_ptr<Mod> ModManager::GetLoadedMod(std::string_view namespace_) noexcept
 {
 	for (auto &&mod : _loadedMods)
 	{

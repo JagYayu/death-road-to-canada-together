@@ -27,7 +27,7 @@ namespace tudov
 		};
 
 	  public:
-		enum class Verbosity
+		enum class EVerbosity
 		{
 			All = -1,
 			None = 0,
@@ -40,10 +40,10 @@ namespace tudov
 		};
 
 	  private:
-		static Verbosity _globalVerbosity;
-		static std::unordered_map<std::string, Verbosity> _moduleVerbs;
-		static std::unordered_map<std::string, Verbosity> _moduleVerbOverrides;
-		static std::unordered_map<std::string, SharedPtr<Log>> _logInstances;
+		static EVerbosity _globalVerbosity;
+		static std::unordered_map<std::string, EVerbosity> _moduleVerbs;
+		static std::unordered_map<std::string, EVerbosity> _moduleVerbOverrides;
+		static std::unordered_map<std::string, std::shared_ptr<Log>> _logInstances;
 		static std::queue<Entry> _queue;
 		static std::mutex _mutex;
 		static std::condition_variable _cv;
@@ -56,11 +56,11 @@ namespace tudov
 		static void Process();
 
 	  public:
-		static SharedPtr<Log> Get(std::string_view module);
+		static std::shared_ptr<Log> Get(std::string_view module);
 		static void CleanupExpired();
-		static Verbosity GetVerbosity(const std::string &module);
-		static std::optional<Verbosity> GetVerbosityOverride(const std::string &module);
-		static void SetVerbosityOverride(const std::string &module, Verbosity verb);
+		static EVerbosity GetVerbosity(const std::string &module);
+		static std::optional<EVerbosity> GetVerbosityOverride(const std::string &module);
+		static void SetVerbosityOverride(const std::string &module, EVerbosity verb);
 		static void UpdateVerbosities(const nlohmann::json &config);
 		static void Exit() noexcept;
 
@@ -76,7 +76,7 @@ namespace tudov
 
 		const std::string &GetModule() const;
 
-		FORCEINLINE Verbosity GetVerbosity() const
+		FORCEINLINE EVerbosity GetVerbosity() const
 		{
 			return GetVerbosity(_module);
 		}
@@ -109,32 +109,32 @@ namespace tudov
 		template <typename... Args>
 		FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Trace", Format(fmt, Forward<Args>(args)...));
+			Output("Trace", std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
 		FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Debug", Format(fmt, Forward<Args>(args)...));
+			Output("Debug", std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
 		FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Info", Format(fmt, Forward<Args>(args)...));
+			Output("Info", std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
 		FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Warn", Format(fmt, Forward<Args>(args)...));
+			Output("Warn", std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
 		FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Error", Format(fmt, Forward<Args>(args)...));
+			Output("Error", std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
 		FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Fatal", Format(fmt, Forward<Args>(args)...));
+			Output("Fatal", std::format(fmt, std::forward<Args>(args)...));
 		}
 	};
 } // namespace tudov

@@ -1,9 +1,8 @@
 #include "Engine.h"
 
-#include "graphic/SDLRenderer.h"
-#include "graphic/SDLTexture.h"
+#include "graphic/sdl/SDLRenderer.h"
+#include "graphic/sdl/SDLTexture.h"
 #include "resource/ResourceType.hpp"
-#include "util/Defs.h"
 #include "util/Log.h"
 #include "util/StringUtils.hpp"
 
@@ -62,7 +61,7 @@ void Engine::InitializeResources()
 	// 	}
 	// };
 
-	std::unordered_map<ResourceType, UInt32> fileCounts{};
+	std::unordered_map<ResourceType, std::uint32_t> fileCounts{};
 
 	auto &&mountDirectories = config.GetMountFiles();
 	for (auto &&mountDirectory : config.GetMountDirectories())

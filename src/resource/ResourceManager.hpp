@@ -14,10 +14,10 @@ namespace tudov
 		struct Entry
 		{
 			std::string path;
-			SharedPtr<T> resource;
+			std::shared_ptr<T> resource;
 		};
 
-		SharedPtr<Log> _log;
+		std::shared_ptr<Log> _log;
 		ResourceID _latestID = 0;
 
 		std::unordered_map<std::string_view, ResourceID> _path2ID;
@@ -26,7 +26,7 @@ namespace tudov
 	  public:
 		explicit ResourceManager() noexcept;
 
-		inline SharedPtr<T> GetResource(ResourceID id) const noexcept
+		inline std::shared_ptr<T> GetResource(ResourceID id) const noexcept
 		{
 			auto &&it = _id2Entry.find(id);
 			return it != _id2Entry.end() ? it->second.resource : nullptr;
@@ -46,7 +46,7 @@ namespace tudov
 			_latestID++;
 			auto id = _latestID;
 
-			SharedPtr<T> resource;
+			std::shared_ptr<T> resource;
 			try
 			{
 				resource = std::static_pointer_cast<T>(std::make_shared<TDerived>(std::forward<Args>(args)...));

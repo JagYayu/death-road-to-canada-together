@@ -1,17 +1,18 @@
 #include "Window.h"
 
 #include "ERenderBackend.h"
-#include "SDLRenderer.h"
-#include "imgui_impl_sdl3.h"
 #include "program/Engine.h"
+#include "sdl/SDLRenderer.h"
 
 #include "SDL3/SDL_timer.h"
+#include "imgui_impl_sdl3.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_video.h>
 #include <imgui.h>
 #include <memory>
+
 
 using namespace tudov;
 
@@ -63,7 +64,7 @@ void Window::Initialize()
 	ImGui::GetIO().DisplaySize = ImVec2(width, height);
 
 	renderer->Initialize();
-	renderer->RegisterGlobalsTo("Render", engine.modManager.scriptEngine);
+	renderer->InstallToScriptEngine("Render", engine.modManager.scriptEngine);
 }
 
 void Window::Deinitialize() noexcept

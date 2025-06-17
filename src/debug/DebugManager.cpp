@@ -24,7 +24,7 @@ DebugManager::DebugManager(Window &window) noexcept
 	};
 }
 
-void DebugManager::AddElement(const SharedPtr<IDebugElement> &element) noexcept
+void DebugManager::AddElement(const std::shared_ptr<IDebugElement> &element) noexcept
 {
 	auto &&name = element->GetName();
 	for (auto &&element : _elements)
@@ -50,7 +50,7 @@ void DebugManager::RemoveElement(std::string_view element) noexcept
 	_shownElements.erase(element);
 }
 
-void DebugManager::RegisterGlobalsTo(std::string_view name, ScriptEngine &scriptEngine) noexcept
+void DebugManager::InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
 {
 	auto &&debugs = scriptEngine.CreateTable();
 
@@ -59,7 +59,7 @@ void DebugManager::RegisterGlobalsTo(std::string_view name, ScriptEngine &script
 	scriptEngine.SetReadonlyGlobal(name, debugs);
 }
 
-void DebugManager::UnregisterGlobalsFrom(std::string_view name, ScriptEngine &scriptEngine) noexcept
+void DebugManager::UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
 {
 }
 

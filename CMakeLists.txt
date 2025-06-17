@@ -75,3 +75,6 @@ target_include_directories(dr2c PRIVATE ${imgui_DIR}/backends)
 # sol2
 find_package(sol2 CONFIG REQUIRED)
 target_link_libraries(dr2c PRIVATE sol2)
+
+# glm
+target_include_directories(dr2c PRIVATE ${CMAKE_SOURCE_DIR}/lib/glm-master)

@@ -1,4 +1,5 @@
 local lockedMetatables = setmetatable({}, { __mode = "k" })
+local enumTables
 
 local type = type
 
@@ -37,7 +38,7 @@ return {
 				error("metatable is locked, unmodifiable in sandboxed environment", 2)
 			end
 
-			setmetatable(table, metatable)
+			return setmetatable(table, metatable)
 		end
 	end,
 }

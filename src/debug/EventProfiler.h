@@ -26,7 +26,7 @@ namespace tudov
 			THandlers handlers;
 		};
 
-		static constexpr UInt64 EntrySize = 256;
+		static constexpr std::uint64_t EntrySize = 256;
 		using PerfEntries = CircularBuffer<PerfEntry, EntrySize>;
 
 	  private:

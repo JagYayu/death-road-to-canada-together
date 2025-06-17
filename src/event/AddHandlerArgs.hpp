@@ -16,6 +16,6 @@ namespace tudov
 		std::optional<std::string> name;
 		std::optional<std::string> order;
 		std::optional<Key> key;
-		std::optional<Number> sequence;
+		std::optional<std::double_t> sequence;
 	};
 } // namespace tudov

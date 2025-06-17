@@ -23,7 +23,7 @@ namespace tudov
 	class ScriptEngine
 	{
 	  private:
-		SharedPtr<Log> _log;
+		std::shared_ptr<Log> _log;
 		sol::state _lua;
 		bool _luaInit;
 
@@ -50,13 +50,12 @@ namespace tudov
 
 		void SetReadonlyGlobal(const sol::string_view &key, sol::object value);
 		void CollectGarbage();
-		sol::table CreateTable(UInt32 arr = 0, UInt32 hash = 0);
+		sol::table CreateTable(std::uint32_t arr = 0, std::uint32_t hash = 0);
 		size_t GetMemory() const noexcept;
+		sol::object MakeReadonlyGlobal(const sol::object &obj);
+		void MarkLockedMetatable();
 		int ThrowError(std::string_view message);
 		sol::load_result LoadFunction(const std::string &name, std::string_view code);
-
-		void MarkLockedMetatable();
-		sol::object MakeReadonlyGlobal(const sol::object &obj);
 
 		sol::table &GetSandboxedGlobals(std::string_view sandboxKey) noexcept;
 		// void ResetSandboxedGlobal() noexcept;

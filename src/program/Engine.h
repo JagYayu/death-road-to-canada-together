@@ -14,15 +14,8 @@ namespace tudov
 {
 	class Engine
 	{
-	  public:
-		enum class MountFileType
-		{
-			Texture,
-			Audio,
-		};
-
 	  private:
-		SharedPtr<Log> _log;
+		std::shared_ptr<Log> _log;
 		bool _running = true;
 
 	  public:

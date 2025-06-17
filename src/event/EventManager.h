@@ -14,27 +14,29 @@
 namespace tudov
 {
 	class ModManager;
+	class ScriptLoader;
 
 	class EventManager
 	{
 	  private:
-		SharedPtr<Log> _log;
+		std::shared_ptr<Log> _log;
 		EventID _latestEventID;
 		std::unordered_map<std::string_view, EventID> _eventName2ID;
 		std::unordered_map<EventID, std::string> _eventID2Name;
-		std::unordered_map<EventID, SharedPtr<LoadtimeEvent>> _loadtimeEvents;
-		std::unordered_map<EventID, SharedPtr<RuntimeEvent>> _runtimeEvents;
-		std::vector<SharedPtr<RuntimeEvent>> _staticEvents;
+		std::unordered_map<EventID, std::shared_ptr<LoadtimeEvent>> _loadtimeEvents;
+		std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>> _runtimeEvents;
+		std::vector<std::shared_ptr<RuntimeEvent>> _staticEvents;
 
 		DelegateEvent<>::HandlerID _onPreLoadAllScriptsHandlerID;
 		DelegateEvent<>::HandlerID _onPostLoadAllScriptsHandlerID;
 		DelegateEvent<ScriptID>::HandlerID _onPreHotReloadScriptsHandlerID;
 		DelegateEvent<ScriptID>::HandlerID _onPostHotReloadScriptsHandlerID;
+		DelegateEvent<ScriptID>::HandlerID _onUnloadScriptHandlerID;
 
 	  public:
 		ModManager &modManager;
-		SharedPtr<RuntimeEvent> update;
-		SharedPtr<RuntimeEvent> render;
+		std::shared_ptr<RuntimeEvent> update;
+		std::shared_ptr<RuntimeEvent> render;
 
 	  public:
 		explicit EventManager(ModManager &modManager);
@@ -44,12 +46,13 @@ namespace tudov
 		[[nodiscard]]
 		EventID AllocEventID(std::string_view eventName) noexcept;
 		void DeallocEventID(EventID eventID) noexcept;
-
 		void OnScriptsLoaded();
 
 	  public:
-		void RegisterGlobal(ScriptEngine &scriptEngine);
-		void UnregisterGlobal(ScriptEngine &scriptEngine);
+		void InstallToScriptEngine(ScriptEngine &scriptEngine);
+		void UninstallFromScriptEngine(ScriptEngine &scriptEngine);
+		void AttachToScriptLoader(ScriptLoader &scriptLoader) noexcept;
+		void DetachFromScriptLoader(ScriptLoader &scriptLoader) noexcept;
 
 		[[nodiscard]]
 		ScriptID GetEventIDByName(std::string_view scriptName) const noexcept;
@@ -57,10 +60,13 @@ namespace tudov
 		std::optional<std::string_view> GetEventNameByID(EventID eventID) const noexcept;
 		[[nodiscard]]
 		bool IsValidEventID(EventID eventID) const noexcept;
+		void ClearInvalidScriptEvents() noexcept;
+		[[nodiscard]]
+		std::optional<std::reference_wrapper<AbstractEvent>> TryGetRegistryEvent(EventID eventID);
 
-		std::optional<Reference<AbstractEvent>> TryGetRegistryEvent(EventID eventID);
-
-		std::unordered_map<EventID, SharedPtr<RuntimeEvent>>::const_iterator BeginRuntimeEvents() const;
-		std::unordered_map<EventID, SharedPtr<RuntimeEvent>>::const_iterator EndRuntimeEvents() const;
+		[[nodiscard]]
+		std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator BeginRuntimeEvents() const;
+		[[nodiscard]]
+		std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator EndRuntimeEvents() const;
 	};
 } // namespace tudov

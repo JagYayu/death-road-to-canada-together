@@ -18,23 +18,24 @@ namespace tudov
 
 	class ModManager
 	{
-	  private:
+	  public:
 		enum class ELoadState
 		{
 			None = 0,
-			AllPending = 1 << 0,
-			AllLoading = 1 << 1,
+			AllLoading = 1 << 0,
+			AllUnloading = 1 << 1,
 			HotReloading = 1 << 2,
 		};
 
-		SharedPtr<Log> _log;
+	  private:
+		std::shared_ptr<Log> _log;
 		ELoadState _loadState;
 
 		std::vector<std::filesystem::path> _directories;
-		std::vector<SharedPtr<Mod>> _loadedMods;
+		std::vector<std::shared_ptr<Mod>> _loadedMods;
 		std::vector<ModEntry> _requiredMods;
 
-		UniquePtr<std::unordered_map<std::string, std::string>> _hotReloadScriptsPending;
+		std::unique_ptr<std::unordered_map<std::string, std::string>> _hotReloadScriptsPending;
 
 	  public:
 		Engine &engine;
@@ -57,7 +58,7 @@ namespace tudov
 		void LoadMods();
 		void UnloadMods();
 
-		WeakPtr<Mod> GetLoadedMod(std::string_view namespace_) noexcept;
+		std::weak_ptr<Mod> GetLoadedMod(std::string_view namespace_) noexcept;
 
 		std::vector<ModEntry> &GetRequiredMods() noexcept;
 		const std::vector<ModEntry> &GetRequiredMods() const noexcept;
@@ -66,4 +67,6 @@ namespace tudov
 
 		void Update();
 	};
+
+	ENABLE_ENUM_FLAG_OPERATORS(ModManager::ELoadState);
 } // namespace tudov

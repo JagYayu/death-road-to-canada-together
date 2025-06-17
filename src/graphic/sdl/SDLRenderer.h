@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IRenderer.h"
+#include "../IRenderer.h"
 #include "SDL3/SDL_surface.h"
 #include "resource/ResourceManager.hpp"
 #include "util/Defs.h"
@@ -28,10 +28,10 @@ namespace tudov
 		};
 
 	  private:
-		SharedPtr<Log> _log;
+		std::shared_ptr<Log> _log;
 		SDL_Renderer *_renderer;
 
-		std::vector<Command> _commandQueue;
+		// std::vector<Command> _commandQueue;
 
 	  public:
 		SDLRenderer(Window &window);
@@ -41,9 +41,9 @@ namespace tudov
 
 		void Initialize() noexcept override;
 
-		void RegisterGlobalsTo(std::string_view name, ScriptEngine &scriptEngine) noexcept override;
+		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept override;
 
-		void Draw(ResourceID texID, float x, float y, float w, float h, float tx, float ty, float tw, float th, float ang, float cx, float cy, uint32_t flip);
+		// void Draw(ResourceID texID, float x, float y, float w, float h, float tx, float ty, float tw, float th, float ang, float cx, float cy, uint32_t flip);
 
 		void Begin() override;
 		void End() override;

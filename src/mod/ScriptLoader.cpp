@@ -178,11 +178,6 @@ ScriptLoader::ScriptLoader(ScriptEngine &scriptEngine) noexcept
 
 ScriptLoader::~ScriptLoader() noexcept
 {
-	// for (auto &&it = _scriptModules.begin(); it != _scriptModules.end(); ++it)
-	// {
-	// 	_log->Trace("Unloading script \"{}\" ...", it->first));
-	// 	_log->Trace("Unloaded script \"{}\"", it->first));
-	// }
 }
 
 ScriptID ScriptLoader::GetLoadingScriptID() const noexcept
@@ -219,7 +214,7 @@ std::vector<ScriptID> ScriptLoader::GetDependencies(ScriptID scriptID) const
 	auto &&sources = std::vector<ScriptID>();
 	auto &&visited = std::unordered_set<ScriptID>();
 	GetScriptDependencies(_scriptReverseDependencies, scriptID, sources, visited);
-	return Move(sources);
+	return std::move(sources);
 }
 
 void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
@@ -264,9 +259,9 @@ void ScriptLoader::LoadAll()
 	Log::CleanupExpired();
 }
 
-SharedPtr<ScriptLoader::Module> ScriptLoader::Load(std::string_view scriptName)
+std::shared_ptr<ScriptLoader::Module> ScriptLoader::Load(std::string_view scriptName)
 {
-	auto&& scriptID = scriptEngine.modManager.scriptProvider.GetScriptIDByName(scriptName);
+	auto &&scriptID = scriptEngine.modManager.scriptProvider.GetScriptIDByName(scriptName);
 	if (!scriptID)
 	{
 		return nullptr;
@@ -274,21 +269,26 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::Load(std::string_view scriptName)
 	return Load(scriptID);
 }
 
-SharedPtr<ScriptLoader::Module> ScriptLoader::Load(ScriptID scriptID)
+std::shared_ptr<ScriptLoader::Module> ScriptLoader::Load(ScriptID scriptID)
 {
-	if (scriptID)
+	if (!scriptID)
 	{
-		auto &&scriptCode = scriptEngine.modManager.scriptProvider.GetScriptCode(scriptID);
-		auto &&scriptName = scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID);
-		auto &&scriptNamespace = scriptEngine.modManager.scriptProvider.GetScriptNamespace(scriptID);
-		return LoadImpl(scriptID, scriptName.value(), scriptCode, scriptNamespace);
+		_log->Warn("Attempt to load invalid script <{}>", scriptID);
+		return nullptr;
+	}
+	auto &&scriptName = scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID);
+	if (!scriptName.has_value())
+	{
+		_log->Warn("Attempt to load invalid script <{}>: missing script name", scriptID);
+		return nullptr;
 	}
 
-	_log->Warn("{}", "Attempt to load invalid script");
-	return nullptr;
+	auto &&scriptCode = scriptEngine.modManager.scriptProvider.GetScriptCode(scriptID);
+	auto &&scriptNamespace = scriptEngine.modManager.scriptProvider.GetScriptNamespace(scriptID);
+	return LoadImpl(scriptID, scriptName.value(), scriptCode, scriptNamespace);
 }
 
-SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_)
+std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_)
 {
 	{
 		auto &&it = _scriptModules.find(scriptID);
@@ -298,14 +298,14 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, std::s
 		}
 	}
 
-	_log->Debug("Loading script \"{}\" ...", scriptName);
+	_log->Debug("Loading script <{}>\"{}\" ...", scriptID, scriptName);
 
 	_scriptErrors.erase(scriptID);
 
 	auto &&result = scriptEngine.LoadFunction(std::string(scriptName), scriptCode);
 	if (!result.valid())
 	{
-		_log->Debug("Failed to load script <{}>: {}", scriptID, result.get<sol::error>().what());
+		_log->Debug("Failed to load script <{}>\"{}\": {}", scriptID, scriptName, result.get<sol::error>().what());
 
 		return nullptr;
 	}
@@ -318,7 +318,7 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, std::s
 	if (ScriptProvider::IsStaticScript(scriptName))
 	{
 		module->RawLoad(*this);
-		_log->Trace("Raw loaded script \"{}\"", scriptName);
+		_log->Trace("Raw loaded script <{}>\"{}\"", scriptID, scriptName);
 	}
 	else
 	{
@@ -332,8 +332,10 @@ SharedPtr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, std::s
 			}
 		}
 		scriptEngine.InitializeScriptFunction(scriptID, scriptName, function, sandboxKey);
-		_log->Trace("Lazy loaded script \"{}\"", scriptName);
+		_log->Trace("Lazy loaded script <{}>\"{}\"", scriptID, scriptName);
 	}
+
+	onLoadedScript(scriptID);
 
 	return it->second;
 }
@@ -353,19 +355,21 @@ std::vector<ScriptID> ScriptLoader::Unload(ScriptID scriptID)
 {
 	std::vector<ScriptID> unloadedScripts{};
 	UnloadImpl(scriptID, unloadedScripts);
-	return Move(unloadedScripts);
+	return std::move(unloadedScripts);
 }
 
 void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts)
 {
-	_log->Trace("Unloading script <{}>", scriptID);
+	_log->Trace("Unloading script <{}> ...", scriptID);
 
 	if (!_scriptModules.erase(scriptID))
 	{
-		_log->Trace("Unload script <{}> failed: script not found", scriptID);
+		_log->Error("Unload script <{}> failed: script not found", scriptID);
 
 		return;
 	}
+
+	onUnloadScript(scriptID);
 
 	for (auto &&dependency : GetDependencies(scriptID))
 	{
@@ -383,7 +387,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 	_scriptErrorsCascaded.erase(scriptID);
 
 	auto &&name = scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID);
-	_log->Trace("Unloaded script \"{}\"", name.value());
+	_log->Trace("Unloaded script <{}> \"{}\"", scriptID, name.value());
 }
 
 void ScriptLoader::HotReload(const std::vector<ScriptID> &scriptIDs)
@@ -391,10 +395,6 @@ void ScriptLoader::HotReload(const std::vector<ScriptID> &scriptIDs)
 	_log->Debug("Hot reloading scripts ...");
 
 	onPreHotReloadScripts(scriptIDs);
-
-	// auto &&scriptCode = scriptEngine.modManager.scriptProvider.GetScriptCode(scriptID);
-	// auto &&scriptName = scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID);
-	// auto &&scriptModule = LoadImpl(scriptID, scriptName.value(), scriptCode);
 
 	for (auto &&additionalScriptID : scriptIDs)
 	{

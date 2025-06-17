@@ -175,7 +175,7 @@ ERenderBackend EngineConfig::GetRenderBackend() noexcept
 	return renderBackend;
 }
 
-UInt32 EngineConfig::GetWindowFramelimit() noexcept
+std::uint32_t EngineConfig::GetWindowFramelimit() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&framelimit = window[keyFramelimit];
@@ -199,7 +199,7 @@ std::string_view EngineConfig::GetWindowTitle() noexcept
 	return title;
 }
 
-UInt32 EngineConfig::GetWindowWidth() noexcept
+std::uint32_t EngineConfig::GetWindowWidth() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&width = window[keyWidth];
@@ -211,7 +211,7 @@ UInt32 EngineConfig::GetWindowWidth() noexcept
 	return width;
 }
 
-UInt32 EngineConfig::GetWindowHeight() noexcept
+std::uint32_t EngineConfig::GetWindowHeight() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&height = window[keyHeight];
@@ -227,10 +227,10 @@ void EngineConfig::SetWindowTitle(const std::string &) noexcept
 {
 }
 
-void EngineConfig::SetWindowWidth(UInt32) noexcept
+void EngineConfig::SetWindowWidth(std::uint32_t) noexcept
 {
 }
 
-void EngineConfig::SetWindowHeight(UInt32) noexcept
+void EngineConfig::SetWindowHeight(std::uint32_t) noexcept
 {
 }

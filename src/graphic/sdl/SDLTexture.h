@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ITexture.h"
+#include "../ITexture.h"
 #include "util/Defs.h"
 
 #include "SDL3/SDL_render.h"

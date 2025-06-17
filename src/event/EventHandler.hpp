@@ -3,6 +3,7 @@
 #include "sol/error.hpp"
 #include "util/Defs.h"
 
+#include <cmath>
 #include <sol/sol.hpp>
 
 namespace tudov
@@ -21,20 +22,20 @@ namespace tudov
 
 			struct Hash
 			{
-				size_t operator()(const EventHandler::Key &key) const
+				std::size_t operator()(const EventHandler::Key &key) const
 				{
-					if (Is<Number>(key.value))
+					if (std::holds_alternative<std::double_t>(key.value))
 					{
-						return std::hash<double>{}(Get<Number>(key.value));
+						return std::hash<double>{}(std::get<std::double_t>(key.value));
 					}
 					else
 					{
-						return std::hash<std::string>{}(Get<std::string>(key.value));
+						return std::hash<std::string>{}(std::get<std::string>(key.value));
 					}
 				}
 			};
 
-			std::variant<Nullptr, Number, std::string> value;
+			std::variant<std::nullptr_t, std::double_t, std::string> value;
 
 			bool operator==(const Key &other) const
 			{
@@ -75,7 +76,7 @@ namespace tudov
 
 			void operator()(const sol::object &obj, const Key &key) const
 			{
-				if (auto &&func = GetIf<sol::function>(&function))
+				if (auto &&func = std::get_if<sol::function>(&function))
 				{
 					auto &&result = (*func)(obj, key);
 					if (!result.valid())
@@ -91,8 +92,8 @@ namespace tudov
 			}
 		};
 
-		inline static constexpr Number defaultSequence = 0;
-		inline static const Key emptyKey = Key(nullptr);
+		inline static constexpr std::double_t defaultSequence = 0;
+		inline static const Key emptyKey = Key();
 
 		EventID eventID;
 		ScriptID scriptID;
@@ -100,6 +101,6 @@ namespace tudov
 		std::string name;
 		std::string order;
 		Key key;
-		Number sequence;
+		std::double_t sequence;
 	};
 } // namespace tudov

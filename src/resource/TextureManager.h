@@ -21,7 +21,7 @@ namespace tudov
 	  public:
 		TextureManager() noexcept;
 
-		void RegisterGlobalsTo(std::string_view name, ScriptEngine &scriptEngine) noexcept;
-		void UnregisterGlobalsFrom(std::string_view name, ScriptEngine &scriptEngine) noexcept;
+		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
+		void UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 	};
 } // namespace tudov

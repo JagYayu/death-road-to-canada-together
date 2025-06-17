@@ -28,10 +28,10 @@ namespace tudov
 		};
 
 	  public:
-		using ScriptID = UInt64;
+		using ScriptID = std::uint64_t;
 
 	  private:
-		SharedPtr<Log> _log;
+		std::shared_ptr<Log> _log;
 
 		ScriptID _latestScriptID;
 		std::unordered_map<std::string_view, ScriptID> _scriptName2ID;
@@ -47,8 +47,8 @@ namespace tudov
 		ScriptProvider(ModManager &modManager);
 
 	  private:
-		ScriptID AllocScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_ = emptyString);
-		void DeallocScript(ScriptID scriptID);
+		ScriptID AddScriptImpl(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_ = emptyString);
+		void RemoveScriptImpl(ScriptID scriptID);
 
 	  public:
 		void Initialize();

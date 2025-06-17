@@ -22,10 +22,9 @@ namespace tudov
 
 	  private:
 		SDL_Window *_window;
-		UInt32 _prevTick;
-		UInt32 _frame;
+		std::uint32_t _prevTick;
+		std::uint32_t _frame;
 		float _framerate;
-		float framerateTimer;
 
 	  public:
 		Engine &engine;

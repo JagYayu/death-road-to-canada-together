@@ -99,7 +99,7 @@ void UnpackagedMod::Load()
 				log->Debug("Script modified");
 
 				auto &&relative = std::filesystem::relative(filePath, GetScriptsDirectory());
-				auto &&scriptName = FilePathToLuaScriptName(Format("{}.{}", _config.namespace_, relative.string()));
+				auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relative.string()));
 				// auto &&scriptID = scriptProvider.GetScriptIDByName(scriptName);
 				// auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
 
@@ -156,7 +156,7 @@ void UnpackagedMod::Load()
 			ins.close();
 
 			auto &&relative = std::filesystem::relative(std::filesystem::relative(file, _directory), GetScriptsDirectory());
-			auto &&scriptName = FilePathToLuaScriptName(Format("{}.{}", namespace_, relative.string()));
+			auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", namespace_, relative.string()));
 			auto &&scriptID = modManager.scriptProvider.AddScript(scriptName, oss.str(), namespace_);
 			_scripts.emplace_back(scriptID);
 		}

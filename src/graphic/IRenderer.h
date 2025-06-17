@@ -15,7 +15,7 @@ namespace tudov
 		IRenderer(Window &window) noexcept;
 
 		virtual void Initialize() noexcept = 0;
-		virtual void RegisterGlobalsTo(std::string_view name, ScriptEngine& scriptEngine) noexcept = 0 ;
+		virtual void InstallToScriptEngine(std::string_view name, ScriptEngine& scriptEngine) noexcept = 0 ;
 
 		virtual void Begin() = 0;
 		virtual void End() = 0;

@@ -8,7 +8,7 @@ namespace tudov
 
 	class DebugProfiler : public IDebugElement
 	{
-		UInt64 _prevPrefCounter;
+		std::uint64_t _prevPrefCounter;
 
 	  public:
 		Engine &engine;

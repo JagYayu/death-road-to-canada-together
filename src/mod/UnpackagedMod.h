@@ -11,15 +11,15 @@ namespace tudov
 	class UnpackagedMod : public Mod
 	{
 	  private:
-		SharedPtr<Log> _log;
+		std::shared_ptr<Log> _log;
 
-		SharedPtr<filewatch::FileWatch<std::string>> _fileWatcher;
+		std::shared_ptr<filewatch::FileWatch<std::string>> _fileWatcher;
 		std::filesystem::path _directory;
 
 		std::vector<std::regex> _scriptFilePatterns;
 
 	  public:
-		SharedPtr<Log> log;
+		std::shared_ptr<Log> log;
 
 		static bool IsValidDirectory(const std::filesystem::path &directory);
 		static ModConfig LoadConfig(const std::filesystem::path &directory);

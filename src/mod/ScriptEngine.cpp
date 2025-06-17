@@ -3,7 +3,6 @@
 #include "ModManager.h"
 #include "ScriptLoader.h"
 #include "ScriptProvider.h"
-#include "program/Engine.h"
 #include "sol/table.hpp"
 #include "util/Defs.h"
 #include "util/StringUtils.hpp"
@@ -64,6 +63,17 @@ void ScriptEngine::Initialize()
 	_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
 	_luaPostProcessSandboxing = scriptEngineModule.raw_get<sol::function>("postProcessSandboxing");
 
+	// _lua.new_usertype<ScriptEnum>("Enum", sol::no_constructor,
+	//                               "clear", &ScriptEnum::Clear,
+	//                               "draw", &ScriptEnum::Draw,
+	//                               "render", &ScriptEnum::Render,
+	//                               "sort", &ScriptEnum::Sort);
+	// {
+	// 	sol::table tbl = _lua.create_table();
+	// 	tbl.new_enum()
+	// 	_lua["Enum"] = tbl;
+	// }
+
 	MakeReadonlyGlobal(_lua.globals());
 }
 
@@ -110,11 +120,6 @@ int ScriptEngine::ThrowError(std::string_view message)
 	lua_pushlstring(_lua, str.data(), str.size());
 	return lua_error(_lua);
 }
-
-// void ScriptEngine::Require(std::string_view source, std::string_view target)
-// {
-// 	throw std::runtime_error("Permission denied");
-// }
 
 sol::object MakeReadonlyGlobalImpl(sol::state &lua, const sol::object &obj, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited, const sol::function &newindex, const sol::function mark)
 {
@@ -222,7 +227,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 
 	auto &&log = Log::Get(std::string(scriptName));
 
-	env["print"] = [&, log](const sol::variadic_args &args)
+	env.set_function("print", [&, log](const sol::variadic_args &args)
 	{
 		try
 		{
@@ -242,9 +247,9 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 			UnhandledCppException(_log, e);
 			throw;
 		}
-	};
+	});
 
-	env["require"] = [&, env, log, scriptID](const sol::string_view &targetScriptName) -> sol::object
+	env.set_function("require", [&, env, log, scriptID](const sol::string_view &targetScriptName) -> sol::object
 	{
 		try
 		{
@@ -271,7 +276,32 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 			UnhandledCppException(_log, e);
 			throw;
 		}
-	};
+	});
+
+	env.set_function("N_", [&, scriptID](const sol::string_view &str)
+	{
+		try
+		{
+			auto &&name = modManager.scriptProvider.GetScriptNameByID(scriptID);
+			if (!name.has_value())
+			{
+				luaL_error(_lua, "Script module <%s> not found", scriptID);
+				return std::string("");
+			}
+			std::string_view src = name.value();
+			std::string result;
+			result.reserve(src.size() + 1 + str.size());
+			result.append(src);
+			result.push_back('_');
+			result.append(str);
+			return result;
+		}
+		catch (const std::exception &e)
+		{
+			UnhandledCppException(_log, e);
+			throw;
+		}
+	});
 
 	sol::set_environment(env, func);
 }

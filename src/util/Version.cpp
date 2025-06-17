@@ -88,7 +88,7 @@ std::ostream &tudov::operator<<(std::ostream &os, const Version &v)
 	return os;
 }
 
-void from_json(const nlohmann::json &j, Version &v)
+void tudov::from_json(const nlohmann::json &j, Version &v)
 {
 	v = Version(j.get<std::string>());
 }

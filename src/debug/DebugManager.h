@@ -13,23 +13,23 @@ namespace tudov
 	class DebugManager
 	{
 	  private:
-		std::vector<SharedPtr<IDebugElement>> _elements;
+		std::vector<std::shared_ptr<IDebugElement>> _elements;
 		std::set<std::string_view> _shownElements;
 
 	  public:
 		Window &window;
-		SharedPtr<DebugConsole> console;
-		SharedPtr<DebugProfiler> profiler;
+		std::shared_ptr<DebugConsole> console;
+		std::shared_ptr<DebugProfiler> profiler;
 
 	  private:
-		void AddElement(const SharedPtr<IDebugElement> &element) noexcept;
+		void AddElement(const std::shared_ptr<IDebugElement> &element) noexcept;
 		void RemoveElement(std::string_view element) noexcept;
 
 	  public:
 		explicit DebugManager(Window &window) noexcept;
 
-		void RegisterGlobalsTo(std::string_view name, ScriptEngine &scriptEngine) noexcept;
-		void UnregisterGlobalsFrom(std::string_view name, ScriptEngine &scriptEngine) noexcept;
+		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
+		void UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 
 		void UpdateAndRender() noexcept;
 	};

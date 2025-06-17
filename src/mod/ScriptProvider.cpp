@@ -34,11 +34,11 @@ ScriptProvider::ScriptProvider(ModManager &modManager)
 		auto &&path = entry.path().string();
 		auto &&scriptName = StaticScriptNamespace(path);
 
-		AllocScript(scriptName, ReadFileToString(path));
+		AddScriptImpl(scriptName, ReadFileToString(path));
 	}
 }
 
-ScriptID ScriptProvider::AllocScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_)
+ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_)
 {
 	{
 		auto &&it = _scriptName2ID.find(scriptName);
@@ -56,7 +56,7 @@ ScriptID ScriptProvider::AllocScript(std::string_view scriptName, std::string_vi
 	return id;
 }
 
-void ScriptProvider::DeallocScript(ScriptID scriptID)
+void ScriptProvider::RemoveScriptImpl(ScriptID scriptID)
 {
 	auto &&it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())
@@ -110,7 +110,7 @@ std::optional<std::string_view> ScriptProvider::GetScriptNameByID(ScriptID scrip
 	{
 		return it->second.name;
 	}
-	return nullopt;
+	return std::nullopt;
 }
 
 ScriptID ScriptProvider::AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_) noexcept
@@ -126,7 +126,7 @@ ScriptID ScriptProvider::AddScript(std::string_view scriptName, std::string_view
 		_log->Info("Script has already been added: {}", scriptName);
 	}
 
-	return AllocScript(scriptName, scriptCode, namespace_);
+	return AddScriptImpl(scriptName, scriptCode, namespace_);
 }
 
 void ScriptProvider::RemoveScript(ScriptID scriptID) noexcept
@@ -136,7 +136,7 @@ void ScriptProvider::RemoveScript(ScriptID scriptID) noexcept
 		_log->Warn("Attempt to remove static script");
 		return;
 	}
-	DeallocScript(scriptID);
+	RemoveScriptImpl(scriptID);
 }
 
 const std::string &ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept

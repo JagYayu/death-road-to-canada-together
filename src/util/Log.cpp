@@ -9,17 +9,17 @@ using namespace tudov;
 static uint32_t logCount = 0;
 static std::thread logWorker;
 
-Log::Verbosity _globalVerbosity = tudov::Log::Verbosity::All;
-std::unordered_map<std::string, Log::Verbosity> Log::_moduleVerbs{};
-std::unordered_map<std::string, Log::Verbosity> Log::_moduleVerbOverrides{};
-std::unordered_map<std::string, SharedPtr<Log>> Log::_logInstances{};
+Log::EVerbosity _globalVerbosity = tudov::Log::EVerbosity::All;
+std::unordered_map<std::string, Log::EVerbosity> Log::_moduleVerbs{};
+std::unordered_map<std::string, Log::EVerbosity> Log::_moduleVerbOverrides{};
+std::unordered_map<std::string, std::shared_ptr<Log>> Log::_logInstances{};
 std::queue<Log::Entry> Log::_queue;
 std::mutex Log::_mutex;
 std::condition_variable Log::_cv;
 std::atomic<bool> Log::_exit = false;
 Log Log::instance{"Log"};
 
-SharedPtr<Log> Log::Get(std::string_view module)
+std::shared_ptr<Log> Log::Get(std::string_view module)
 {
 	auto &&str = std::string(module);
 	auto &&it = _logInstances.find(str);
@@ -49,7 +49,7 @@ void Log::CleanupExpired()
 	ShrinkUnorderedMap(_logInstances);
 }
 
-Log::Verbosity Log::GetVerbosity(const std::string &module)
+Log::EVerbosity Log::GetVerbosity(const std::string &module)
 {
 	{
 		auto &&it = _moduleVerbOverrides.find("key");
@@ -58,20 +58,20 @@ Log::Verbosity Log::GetVerbosity(const std::string &module)
 			return it->second;
 		}
 	}
-	return (Log::Verbosity)0;
+	return (Log::EVerbosity)0;
 }
 
-std::optional<Log::Verbosity> Log::GetVerbosityOverride(const std::string &module)
+std::optional<Log::EVerbosity> Log::GetVerbosityOverride(const std::string &module)
 {
 	auto &&it = _moduleVerbOverrides.find("key");
 	if (it != _moduleVerbOverrides.end())
 	{
 		return it->second;
 	}
-	return nullopt;
+	return std::nullopt;
 }
 
-void Log::SetVerbosityOverride(const std::string &module, Verbosity verb)
+void Log::SetVerbosityOverride(const std::string &module, EVerbosity verb)
 {
 	_moduleVerbOverrides[module] = verb;
 }
@@ -132,7 +132,7 @@ void Log::Process()
 			_queue.pop();
 			lock.unlock();
 
-			std::cout << Format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}", entry.time, entry.module, entry.verbosity, entry.message) << std::endl;
+			std::cout << std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}", entry.time, entry.module, entry.verbosity, entry.message) << std::endl;
 
 			lock.lock();
 		}

@@ -16,12 +16,12 @@ namespace tudov
 		};
 
 	  private:
-		SharedPtr<Log> _log;
+		std::shared_ptr<Log> _log;
 
 		ImGuiTextBuffer _buffer;
 		ImGuiTextFilter _filter;
 		std::vector<uint32_t> _lineOffsets;
-		std::array<Char, 256> _input;
+		std::array<char, 256> _input;
 
 	  public:
 		explicit DebugConsole() noexcept;

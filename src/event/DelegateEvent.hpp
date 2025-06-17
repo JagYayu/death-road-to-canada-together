@@ -56,14 +56,14 @@ namespace tudov
 			{
 				if (handler.second)
 				{
-					handler.second(Forward<Args>(args)...);
+					handler.second(std::forward<Args>(args)...);
 				}
 			}
 		}
 
 		void operator()(Args... args) const
 		{
-			Invoke(Forward<Args>(args)...);
+			Invoke(std::forward<Args>(args)...);
 		}
 	};
 } // namespace tudov

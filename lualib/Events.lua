@@ -9,6 +9,8 @@
 --- @class Events
 Events = {}
 
+--- @alias Events.Key number | string
+
 --- @class Events.AddHandlerArgs
 --- @field event Events.EventName
 --- @field func fun(e: any)
@@ -28,10 +30,15 @@ Events = {}
 --- @param sequence integer?
 function Events.add(event, func, name, order, key, sequence) end
 
---- comment
+--- @param event string | integer
+--- @param e any?
+--- @param key Events.Key?
+function Events.invoke(event, e, key) end
+
 --- @param event string
 --- @param orders string[]?
 --- @param keys (number|string)[]?
+--- @return integer
 function Events.new(event, orders, keys) end
 
 return Events

@@ -9,6 +9,8 @@
 #include "util/Defs.h"
 
 #include <cassert>
+#include <cstddef>
+#include <variant>
 
 using namespace tudov;
 
@@ -24,13 +26,23 @@ RuntimeEvent::RuntimeEvent(EventManager &eventManager, EventID eventID, const st
 	}
 }
 
-std::optional<Reference<RuntimeEvent::Profile>> RuntimeEvent::GetProfile() const noexcept
+std::vector<EventHandler>::const_iterator RuntimeEvent::BeginHandlers() const noexcept
+{
+	return _handlers.begin();
+}
+
+std::vector<EventHandler>::const_iterator RuntimeEvent::EndHandlers() const noexcept
+{
+	return _handlers.end();
+}
+
+std::optional<std::reference_wrapper<RuntimeEvent::Profile>> RuntimeEvent::GetProfile() const noexcept
 {
 	if (_profile)
 	{
 		return *_profile;
 	}
-	return nullopt;
+	return std::nullopt;
 }
 
 void RuntimeEvent::EnableProfiler(bool traceHandlers) noexcept
@@ -60,8 +72,8 @@ void RuntimeEvent::Add(const AddHandlerArgs &args)
 	}
 	else
 	{
-		static UInt64 autoID;
-		name = Format("{}-{}", args.scriptID, autoID++);
+		static std::uint64_t autoID;
+		name = std::format("{}-{}", args.scriptID, autoID++);
 	}
 
 	auto &&argOrder = args.order;
@@ -121,7 +133,7 @@ std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 	return _handlers;
 }
 
-void RuntimeEvent::Invoke(const sol::object &args, std::optional<EventHandler::Key> key)
+void RuntimeEvent::Invoke(const sol::object &args, EventHandler::Key key)
 {
 	if (_profile && _profile->traceHandlers)
 	{
@@ -130,21 +142,25 @@ void RuntimeEvent::Invoke(const sol::object &args, std::optional<EventHandler::K
 	}
 
 	InvocationCache *cache;
-	if (key.has_value())
+	if (!std::holds_alternative<std::nullptr_t>(key.value))
 	{
-		auto &&it = _invocationCaches.find(key.value());
+		auto &&it = _invocationCaches.find(key);
 		if (it == _invocationCaches.end())
 		{
-			_invocationCaches[key.value()] = {};
-			cache = &_invocationCaches[key.value()];
+			_invocationCaches[key] = {};
+			cache = &_invocationCaches[key];
 
 			for (auto &&handler : GetSortedHandlers())
 			{
-				if (handler.key == key.value())
+				if (handler.key == key)
 				{
 					cache->emplace_back(handler.function);
 				}
 			}
+		}
+		else
+		{
+			cache = &it->second;
 		}
 	}
 	else
@@ -169,12 +185,11 @@ void RuntimeEvent::Invoke(const sol::object &args, std::optional<EventHandler::K
 
 	try
 	{
-		if (key.has_value())
+		if (!std::holds_alternative<std::nullptr_t>(key.value))
 		{
-			auto &&keyVal = key.value();
 			for (auto &&function : *cache)
 			{
-				function(args, keyVal);
+				function(args, key);
 			}
 		}
 		else
@@ -196,7 +211,7 @@ void RuntimeEvent::Invoke(const sol::object &args, std::optional<EventHandler::K
 	}
 }
 
-void RuntimeEvent::InvokeUncached(const sol::object &args, std::optional<EventHandler::Key> key)
+void RuntimeEvent::InvokeUncached(const sol::object &args, EventHandler::Key key)
 {
 	if (_profile)
 	{
@@ -205,14 +220,13 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, std::optional<EventHa
 
 	try
 	{
-		if (key.has_value())
+		if (!std::holds_alternative<std::nullptr_t>(key.value))
 		{
-			auto &&keyVal = key.value();
 			for (auto &&handler : _handlers)
 			{
-				if (handler.key == keyVal)
+				if (handler.key == key)
 				{
-					handler.function(args, keyVal);
+					handler.function(args, key);
 
 					if (_profile)
 					{
@@ -247,7 +261,7 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, std::optional<EventHa
 void RuntimeEvent::ClearCaches()
 {
 	_handlersSortedCache = false;
-	_invocationCache = nullopt;
+	_invocationCache = std::nullopt;
 	_invocationCaches.clear();
 }
 
@@ -268,6 +282,14 @@ void RuntimeEvent::ClearInvalidScriptsHandlers(const ScriptProvider &scriptProvi
 	ClearScriptHandlersImpl([&](const EventHandler &handler)
 	{
 		return !scriptProvider.IsValidScriptID(handler.scriptID);
+	});
+}
+
+void RuntimeEvent::ClearSpecificScriptHandlers(const ScriptProvider &scriptProvider, ScriptID scriptID)
+{
+	ClearScriptHandlersImpl([this, scriptID](const EventHandler &handler)
+	{
+		return handler.scriptID == scriptID;
 	});
 }
 

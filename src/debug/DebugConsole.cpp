@@ -92,7 +92,7 @@ void DebugConsole::UpdateAndRender() noexcept
 		{
 			if (_input[0])
 			{
-				Log(Format("> {}\n", _input.data()));
+				Log(std::format("> {}\n", _input.data()));
 				// TODO: 处理命令
 				_input[0] = 0;
 			}

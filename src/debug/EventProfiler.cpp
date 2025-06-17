@@ -20,7 +20,7 @@ void EventProfiler::BeginEvent(ScriptEngine &engine) noexcept
 
 void EventProfiler::EndEvent(ScriptEngine &engine) noexcept
 {
-	UInt64 memory = 0;
+	std::uint64_t memory = 0;
 	if (engine.GetMemory() > _memory)
 	{
 		memory = engine.GetMemory() - _memory;
@@ -29,7 +29,7 @@ void EventProfiler::EndEvent(ScriptEngine &engine) noexcept
 	_perfEntries.push(PerfEntry{
 	    .duration = std::chrono::high_resolution_clock::now() - _time,
 	    .memory = memory,
-	    .handlers = Move(_handlers),
+	    .handlers = std::move(_handlers),
 	});
 }
 

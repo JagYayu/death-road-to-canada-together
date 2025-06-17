@@ -26,7 +26,7 @@ std::string_view DebugProfiler::GetName() noexcept
 struct DebugProfilerEntry
 {
 	RuntimeEvent *event;
-	UInt64 index;
+	std::uint64_t index;
 	std::string header;
 	float (*durations)[EventProfiler::EntrySize];
 	float (*memories)[EventProfiler::EntrySize];
@@ -57,7 +57,7 @@ void DebugProfiler::UpdateAndRender() noexcept
 			{
 				auto &&perfEntries = event.GetProfile()->get().eventProfiler.GetPerfEntries();
 
-				for (UInt64 i = 0; i < EventProfiler::EntrySize; ++i)
+				for (std::uint64_t i = 0; i < EventProfiler::EntrySize; ++i)
 				{
 					if (i < perfEntries.size())
 					{
@@ -132,7 +132,7 @@ void DebugProfiler::UpdateAndRender() noexcept
 					float durations[EventProfiler::EntrySize];
 					float memories[EventProfiler::EntrySize];
 
-					for (UInt64 i = 0; i < EventProfiler::EntrySize; ++i)
+					for (std::uint64_t i = 0; i < EventProfiler::EntrySize; ++i)
 					{
 						if (i < perfEntries.size())
 						{

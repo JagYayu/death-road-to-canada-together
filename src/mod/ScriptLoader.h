@@ -46,15 +46,15 @@ namespace tudov
 		using ScriptID = ScriptID;
 
 	  private:
-		SharedPtr<Log> _log;
+		std::shared_ptr<Log> _log;
 		ScriptID _loadingScript;
 		std::vector<std::string> _loadingScripts;
-		std::unordered_map<ScriptID, SharedPtr<Module>> _scriptModules;
+		std::unordered_map<ScriptID, std::shared_ptr<Module>> _scriptModules;
 		std::unordered_map<ScriptID, std::unordered_set<ScriptID>> _scriptReverseDependencies;
 		std::unordered_map<ScriptID, std::string> _scriptErrors;
 		std::unordered_map<ScriptID, std::string> _scriptErrorsCascaded;
 
-		SharedPtr<Module> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
+		std::shared_ptr<Module> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
 		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
 
 	  public:
@@ -64,6 +64,14 @@ namespace tudov
 		DelegateEvent<> onPostLoadAllScripts;
 		DelegateEvent<const std::vector<ScriptID> &> onPreHotReloadScripts;
 		DelegateEvent<const std::vector<ScriptID> &> onPostHotReloadScripts;
+		/*
+		 * Called right after a script was `RawLoaded` or `LazyLoaded`.
+		 */
+		DelegateEvent<ScriptID> onLoadedScript;
+		/*
+		 * Called before a script was unloaded.
+		 */
+		DelegateEvent<ScriptID> onUnloadScript;
 
 	  public:
 		ScriptLoader(ScriptEngine &scriptEngine) noexcept;
@@ -80,8 +88,8 @@ namespace tudov
 		/*
 		 * Try load script's module, do nothing if already loaded.
 		 */
-		SharedPtr<ScriptLoader::Module> Load(ScriptID scriptID);
-		SharedPtr<ScriptLoader::Module> Load(std::string_view scriptName);
+		std::shared_ptr<ScriptLoader::Module> Load(ScriptID scriptID);
+		std::shared_ptr<ScriptLoader::Module> Load(std::string_view scriptName);
 		std::vector<ScriptID> Unload(ScriptID scriptID);
 		void HotReload(const std::vector<ScriptID> &scriptIDs);
 		void ProcessFullLoads();

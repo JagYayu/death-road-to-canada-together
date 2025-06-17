@@ -16,16 +16,16 @@ namespace tudov
 	class EngineConfig
 	{
 	  private:
-		SharedPtr<Log> _log;
+		std::shared_ptr<Log> _log;
 		nlohmann::json _config;
-		UniquePtr<filewatch::FileWatch<std::string>> _fileWatcher;
+		std::unique_ptr<filewatch::FileWatch<std::string>> _fileWatcher;
 
 	  public:
 		static constexpr std::string_view file = "config.json";
 
 		static constexpr std::string_view defaultWindowTitle = "DR2C";
-		static constexpr UInt32 defaultWindowWidth = 1280;
-		static constexpr UInt32 defaultWindowHeight = 720;
+		static constexpr std::uint32_t defaultWindowWidth = 1280;
+		static constexpr std::uint32_t defaultWindowHeight = 720;
 
 		EngineConfig() noexcept;
 		~EngineConfig() noexcept;
@@ -37,13 +37,13 @@ namespace tudov
 		std::unordered_map<std::string, ResourceType> GetMountFiles() noexcept;
 		void GetDebugProfiling() noexcept;
 		ERenderBackend GetRenderBackend() noexcept;
-		UInt32 GetWindowFramelimit() noexcept;
+		std::uint32_t GetWindowFramelimit() noexcept;
 		std::string_view GetWindowTitle() noexcept;
-		UInt32 GetWindowWidth() noexcept;
-		UInt32 GetWindowHeight() noexcept;
+		std::uint32_t GetWindowWidth() noexcept;
+		std::uint32_t GetWindowHeight() noexcept;
 
 		void SetWindowTitle(const std::string &) noexcept;
-		void SetWindowWidth(UInt32) noexcept;
-		void SetWindowHeight(UInt32) noexcept;
+		void SetWindowWidth(std::uint32_t) noexcept;
+		void SetWindowHeight(std::uint32_t) noexcept;
 	};
 } // namespace tudov
