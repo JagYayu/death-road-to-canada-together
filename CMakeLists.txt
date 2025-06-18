@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
 set(SDL3_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3-3.2.16")
+set(SDL3_ttf_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3_ttf-3.2.2")
 set(SDL3_image_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3_image-3.2.4")
 set(imgui_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui-1.91.9b")
 
@@ -66,6 +67,20 @@ elseif(UNIX)
     target_link_libraries(dr2c PRIVATE "${SDL3_image_DIR}/lib/libSDL3_image.so")
 elseif(APPLE)
     target_link_libraries(dr2c PRIVATE "${SDL3_image_DIR}/lib/libSDL3_image.dylib")
+endif()
+
+# SDL3_ttf
+target_include_directories(dr2c PRIVATE "${SDL3_ttf_DIR}/include")
+if (WIN32)
+    set(SDL3_ttf_LIB_DIR "${SDL3_ttf_DIR}/lib/${CMAKE_VS_PLATFORM_NAME}")
+    target_link_libraries(dr2c PRIVATE "${SDL3_ttf_LIB_DIR}/SDL3_ttf.lib")
+    add_custom_command(TARGET dr2c POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy "${SDL3_ttf_LIB_DIR}/SDL3_ttf.dll" "$<TARGET_FILE_DIR:dr2c>"
+    )
+elseif(UNIX)
+    target_link_libraries(dr2c PRIVATE "${SDL3_ttf_DIR}/lib/libSDL3_ttf.so")
+elseif(APPLE)
+    target_link_libraries(dr2c PRIVATE "${SDL3_ttf_DIR}/lib/libSDL3_ttf.dylib")
 endif()
 
 # imgui

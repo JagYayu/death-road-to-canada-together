@@ -41,7 +41,7 @@ namespace tudov
 
 		void Initialize() noexcept override;
 
-		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept override;
+		void InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept override;
 
 		// void Draw(ResourceID texID, float x, float y, float w, float h, float tx, float ty, float tw, float th, float ang, float cx, float cy, uint32_t flip);
 

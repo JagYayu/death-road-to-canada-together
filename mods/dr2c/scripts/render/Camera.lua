@@ -1,14 +1,18 @@
 --- @class Camera
 local Camera = {}
 local Matrix3x3 = require "dr2c.utils.Matrix3x3"
+local SpriteRenderer = require "dr2c.render.SpriteRenderer"
+
+-- circular dependency test
+SpriteRenderer.test()
 
 local centerX = 0
 local centerY = 0
 local rotation = 0
 local scaleX = 1
 local scaleY = 1
-local viewWidth = 0
-local viewHeight = 0
+local viewWidth = 1280
+local viewHeight = 768
 
 --- @param x number
 --- @param y number
@@ -17,8 +21,8 @@ function Camera.set(x, y)
 	centerY = y
 end
 
-local targetPositionX = 0
-local targetPositionY = 0
+local targetCenterX = 0
+local targetCenterY = 0
 local targetScaleX = 0
 local targetScaleY = 0
 
@@ -30,12 +34,18 @@ end
 
 local timer = 0
 
+-- Events.add("KeyDown", function(e)
+-- 	print(e)
+-- end)
+
 Events.add("RenderGame", function(e)
 	-- TODO LERP POSITION
 	timer = timer + 1
 
-	-- centerY = math.sin(timer/10) * 100
-	-- centerY = timer
+	local windowWidth, windowHeight = Window.getSize()
+	local scale = math.max(windowWidth / viewWidth, windowHeight / viewHeight)
+	scaleX = scale
+	scaleY = scale
 
 	transform:reset()
 	transform:scale(scaleX, scaleY)

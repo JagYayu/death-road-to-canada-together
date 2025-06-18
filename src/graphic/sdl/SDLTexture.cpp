@@ -2,11 +2,13 @@
 
 #include "../IRenderer.h"
 #include "../ITexture.h"
-#include "SDLRenderer.h"
 #include "../Window.h"
+#include "SDLRenderer.h"
+
 
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_surface.h"
+#include "graphic/ERenderBackend.h"
 #include <SDL3_image/SDL_image.h>
 
 #include <cassert>
@@ -51,4 +53,9 @@ SDL_Texture *SDLTexture::GetRaw() noexcept
 const SDL_Texture *SDLTexture::GetRaw() const noexcept
 {
 	return _texture;
+}
+
+ERenderBackend SDLTexture::GetRenderBackend() const noexcept
+{
+	return ERenderBackend::SDL;
 }

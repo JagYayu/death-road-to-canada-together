@@ -19,7 +19,6 @@ local function tableToReadonly(tbl, seen)
 		return tbl
 	end
 
-
 	local index = {}
 	local proxy = setmetatable({}, { __index = index, __newindex = Function.newIndexReadonly })
 	seen[tbl] = proxy

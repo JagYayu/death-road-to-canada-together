@@ -1,10 +1,16 @@
 --- @meta
 
---- @diagnostic disable
+--- @diagnostic disable: duplicate-doc-alias
 --- @alias Events.EventName string
 --- @alias Events.EventName "Update"
---- @alias Events.EventName "Draw"
---- @diagnostic enable
+--- @alias Events.EventName "KeyDown"
+--- @alias Events.EventName "KeyUp"
+--- @alias Events.EventName "MouseButtonDown"
+--- @alias Events.EventName "MouseButtonUp"
+--- @alias Events.EventName "MouseMove"
+--- @alias Events.EventName "MouseWheel"
+--- @alias Events.EventName "Render"
+--- @diagnostic enable: duplicate-doc-alias
 
 --- @class Events
 Events = {}

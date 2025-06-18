@@ -100,20 +100,11 @@ void UnpackagedMod::Load()
 
 				auto &&relative = std::filesystem::relative(filePath, GetScriptsDirectory());
 				auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relative.string()));
-				// auto &&scriptID = scriptProvider.GetScriptIDByName(scriptName);
-				// auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
-
-				// auto &&pendingScripts = scriptLoader.Unload(scriptID);
-				// scriptProvider.RemoveScript(scriptID);
 
 				std::ifstream ins{_directory / filePath};
 				std::ostringstream oss;
 				oss << ins.rdbuf();
 				ins.close();
-
-				// scriptID = scriptProvider.AddScript(scriptName, oss.str());
-				// pendingScripts.emplace_back(scriptID);
-				// scriptLoader.HotReload(pendingScripts);
 
 				modManager.HotReloadScriptPending(scriptName, oss.str());
 

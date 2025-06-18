@@ -6,12 +6,16 @@
 #include "util/Defs.h"
 #include "util/StringUtils.hpp"
 
+#include <algorithm>
 #include <cassert>
+#include <format>
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
 
 #include <optional>
+#include <tuple>
+#include <vector>
 
 using namespace tudov;
 
@@ -78,7 +82,7 @@ const sol::table &ScriptLoader::Module::RawLoad(ScriptLoader &scriptLoader)
 
 const sol::table &ScriptLoader::Module::LazyLoad(ScriptLoader &scriptLoader)
 {
-	if (!IsLazyLoaded())
+	if (!_table.valid())
 	{
 		_table = scriptLoader.scriptEngine.modManager.scriptEngine.CreateTable();
 	}
@@ -113,24 +117,23 @@ const sol::table &ScriptLoader::Module::FullLoad(ScriptLoader &scriptLoader)
 	}
 
 	assert(_scriptID);
-	auto previousLoadingScript = scriptLoader._loadingScript;
+	auto previousScriptID = scriptLoader._loadingScript;
 	scriptLoader._loadingScript = _scriptID;
 
 	auto &&scriptEngine = scriptLoader.scriptEngine.modManager.scriptEngine;
 
 	_table = scriptEngine.CreateTable();
-	sol::table metatable = scriptEngine.CreateTable(0, 2);
-
+	auto &&metatable = scriptEngine.CreateTable(0, 2);
 	_table[sol::metatable_key] = metatable;
 
-	sol::table tab;
 	auto &&result = _func();
 
+	sol::table tbl;
 	if (!result.valid())
 	{
-		sol::error cc = result;
-		scriptLoader._log->Error("{}", cc.what());
-		tab = scriptEngine.CreateTable();
+		sol::error err = result;
+		scriptLoader._log->Error("{}", err.what());
+		scriptLoader._scriptErrors.try_emplace(_scriptID, std::make_tuple(scriptLoader._scriptErrors.size(), std::string(err.what())));
 	}
 	else
 	{
@@ -142,7 +145,7 @@ const sol::table &ScriptLoader::Module::FullLoad(ScriptLoader &scriptLoader)
 		auto &&value = result.get<sol::object>(0);
 		if (value.get_type() == sol::type::table)
 		{
-			tab = value.as<sol::table>();
+			tbl = value.as<sol::table>();
 		}
 		else
 		{
@@ -150,18 +153,18 @@ const sol::table &ScriptLoader::Module::FullLoad(ScriptLoader &scriptLoader)
 			{
 				scriptLoader._log->Warn("'{}': Does not support receiving non-table values", scriptLoader.GetLoadingScriptName().value());
 			}
-			tab = scriptLoader.scriptEngine.CreateTable();
+			tbl = scriptEngine.CreateTable();
 		}
 	}
 
-	metatable["__index"] = tab;
+	metatable["__index"] = tbl;
 	metatable["__newindex"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
 	{
 		scriptLoader.scriptEngine.ThrowError("Attempt to modify readonly module");
 		return;
 	};
 
-	scriptLoader._loadingScript = previousLoadingScript;
+	scriptLoader._loadingScript = previousScriptID;
 	_fullyLoaded = true;
 
 	return _table;
@@ -215,9 +218,11 @@ std::vector<ScriptID> ScriptLoader::GetDependencies(ScriptID scriptID) const
 	auto &&visited = std::unordered_set<ScriptID>();
 	GetScriptDependencies(_scriptReverseDependencies, scriptID, sources, visited);
 	return std::move(sources);
+	// auto &&links = _scriptDependencyGraph.GetBackwardTraversal(scriptID);
+	// return links.has_value() ? links.value() : std::vector<ScriptID>();
 }
 
-void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
+void ScriptLoader::AddScriptDependency(ScriptID source, ScriptID target)
 {
 	if (!scriptEngine.modManager.scriptProvider.IsValidScriptID(source) || !scriptEngine.modManager.scriptProvider.IsValidScriptID(target))
 	{
@@ -226,6 +231,7 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 	}
 	auto &&dependencies = _scriptReverseDependencies[target];
 	dependencies.insert(source);
+	// _scriptDependencyGraph.AddLink(from, to);
 }
 
 void ScriptLoader::LoadAll()
@@ -241,6 +247,8 @@ void ScriptLoader::LoadAll()
 
 	_scriptModules.clear();
 	_scriptErrors.clear();
+	// _scriptErrorsCascaded.clear();
+	// _scriptDependencyGraph.Clear();
 
 	auto &&scriptProvider = scriptEngine.modManager.scriptProvider;
 
@@ -301,6 +309,7 @@ std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, 
 	_log->Debug("Loading script <{}>\"{}\" ...", scriptID, scriptName);
 
 	_scriptErrors.erase(scriptID);
+	// _scriptErrorsCascaded.erase(scriptID);
 
 	auto &&result = scriptEngine.LoadFunction(std::string(scriptName), scriptCode);
 	if (!result.valid())
@@ -377,14 +386,14 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 		unloadedScripts.emplace_back(dependency);
 	}
 
+	_scriptErrors.erase(scriptID);
+	// _scriptErrorsCascaded.erase(scriptID);
+	// _scriptDependencyGraph.UnlinkOutgoing(scriptID);
 	_scriptReverseDependencies.erase(scriptID);
 	for (auto &&[_, dependencies] : _scriptReverseDependencies)
 	{
 		dependencies.erase(scriptID);
 	}
-
-	_scriptErrors.erase(scriptID);
-	_scriptErrorsCascaded.erase(scriptID);
 
 	auto &&name = scriptEngine.modManager.scriptProvider.GetScriptNameByID(scriptID);
 	_log->Trace("Unloaded script <{}> \"{}\"", scriptID, name.value());
@@ -423,4 +432,38 @@ void ScriptLoader::ProcessFullLoads()
 	}
 
 	_log->Debug("Processed full loads");
+}
+
+bool ScriptLoader::HasAnyLoadError() const noexcept
+{
+	return !_scriptErrors.empty();
+}
+
+std::vector<std::string> ScriptLoader::GetLoadErrors() noexcept
+{
+	if (!_scriptErrorsCache.has_value())
+	{
+		std::vector<std::pair<std::size_t, std::string>> temp;
+
+		for (const auto &[scriptID, entry] : _scriptErrors)
+		{
+			temp.emplace_back(std::get<0>(entry), std::get<1>(entry));
+		}
+
+		std::ranges::sort(temp, [](const auto &a, const auto &b)
+		{
+			return a.first < b.first;
+		});
+
+		std::vector<std::string> result;
+		result.reserve(temp.size());
+		for (const auto &[order, message] : temp)
+		{
+			result.emplace_back(message);
+		}
+
+		_scriptErrorsCache = std::make_optional(result);
+	}
+
+	return _scriptErrorsCache.value();
 }

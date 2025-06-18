@@ -42,7 +42,7 @@ void SDLRenderer::Initialize() noexcept
 	ImGui_ImplSDLRenderer3_Init(_renderer);
 }
 
-void SDLRenderer::InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
+void SDLRenderer::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
 {
 	auto &&render = scriptEngine.CreateTable();
 
@@ -74,7 +74,7 @@ void SDLRenderer::InstallToScriptEngine(std::string_view name, ScriptEngine &scr
 		return std::make_shared<SDLRenderBuffer>(*this);
 	};
 
-	scriptEngine.SetReadonlyGlobal(name, render);
+	scriptEngine.SetReadonlyGlobal("Render", render);
 }
 
 // void SDLRenderer::Draw(ResourceID texID, float x, float y, float w, float h, float tx, float ty, float tw, float th, float ang, float cx, float cy, uint32_t flip)

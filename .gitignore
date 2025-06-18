@@ -6,6 +6,7 @@
 /lib
 /log
 /build
+.clang-format
 .clangd
 .gitignore
 config.json

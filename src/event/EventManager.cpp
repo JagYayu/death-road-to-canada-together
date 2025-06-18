@@ -1,7 +1,6 @@
 #include "EventManager.h"
 
 #include "AbstractEvent.h"
-#include "EventHandler.hpp"
 #include "RuntimeEvent.h"
 #include "event/LoadtimeEvent.h"
 #include "mod/ModManager.h"
@@ -26,7 +25,13 @@ EventManager::EventManager(ModManager &modManager)
       _log(Log::Get("EventManager")),
       _latestEventID(),
       update(std::make_shared<RuntimeEvent>(*this, AllocEventID("Update"))),
-      render(std::make_shared<RuntimeEvent>(*this, AllocEventID("Render")))
+      render(std::make_shared<RuntimeEvent>(*this, AllocEventID("Render"))),
+      keyDown(std::make_shared<RuntimeEvent>(*this, AllocEventID("KeyDown"))),
+      keyUp(std::make_shared<RuntimeEvent>(*this, AllocEventID("KeyUp"))),
+      mouseMove(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseMove"))),
+      mouseButtonDown(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseButtonDown"))),
+      mouseButtonUp(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseButtonUp"))),
+      mouseWheel(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseWheel")))
 {
 	_runtimeEvents.emplace(update->GetID(), update);
 	_runtimeEvents.emplace(render->GetID(), render);
@@ -62,12 +67,20 @@ void EventManager::OnScriptsLoaded()
 	for (auto &&[eventID, loadtimeEvent] : _loadtimeEvents)
 	{
 		assert(eventID && "contains invalid event id!");
+		assert(_runtimeEvents.find(eventID) == _runtimeEvents.end() && "duplicated event id!");
 
-		auto &&it = _runtimeEvents.find(eventID);
-		assert(it == _runtimeEvents.end() && "duplicated event id!");
-
-		auto &&runtimeEvent = std::make_shared<RuntimeEvent>(loadtimeEvent->ToRuntime());
-		_runtimeEvents.try_emplace(runtimeEvent->GetID(), runtimeEvent);
+		if (loadtimeEvent->IsBuilt())
+		{
+			auto &&runtimeEvent = std::make_shared<RuntimeEvent>(loadtimeEvent->ToRuntime());
+			_runtimeEvents.try_emplace(runtimeEvent->GetID(), runtimeEvent);
+		}
+		else
+		{
+			auto &&eventName = _eventID2Name[eventID];
+			auto scriptID = loadtimeEvent->GetScriptID();
+			auto scriptName = modManager.scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
+			_log->Error("Attempt to add handler to non-exist event <{}>\"{}\", source script <{}>\"{}\"", eventID, eventName, scriptID, scriptName);
+		}
 	}
 
 	_loadtimeEvents.clear();
@@ -193,7 +206,7 @@ void EventManager::InstallToScriptEngine(ScriptEngine &scriptEngine)
 			registryEvent->get().Add({
 			    .eventID = eventID,
 			    .scriptID = scriptID,
-			    .function = EventHandler::Function(func),
+			    .function = EventHandleFunction(func),
 			    .name = name_,
 			    .order = order_,
 			    .key = key_,
@@ -261,7 +274,7 @@ void EventManager::InstallToScriptEngine(ScriptEngine &scriptEngine)
 				return false;
 			}
 
-			std::vector<EventHandler::Key> keys_;
+			std::vector<EventHandleKey> keys_;
 			if (keys.is<sol::table>())
 			{
 				keys_ = {};
@@ -273,7 +286,7 @@ void EventManager::InstallToScriptEngine(ScriptEngine &scriptEngine)
 						scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#2 'keys' type, table must be a number/string array, contains {}", GetLuaTypeStringView(tbl[i].get_type())));
 						return false;
 					}
-					keys_.emplace_back(EventHandler::Key{tbl[i]});
+					keys_.emplace_back(EventHandleKey{tbl[i]});
 				}
 			}
 			else if (keys.is<sol::nil_t>())
@@ -336,7 +349,7 @@ void EventManager::InstallToScriptEngine(ScriptEngine &scriptEngine)
 				eventInstance = it->second.get();
 			}
 
-			EventHandler::Key k{nullptr};
+			EventHandleKey k{nullptr};
 			if (key.is<double>())
 			{
 				k.value = key.as<double>();

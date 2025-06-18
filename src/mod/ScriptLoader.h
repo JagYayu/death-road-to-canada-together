@@ -3,14 +3,17 @@
 #include "ScriptProvider.h"
 #include "event/DelegateEvent.hpp"
 #include "util/Defs.h"
+#include "util/DependencyGraph.hpp"
 #include "util/Log.h"
 #include "util/StringUtils.hpp"
 
+#include <optional>
 #include <sol/table.hpp>
 
 #include <map>
 #include <set>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -51,11 +54,11 @@ namespace tudov
 		std::vector<std::string> _loadingScripts;
 		std::unordered_map<ScriptID, std::shared_ptr<Module>> _scriptModules;
 		std::unordered_map<ScriptID, std::unordered_set<ScriptID>> _scriptReverseDependencies;
-		std::unordered_map<ScriptID, std::string> _scriptErrors;
-		std::unordered_map<ScriptID, std::string> _scriptErrorsCascaded;
-
-		std::shared_ptr<Module> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
-		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
+		std::unordered_map<ScriptID, std::tuple<std::size_t, std::string>> _scriptErrors;
+		std::optional<std::vector<std::string>> _scriptErrorsCache;
+		// std::unordered_map<ScriptID, std::string> _scriptErrorsCascaded;
+		// DependencyGraph<ScriptID> _scriptDependencyGraph;
+		std::vector<ScriptID> _scriptLoopLoads;
 
 	  public:
 		ScriptEngine &scriptEngine;
@@ -77,11 +80,16 @@ namespace tudov
 		ScriptLoader(ScriptEngine &scriptEngine) noexcept;
 		~ScriptLoader() noexcept;
 
+	  private:
+		std::shared_ptr<Module> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
+		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
+
+	  public:
 		ScriptID GetLoadingScriptID() const noexcept;
 		std::optional<std::string_view> GetLoadingScriptName() const noexcept;
 
 		std::vector<ScriptID> GetDependencies(ScriptID scriptID) const;
-		void AddReverseDependency(ScriptID source, ScriptID target);
+		void AddScriptDependency(ScriptID source, ScriptID target);
 
 		void LoadAll();
 		void UnloadAll();
@@ -93,5 +101,8 @@ namespace tudov
 		std::vector<ScriptID> Unload(ScriptID scriptID);
 		void HotReload(const std::vector<ScriptID> &scriptIDs);
 		void ProcessFullLoads();
+
+		bool HasAnyLoadError() const noexcept;
+		std::vector<std::string> GetLoadErrors() noexcept;
 	};
 } // namespace tudov

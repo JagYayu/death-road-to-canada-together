@@ -189,7 +189,10 @@ void ModManager::HotReloadScriptPending(std::string scriptName, std::string scri
 
 void ModManager::Update()
 {
-	eventManager.update->Invoke();
+	if (!scriptEngine.scriptLoader.HasAnyLoadError())
+	{
+		eventManager.update->Invoke();
+	}
 
 	if (_hotReloadScriptsPending)
 	{

@@ -23,7 +23,7 @@ constexpr const char *keyWidth = "width";
 constexpr const char *keyWindow = "window";
 
 static const auto valueRenderBackend = ERenderBackend::SDL;
-static const auto valueWindowFramelimit = 60;
+static const auto valueWindowFramelimit = 100;
 static const auto valueWindowFullscreen = false;
 static const auto valueWindowHeight = 720;
 static const auto valueWindowTitle = "DR2C Together";
@@ -179,7 +179,7 @@ std::uint32_t EngineConfig::GetWindowFramelimit() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&framelimit = window[keyFramelimit];
-	if (!framelimit.is_string())
+	if (!framelimit.is_number())
 	{
 		framelimit = valueWindowFramelimit;
 		window[keyFramelimit] = framelimit;

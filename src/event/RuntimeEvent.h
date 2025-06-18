@@ -20,7 +20,7 @@ namespace tudov
 
 	class RuntimeEvent : public AbstractEvent
 	{
-		using InvocationCache = std::vector<EventHandler::Function>;
+		using InvocationCache = std::vector<EventHandleFunction>;
 
 		struct Profile
 		{
@@ -40,13 +40,13 @@ namespace tudov
 		std::unique_ptr<Profile> _profile;
 		bool _handlersSortedCache;
 		std::optional<InvocationCache> _invocationCache;
-		std::unordered_map<EventHandler::Key, InvocationCache, EventHandler::Key::Hash, EventHandler::Key::Equal> _invocationCaches;
+		std::unordered_map<EventHandleKey, InvocationCache, EventHandleKey::Hash, EventHandleKey::Equal> _invocationCaches;
 		std::vector<std::string> _orders;
-		std::unordered_set<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> _keys;
+		std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> _keys;
 		std::vector<EventHandler> _handlers;
 
 	  public:
-		explicit RuntimeEvent(EventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = {""}, const std::unordered_set<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> &keys = {}, ScriptID scriptID = false);
+		explicit RuntimeEvent(EventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = {""}, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys = {}, ScriptID scriptID = false);
 
 	  private:
 		void ClearCaches();
@@ -67,8 +67,8 @@ namespace tudov
 
 		void Add(const AddHandlerArgs &args) override;
 
-		void Invoke(const sol::object &args = sol::lua_nil, EventHandler::Key key = {});
-		void InvokeUncached(const sol::object &args = sol::lua_nil, EventHandler::Key key = {});
+		void Invoke(const sol::object &args = sol::lua_nil, EventHandleKey key = {});
+		void InvokeUncached(const sol::object &args = sol::lua_nil, EventHandleKey key = {});
 
 		void ClearInvalidScriptsHandlers(const ScriptProvider &scriptProvider);
 		void ClearSpecificScriptHandlers(const ScriptProvider &scriptProvider, ScriptID scriptID);

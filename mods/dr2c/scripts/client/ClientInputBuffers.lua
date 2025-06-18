@@ -1,0 +1,3 @@
+local ClientInputBuffers = {}
+
+return ClientInputBuffers

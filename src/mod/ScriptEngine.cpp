@@ -205,6 +205,7 @@ sol::table &ScriptEngine::GetSandboxedGlobals(std::string_view sandboxKey) noexc
 	    // C++
 	    "Events",
 	    "Render",
+	    "Window",
 	};
 
 	for (auto &&key : keys)
@@ -254,22 +255,24 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 		try
 		{
 			auto &&targetScriptID = modManager.scriptProvider.GetScriptIDByName(targetScriptName);
-			auto &&targetModule = scriptLoader.Load(targetScriptID);
-			if (!targetModule)
+			if (targetScriptID)
 			{
-				auto &&virtualModule = env[targetScriptName];
-				if (virtualModule.valid())
+				scriptLoader.AddScriptDependency(targetScriptID, scriptID);
+				auto &&targetModule = scriptLoader.Load(targetScriptID);
+				if (targetModule)
 				{
-					return virtualModule;
+					return targetModule->LazyLoad(scriptLoader);
 				}
-
-				luaL_error(_lua, "Script module '%s' not found", targetScriptName.data());
-				return sol::nil;
 			}
 
-			scriptLoader.AddReverseDependency(scriptID, targetScriptID);
+			auto &&virtualModule = env[targetScriptName];
+			if (virtualModule.valid())
+			{
+				return virtualModule;
+			}
 
-			return targetModule->LazyLoad(scriptLoader);
+			luaL_error(_lua, "Script module '%s' not found", targetScriptName.data());
+			return sol::nil;
 		}
 		catch (const std::exception &e)
 		{

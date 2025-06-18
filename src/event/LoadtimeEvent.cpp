@@ -17,7 +17,7 @@ LoadtimeEvent::LoadtimeEvent(EventManager &eventManager, EventID eventID, Script
 {
 }
 
-LoadtimeEvent::LoadtimeEvent(EventManager &eventManager, EventID eventID, ScriptID scriptID, const std::vector<std::string> &orders, const std::vector<EventHandler::Key> &keys) noexcept
+LoadtimeEvent::LoadtimeEvent(EventManager &eventManager, EventID eventID, ScriptID scriptID, const std::vector<std::string> &orders, const std::vector<EventHandleKey> &keys) noexcept
     : AbstractEvent(eventManager, eventID, scriptID),
       _built(true),
       _orders(orders),
@@ -36,7 +36,12 @@ void LoadtimeEvent::Add(const AddHandlerArgs &handler)
 	_operations.emplace_back(handler);
 }
 
-bool LoadtimeEvent::TryBuild(const std::vector<std::string> &orders, const std::vector<EventHandler::Key> &keys) noexcept
+bool LoadtimeEvent::IsBuilt() const noexcept
+{
+	return _built;
+}
+
+bool LoadtimeEvent::TryBuild(const std::vector<std::string> &orders, const std::vector<EventHandleKey> &keys) noexcept
 {
 	if (_built)
 	{
@@ -51,7 +56,7 @@ bool LoadtimeEvent::TryBuild(const std::vector<std::string> &orders, const std::
 
 RuntimeEvent LoadtimeEvent::ToRuntime() noexcept
 {
-	std::unordered_set<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> keys{};
+	std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> keys{};
 	for (auto &&key : _keys)
 	{
 		keys.emplace(key);

@@ -38,9 +38,9 @@ void Engine::Run(const MainArgs &args)
 	}
 
 	_log->Debug("Deinitializing engine ...");
-
-	modManager.Deinitialize();
-
+	{
+		modManager.Deinitialize();
+	}
 	_log->Debug("Deinitialized engine");
 }
 

@@ -13,7 +13,7 @@
 	"render": "",
 	"renderBackend": "SDL",
 	"window": {
-		"framelimit": 60,
+		"framelimit": 100,
 		"fullscreen": false,
 		"height": 720,
 		"title": "DR2C",

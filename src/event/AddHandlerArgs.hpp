@@ -7,8 +7,8 @@ namespace tudov
 {
 	struct AddHandlerArgs
 	{
-		using Function = EventHandler::Function;
-		using Key = EventHandler::Key;
+		using Function = EventHandleFunction;
+		using Key = EventHandleKey;
 
 		EventID eventID;
 		ScriptID scriptID;

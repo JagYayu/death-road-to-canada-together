@@ -1,18 +1,21 @@
 #include "Window.h"
 
 #include "ERenderBackend.h"
+#include "mod/ScriptEngine.h"
 #include "program/Engine.h"
 #include "sdl/SDLRenderer.h"
 
-#include "SDL3/SDL_timer.h"
-#include "imgui_impl_sdl3.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_log.h>
+#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <imgui.h>
-#include <memory>
+#include <imgui_impl_sdl3.h>
 
+#include <cmath>
+#include <memory>
+#include <tuple>
 
 using namespace tudov;
 
@@ -50,9 +53,12 @@ float Window::GetFramerate() const noexcept
 
 void Window::Initialize()
 {
-	auto &&title = engine.config.GetWindowTitle();
-	auto &&width = engine.config.GetWindowWidth();
-	auto &&height = engine.config.GetWindowHeight();
+	auto &&engineConfig = engine.config;
+	auto &&scriptEngine = engine.modManager.scriptEngine;
+
+	auto &&title = engineConfig.GetWindowTitle();
+	auto &&width = engineConfig.GetWindowWidth();
+	auto &&height = engineConfig.GetWindowHeight();
 
 	_window = SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE);
 	if (!_window)
@@ -64,47 +70,113 @@ void Window::Initialize()
 	ImGui::GetIO().DisplaySize = ImVec2(width, height);
 
 	renderer->Initialize();
-	renderer->InstallToScriptEngine("Render", engine.modManager.scriptEngine);
+
+	InstallToScriptEngine(scriptEngine);
 }
 
 void Window::Deinitialize() noexcept
 {
 }
 
+void Window::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
+{
+	auto &&window = scriptEngine.CreateTable();
+
+	window.set_function("getSize", [this]()
+	{
+		int w, h;
+		SDL_GetWindowSize(_window, &w, &h);
+		return std::make_tuple((double)w, (double)h);
+	});
+
+	scriptEngine.SetReadonlyGlobal("Window", window);
+
+	renderer->InstallToScriptEngine(scriptEngine);
+}
+
+std::tuple<sol::table, EventHandleKey> Window::ResolveKeyEvent(SDL_Event &event) noexcept
+{
+	auto &&e = engine.modManager.scriptEngine.CreateTable();
+	e["key"] = event.key.key;
+	e["scancode"] = event.key.scancode;
+	e["mod"] = event.key.mod;
+	e["repeat"] = event.key.repeat;
+	return std::make_tuple(e, EventHandleKey((std::double_t)event.key.key));
+}
+
+std::tuple<sol::table, EventHandleKey> Window::ResolveMouseButtonEvent(SDL_Event &event) noexcept
+{
+	auto &&e = engine.modManager.scriptEngine.CreateTable();
+	e["button"] = event.button.button;
+	e["x"] = event.button.x;
+	e["y"] = event.button.y;
+	return std::make_tuple(e, EventHandleKey((std::double_t)event.button.button));
+}
+
 void Window::PoolEvents()
 {
 	auto &&eventManager = engine.modManager.eventManager;
+	auto &&scriptEngine = engine.modManager.scriptEngine;
 
-	SDL_Event e;
-	while (SDL_PollEvent(&e))
+	SDL_Event event;
+	while (SDL_PollEvent(&event))
 	{
-		ImGui_ImplSDL3_ProcessEvent(&e);
+		ImGui_ImplSDL3_ProcessEvent(&event);
 
-		switch (e.type)
+		switch (event.type)
 		{
-		// 窗口事件
 		case SDL_EVENT_QUIT:
+		{
 			engine.Quit();
 			break;
+		}
 		case SDL_EVENT_KEY_DOWN:
-
+		{
+			auto &&res = ResolveKeyEvent(event);
+			eventManager.keyDown->Invoke(std::get<0>(res), std::get<1>(res));
 			break;
+		}
 		case SDL_EVENT_KEY_UP:
+		{
+			auto &&res = ResolveKeyEvent(event);
+			eventManager.keyUp->Invoke(std::get<0>(res), std::get<1>(res));
 			break;
+		}
+		case SDL_EVENT_MOUSE_MOTION:
+		{
+			auto &&e = scriptEngine.CreateTable();
+			e["x"] = event.motion.x;
+			e["y"] = event.motion.y;
+			e["dx"] = event.motion.xrel;
+			e["dy"] = event.motion.yrel;
+			eventManager.mouseMove->Invoke(e);
+			break;
+		}
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		{
+			auto &&res = ResolveMouseButtonEvent(event);
+			eventManager.mouseButtonDown->Invoke(std::get<0>(res), std::get<1>(res));
+			break;
+		}
+		case SDL_EVENT_MOUSE_BUTTON_UP:
+		{
+			auto &&res = ResolveMouseButtonEvent(event);
+			eventManager.mouseButtonUp->Invoke(std::get<0>(res), std::get<1>(res));
+			break;
+		}
+		case SDL_EVENT_MOUSE_WHEEL:
+		{
+			auto &&e = scriptEngine.CreateTable();
+			e["x"] = event.wheel.x;
+			e["y"] = event.wheel.y;
+			e["direction"] = event.wheel.direction;
+			eventManager.mouseWheel->Invoke(e);
+			break;
+		}
 		case SDL_EVENT_TEXT_EDITING:
 			break;
 		case SDL_EVENT_TEXT_INPUT:
 			break;
-
-		case SDL_EVENT_MOUSE_MOTION:
-			break;
-		case SDL_EVENT_MOUSE_BUTTON_DOWN:
-			break;
-		case SDL_EVENT_MOUSE_BUTTON_UP:
-			break;
-		case SDL_EVENT_MOUSE_WHEEL:
-			break;
-
 		case SDL_EVENT_JOYSTICK_AXIS_MOTION:
 			break;
 		case SDL_EVENT_JOYSTICK_BALL_MOTION:
@@ -115,64 +187,6 @@ void Window::PoolEvents()
 			break;
 		case SDL_EVENT_JOYSTICK_BUTTON_UP:
 			break;
-			// case SDL_EVENT_JOYDEVICEADDED:
-			// 	break;
-			// case SDL_EVENT_JOYDEVICEREMOVED:
-			// 	break;
-			// case SDL_EVENT_CONTROLLERAXISMOTION:
-			// 	break;
-			// case SDL_EVENT_CONTROLLERBUTTONDOWN:
-			// 	break;
-			// case SDL_EVENT_CONTROLLERBUTTONUP:
-			// 	break;
-			// case SDL_EVENT_CONTROLLERDEVICEADDED:
-			// 	break;
-			// case SDL_EVENT_CONTROLLERDEVICEREMOVED:
-			// 	break;
-			// case SDL_EVENT_CONTROLLERDEVICEREMAPPED:
-			// 	break;
-
-			// case SDL_EVENT_FINGERDOWN:
-			// 	break;
-			// case SDL_EVENT_FINGERUP:
-			// 	break;
-			// case SDL_EVENT_FINGERMOTION:
-			// 	break;
-			// case SDL_EVENT_MULTIGESTURE:
-			// 	break;
-			// case SDL_EVENT_DOLLARGESTURE:
-			// 	break;
-			// case SDL_EVENT_DOLLARRECORD:
-			// 	break;
-
-			// case SDL_EVENT_DROPFILE:
-			// 	break;
-			// case SDL_EVENT_DROPTEXT:
-			// 	break;
-			// case SDL_EVENT_DROPBEGIN:
-			// 	break;
-			// case SDL_EVENT_DROPCOMPLETE:
-			// 	break;
-
-			// case SDL_EVENT_CLIPBOARDUPDATE:
-			// 	break;
-
-			// case SDL_EVENT_APP_TERMINATING:
-			// 	break;
-			// case SDL_EVENT_APP_LOWMEMORY:
-			// 	break;
-			// case SDL_EVENT_APP_WILLENTERBACKGROUND:
-			// 	break;
-			// case SDL_EVENT_APP_DIDENTERBACKGROUND:
-			// 	break;
-			// case SDL_EVENT_APP_WILLENTERFOREGROUND:
-			// 	break;
-			// case SDL_EVENT_APP_DIDENTERFOREGROUND:
-			// 	break;
-
-			// case SDL_EVENT_USEREVENT:
-			// 	break;
-
 		default:
 			break;
 		}
@@ -181,20 +195,31 @@ void Window::PoolEvents()
 
 void Window::Render()
 {
+	auto &&modManager = engine.modManager;
+	auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
+
 	++_frame;
 
 	Uint64 target = 1e9 / engine.config.GetWindowFramelimit();
 	Uint64 begin = SDL_GetTicksNS();
 
 	renderer->Begin();
-	engine.modManager.eventManager.render->Invoke();
+
+	modManager.eventManager.render->Invoke();
+
 	debugManager.UpdateAndRender();
+
+	if (scriptLoader.HasAnyLoadError())
+	{
+		_errorOverlay.RenderLoadtimeErrors(scriptLoader.GetLoadErrors());
+	}
+
 	renderer->End();
 
 	Uint64 delta = SDL_GetTicksNS() - begin;
 	if (delta < target)
 	{
-		SDL_DelayNS(target - delta);
+		SDL_DelayPrecise(target - delta);
 	}
-	_framerate = 1e9 / double(SDL_GetTicksNS() - begin);
+	_framerate = double(1e9) / double(SDL_GetTicksNS() - begin);
 }

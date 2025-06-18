@@ -37,6 +37,12 @@ namespace tudov
 		ModManager &modManager;
 		std::shared_ptr<RuntimeEvent> update;
 		std::shared_ptr<RuntimeEvent> render;
+		std::shared_ptr<RuntimeEvent> keyDown;
+		std::shared_ptr<RuntimeEvent> keyUp;
+		std::shared_ptr<RuntimeEvent> mouseMove;
+		std::shared_ptr<RuntimeEvent> mouseButtonDown;
+		std::shared_ptr<RuntimeEvent> mouseButtonUp;
+		std::shared_ptr<RuntimeEvent> mouseWheel;
 
 	  public:
 		explicit EventManager(ModManager &modManager);

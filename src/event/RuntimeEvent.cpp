@@ -14,7 +14,7 @@
 
 using namespace tudov;
 
-RuntimeEvent::RuntimeEvent(EventManager &eventManager, EventID eventID, const std::vector<std::string> &orders, const std::unordered_set<EventHandler::Key, EventHandler::Key::Hash, EventHandler::Key::Equal> &keys, ScriptID scriptID)
+RuntimeEvent::RuntimeEvent(EventManager &eventManager, EventID eventID, const std::vector<std::string> &orders, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys, ScriptID scriptID)
     : AbstractEvent(eventManager, eventID, scriptID),
       _log(Log::Get("RuntimeEvent")),
       _orders(orders),
@@ -133,7 +133,7 @@ std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 	return _handlers;
 }
 
-void RuntimeEvent::Invoke(const sol::object &args, EventHandler::Key key)
+void RuntimeEvent::Invoke(const sol::object &args, EventHandleKey key)
 {
 	if (_profile && _profile->traceHandlers)
 	{
@@ -211,7 +211,7 @@ void RuntimeEvent::Invoke(const sol::object &args, EventHandler::Key key)
 	}
 }
 
-void RuntimeEvent::InvokeUncached(const sol::object &args, EventHandler::Key key)
+void RuntimeEvent::InvokeUncached(const sol::object &args, EventHandleKey key)
 {
 	if (_profile)
 	{

@@ -38,9 +38,33 @@ struct DebugProfilerEntry
 
 void DebugProfiler::UpdateAndRender() noexcept
 {
-	if (ImGui::Begin("Event Profilers"))
+	if (ImGui::Begin("Profiler"))
 	{
-		ImGui::Text("FPS: %.1f", engine.window.GetFramerate());
+		_framerateBuffer.push(engine.window.GetFramerate());
+		{
+			float framerates[FramerateBufferSize];
+			for (std::uint64_t i = FramerateBufferSize; i-- > 0;)
+			{
+				if (i < _framerateBuffer.size())
+				{
+					framerates[i] = _framerateBuffer[i];
+				}
+				else if (i < FramerateBufferSize - 1)
+				{
+					framerates[i] = framerates[i + 1];
+				}
+				else
+				{
+					framerates[i] = 0.f;
+				}
+			}
+			ImGui::PlotLines("FPS", framerates, FramerateBufferSize, 0, nullptr, 1.0F);
+			ImGui::SameLine();
+			ImGui::Text("Avg %.1f", Average(framerates));
+			ImGui::SameLine();
+			ImGui::Text("Min %.1f", *std::min_element(framerates, framerates + _framerateBuffer.size()));
+			// ImGui::Text("FPS: %.1f", engine.window.GetFramerate());
+		}
 
 		std::vector<DebugProfilerEntry> entries{};
 
