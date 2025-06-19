@@ -116,8 +116,7 @@ sol::load_result ScriptEngine::LoadFunction(const std::string &name, std::string
 
 int ScriptEngine::ThrowError(std::string_view message)
 {
-	std::string str{message};
-	lua_pushlstring(_lua, str.data(), str.size());
+	lua_pushlstring(_lua, message.data(), message.size());
 	return lua_error(_lua);
 }
 
@@ -257,7 +256,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 			auto &&targetScriptID = modManager.scriptProvider.GetScriptIDByName(targetScriptName);
 			if (targetScriptID)
 			{
-				scriptLoader.AddScriptDependency(targetScriptID, scriptID);
+				scriptLoader.AddReverseDependency(targetScriptID, scriptID);
 				auto &&targetModule = scriptLoader.Load(targetScriptID);
 				if (targetModule)
 				{

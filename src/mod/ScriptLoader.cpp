@@ -5,14 +5,15 @@
 #include "ScriptProvider.h"
 #include "util/Defs.h"
 #include "util/StringUtils.hpp"
+#include "util/Utils.hpp"
 
-#include <algorithm>
-#include <cassert>
-#include <format>
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
 
+#include <algorithm>
+#include <cassert>
+#include <format>
 #include <optional>
 #include <tuple>
 #include <vector>
@@ -126,7 +127,29 @@ const sol::table &ScriptLoader::Module::FullLoad(ScriptLoader &scriptLoader)
 	auto &&metatable = scriptEngine.CreateTable(0, 2);
 	_table[sol::metatable_key] = metatable;
 
+	metatable["__index"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	{
+		if (auto &&prevScriptID = FindPreviousInStack(scriptLoader._scriptLoopLoadStack, _scriptID); prevScriptID.has_value())
+		{
+			auto &scriptProvider = scriptLoader.scriptEngine.modManager.scriptProvider;
+			auto scriptName = scriptProvider.GetScriptNameByID(_scriptID);
+			auto prevScriptName = scriptProvider.GetScriptNameByID(*prevScriptID);
+			scriptLoader.scriptEngine.ThrowError(std::format("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *scriptName, *prevScriptID, *prevScriptName));
+		}
+		else
+		{
+			scriptLoader.scriptEngine.ThrowError("Attempt to access incomplete module");
+		}
+	};
+	metatable["__newindex"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	{
+		scriptLoader.scriptEngine.ThrowError("Attempt to modify readonly module");
+	};
+
+	scriptLoader._scriptLoopLoadStack.emplace_back(_scriptID);
 	auto &&result = _func();
+	assert(scriptLoader._scriptLoopLoadStack.back() == _scriptID);
+	scriptLoader._scriptLoopLoadStack.pop_back();
 
 	sol::table tbl;
 	if (!result.valid())
@@ -158,11 +181,6 @@ const sol::table &ScriptLoader::Module::FullLoad(ScriptLoader &scriptLoader)
 	}
 
 	metatable["__index"] = tbl;
-	metatable["__newindex"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
-	{
-		scriptLoader.scriptEngine.ThrowError("Attempt to modify readonly module");
-		return;
-	};
 
 	scriptLoader._loadingScript = previousScriptID;
 	_fullyLoaded = true;
@@ -222,7 +240,7 @@ std::vector<ScriptID> ScriptLoader::GetDependencies(ScriptID scriptID) const
 	// return links.has_value() ? links.value() : std::vector<ScriptID>();
 }
 
-void ScriptLoader::AddScriptDependency(ScriptID source, ScriptID target)
+void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 {
 	if (!scriptEngine.modManager.scriptProvider.IsValidScriptID(source) || !scriptEngine.modManager.scriptProvider.IsValidScriptID(target))
 	{

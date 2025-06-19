@@ -5,29 +5,27 @@
 #include "../Window.h"
 #include "SDLRenderer.h"
 
-
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_surface.h"
+#include "SDLSurface.h"
 #include "graphic/ERenderBackend.h"
+#include "graphic/ITexture.h"
 #include <SDL3_image/SDL_image.h>
 
 #include <cassert>
 #include <exception>
+#include <memory>
 
 using namespace tudov;
 
-SDLTexture::SDLTexture(SDLRenderer &renderer, std::string_view data)
+SDLTexture::SDLTexture(SDLRenderer &renderer, const std::shared_ptr<SDLSurface> &surface)
     : ITexture(renderer)
 {
-	SDL_IOStream *rw = SDL_IOFromConstMem(data.data(), data.size());
-	SDL_Surface *surf = IMG_Load_IO(rw, 1);
-	if (surf)
-	{
-		auto &&raw = renderer.GetRaw();
-		assert(raw);
-		_texture = SDL_CreateTextureFromSurface(raw, surf);
-		SDL_DestroySurface(surf);
-	}
+	this->surface = std::dynamic_pointer_cast<ISurface>(surface);
+
+	auto rawRenderer = renderer.GetRaw();
+	auto rawSurface = surface->GetRaw();
+	_texture = SDL_CreateTextureFromSurface(rawRenderer, rawSurface);
 
 	if (!_texture)
 	{
@@ -58,4 +56,13 @@ const SDL_Texture *SDLTexture::GetRaw() const noexcept
 ERenderBackend SDLTexture::GetRenderBackend() const noexcept
 {
 	return ERenderBackend::SDL;
+}
+
+std::optional<std::reference_wrapper<SDLSurface>> SDLTexture::GetSurface() noexcept
+{
+	if (surface)
+	{
+		return static_cast<SDLSurface &>(*surface);
+	}
+	return std::nullopt;
 }

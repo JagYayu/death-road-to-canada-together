@@ -10,6 +10,7 @@
 
 using namespace tudov;
 
+constexpr const char *keyBitmaps = "bitmaps";
 constexpr const char *keyDirectories = "directories";
 constexpr const char *keyFiles = "files";
 constexpr const char *keyFramelimit = "framelimit";
@@ -28,6 +29,9 @@ static const auto valueWindowFullscreen = false;
 static const auto valueWindowHeight = 720;
 static const auto valueWindowTitle = "DR2C Together";
 static const auto valueWindowWidth = 1280;
+static const auto valueMountBitmaps = std::vector<std::string>{
+    R"(fonts/.*\.png)",
+};
 static const auto valueMountDirectories = std::vector<std::string>{
     "data",
     "gfx",
@@ -138,6 +142,18 @@ void EngineConfig::Load() noexcept
 	{
 		_log->Error("Exception occurred while loading config file: {}", e.what());
 	}
+}
+
+std::vector<std::string> EngineConfig::GetMountBitmaps() noexcept
+{
+	auto &&mount = GetMount(_config);
+	auto &&bitmaps = mount[keyBitmaps];
+	if (!bitmaps.is_array())
+	{
+		bitmaps = valueMountBitmaps;
+		mount[keyBitmaps] = bitmaps;
+	}
+	return bitmaps;
 }
 
 std::vector<std::string> EngineConfig::GetMountDirectories() noexcept

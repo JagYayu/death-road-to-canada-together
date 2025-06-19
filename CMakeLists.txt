@@ -93,3 +93,7 @@ target_link_libraries(dr2c PRIVATE sol2)
 
 # glm
 target_include_directories(dr2c PRIVATE ${CMAKE_SOURCE_DIR}/lib/glm-master)
+
+# stb
+find_package(Stb REQUIRED)
+target_include_directories(dr2c PRIVATE ${Stb_INCLUDE_DIR})

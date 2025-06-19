@@ -3,14 +3,18 @@
 #include "../Window.h"
 #include "SDLRenderBuffer.h"
 #include "SDLTexture.h"
+#include "graphic/ERenderBackend.h"
 #include "graphic/IRenderer.h"
-#include "program/Engine.h"
 
 #include "SDL3/SDL_render.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
 
 #include <memory>
+
+#ifdef DrawText
+#undef DrawText
+#endif
 
 using namespace tudov;
 
@@ -28,6 +32,11 @@ SDL_Renderer *SDLRenderer::GetRaw() noexcept
 const SDL_Renderer *SDLRenderer::GetRaw() const noexcept
 {
 	return _renderer;
+}
+
+ERenderBackend SDLRenderer::GetRenderBackend() const noexcept
+{
+	return ERenderBackend::SDL;
 }
 
 void SDLRenderer::Initialize() noexcept
@@ -62,7 +71,8 @@ void SDLRenderer::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
 
 	lua.new_usertype<IRenderBuffer>("IRenderBuffer", sol::no_constructor,
 	                                "clear", &IRenderBuffer::Clear,
-	                                "draw", &IRenderBuffer::Draw,
+	                                "draw", &IRenderBuffer::LuaDraw,
+	                                "drawText", &IRenderBuffer::LuaDrawText,
 	                                "getTransform", &IRenderBuffer::LuaGetTransform,
 	                                "render", &IRenderBuffer::Render,
 	                                "setTransform", &IRenderBuffer::LuaSetTransform,

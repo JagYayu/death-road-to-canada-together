@@ -33,6 +33,7 @@ namespace tudov
 		void Save() noexcept;
 		void Load() noexcept;
 
+		std::vector<std::string> GetMountBitmaps() noexcept;
 		std::vector<std::string> GetMountDirectories() noexcept;
 		std::unordered_map<std::string, ResourceType> GetMountFiles() noexcept;
 		void GetDebugProfiling() noexcept;

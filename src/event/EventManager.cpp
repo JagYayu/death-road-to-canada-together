@@ -85,14 +85,16 @@ void EventManager::OnScriptsLoaded()
 
 	_loadtimeEvents.clear();
 
-	// for (auto &&[_, event] : _runtimeEvents)
-	// {
-	// 	auto scriptID = event->GetScriptID();
-	// 	for (auto &&it = event->BeginHandlers(); it != event->EndHandlers(); ++it)
-	// 	{
-	// 		scriptLoader.AddReverseDependency(it->scriptID, scriptID);
-	// 	}
-	// }
+	auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
+
+	for (auto &&[_, event] : _runtimeEvents)
+	{
+		auto scriptID = event->GetScriptID();
+		for (auto &&it = event->BeginHandlers(); it != event->EndHandlers(); ++it)
+		{
+			scriptLoader.AddReverseDependency(it->scriptID, scriptID);
+		}
+	}
 }
 
 void EventManager::InstallToScriptEngine(ScriptEngine &scriptEngine)

@@ -1,10 +1,16 @@
 #include "Engine.h"
 
+#include "graphic/ERenderBackend.h"
 #include "graphic/sdl/SDLRenderer.h"
+#include "graphic/sdl/SDLSurface.h"
 #include "graphic/sdl/SDLTexture.h"
 #include "resource/ResourceType.hpp"
 #include "util/Log.h"
 #include "util/StringUtils.hpp"
+
+#include <memory>
+#include <regex>
+#include <vector>
 
 using namespace tudov;
 
@@ -12,7 +18,8 @@ Engine::Engine()
     : _log(Log::Get("Engine")),
       window(*this),
       modManager(*this),
-      textureManager()
+      textureManager(),
+      fontManager()
 {
 }
 
@@ -63,6 +70,12 @@ void Engine::InitializeResources()
 
 	std::unordered_map<ResourceType, std::uint32_t> fileCounts{};
 
+	std::vector<std::regex> mountBitmapPatterns{};
+	for (auto &&pattern : config.GetMountBitmaps())
+	{
+		mountBitmapPatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
+	}
+
 	auto &&mountDirectories = config.GetMountFiles();
 	for (auto &&mountDirectory : config.GetMountDirectories())
 	{
@@ -86,12 +99,32 @@ void Engine::InitializeResources()
 				auto &&file = path.string();
 				auto &&data = ReadFileToString(file, true);
 
-				if (auto &&sdlRenderer = dynamic_cast<SDLRenderer *>(window.renderer.get()))
+				TextureID textureID;
+
+				switch (window.renderer->GetRenderBackend())
 				{
-					if (textureManager.Load<SDLTexture>(file, *sdlRenderer, std::string_view(data)))
+				case ERenderBackend::SDL:
+				{
+					auto &&sdlRenderer = dynamic_cast<SDLRenderer *>(window.renderer.get());
+					auto &&sdlSurface = std::make_shared<SDLSurface>(*sdlRenderer, std::string_view(data));
+					textureID = textureManager.Load<SDLTexture>(file, *sdlRenderer, sdlSurface);
+					if (textureID)
 					{
 						fileCounts.try_emplace(it->second, 0).first->second++;
 						_log->Trace("{}", file);
+					}
+				}
+				default:
+					break;
+				}
+
+				auto &&relative = std::filesystem::relative(path, mountDirectory).generic_string();
+				for (auto &&pattern : mountBitmapPatterns)
+				{
+					if (std::regex_match(relative, pattern))
+					{
+						fontManager.SetBitmapFont(textureID, BitmapFont(std::string_view(data)));
+						break;
 					}
 				}
 			}

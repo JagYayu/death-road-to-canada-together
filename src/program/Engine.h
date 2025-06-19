@@ -5,7 +5,8 @@
 #include "debug/DebugManager.h"
 #include "graphic/Window.h"
 #include "mod/ModManager.h"
-#include "resource/TextureManager.h"
+#include "resource/FontManager.hpp"
+#include "resource/TextureManager.hpp"
 #include "util/Defs.h"
 
 #include <memory>
@@ -23,6 +24,7 @@ namespace tudov
 		Window window;
 		ModManager modManager;
 		TextureManager textureManager;
+		FontManager fontManager;
 
 	  public:
 		Engine();

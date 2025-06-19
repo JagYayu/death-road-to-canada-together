@@ -45,6 +45,29 @@ namespace tudov
 		return sum / N;
 	}
 
+	template <typename T>
+	std::optional<T> FindPreviousInStack(const std::vector<T> &stack, const T &target)
+	{
+		auto rit = stack.rbegin();
+		auto rend = stack.rend();
+		for (; rit != rend; ++rit)
+		{
+			if (*rit == target)
+			{
+				auto it = rit.base();
+				if (it != stack.end())
+				{
+					return *it;
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+		return std::nullopt;
+	}
+
 	inline std::string_view GetLuaTypeStringView(sol::type luaType) noexcept
 	{
 		switch (luaType)

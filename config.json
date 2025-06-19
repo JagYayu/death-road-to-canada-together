@@ -1,6 +1,9 @@
 {
 	"log": {},
 	"mount": {
+		"bitmaps": [
+			"fonts/.*\\.png"
+		],
 		"directories": [
 			"data",
 			"gfx"
@@ -10,13 +13,12 @@
 			".png": "Texture"
 		}
 	},
-	"render": "",
 	"renderBackend": "SDL",
 	"window": {
 		"framelimit": 100,
 		"fullscreen": false,
 		"height": 720,
-		"title": "DR2C",
+		"title": "DR2C Together",
 		"width": 1280
 	}
 }

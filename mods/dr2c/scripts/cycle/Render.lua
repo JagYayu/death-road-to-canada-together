@@ -1,5 +1,6 @@
 local Enum = require "dr2c.utils.Enum"
 local Render = {}
+require "dr2c.render.SpriteRenderer"
 
 -- Render.Buffers = Enum.sequence {
 -- 	"Sprite",

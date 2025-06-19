@@ -94,4 +94,51 @@ namespace tudov
 
 		return result;
 	}
+
+	inline std::u32string Utf8ToTtf32(const std::string_view &utf8str)
+	{
+		std::u32string utf32str;
+		size_t i = 0;
+		while (i < utf8str.size())
+		{
+			uint32_t ch = 0;
+			unsigned char c = utf8str[i];
+			size_t extra = 0;
+
+			if (c < 0x80)
+			{
+				ch = c;
+				extra = 0;
+			}
+			else if ((c >> 5) == 0x6)
+			{
+				ch = c & 0x1F;
+				extra = 1;
+			}
+			else if ((c >> 4) == 0xE)
+			{
+				ch = c & 0x0F;
+				extra = 2;
+			}
+			else if ((c >> 3) == 0x1E)
+			{
+				ch = c & 0x07;
+				extra = 3;
+			}
+
+			if (i + extra >= utf8str.size())
+				break; // invalid utf8
+
+			for (size_t j = 1; j <= extra; ++j)
+			{
+				ch = (ch << 6) | (utf8str[i + j] & 0x3F);
+			}
+
+			utf32str.push_back(ch);
+			i += extra + 1;
+		}
+
+		return utf32str;
+	}
+
 } // namespace tudov

@@ -2,6 +2,7 @@
 
 #include "../IRenderer.h"
 #include "SDL3/SDL_surface.h"
+#include "graphic/ERenderBackend.h"
 #include "resource/ResourceManager.hpp"
 #include "util/Defs.h"
 
@@ -38,6 +39,8 @@ namespace tudov
 
 		SDL_Renderer *GetRaw() noexcept;
 		const SDL_Renderer *GetRaw() const noexcept;
+
+		ERenderBackend GetRenderBackend() const noexcept;
 
 		void Initialize() noexcept override;
 

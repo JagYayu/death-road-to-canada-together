@@ -50,15 +50,17 @@ namespace tudov
 
 	  private:
 		std::shared_ptr<Log> _log;
-		ScriptID _loadingScript;
-		std::vector<std::string> _loadingScripts;
 		std::unordered_map<ScriptID, std::shared_ptr<Module>> _scriptModules;
 		std::unordered_map<ScriptID, std::unordered_set<ScriptID>> _scriptReverseDependencies;
 		std::unordered_map<ScriptID, std::tuple<std::size_t, std::string>> _scriptErrors;
 		std::optional<std::vector<std::string>> _scriptErrorsCache;
 		// std::unordered_map<ScriptID, std::string> _scriptErrorsCascaded;
 		// DependencyGraph<ScriptID> _scriptDependencyGraph;
-		std::vector<ScriptID> _scriptLoopLoads;
+
+		// Set this value when a script is doing whatever loads.
+		ScriptID _loadingScript;
+		// Push scriptID whenever a script is doing full load, pop after done. Used to detect which modules has circular dependencies.
+		std::vector<ScriptID> _scriptLoopLoadStack;
 
 	  public:
 		ScriptEngine &scriptEngine;
@@ -89,7 +91,7 @@ namespace tudov
 		std::optional<std::string_view> GetLoadingScriptName() const noexcept;
 
 		std::vector<ScriptID> GetDependencies(ScriptID scriptID) const;
-		void AddScriptDependency(ScriptID source, ScriptID target);
+		void AddReverseDependency(ScriptID source, ScriptID target);
 
 		void LoadAll();
 		void UnloadAll();

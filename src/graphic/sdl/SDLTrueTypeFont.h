@@ -7,21 +7,18 @@
 
 namespace tudov
 {
-	class SDLFont : public IFont
+	class SDLTrueTypeFont : public IFont
 	{
 	  private:
+		TTF_Font *font = nullptr;
 
-		
 	  public:
-		explicit SDLFont(std::string_view data, std::size_t size);
-		~SDLFont() noexcept;
+		explicit SDLTrueTypeFont(std::string_view data, std::size_t size);
+		~SDLTrueTypeFont() noexcept;
 
 		TTF_Font *GetRaw() const
 		{
 			return font;
 		}
-
-	  private:
-		TTF_Font *font = nullptr;
 	};
 } // namespace tudov

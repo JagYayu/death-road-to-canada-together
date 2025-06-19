@@ -1,6 +1,9 @@
 #pragma once
 
 #include "IRenderBackend.h"
+#include "ISurface.h"
+
+#include <memory>
 
 namespace tudov
 {
@@ -9,9 +12,8 @@ namespace tudov
 	struct ITexture : public IRenderBackend
 	{
 		IRenderer &renderer;
+		std::shared_ptr<ISurface> surface;
 
 		explicit ITexture(IRenderer &renderer) noexcept;
-
-		virtual void Test() {};
 	};
 } // namespace tudov

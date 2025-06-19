@@ -1,11 +1,11 @@
-#include "SDLFont.h"
+#include "SDLTrueTypeFont.h"
 
 #include <format>
 #include <stdexcept>
 
 using namespace tudov;
 
-SDLFont::SDLFont(std::string_view data, std::size_t size)
+SDLTrueTypeFont::SDLTrueTypeFont(std::string_view data, std::size_t size)
 {
 	// auto rwops = SDL_IOFromConstMem(data, size);
 	// if (!rwops)
@@ -20,7 +20,7 @@ SDLFont::SDLFont(std::string_view data, std::size_t size)
 	// }
 }
 
-SDLFont::~SDLFont() noexcept
+SDLTrueTypeFont::~SDLTrueTypeFont() noexcept
 {
 	if (font)
 	{

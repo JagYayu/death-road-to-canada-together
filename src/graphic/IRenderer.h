@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IRenderBackend.h"
+
 #include <memory>
 #include <string_view>
 
@@ -8,7 +10,7 @@ namespace tudov
 	class ScriptEngine;
 	class Window;
 
-	struct IRenderer
+	struct IRenderer : IRenderBackend
 	{
 		Window &window;
 

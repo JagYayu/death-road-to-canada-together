@@ -1,10 +1,6 @@
 --- @class Camera
 local Camera = {}
 local Matrix3x3 = require "dr2c.utils.Matrix3x3"
-local SpriteRenderer = require "dr2c.render.SpriteRenderer"
-
--- circular dependency test
-SpriteRenderer.test()
 
 local centerX = 0
 local centerY = 0
