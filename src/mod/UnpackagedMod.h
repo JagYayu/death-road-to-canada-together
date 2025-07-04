@@ -17,6 +17,7 @@ namespace tudov
 		std::filesystem::path _directory;
 
 		std::vector<std::regex> _scriptFilePatterns;
+		std::vector<std::regex> _fontFilePatterns;
 
 	  public:
 		std::shared_ptr<Log> log;
@@ -30,7 +31,8 @@ namespace tudov
 		void UpdateFilePatterns();
 
 	  public:
-		bool IsScript(const std::string &fileName) const;
+		bool IsScript(std::string_view file) const;
+		bool IsFont(std::string_view file) const;
 
 		void Load() override;
 		void Unload() override;

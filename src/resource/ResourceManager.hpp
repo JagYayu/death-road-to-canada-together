@@ -25,7 +25,14 @@ namespace tudov
 
 	  public:
 		explicit ResourceManager() noexcept;
+		~ResourceManager() noexcept = default;
 
+	  protected:
+		inline virtual void OnUnloadResource(ResourceID id) noexcept
+		{
+		}
+
+	  public:
 		inline std::shared_ptr<T> GetResource(ResourceID id) const noexcept
 		{
 			auto &&it = _id2Entry.find(id);
@@ -35,7 +42,7 @@ namespace tudov
 		inline ResourceID GetResourceID(std::string_view path) const noexcept
 		{
 			auto &&it = _path2ID.find(path);
-			return it != _id2Entry.end() ? it->first : false;
+			return it != _path2ID.end() ? it->second : false;
 		}
 
 		template <typename TDerived = T, typename... Args>
@@ -60,20 +67,30 @@ namespace tudov
 			    .path = std::string(path),
 			    .resource = resource,
 			};
+			auto &&result = _id2Entry.try_emplace(id, entry);
+			_path2ID[std::string_view(result.first->second.path)] = id;
 
-			_id2Entry.emplace(id, entry);
-			_path2ID[std::string_view(entry.path)] = id;
+			_log->Debug("Loaded resource <{}>\"{}\"", id, path);
 
 			return id;
 		}
 
 		inline void Unload(ResourceID id) noexcept
 		{
-			_id2Entry.erase(id);
+			auto &&it = _id2Entry.find(id);
+			if (it == _id2Entry.end())
+			{
+				_log->Warn("Attempt to unload invalid resource <{}>", id);
+				return;
+			}
+
+			_path2ID.erase(std::string_view(it->second.path));
+			_id2Entry.erase(it);
 		}
 
 		inline void Clear() noexcept
 		{
+			_path2ID.clear();
 			_id2Entry.clear();
 		}
 	};

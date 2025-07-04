@@ -1,8 +1,6 @@
 /.vscode
+/assets
 /bin
-/data
-/deathforth
-/gfx
 /lib
 /log
 /build

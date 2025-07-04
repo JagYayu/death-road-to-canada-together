@@ -1,16 +1,13 @@
 --- @meta
 
---- @class Render
-Render = {}
+--- @class Renderer
+local Renderer = {}
 
---- @class Render.Buffer : userdata
+--- @class Renderer : userdata
 --- @field clear fun(self: self)
 --- @field draw fun(self: self, x: number, y: number, w: number, h: number, t: integer, tx: number, ty: number, tw: number, th: number, col: integer, a: number, cx: number, cy: number, z: number)
---- @field drawText fun(self: self, text:string, fonts: integer[], x: number, y: number, col: integer, scale: number, alignX: number, alignY: number, wrapWidth: number, shadow: number)
+--- @field drawText fun(self: self, text: string, fonts: integer[], fontSize: integer, x: number, y: number, col: integer, scale: number, alignX: number, alignY: number, wrapWidth: number, shadow: number)
 --- @field render fun(self: self)
 --- @field setTransform fun(self: self, matrix: Matrix3x3)
 
---- @return Render.Buffer
-function Render.newBuffer() end
-
-return Render
+return Renderer

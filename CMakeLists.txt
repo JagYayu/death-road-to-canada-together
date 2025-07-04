@@ -5,9 +5,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
-set(SDL3_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3-3.2.16")
-set(SDL3_ttf_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3_ttf-3.2.2")
-set(SDL3_image_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3_image-3.2.4")
+# set(SDL3_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3-3.2.16")
+# set(SDL3_ttf_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3_ttf-3.2.2")
+# set(SDL3_image_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3_image-3.2.4")
 set(imgui_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui-1.91.9b")
 
 if (MSVC)
@@ -32,7 +32,7 @@ target_include_directories(dr2c PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# LuaJIT
+# LuaJIT - from vcpkg dir
 find_path(LUAJIT_INCLUDE_DIR luajit.h PATHS "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include" PATH_SUFFIXES luajit)
 find_library(LUAJIT_LIBRARY NAMES lua51 PATHS "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib")
 if (NOT LUAJIT_INCLUDE_DIR OR NOT LUAJIT_LIBRARY)
@@ -41,59 +41,33 @@ endif()
 target_include_directories(dr2c PRIVATE ${LUAJIT_INCLUDE_DIR})
 target_link_libraries(dr2c PRIVATE ${LUAJIT_LIBRARY})
 
+# sol2 - from vcpkg
+find_package(sol2 CONFIG REQUIRED)
+target_link_libraries(dr2c PRIVATE sol2::sol2)
+
 # SDL3
-target_include_directories(dr2c PRIVATE "${SDL3_DIR}/include")
-if (WIN32)
-    set(SDL3_LIB_DIR "${SDL3_DIR}/lib/${CMAKE_VS_PLATFORM_NAME}")
-    target_link_libraries(dr2c PRIVATE "${SDL3_LIB_DIR}/SDL3.lib")
-    add_custom_command(TARGET dr2c POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy "${SDL3_LIB_DIR}/SDL3.dll" "$<TARGET_FILE_DIR:dr2c>"
-    )
-elseif(UNIX)
-    target_link_libraries(dr2c PRIVATE "${SDL3_DIR}/lib/libSDL3.so")
-elseif(APPLE)
-    target_link_libraries(dr2c PRIVATE "${SDL3_DIR}/lib/libSDL3.dylib")
-endif()
+find_package(SDL3 CONFIG REQUIRED)
+target_link_libraries(dr2c PRIVATE SDL3::SDL3)
 
 # SDL3_image
-target_include_directories(dr2c PRIVATE "${SDL3_image_DIR}/include")
-if (WIN32)
-    set(SDL3_IMAGE_LIB_DIR "${SDL3_image_DIR}/lib/${CMAKE_VS_PLATFORM_NAME}")
-    target_link_libraries(dr2c PRIVATE "${SDL3_IMAGE_LIB_DIR}/SDL3_image.lib")
-    add_custom_command(TARGET dr2c POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy "${SDL3_IMAGE_LIB_DIR}/SDL3_image.dll" "$<TARGET_FILE_DIR:dr2c>"
-    )
-elseif(UNIX)
-    target_link_libraries(dr2c PRIVATE "${SDL3_image_DIR}/lib/libSDL3_image.so")
-elseif(APPLE)
-    target_link_libraries(dr2c PRIVATE "${SDL3_image_DIR}/lib/libSDL3_image.dylib")
-endif()
+find_package(SDL3_image CONFIG REQUIRED)
+target_link_libraries(dr2c PRIVATE $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>)
 
 # SDL3_ttf
-target_include_directories(dr2c PRIVATE "${SDL3_ttf_DIR}/include")
-if (WIN32)
-    set(SDL3_ttf_LIB_DIR "${SDL3_ttf_DIR}/lib/${CMAKE_VS_PLATFORM_NAME}")
-    target_link_libraries(dr2c PRIVATE "${SDL3_ttf_LIB_DIR}/SDL3_ttf.lib")
-    add_custom_command(TARGET dr2c POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy "${SDL3_ttf_LIB_DIR}/SDL3_ttf.dll" "$<TARGET_FILE_DIR:dr2c>"
-    )
-elseif(UNIX)
-    target_link_libraries(dr2c PRIVATE "${SDL3_ttf_DIR}/lib/libSDL3_ttf.so")
-elseif(APPLE)
-    target_link_libraries(dr2c PRIVATE "${SDL3_ttf_DIR}/lib/libSDL3_ttf.dylib")
-endif()
+find_package(SDL3_ttf CONFIG REQUIRED)
+target_link_libraries(dr2c PRIVATE SDL3_ttf::SDL3_ttf)
 
-# imgui
+# bgfx
+find_package(bgfx CONFIG REQUIRED)
+target_link_libraries(dr2c PRIVATE bgfx::bx bgfx::bgfx bgfx::bimg bgfx::bimg_decode)
+
+# imgui - from thirdparty dir
 target_include_directories(dr2c PRIVATE ${imgui_DIR})
 target_include_directories(dr2c PRIVATE ${imgui_DIR}/backends)
 
-# sol2
-find_package(sol2 CONFIG REQUIRED)
-target_link_libraries(dr2c PRIVATE sol2)
-
-# glm
+# glm - from thirdparty lib
 target_include_directories(dr2c PRIVATE ${CMAKE_SOURCE_DIR}/lib/glm-master)
 
-# stb
+# stb - from vcpkg
 find_package(Stb REQUIRED)
 target_include_directories(dr2c PRIVATE ${Stb_INCLUDE_DIR})

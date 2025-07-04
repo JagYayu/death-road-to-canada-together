@@ -3,7 +3,8 @@
 #include "Mod.h"
 #include "ModConfig.hpp"
 #include "ModManager.h"
-#include "util/Defs.h"
+#include "graphic/sdl/SDLTrueTypeFont.h"
+#include "program/Engine.h"
 #include "util/StringUtils.hpp"
 
 #include <FileWatch.hpp>
@@ -11,6 +12,8 @@
 #include <format>
 #include <memory>
 #include <regex>
+#include <string_view>
+#include <vector>
 
 using namespace tudov;
 
@@ -60,18 +63,34 @@ void UnpackagedMod::UpdateFilePatterns()
 	{
 		_scriptFilePatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
 	}
+
+	_fontFilePatterns = std::vector<std::regex>(_config.fonts.files.size());
+	for (auto &&pattern : _config.fonts.files)
+	{
+		_fontFilePatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
+	}
 }
 
-bool UnpackagedMod::IsScript(const std::string &fileName) const
+inline bool RegexPatternMatch(std::string_view file, const std::vector<std::regex> &patterns) noexcept
 {
-	for (auto &&pattern : _scriptFilePatterns)
+	for (auto &&pattern : patterns)
 	{
-		if (std::regex_match(fileName, pattern))
+		if (std::regex_match(file.data(), pattern))
 		{
 			return true;
 		}
 	}
 	return false;
+}
+
+bool UnpackagedMod::IsScript(std::string_view file) const
+{
+	return RegexPatternMatch(file, _scriptFilePatterns);
+}
+
+bool UnpackagedMod::IsFont(std::string_view file) const
+{
+	return RegexPatternMatch(file, _fontFilePatterns);
 }
 
 void UnpackagedMod::Load()
@@ -137,19 +156,24 @@ void UnpackagedMod::Load()
 			continue;
 		}
 
-		auto &&file = entry.path();
-		auto &&fileName = file.filename().string();
-		if (IsScript(fileName))
+		auto &&filePath = entry.path().generic_string();
+		// auto &&fileName = filePath.filename().generic_string();
+		if (IsScript(filePath))
 		{
-			std::ifstream ins{file};
+			std::ifstream ins{filePath};
 			std::ostringstream oss;
 			oss << ins.rdbuf();
 			ins.close();
 
-			auto &&relative = std::filesystem::relative(std::filesystem::relative(file, _directory), GetScriptsDirectory());
+			auto &&relative = std::filesystem::relative(std::filesystem::relative(filePath, _directory), GetScriptsDirectory());
 			auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", namespace_, relative.string()));
 			auto &&scriptID = modManager.scriptProvider.AddScript(scriptName, oss.str(), namespace_);
 			_scripts.emplace_back(scriptID);
+		}
+		else if (IsFont(filePath))
+		{
+			auto fontID = modManager.engine.fontManager.Load<SDLTrueTypeFont>(filePath, ReadFileToString(filePath, true));
+			_fonts.emplace_back(fontID);
 		}
 	}
 
@@ -172,6 +196,13 @@ void UnpackagedMod::Unload()
 	{
 		modManager.scriptProvider.RemoveScript(scriptID);
 	}
+	_scripts.clear();
+
+	for (auto &&fontID : _fonts)
+	{
+		modManager.engine.fontManager.Unload(fontID);
+	}
+	_fonts.clear();
 
 	log->Debug("Unloaded unpackaged mod \"{}\"", dir);
 }

@@ -13,8 +13,8 @@
 
 using namespace tudov;
 
-DebugProfiler::DebugProfiler(Engine &engine) noexcept
-    : engine(engine)
+DebugProfiler::DebugProfiler(Window &window) noexcept
+    : window(window)
 {
 }
 
@@ -40,7 +40,7 @@ void DebugProfiler::UpdateAndRender() noexcept
 {
 	if (ImGui::Begin("Profiler"))
 	{
-		_framerateBuffer.push(engine.window.GetFramerate());
+		_framerateBuffer.push(window.GetFramerate());
 		{
 			float framerates[FramerateBufferSize];
 			for (std::uint64_t i = FramerateBufferSize; i-- > 0;)
@@ -68,7 +68,7 @@ void DebugProfiler::UpdateAndRender() noexcept
 
 		std::vector<DebugProfilerEntry> entries{};
 
-		auto &&eventManager = engine.modManager.eventManager;
+		auto &&eventManager = window.engine.modManager.eventManager;
 		for (auto &&it = eventManager.BeginRuntimeEvents(); it != eventManager.EndRuntimeEvents(); ++it)
 		{
 			auto &&event = *it->second;

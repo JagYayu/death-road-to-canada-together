@@ -60,7 +60,7 @@ namespace tudov
 		bool IsStaticScript(ScriptID scriptID) const noexcept;
 
 		ScriptID AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_) noexcept;
-		void RemoveScript(ScriptID scriptName) noexcept;
+		void RemoveScript(ScriptID scriptID) noexcept;
 		const std::string &GetScriptCode(ScriptID scriptID) const noexcept;
 		std::string_view GetScriptNamespace(ScriptID scriptID) noexcept;
 

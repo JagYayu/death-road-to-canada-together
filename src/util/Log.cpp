@@ -92,7 +92,11 @@ void Log::Exit() noexcept
 		_exit = true;
 	}
 	_cv.notify_all();
-	logWorker.join();
+
+	if (logWorker.joinable())
+	{
+		logWorker.join();
+	}
 }
 
 Log::Log(const std::string &module) noexcept

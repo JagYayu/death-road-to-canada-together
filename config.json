@@ -5,8 +5,7 @@
 			"fonts/.*\\.png"
 		],
 		"directories": [
-			"data",
-			"gfx"
+			"assets"
 		],
 		"files": {
 			".ogg": "Audio",

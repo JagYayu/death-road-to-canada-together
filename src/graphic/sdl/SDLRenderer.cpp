@@ -1,9 +1,11 @@
 #include "SDLRenderer.h"
 
 #include "../Window.h"
+#include "SDL3/SDL_oldnames.h"
+#include "SDL3_ttf/SDL_ttf.h"
 #include "SDLRenderBuffer.h"
 #include "SDLTexture.h"
-#include "graphic/ERenderBackend.h"
+#include "glm/ext/matrix_float3x3.hpp"
 #include "graphic/IRenderer.h"
 
 #include "SDL3/SDL_render.h"
@@ -22,6 +24,7 @@ SDLRenderer::SDLRenderer(Window &window)
     : IRenderer(window),
       _log(Log::Get("SDLRenderer"))
 {
+	_textEngine = TTF_CreateRendererTextEngine(_renderer);
 }
 
 SDL_Renderer *SDLRenderer::GetRaw() noexcept
@@ -34,10 +37,20 @@ const SDL_Renderer *SDLRenderer::GetRaw() const noexcept
 	return _renderer;
 }
 
-ERenderBackend SDLRenderer::GetRenderBackend() const noexcept
+TTF_TextEngine *SDLRenderer::GetRawTextEngine() noexcept
 {
-	return ERenderBackend::SDL;
+	return _textEngine;
 }
+
+const TTF_TextEngine *SDLRenderer::GetRawTextEngine() const noexcept
+{
+	return _textEngine;
+}
+
+// ERenderBackend SDLRenderer::GetRenderBackend() const noexcept
+// {
+// 	return ERenderBackend::SDL;
+// }
 
 void SDLRenderer::Initialize() noexcept
 {
@@ -51,41 +64,41 @@ void SDLRenderer::Initialize() noexcept
 	ImGui_ImplSDLRenderer3_Init(_renderer);
 }
 
-void SDLRenderer::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
-{
-	auto &&render = scriptEngine.CreateTable();
+// void SDLRenderer::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
+// {
+// 	auto &&render = scriptEngine.CreateTable();
 
-	// render["draw"] = [&](ResourceID texID, float x, float y, float w, float h, float tx, float ty, float tw, float th, float ang, float cx, float cy, uint32_t flip)
-	// {
-	// 	try
-	// 	{
-	// 		Draw(texID, x, y, w, h, tx, ty, tw, th, ang, cx, cy, flip);
-	// 	}
-	// 	catch (std::exception &e)
-	// 	{
-	// 		scriptEngine.ThrowError(std::format("C++ exception: {}", e.what()));
-	// 	}
-	// };
+// 	// render["draw"] = [&](ResourceID texID, float x, float y, float w, float h, float tx, float ty, float tw, float th, float ang, float cx, float cy, uint32_t flip)
+// 	// {
+// 	// 	try
+// 	// 	{
+// 	// 		Draw(texID, x, y, w, h, tx, ty, tw, th, ang, cx, cy, flip);
+// 	// 	}
+// 	// 	catch (std::exception &e)
+// 	// 	{
+// 	// 		scriptEngine.ThrowError(std::format("C++ exception: {}", e.what()));
+// 	// 	}
+// 	// };
 
-	auto &&lua = scriptEngine.GetState();
+// 	auto &&lua = scriptEngine.GetState();
 
-	lua.new_usertype<IRenderBuffer>("IRenderBuffer", sol::no_constructor,
-	                                "clear", &IRenderBuffer::Clear,
-	                                "draw", &IRenderBuffer::LuaDraw,
-	                                "drawText", &IRenderBuffer::LuaDrawText,
-	                                "getTransform", &IRenderBuffer::LuaGetTransform,
-	                                "render", &IRenderBuffer::Render,
-	                                "setTransform", &IRenderBuffer::LuaSetTransform,
-	                                "sort", &IRenderBuffer::Sort);
-	lua.new_usertype<SDLRenderBuffer>("SDLRenderBuffer", sol::base_classes, sol::bases<IRenderBuffer>());
+// 	lua.new_usertype<IRenderBuffer>("IRenderBuffer", sol::no_constructor,
+// 	                                "clear", &IRenderBuffer::Clear,
+// 	                                "draw", &IRenderBuffer::LuaDraw,
+// 	                                "drawText", &IRenderBuffer::LuaDrawText,
+// 	                                "getTransform", &IRenderBuffer::LuaGetTransform,
+// 	                                "render", &IRenderBuffer::Render,
+// 	                                "setTransform", &IRenderBuffer::LuaSetTransform,
+// 	                                "sort", &IRenderBuffer::Sort);
+// 	lua.new_usertype<SDLRenderBuffer>("SDLRenderBuffer", sol::base_classes, sol::bases<IRenderBuffer>());
 
-	render["newBuffer"] = [&]()
-	{
-		return std::make_shared<SDLRenderBuffer>(*this);
-	};
+// 	render["newBuffer"] = [&]()
+// 	{
+// 		return std::make_shared<SDLRenderBuffer>(*this);
+// 	};
 
-	scriptEngine.SetReadonlyGlobal("Render", render);
-}
+// 	scriptEngine.SetReadonlyGlobal("Render", render);
+// }
 
 // void SDLRenderer::Draw(ResourceID texID, float x, float y, float w, float h, float tx, float ty, float tw, float th, float ang, float cx, float cy, uint32_t flip)
 // {
@@ -115,9 +128,6 @@ void SDLRenderer::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
 
 void SDLRenderer::Begin()
 {
-	auto &&io = ImGui::GetIO();
-
-	SDL_SetRenderScale(_renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
 	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
 	SDL_RenderClear(_renderer);
 }
@@ -138,6 +148,46 @@ void SDLRenderer::End()
 
 	// _commandQueue.clear();
 
-	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), _renderer);
 	SDL_RenderPresent(_renderer);
+}
+
+glm::mat3x3 SDLRenderer::GetTransform()
+{
+	return glm::mat3x3();
+}
+
+void SDLRenderer::SetTransform(const glm::mat3x3 &mat3)
+{
+}
+
+void SDLRenderer::Clear()
+{
+}
+
+void SDLRenderer::Draw(const DrawArgs &args)
+{
+}
+
+SDL_FRect SDLRenderer::DrawText(const DrawTextArgs &args)
+{
+	return {};
+}
+
+void SDLRenderer::Sort()
+{
+}
+
+void SDLRenderer::Render()
+{
+}
+
+sol::object SDLRenderer::LuaGetTransform()
+{
+	return {};
+}
+
+void SDLRenderer::LuaSetTransform(const sol::table &mat3)
+{
+	// SDL_RenderGeometryRaw(SDL_Renderer *renderer, SDL_Texture *texture, const float *xy, int xy_stride, const SDL_FColor *color, int color_stride, const float *uv, int uv_stride, int num_vertices, const void *indices, int num_indices, int size_indices)
+	// SDL_SetRenderScale(_renderer, float scaleX, float scaleY)
 }

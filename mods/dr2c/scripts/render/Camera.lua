@@ -35,18 +35,18 @@ local timer = 0
 -- end)
 
 Events.add("RenderGame", function(e)
-	-- TODO LERP POSITION
-	timer = timer + 1
+	-- -- TODO LERP POSITION
+	-- timer = timer + 1
 
-	local windowWidth, windowHeight = Window.getSize()
-	local scale = math.max(windowWidth / viewWidth, windowHeight / viewHeight)
-	scaleX = scale
-	scaleY = scale
+	-- local windowWidth, windowHeight = Window.getSize()
+	-- local scale = math.max(windowWidth / viewWidth, windowHeight / viewHeight)
+	-- scaleX = scale
+	-- scaleY = scale
 
-	transform:reset()
-	transform:scale(scaleX, scaleY)
-	transform:translate(viewWidth / 2, viewHeight / 2)
-	transform:translate(-centerX, -centerY)
+	-- transform:reset()
+	-- transform:scale(scaleX, scaleY)
+	-- transform:translate(viewWidth / 2, viewHeight / 2)
+	-- transform:translate(-centerX, -centerY)
 end, N_ "updateCamera", "Camera")
 
 return Camera;

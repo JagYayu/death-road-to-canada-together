@@ -2,6 +2,8 @@
 
 #include "SDL3/SDL_rect.h"
 #include <algorithm>
+#include <cstdint>
+#include <format>
 #include <stdexcept>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -14,42 +16,46 @@
 
 using namespace tudov;
 
-BitmapFont::BitmapFont(std::string_view fontData)
-    : _width(0),
+BitmapFont::BitmapFont(TextureID textureID, std::string_view fontData)
+    : _textureID(textureID),
+      _width(0),
       _height(0),
       _channels(0),
       _glyphWidth(0),
       _glyphHeight(0),
       _columns(0)
 {
-	int w, h, channels;
+	std::int32_t w;
+	std::int32_t h;
+	std::int32_t channels;
 	unsigned char *img = stbi_load_from_memory(
 	    reinterpret_cast<const unsigned char *>(fontData.data()),
 	    fontData.size(), &w, &h, &channels, 4);
 
 	if (!img)
-		throw std::runtime_error("Failed to load font image");
+	{
+		throw std::runtime_error("Failed to load bitmap font");
+	}
 
-	int N = w * h;
-	auto getpix = [&](int i) -> uint32_t
+	int size = w * h;
+	auto &&getPixel = [&](int i) constexpr -> uint32_t
 	{
 		const unsigned char *p = img + 4 * i;
 		return p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
 	};
 
-	uint32_t bg = getpix(0);
-	std::vector<uint8_t> mask(N);
-	for (int i = 0; i < N; ++i)
-		mask[i] = (getpix(i) != bg);
-
-	std::vector<int> label(N, 0);
-	int nextId = 1;
-	struct BBox
+	std::vector<uint8_t> mask(size);
 	{
-		int minx, miny, maxx, maxy;
-	};
-	std::vector<BBox> bboxes(1);
+		uint32_t bg = getPixel(0);
+		for (int i = 0; i < size; ++i)
+		{
+			mask[i] = (getPixel(i) != bg);
+		}
+	}
 
+	std::int32_t nextID = 1;
+	std::vector<std::int32_t> label(size, 0);
+	std::vector<BoundingBox> boxes{1};
 	std::vector<int> stack;
 	stack.reserve(512);
 
@@ -60,23 +66,25 @@ BitmapFont::BitmapFont(std::string_view fontData)
 			int idx = y * w + x;
 			if (mask[idx] && label[idx] == 0)
 			{
-				label[idx] = nextId;
-				bboxes.push_back({x, y, x, y});
+				label[idx] = nextID;
+				boxes.push_back({x, y, x, y});
 				stack.clear();
 				stack.push_back(idx);
 
 				while (!stack.empty())
 				{
-					int i0 = stack.back();
+					auto i0 = stack.back();
 					stack.pop_back();
-					int x0 = i0 % w, y0 = i0 / w;
-					auto &bb = bboxes[nextId];
-					bb.minx = std::min(bb.minx, x0);
-					bb.miny = std::min(bb.miny, y0);
-					bb.maxx = std::max(bb.maxx, x0);
-					bb.maxy = std::max(bb.maxy, y0);
+					auto x0 = i0 % w;
+					auto y0 = i0 / w;
+					auto &b = boxes[nextID];
+					b.minX = std::min(b.minX, x0);
+					b.minY = std::min(b.minY, y0);
+					b.maxX = std::max(b.maxX, x0);
+					b.maxY = std::max(b.maxY, y0);
 
-					const int dx[4] = {1, -1, 0, 0}, dy[4] = {0, 0, 1, -1};
+					const std::int32_t dx[4] = {1, -1, 0, 0};
+					const std::int32_t dy[4] = {0, 0, 1, -1};
 					for (int d = 0; d < 4; ++d)
 					{
 						int xn = x0 + dx[d], yn = y0 + dy[d];
@@ -85,48 +93,47 @@ BitmapFont::BitmapFont(std::string_view fontData)
 							int in = yn * w + xn;
 							if (mask[in] && label[in] == 0)
 							{
-								label[in] = nextId;
+								label[in] = nextID;
 								stack.push_back(in);
 							}
 						}
 					}
 				}
-				nextId++;
+				++nextID;
 			}
 		}
 	}
 
-	struct Item
-	{
-		int id, minx, miny;
-	};
-
 	std::vector<Item> items;
-	for (int id = 1; id < nextId; ++id)
-		items.push_back({id, bboxes[id].minx, bboxes[id].miny});
-
-	// 按行优先 (miny), 行内左到右 (minx)
-	std::sort(items.begin(), items.end(), [](const Item &a, const Item &b)
+	for (auto id = 1; id < nextID; ++id)
 	{
-		if (a.miny != b.miny)
-			return a.miny < b.miny;
-		return a.minx < b.minx;
+		items.push_back({id, boxes[id].minX, boxes[id].minY});
+	}
+
+	std::sort(items.begin(), items.end(), [](const Item &a, const Item &b) constexpr
+	{
+		if (a.minY != b.minY)
+		{
+			return a.minY < b.minY;
+		}
+		return a.minX < b.minX;
 	});
 
-	std::unordered_map<char, SDL_Rect> map;
-	for (int idx = 0; idx < (int)items.size(); ++idx)
+	std::unordered_map<char32_t, SDL_Rect> map;
+	for (auto idx = 0; idx < (int)items.size(); ++idx)
 	{
-		int id = items[idx].id;
-		auto &bb = bboxes[id];
-
-		// 你可以改为自己映射，比如只映射 0-9 A-Z a-z
-		// char ch = (idx < 95 ? char(32 + idx) : '?'); // ASCII 32~126
-		// map[ch] = {bb.minx, bb.miny, bb.maxx - bb.minx + 1, bb.maxy - bb.miny + 1};
-		map[idx] = {bb.minx, bb.miny, bb.maxx - bb.minx + 1, bb.maxy - bb.miny + 1};
+		auto id = items[idx].id;
+		auto &b = boxes[id];
+		map[idx] = {b.minX, b.minY, b.maxX - b.minX + 1, b.maxY - b.minY + 1};
 	}
 
 	stbi_image_free(img);
 	_charMap = std::move(map);
+}
+
+TextureID BitmapFont::GetTextureID() const noexcept
+{
+	return _textureID;
 }
 
 std::int32_t BitmapFont::GetWidth() const noexcept
@@ -159,22 +166,25 @@ std::int32_t BitmapFont::GetColumns() const noexcept
 	return _columns;
 }
 
-const std::unordered_map<char, SDL_Rect> &BitmapFont::GetCharMap() const noexcept
-{
-	return _charMap;
-}
+// const std::unordered_map<char32_t, SDL_Rect> &BitmapFont::GetCharMap() const noexcept
+// {
+// 	return _charMap;
+// }
 
-bool BitmapFont::HasChar(char c) const
+bool BitmapFont::HasChar(char32_t c) const
 {
 	return _charMap.contains(c);
 }
 
-SDL_Rect BitmapFont::GetCharRect(char c) const
+BitmapFont::Char BitmapFont::GetChar(char32_t ch, size_t sz)
 {
-	auto &&it = _charMap.find(c);
+	auto &&it = _charMap.find(ch);
 	if (it != _charMap.end())
 	{
-		return it->second;
+		return {
+		    .tex = _textureID,
+		    .rect = it->second,
+		};
 	}
-	return SDL_Rect();
+	throw std::runtime_error(std::format("Character '{}' does not exist in bitmap font", (uint32_t)ch));
 }

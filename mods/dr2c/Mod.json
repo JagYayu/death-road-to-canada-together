@@ -1,26 +1,39 @@
 {
-  "namespace": "dr2c",
-  "version": "1.0.0",
-  "name": "Death Road to Canada",
-  "author": "JagYayu",
-  "description": "Core mod for Death Road to Canada.",
-  "dependencies": {},
-  "scripts": {
-    "directory": "scripts",
-    "files": [".*\\.lua$"],
-    "closedSource": false,
-    "sandbox": true,
-    "preloads": [".*"]
-  },
-  "audios": {
-    "directory": "Audios",
-    "files": [".*\\.mp3$", ".*\\.ogg$"],
-    "preloads": [".*"]
-  },
-  "data": {
-    "directory": "Data",
-    "files": [".*\\.json$", ".*\\.txt$", ".*\\.xml$"],
-    "preloads": [".*"]
-  },
-  "custom": {}
+	"namespace": "dr2c",
+	"version": "1.0.0",
+	"name": "Death Road to Canada",
+	"author": "JagYayu",
+	"description": "Core mod for Death Road to Canada.",
+	"dependencies": {},
+	"scripts": {
+		"directory": "scripts",
+		"files": [
+			".*\\.lua$"
+		],
+		"closedSource": false,
+		"sandbox": true
+	},
+	"audios": {
+		"directory": "audios",
+		"files": [
+			".*\\.mp3$",
+			".*\\.ogg$"
+		]
+	},
+	"images": {},
+	"fonts": {
+		"directory": "fonts",
+		"files": [
+			".*\\.ttf$"
+		]
+	},
+	"data": {
+		"directory": "data",
+		"files": [
+			".*\\.json$",
+			".*\\.txt$",
+			".*\\.xml$"
+		]
+	},
+	"custom": {}
 }

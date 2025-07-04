@@ -23,15 +23,16 @@ namespace tudov
 			std::vector<std::string> privates{};
 		};
 
-		std::string namespace_{};
-		Version version{};
-		std::string name{};
-		std::string author{};
-		std::string description{};
-		std::unordered_map<std::string, Version> dependencies{};
+		std::string namespace_;
+		Version version;
+		std::string name;
+		std::string author;
+		std::string description;
+		std::unordered_map<std::string, Version> dependencies;
 
-		Data audios{};
-		Scripts scripts{};
+		Data audios;
+		Scripts scripts;
+		Data fonts;
 	};
 
 	inline void from_json(const nlohmann::json &j, ModConfig::Data &d)
@@ -60,5 +61,6 @@ namespace tudov
 		m.dependencies = j.value("dependencies", std::unordered_map<std::string, Version>());
 		m.audios = j.value("audios", ModConfig::Data());
 		m.scripts = j.value("scripts", ModConfig::Scripts());
+		m.fonts = j.value("fonts", ModConfig::Data());
 	}
 } // namespace tudov

@@ -90,9 +90,12 @@ void EventManager::OnScriptsLoaded()
 	for (auto &&[_, event] : _runtimeEvents)
 	{
 		auto scriptID = event->GetScriptID();
-		for (auto &&it = event->BeginHandlers(); it != event->EndHandlers(); ++it)
+		if (scriptID)
 		{
-			scriptLoader.AddReverseDependency(it->scriptID, scriptID);
+			for (auto &&it = event->BeginHandlers(); it != event->EndHandlers(); ++it)
+			{
+				scriptLoader.AddReverseDependency(it->scriptID, scriptID);
+			}
 		}
 	}
 }

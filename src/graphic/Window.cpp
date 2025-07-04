@@ -1,9 +1,9 @@
 #include "Window.h"
 
-#include "ERenderBackend.h"
+#include "SDL3/SDL_render.h"
+#include "graphic/sdl/SDLRenderer.h"
 #include "mod/ScriptEngine.h"
 #include "program/Engine.h"
-#include "sdl/SDLRenderer.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
@@ -12,6 +12,7 @@
 #include <SDL3/SDL_video.h>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
+#include <imgui_impl_sdlrenderer3.h>
 
 #include <cmath>
 #include <memory>
@@ -21,24 +22,18 @@ using namespace tudov;
 
 Window::Window(Engine &engine)
     : engine(engine),
+      renderer(*this),
       debugManager(*this),
-      renderer(),
+      _initialized(false),
       _prevTick(),
       _frame(),
       _framerate()
 {
-	switch (engine.config.GetRenderBackend())
-	{
-	case tudov::ERenderBackend::SDL:
-		renderer = std::make_unique<SDLRenderer>(*this);
-		break;
-	default:
-		throw std::exception("Invalid render backend");
-	}
 }
 
 Window::~Window() noexcept
 {
+	SDL_DestroyWindow(_window);
 }
 
 SDL_Window *Window::GetHandle()
@@ -51,8 +46,20 @@ float Window::GetFramerate() const noexcept
 	return _framerate;
 }
 
+std::tuple<std::int32_t, std::int32_t> Window::GetSize() const noexcept
+{
+	int w, h;
+	SDL_GetWindowSize(_window, &w, &h);
+	return {w, h};
+}
+
 void Window::Initialize()
 {
+	if (_initialized)
+	{
+		return;
+	}
+
 	auto &&engineConfig = engine.config;
 	auto &&scriptEngine = engine.modManager.scriptEngine;
 
@@ -67,11 +74,24 @@ void Window::Initialize()
 	}
 	SDL_SetWindowPosition(_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
+	_renderer = SDL_CreateRenderer(_window, nullptr);
+
+	if (!ImGui_ImplSDL3_InitForSDLRenderer(_window, _renderer))
+	{
+		SDL_Log("ImGui_ImplSDL3_InitForSDLRenderer failed: %s", SDL_GetError());
+	}
+	if (!ImGui_ImplSDLRenderer3_Init(_renderer))
+	{
+		SDL_Log("ImGui_ImplSDLRenderer3_Init failed: %s", SDL_GetError());
+	}
+
+	renderer.Initialize();
+
 	ImGui::GetIO().DisplaySize = ImVec2(width, height);
 
-	renderer->Initialize();
-
 	InstallToScriptEngine(scriptEngine);
+
+	_initialized = true;
 }
 
 void Window::Deinitialize() noexcept
@@ -80,18 +100,23 @@ void Window::Deinitialize() noexcept
 
 void Window::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
 {
-	auto &&window = scriptEngine.CreateTable();
+	// auto &&window = scriptEngine.CreateTable();
 
-	window.set_function("getSize", [this]()
-	{
-		int w, h;
-		SDL_GetWindowSize(_window, &w, &h);
-		return std::make_tuple((double)w, (double)h);
-	});
+	// window.set_function("getSize", [this]()
+	// {
+	// 	int w, h;
+	// 	SDL_GetWindowSize(_window, &w, &h);
+	// 	return std::make_tuple((double)w, (double)h);
+	// });
 
-	scriptEngine.SetReadonlyGlobal("Window", window);
+	// window.set_function("newRenderer", [this]()
+	// {
+	// 	// switch (engine.config.GetRenderBackend())
+	// 	// auto &&sdlRenderer = std::make_unique<SDLRenderer>(*this);
+	// 	return std::make_shared<SDLRenderer>(*this);
+	// });
 
-	renderer->InstallToScriptEngine(scriptEngine);
+	// scriptEngine.SetReadonlyGlobal("Window", window);
 }
 
 std::tuple<sol::table, EventHandleKey> Window::ResolveKeyEvent(SDL_Event &event) noexcept
@@ -113,8 +138,13 @@ std::tuple<sol::table, EventHandleKey> Window::ResolveMouseButtonEvent(SDL_Event
 	return std::make_tuple(e, EventHandleKey((std::double_t)event.button.button));
 }
 
-void Window::PoolEvents()
+void Window::PollEvents()
 {
+	if (!_initialized)
+	{
+		Initialize();
+	}
+
 	auto &&eventManager = engine.modManager.eventManager;
 	auto &&scriptEngine = engine.modManager.scriptEngine;
 
@@ -197,13 +227,19 @@ void Window::Render()
 {
 	auto &&modManager = engine.modManager;
 	auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
+	auto &&renderBackend = engine.config.GetRenderBackend();
 
 	++_frame;
 
 	Uint64 target = 1e9 / engine.config.GetWindowFramelimit();
 	Uint64 begin = SDL_GetTicksNS();
 
-	renderer->Begin();
+	renderer.Begin();
+	// {
+	// 	auto &&io = ImGui::GetIO();
+	// 	auto &&raw = dynamic_cast<SDLRenderer *>(renderer.get())->GetRaw();
+	// 	SDL_SetRenderScale(raw, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+	// }
 
 	modManager.eventManager.render->Invoke();
 
@@ -214,12 +250,16 @@ void Window::Render()
 		_errorOverlay.RenderLoadtimeErrors(scriptLoader.GetLoadErrors());
 	}
 
-	renderer->End();
+	// {
+	// 	auto &&raw = dynamic_cast<SDLRenderer *>(renderer.get())->GetRaw();
+	// 	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), raw);
+	// }
+	renderer.End();
 
 	Uint64 delta = SDL_GetTicksNS() - begin;
 	if (delta < target)
 	{
-		SDL_DelayPrecise(target - delta);
+		// SDL_DelayPrecise(target - delta);
 	}
 	_framerate = double(1e9) / double(SDL_GetTicksNS() - begin);
 }

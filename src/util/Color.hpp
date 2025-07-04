@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SDL3/SDL_pixels.h"
 #include <cstdint>
 
 namespace tudov
@@ -36,6 +37,11 @@ namespace tudov
 		inline constexpr bool operator!=(const Color &other) const noexcept
 		{
 			return r != other.r || g != other.g || b != other.b | a == other.a;
+		}
+
+		inline operator SDL_Color() const noexcept
+		{
+			return SDL_Color{.r = r, .g = g, .b = b, .a = a};
 		}
 	};
 } // namespace tudov

@@ -244,7 +244,7 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 {
 	if (!scriptEngine.modManager.scriptProvider.IsValidScriptID(source) || !scriptEngine.modManager.scriptProvider.IsValidScriptID(target))
 	{
-		_log->Warn("Attempt to add invalid scriptID to reverse dependency map");
+		_log->Warn("Attempt to link invalid scripts to reverse dependency map: <{}> -> <{}>", source, target);
 		return;
 	}
 	auto &&dependencies = _scriptReverseDependencies[target];

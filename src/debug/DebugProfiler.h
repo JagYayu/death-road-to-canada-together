@@ -7,7 +7,7 @@
 
 namespace tudov
 {
-	class Engine;
+	class Window;
 
 	class DebugProfiler : public IDebugElement
 	{
@@ -19,9 +19,9 @@ namespace tudov
 		CircularBuffer<std::float_t, FramerateBufferSize> _framerateBuffer;
 
 	  public:
-		Engine &engine;
+		Window &window;
 
-		DebugProfiler(Engine &engine) noexcept;
+		DebugProfiler(Window &window) noexcept;
 
 		std::string_view GetName() noexcept override;
 		void UpdateAndRender() noexcept override;

@@ -6,6 +6,7 @@
 #include "util/Defs.h"
 
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string_view>
 #include <unordered_map>
@@ -16,7 +17,7 @@ namespace tudov
 
 	template <>
 	inline FontManagerBase::ResourceManager() noexcept
-	    : _log(Log::Get("TextureManager"))
+	    : _log(Log::Get("FontManager"))
 	{
 	}
 
@@ -24,26 +25,30 @@ namespace tudov
 
 	class FontManager : public FontManagerBase
 	{
-	  public:
-		struct BitmapFontInfo
-		{
-			std::uint32_t charWidth;
-			std::uint32_t charHeight;
-			std::unordered_map<std::uint32_t, std::uint32_t> charMap;
-			std::uint32_t columns;
-		};
+		//   public:
+		// 	struct BitmapFontInfo
+		// 	{
+		// 		std::uint32_t charWidth;
+		// 		std::uint32_t charHeight;
+		// 		std::unordered_map<std::uint32_t, std::uint32_t> charMap;
+		// 		std::uint32_t columns;
+		// 	};
 
 	  private:
-		std::unordered_map<TextureID, BitmapFont> _bitmapFonts;
+		std::unordered_map<TextureID, std::shared_ptr<BitmapFont>> _bitmapFonts;
 
 	  public:
 		FontManager() noexcept;
 
+	  protected:
+		// void OnUnloadResource(ResourceID id) noexcept override;
+
+	  public:
 		std::optional<std::reference_wrapper<BitmapFont>> GetBitmapFont(FontID fontID) noexcept;
 		/*
 		 * Override a texture resource as a bitmap.
 		 */
-		void SetBitmapFont(TextureID textureID, BitmapFont info) noexcept;
+		void AddBitmapFont(const std::shared_ptr<BitmapFont> &bitmapFont) noexcept;
 
 		void InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept;
 		void UninstallFromScriptEngine(ScriptEngine &scriptEngine) noexcept;

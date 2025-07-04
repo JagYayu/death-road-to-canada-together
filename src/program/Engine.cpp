@@ -1,12 +1,17 @@
 #include "Engine.h"
 
-#include "graphic/ERenderBackend.h"
-#include "graphic/sdl/SDLRenderer.h"
-#include "graphic/sdl/SDLSurface.h"
+#include "graphic/DynamicBuffer.h"
+#include "graphic/RenderBuffer.h"
+#include "graphic/Windows.h"
 #include "graphic/sdl/SDLTexture.h"
 #include "resource/ResourceType.hpp"
 #include "util/Log.h"
 #include "util/StringUtils.hpp"
+
+#include <SDL3/SDL_system.h>
+#include <bgfx/bgfx.h>
+#include <bgfx/defines.h>
+#include <bgfx/platform.h>
 
 #include <memory>
 #include <regex>
@@ -14,13 +19,65 @@
 
 using namespace tudov;
 
-Engine::Engine()
+Engine::Engine() noexcept
     : _log(Log::Get("Engine")),
-      window(*this),
+      _running(true),
+      _bgfxInitialized(false),
+      windows(*this),
       modManager(*this),
-      textureManager(),
+      texture2DManager(),
       fontManager()
 {
+}
+
+Engine::~Engine() noexcept
+{
+	if (_bgfxInitialized)
+	{
+		bgfx::shutdown();
+	}
+}
+
+inline bgfx::PlatformData GetPlatformData(Window &window)
+{
+	SDL_PropertiesID props = SDL_GetWindowProperties(window.GetHandle());
+	bgfx::PlatformData pd{};
+
+#if defined(SDL_PLATFORM_WIN32)
+	pd.nwh = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
+	pd.type = bgfx::NativeWindowHandleType::Default;
+#elif defined(SDL_PLATFORM_MACOS)
+	// TODO
+#elif defined(SDL_PLATFORM_LINUX)
+	// TODO
+#endif
+
+	return pd;
+}
+
+void Engine::InitializeBGFXWindow(Window &window) noexcept
+{
+	bgfx::Init init{};
+	init.type = bgfx::RendererType::Count;
+	init.vendorId = BGFX_PCI_ID_NONE;
+	init.platformData = GetPlatformData(window);
+	init.resolution.width = 800;
+	init.resolution.height = 600;
+	init.resolution.reset = BGFX_RESET_VSYNC;
+
+	if (!bgfx::init(init))
+	{
+		_log->Error("Failed to initialize bgfx");
+	}
+	_bgfxInitialized = true;
+}
+
+void Engine::SwitchWindow(Window &window)
+{
+	bgfx::setPlatformData(GetPlatformData(window));
+
+	auto &&size = window.GetSize();
+	bgfx::reset(std::get<0>(size), std::get<1>(size), BGFX_RESET_VSYNC);
 }
 
 void Engine::Run(const MainArgs &args)
@@ -30,18 +87,54 @@ void Engine::Run(const MainArgs &args)
 	_log->Debug("Initializing engine ...");
 	{
 		config.Load();
-		window.Initialize();
+		auto &&mainWindow = windows.CreateWindow("", config.GetWindowTitle(), config.GetWindowWidth(), config.GetWindowHeight());
+		mainWindow->Initialize();
+		InitializeBGFXWindow(*mainWindow);
 		InitializeResources();
 		modManager.Initialize();
 		modManager.LoadMods();
 	}
 	_log->Debug("Initialized engine");
 
+	std::shared_ptr<DynamicBuffer> buffer;
+
 	while (_running)
 	{
-		window.PoolEvents();
+		// if (!bgfx::renderFrame(10))
+		// {
+		// 	_log->Error("bgfx::renderFrame error");
+		// }
+
+		for (auto &&window : windows)
+		{
+			window->PollEvents();
+		}
+
 		modManager.Update();
-		window.Render();
+
+		auto firstWindow = true;
+
+		for (auto &&window : windows)
+		{
+			if (firstWindow)
+			{
+				buffer = std::make_shared<DynamicBuffer>(window->renderer);
+				firstWindow = false;
+			}
+
+			buffer->Clear();
+			DynamicBuffer::Draw2DArgs args{};
+			args.tex = 1;
+			args.src = {0, 0, 24, 24};
+			args.dst = {0, 0, 800, 800};
+			buffer->Draw2D(args);
+			buffer->Render();
+
+			SwitchWindow(*window);
+			window->Render();
+		}
+
+		bgfx::frame();
 	}
 
 	_log->Debug("Deinitializing engine ...");
@@ -96,37 +189,31 @@ void Engine::InitializeResources()
 			auto &&it = mountDirectories.find(path.extension().string());
 			if (it != mountDirectories.end())
 			{
-				auto &&file = path.string();
-				auto &&data = ReadFileToString(file, true);
+				auto &&filePath = path.generic_string();
+				auto &&data = ReadFileToString(filePath, true);
 
-				TextureID textureID;
+				// auto &&sdlRenderer = dynamic_cast<SDLRenderer *>(window.renderer.get());
+				// auto &&sdlSurface = std::make_shared<SDLSurface>(*sdlRenderer, std::string_view(data));
+				// TextureID textureID = texture2DManager.Load<Texture2D>(filePath, *(sdlSurface->GetRaw()));
+				// if (textureID)
+				// {
+				// 	fileCounts.try_emplace(it->second, 0).first->second++;
+				// }
+				// else
+				// {
+				// 	_log->Error("Texture ID of \"{}\" is 0!", filePath);
+				// }
 
-				switch (window.renderer->GetRenderBackend())
-				{
-				case ERenderBackend::SDL:
-				{
-					auto &&sdlRenderer = dynamic_cast<SDLRenderer *>(window.renderer.get());
-					auto &&sdlSurface = std::make_shared<SDLSurface>(*sdlRenderer, std::string_view(data));
-					textureID = textureManager.Load<SDLTexture>(file, *sdlRenderer, sdlSurface);
-					if (textureID)
-					{
-						fileCounts.try_emplace(it->second, 0).first->second++;
-						_log->Trace("{}", file);
-					}
-				}
-				default:
-					break;
-				}
-
-				auto &&relative = std::filesystem::relative(path, mountDirectory).generic_string();
-				for (auto &&pattern : mountBitmapPatterns)
-				{
-					if (std::regex_match(relative, pattern))
-					{
-						fontManager.SetBitmapFont(textureID, BitmapFont(std::string_view(data)));
-						break;
-					}
-				}
+				// bitmap suppoert
+				// auto &&relative = std::filesystem::relative(path, mountDirectory).generic_string();
+				// for (auto &&pattern : mountBitmapPatterns)
+				// {
+				// 	if (std::regex_match(relative, pattern))
+				// 	{
+				// 		fontManager.AddBitmapFont(std::make_shared<BitmapFont>(textureID, std::string_view(data)));
+				// 		break;
+				// 	}
+				// }
 			}
 		}
 	}
