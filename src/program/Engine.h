@@ -23,6 +23,7 @@ namespace tudov
 		std::shared_ptr<Log> _log;
 		bool _running;
 		std::vector<std::shared_ptr<Window>> _windows;
+		std::float_t _framerate;
 
 	  public:
 		EngineConfig config;
@@ -44,6 +45,8 @@ namespace tudov
 		std::shared_ptr<Window> LuaGetMainWindow() noexcept;
 
 	  public:
+		std::float_t GetFramerate() const noexcept;
+
 		void AddWindow(const std::shared_ptr<Window> &window);
 		void RemoveWindow(const std::shared_ptr<Window> &window);
 

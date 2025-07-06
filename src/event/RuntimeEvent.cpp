@@ -6,6 +6,7 @@
 #include "event/RuntimeEvent.h"
 #include "mod/ModManager.h"
 #include "mod/ScriptProvider.h"
+#include "sol/types.hpp"
 #include "util/Defs.h"
 
 #include <cassert>
@@ -145,11 +146,13 @@ void RuntimeEvent::Invoke(const sol::object &args, EventHandleKey key)
 	if (!std::holds_alternative<std::nullptr_t>(key.value))
 	{
 		auto &&it = _invocationCaches.find(key);
-		if (it == _invocationCaches.end())
+		if (it != _invocationCaches.end())
 		{
-			_invocationCaches[key] = {};
-			cache = &_invocationCaches[key];
-
+			cache = &it->second;
+		}
+		else
+		{
+			cache = &_invocationCaches.try_emplace(key, InvocationCache()).first->second;
 			for (auto &&handler : GetSortedHandlers())
 			{
 				if (handler.key == key)
@@ -157,10 +160,6 @@ void RuntimeEvent::Invoke(const sol::object &args, EventHandleKey key)
 					cache->emplace_back(handler.function);
 				}
 			}
-		}
-		else
-		{
-			cache = &it->second;
 		}
 	}
 	else
@@ -258,6 +257,7 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, EventHandleKey key)
 		_profile->eventProfiler.EndEvent(eventManager.modManager.scriptEngine);
 	}
 }
+
 void RuntimeEvent::ClearCaches()
 {
 	_handlersSortedCache = false;
@@ -299,5 +299,4 @@ void RuntimeEvent::ClearScriptsHandlers()
 	{
 		return !!handler.eventID;
 	});
-	ClearCaches();
 }

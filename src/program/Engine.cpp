@@ -1,5 +1,6 @@
 #include "Engine.h"
 
+#include "SDL3/SDL_timer.h"
 #include "debug/DebugManager.h"
 #include "resource/ResourceType.hpp"
 #include "util/Log.h"
@@ -47,8 +48,15 @@ void Engine::Run(const MainArgs &args)
 	}
 	_log->Debug("Initialized engine");
 
+	std::uint64_t prevNS = SDL_GetTicksNS();
+
 	while (_running)
 	{
+		uint64_t startNS = SDL_GetTicksNS();
+		uint64_t deltaNS = startNS - prevNS;
+		prevNS = startNS;
+		_framerate = 1'000'000'000.0 / deltaNS;
+
 		for (auto &&window : _windows)
 		{
 			window->HandleEvents();
@@ -61,6 +69,13 @@ void Engine::Run(const MainArgs &args)
 		for (auto &&window : _windows)
 		{
 			window->Render();
+		}
+
+		uint64_t elapsed = SDL_GetTicksNS() - startNS;
+		const uint64_t limit = 1'000'000'000ull / static_cast<uint64_t>(config.GetWindowFramelimit());
+		if (elapsed < limit)
+		{
+			SDL_DelayPrecise(limit - elapsed);
 		}
 	}
 
@@ -171,6 +186,11 @@ void Engine::InitializeResources()
 	{
 		_log->Info("{}: {}", ResourceTypeToStringView(fileType), count);
 	}
+}
+
+std::float_t Engine::GetFramerate() const noexcept
+{
+	return _framerate;
 }
 
 void Engine::AddWindow(const std::shared_ptr<Window> &window)

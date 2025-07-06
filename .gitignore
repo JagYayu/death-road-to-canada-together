@@ -2,7 +2,7 @@
 /assets
 /bin
 /lib
-/log
+/logs
 /build
 .clang-format
 .clangd

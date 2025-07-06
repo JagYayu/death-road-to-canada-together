@@ -35,10 +35,12 @@ namespace tudov
 			                         "getSize", &Window::GetSize);
 
 			lua.new_usertype<Renderer>("Renderer",
-			                           "drawRect", &Renderer::LuaDrawRect,
-									   "newRenderTexture", &Renderer::LuaNewRenderTexture,
+			                           "clear", &Renderer::LuaClear,
+			                           "render", &Renderer::Render,
+			                           "drawRect", &Renderer::LuaDrawTexture,
+			                           "newRenderTexture", &Renderer::LuaNewRenderTexture,
 			                           "setRenderTarget", &Renderer::SetRenderTarget,
-			                           "renderTexture", &Renderer::RenderTexture);
+			                           "renderTexture", &Renderer::DrawTexture);
 
 			lua["engine"] = engine;
 			lua["mods"] = &engine->modManager;

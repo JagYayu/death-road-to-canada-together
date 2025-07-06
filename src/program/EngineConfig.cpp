@@ -34,7 +34,7 @@ static const auto valueMountDirectories = std::vector<std::string>{
     "assets",
 };
 static const auto valueMountFiles = std::unordered_map<std::string, ResourceType>{
-    {".png", ResourceType::Texture},
+    {".png", ResourceType::Image},
     {".ogg", ResourceType::Audio},
 };
 

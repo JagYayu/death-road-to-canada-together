@@ -8,7 +8,7 @@ namespace tudov
 {
 	enum class ResourceType
 	{
-		Texture,
+		Image,
 		Audio,
 	};
 
@@ -16,8 +16,8 @@ namespace tudov
 	{
 		switch (resourceType)
 		{
-		case ResourceType::Texture:
-			return "Texture";
+		case ResourceType::Image:
+			return "Image";
 		case ResourceType::Audio:
 			return "Audio";
 		default:
@@ -26,7 +26,7 @@ namespace tudov
 	}
 
 	NLOHMANN_JSON_SERIALIZE_ENUM(ResourceType, {
-	                                               {ResourceType::Texture, "Texture"},
+	                                               {ResourceType::Image, "Texture"},
 	                                               {ResourceType::Audio, "Audio"},
 	                                           });
 } // namespace tudov

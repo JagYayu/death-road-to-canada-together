@@ -41,7 +41,7 @@ bool LoadtimeEvent::IsBuilt() const noexcept
 	return _built;
 }
 
-bool LoadtimeEvent::TryBuild(const std::vector<std::string> &orders, const std::vector<EventHandleKey> &keys) noexcept
+bool LoadtimeEvent::TryBuild(ScriptID scriptID, const std::vector<std::string> &orders, const std::vector<EventHandleKey> &keys) noexcept
 {
 	if (_built)
 	{
@@ -49,6 +49,7 @@ bool LoadtimeEvent::TryBuild(const std::vector<std::string> &orders, const std::
 	}
 
 	_built = true;
+	_scriptID = scriptID;
 	_orders = orders;
 	_keys = keys;
 	return true;

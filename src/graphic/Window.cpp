@@ -51,6 +51,11 @@ bool Window::ShouldClose() noexcept
 	return _shouldClose;
 }
 
+EventHandleKey Window::GetKey() const noexcept
+{
+	return {};
+}
+
 void Window::HandleEvents() noexcept
 {
 	SDL_Event event;
@@ -72,9 +77,9 @@ void Window::HandleEvent(const SDL_Event &event) noexcept
 
 void Window::Render() noexcept
 {
-	engine.modManager.eventManager.render->Invoke();
-
-	renderer->RenderPresent();
+	auto &&args = engine.modManager.scriptEngine.CreateTable(0, 1);
+	args["window"] = this;
+	engine.modManager.eventManager.render->Invoke(args, GetKey());
 }
 
 SDL_Window *Window::GetSDLWindowHandle() noexcept
@@ -105,5 +110,5 @@ std::tuple<std::int32_t, std::int32_t> Window::GetSize() const noexcept
 
 std::float_t Window::GetFramerate() const noexcept
 {
-	return 60;
+	return engine.GetFramerate();
 }

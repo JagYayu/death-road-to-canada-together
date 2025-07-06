@@ -247,7 +247,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 			auto &&targetScriptID = modManager.scriptProvider.GetScriptIDByName(targetScriptName);
 			if (targetScriptID)
 			{
-				scriptLoader.AddReverseDependency(targetScriptID, scriptID);
+				scriptLoader.AddReverseDependency(scriptID, targetScriptID);
 				auto &&targetModule = scriptLoader.Load(targetScriptID);
 				if (targetModule)
 				{

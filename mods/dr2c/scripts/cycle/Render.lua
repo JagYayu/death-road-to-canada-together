@@ -17,8 +17,8 @@ local eventRenderGame = events:new("RenderGame", {
 	"UI",
 })
 
-events:add("Render", function()
-	events:invoke(eventRenderGame, {})
-end, N_ "render")
+events:add("Render", function(e)
+	events:invoke(eventRenderGame, e)
+end, N_ "render", nil, "Main")
 
 return Render

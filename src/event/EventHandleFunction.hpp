@@ -26,7 +26,7 @@ namespace tudov
 				const auto &func = std::get<sol::function>(function);
 				if (func.valid())
 				{
-					auto &&result = func();
+					auto &&result = func(obj);
 					if (!result.valid())
 					{
 						sol::error err = result;

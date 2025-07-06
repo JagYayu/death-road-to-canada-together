@@ -29,7 +29,7 @@ events = {}
 --- @param func fun(e: any)
 --- @param name string?
 --- @param order string?
---- @param key integer?
+--- @param key (string | integer)?
 --- @param sequence integer?
 function events:add(event, func, name, order, key, sequence) end
 

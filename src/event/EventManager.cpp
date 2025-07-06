@@ -16,6 +16,7 @@
 #include <cassert>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string_view>
 
 using namespace tudov;
@@ -67,11 +68,16 @@ void EventManager::OnScriptsLoaded()
 	for (auto &&[eventID, loadtimeEvent] : _loadtimeEvents)
 	{
 		assert(eventID && "contains invalid event id!");
-		assert(_runtimeEvents.find(eventID) == _runtimeEvents.end() && "duplicated event id!");
+		if (_runtimeEvents.contains(eventID))
+		{
+			auto &&msg = std::format("duplicated event <{}>\"{}\"", eventID, GetEventNameByID(eventID)->data());
+			throw std::runtime_error(msg);
+		}
 
 		if (loadtimeEvent->IsBuilt())
 		{
 			auto &&runtimeEvent = std::make_shared<RuntimeEvent>(loadtimeEvent->ToRuntime());
+			_log->Trace("loadtime event converted to a runtime event <{}>\"{}\"", eventID, GetEventNameByID(eventID)->data());
 			_runtimeEvents.try_emplace(runtimeEvent->GetID(), runtimeEvent);
 		}
 		else
@@ -79,11 +85,12 @@ void EventManager::OnScriptsLoaded()
 			auto &&eventName = _eventID2Name[eventID];
 			auto scriptID = loadtimeEvent->GetScriptID();
 			auto scriptName = modManager.scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
-			_log->Error("Attempt to add handler to non-exist event <{}>\"{}\", source script <{}>\"{}\"", eventID, eventName, scriptID, scriptName);
+			_log->Error("Attempt to add handlers to non-exist event <{}>\"{}\", source script <{}>\"{}\"", eventID, eventName, scriptID, scriptName);
 		}
 	}
 
 	_loadtimeEvents.clear();
+	_log->Trace("Cleared loadtime events");
 
 	auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
 
@@ -153,11 +160,14 @@ void EventManager::Initialize() noexcept
 
 	_onUnloadScriptHandlerID = scriptLoader.onUnloadScript += [this](ScriptID scriptID)
 	{
+		assert(scriptID && "invalid script id!");
+
 		for (auto &&it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 		{
 			if (it->second->GetScriptID() == scriptID)
 			{
-				_log->Trace("Remove script <{}> event \"{}\"", scriptID, _eventID2Name[it->second->GetID()]);
+				auto eventID = it->second->GetID();
+				_log->Trace("Remove event <{}>\"{}\" from script <{}>", eventID, _eventID2Name[eventID], scriptID);
 				DeallocEventID(it->first);
 				it = _runtimeEvents.erase(it);
 			}
@@ -288,9 +298,9 @@ void EventManager::LuaAdd(const sol::object &event, const sol::object &func, con
 		auto &&registryEvent = TryGetRegistryEvent(eventID);
 		if (!registryEvent.has_value())
 		{
-			auto &&e = std::make_shared<LoadtimeEvent>(*this, eventID, scriptID);
-			_log->Trace("Add script <{}> event \"{}\"", scriptID, eventName);
-			registryEvent = *(_loadtimeEvents.try_emplace(eventID, e).first->second);
+			auto &&loadtimeEvent = std::make_shared<LoadtimeEvent>(*this, eventID, scriptID);
+			_log->Trace("Script <{}> added handler to loadtime event <{}>\"{}\"", scriptID, eventID, eventName);
+			registryEvent = *(_loadtimeEvents.try_emplace(eventID, loadtimeEvent).first->second);
 		}
 
 		registryEvent->get().Add({
@@ -331,7 +341,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 			if (!eventID)
 			{
 				eventID = AllocEventID(eventName);
-				_log->Trace("Add script <{}> event \"{}\"", scriptID, eventName);
+				_log->Trace("Script <{}> alloc event <{}>\"{}\"", scriptID, eventID, eventName);
 			}
 		}
 		else
@@ -393,8 +403,13 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 
 		bool dup = false;
 		{
-			auto &&it = _loadtimeEvents.find(eventID);
-			if (it != _loadtimeEvents.end() && !it->second->TryBuild(orders_, keys_))
+			auto it = _loadtimeEvents.find(eventID);
+			if (it == _loadtimeEvents.end())
+			{
+				auto &&loadtimeEvent = std::make_shared<LoadtimeEvent>(*this, eventID, scriptID, orders_, keys_);
+				_loadtimeEvents.try_emplace(eventID, loadtimeEvent);
+			}
+			else if (!it->second->TryBuild(scriptID, orders_, keys_))
 			{
 				dup = true;
 			}
@@ -405,8 +420,8 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 			return false;
 		}
 
-		auto &&loadtimeEvent = std::make_shared<LoadtimeEvent>(*this, eventID, scriptID, orders_, keys_);
-		return _loadtimeEvents.try_emplace(eventID, loadtimeEvent).first->first;
+		_log->Trace("Constructed loadtime event <{}>\"{}\" from script <{}>", eventID, eventName, scriptID);
+		return eventID;
 	}
 	catch (const std::exception &e)
 	{
@@ -417,7 +432,6 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 
 void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, const sol::object &key)
 {
-
 	try
 	{
 		auto &&scriptEngine = modManager.scriptEngine;
@@ -453,7 +467,11 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 		{
 			k.value = key.as<std::string>();
 		}
-		eventInstance->Invoke(args, k);
+
+		if (eventInstance)
+		{
+			eventInstance->Invoke(args, k);
+		}
 	}
 	catch (const std::exception &e)
 	{
@@ -521,7 +539,7 @@ std::optional<std::reference_wrapper<AbstractEvent>> EventManager::TryGetRegistr
 {
 	if (!eventID)
 	{
-		return std::nullopt;
+		throw std::runtime_error("invalid event id");
 	}
 	{
 		auto &&it = _loadtimeEvents.find(eventID);

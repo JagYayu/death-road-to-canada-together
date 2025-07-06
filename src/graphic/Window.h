@@ -16,6 +16,7 @@
 namespace tudov
 {
 	class Engine;
+	class EventHandleKey;
 	class ScriptEngine;
 
 	class Window
@@ -37,7 +38,8 @@ namespace tudov
 		void HandleEvent(const SDL_Event &event) noexcept;
 	  
 	  public:
-		virtual void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept;
+	  virtual void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept;
+	  virtual EventHandleKey GetKey() const noexcept;
 		virtual void HandleEvents() noexcept;
 		virtual void Render() noexcept;
 

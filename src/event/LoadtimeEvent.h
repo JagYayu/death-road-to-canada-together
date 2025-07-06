@@ -29,7 +29,7 @@ namespace tudov
 		/*
 		 * return true if event already been built.
 		 */
-		bool TryBuild(const std::vector<std::string> &orders, const std::vector<EventHandleKey> &keys) noexcept;
+		bool TryBuild(ScriptID scriptID, const std::vector<std::string> &orders, const std::vector<EventHandleKey> &keys) noexcept;
 		RuntimeEvent ToRuntime() noexcept;
 	};
 } // namespace tudov

@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <format>
+#include <fstream>
 
 using namespace tudov;
 
@@ -125,6 +126,11 @@ void Log::Process()
 		return !_queue.empty() || _exit;
 	};
 
+	std::filesystem::create_directories("logs");
+	std::ofstream logFile{
+	    std::format("logs/{:%Y_%m_%d_%H_%M}.log", std::chrono::system_clock::now()),
+	    std::ios::app};
+
 	while (!_exit)
 	{
 		std::unique_lock<std::mutex> lock{_mutex};
@@ -136,7 +142,10 @@ void Log::Process()
 			_queue.pop();
 			lock.unlock();
 
-			std::cout << std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}", entry.time, entry.module, entry.verbosity, entry.message) << std::endl;
+			auto &&msg = std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}", entry.time, entry.module, entry.verbosity, entry.message);
+			std::cout << msg << std::endl;
+			logFile << msg << '\n';
+			logFile.flush();
 
 			lock.lock();
 		}

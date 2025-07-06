@@ -7,6 +7,8 @@
 -- end
 
 events:add("RenderGame", function(e)
+	e.window.renderer:clear()
+
 	-- renderer:setTransform(Camera.getTransform())
 
 	-- renderer:clear()
@@ -15,6 +17,6 @@ events:add("RenderGame", function(e)
 	-- renderer:drawText("hello world", { 36, 1 }, 16, 100, 100, -1, 1, 0, 0, 0, 1)
 
 	-- renderer:render()
-end, N_ "renderSprites")
+end, N_ "renderSprites", nil)
 
 -- return SpriteRenderer

@@ -29,7 +29,7 @@ void Renderer::Initialize() noexcept
 
 std::shared_ptr<Texture> Renderer::GetOrCreateTexture(ImageID imageID) noexcept
 {
-	auto &&texture = textureManager.GetResource(imageID);
+	auto &&texture = _textureManager.GetResource(imageID);
 	if (!texture) [[unlikely]]
 	{
 		auto &&image = window.engine.imageManager.GetResource(imageID);
@@ -39,9 +39,9 @@ std::shared_ptr<Texture> Renderer::GetOrCreateTexture(ImageID imageID) noexcept
 		}
 
 		auto &&path = window.engine.imageManager.GetResourcePath(imageID);
-		auto textureID = textureManager.Load(path, *this);
+		auto textureID = _textureManager.Load(path, *this);
 		assert(textureID);
-		texture = textureManager.GetResource(textureID);
+		texture = _textureManager.GetResource(textureID);
 		texture->Initialize(*image);
 	}
 
@@ -53,21 +53,24 @@ void Renderer::SetRenderTarget(const std::shared_ptr<Texture> &texture) noexcept
 	SDL_SetRenderTarget(_sdlRenderer, texture->GetSDLTextureHandle());
 }
 
-void Renderer::RenderTexture(const SDL_FRect &dst, const SDL_FRect &src, const std::shared_ptr<Texture> &texture) noexcept
+void Renderer::DrawTexture(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src, std::float_t z) noexcept
 {
-	SDL_RenderTexture(_sdlRenderer, texture->GetSDLTextureHandle(), &src, &dst);
+	// TODO
+	// SDL_RenderTexture(_sdlRenderer, texture->GetSDLTextureHandle(), &src, &dst);
 }
 
-void Renderer::LuaDrawRect(const sol::table &args)
+void Renderer::LuaDrawTexture(const sol::table &args)
 {
+	DrawTextureCommand cmd{};
+
 	auto texture = GetOrCreateTexture(args.get_or<ImageID>("image", 0));
 	if (!texture) [[unlikely]]
 	{
 		_log->Error("Failed to draw rect: invalid 'image'");
 		return;
 	}
+	cmd.tex = texture->GetSDLTextureHandle();
 
-	SDL_FRect dst{};
 	if (const sol::object &destination = args["destination"])
 	{
 		if (!destination.is<sol::table>()) [[unlikely]]
@@ -77,38 +80,45 @@ void Renderer::LuaDrawRect(const sol::table &args)
 		}
 
 		sol::table t = destination.as<sol::table>();
-		dst.x = t.get_or(1, 0);
-		dst.y = t.get_or(2, 0);
-		dst.w = t.get_or(3, 0);
-		dst.h = t.get_or(4, 0);
+		cmd.dst.x = t.get_or(1, 0);
+		cmd.dst.y = t.get_or(2, 0);
+		cmd.dst.w = t.get_or(3, 0);
+		cmd.dst.h = t.get_or(4, 0);
 	}
 
-	SDL_FRect *psrc = nullptr;
-	SDL_FRect src{};
 	if (const sol::object &source = args["source"]; source.is<sol::table>())
 	{
 		sol::table t = source.as<sol::table>();
-		src.x = t.get_or(1, 0);
-		src.y = t.get_or(2, 0);
-		src.w = t.get_or(3, 0);
-		src.h = t.get_or(4, 0);
-		psrc = &src;
+		cmd.src.x = t.get_or(1, 0);
+		cmd.src.y = t.get_or(2, 0);
+		cmd.src.w = t.get_or(3, 0);
+		cmd.src.h = t.get_or(4, 0);
+	}
+	else
+	{
+		cmd.nulls = DrawTextureCommand::Nulls(cmd.nulls | DrawTextureCommand::Src);
 	}
 
-	SDL_FPoint *pcenter;
-	SDL_FPoint center{};
 	if (const sol::object &origin = args["origin"]; origin.is<sol::table>())
 	{
 		sol::table ori = origin.as<sol::table>();
-		center.x = ori.get_or(1, 0);
-		center.y = ori.get_or(2, 0);
-		pcenter = &center;
+		cmd.ori.x = ori.get_or(1, 0);
+		cmd.ori.y = ori.get_or(2, 0);
+	}
+	else
+	{
+		cmd.nulls = DrawTextureCommand::Nulls(cmd.nulls | DrawTextureCommand::Ori);
 	}
 
-	std::float_t angle = args.get_or("angle", 0.0f);
+	cmd.ang = args.get_or("angle", 0.0f);
 
-	SDL_RenderTextureRotated(_sdlRenderer, texture->GetSDLTextureHandle(),
-	                         psrc, &dst, angle, pcenter, SDL_FLIP_NONE);
+	_renderCommands.emplace_back(RenderCommand{
+	    .drawTexture = cmd,
+	    .type = RenderCommandType::DrawTexture,
+	    .z = args.get_or("z", 0.0f),
+	});
+	// SDL_RenderTextureRotated(_sdlRenderer, texture->GetSDLTextureHandle(),
+	//                          psrc, &dst, angle, pcenter, SDL_FLIP_NONE);
 }
 
 std::shared_ptr<Texture> Renderer::LuaNewRenderTexture(std::int32_t width, std::int32_t height)
@@ -118,10 +128,46 @@ std::shared_ptr<Texture> Renderer::LuaNewRenderTexture(std::int32_t width, std::
 	return texture;
 }
 
-void Renderer::RenderPresent() noexcept
+void Renderer::Clear(const SDL_Color &color) noexcept
 {
-	
-	
+	SDL_SetRenderDrawColor(_sdlRenderer, color.r, color.g, color.b, color.a);
+	SDL_RenderClear(_sdlRenderer);
+}
+
+void Renderer::LuaClear(std::uint32_t color) noexcept
+{
+	std::uint8_t r = (color >> 24) & 0xFF;
+	std::uint8_t g = (color >> 16) & 0xFF;
+	std::uint8_t b = (color >> 8) & 0xFF;
+	std::uint8_t a = (color >> 0) & 0xFF;
+	Clear(SDL_Color{r, g, b, a});
+}
+
+void Renderer::Render() noexcept
+{
+	std::sort(_renderCommands.begin(), _renderCommands.end());
+
+	for (auto &&command : _renderCommands)
+	{
+		switch (command.type)
+		{
+		case RenderCommandType::DrawTexture:
+		{
+			auto &args = command.drawTexture;
+			SDL_FRect *src = (args.nulls & DrawTextureCommand::Src) ? nullptr : &args.src;
+			SDL_FPoint *ori = (args.nulls & DrawTextureCommand::Ori) ? nullptr : &args.ori;
+			SDL_RenderTextureRotated(_sdlRenderer, args.tex, src, &args.dst, args.ang, ori, SDL_FlipMode::SDL_FLIP_NONE);
+			break;
+		}
+		case RenderCommandType::DrawRect:
+		{
+			break;
+		}
+		}
+	}
+
+	_renderCommands.clear();
+
 	SDL_RenderPresent(_sdlRenderer);
 }
 

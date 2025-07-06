@@ -431,7 +431,7 @@ void ScriptLoader::HotReload(const std::vector<ScriptID> &scriptIDs)
 
 	onPostHotReloadScripts(scriptIDs);
 
-	_log->Debug("Hot reloaded scripts ...");
+	_log->Debug("Hot reloaded scripts");
 
 	Log::CleanupExpired();
 }

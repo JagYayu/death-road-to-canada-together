@@ -51,8 +51,7 @@ namespace tudov
 		~EventManager();
 
 	  private:
-		[[nodiscard]]
-		EventID AllocEventID(std::string_view eventName) noexcept;
+		[[nodiscard]] EventID AllocEventID(std::string_view eventName) noexcept;
 		void DeallocEventID(EventID eventID) noexcept;
 		void OnScriptsLoaded();
 
@@ -68,19 +67,13 @@ namespace tudov
 		void AttachToScriptLoader(ScriptLoader &scriptLoader) noexcept;
 		void DetachFromScriptLoader(ScriptLoader &scriptLoader) noexcept;
 
-		[[nodiscard]]
-		ScriptID GetEventIDByName(std::string_view scriptName) const noexcept;
-		[[nodiscard]]
-		std::optional<std::string_view> GetEventNameByID(EventID eventID) const noexcept;
-		[[nodiscard]]
-		bool IsValidEventID(EventID eventID) const noexcept;
+		[[nodiscard]] ScriptID GetEventIDByName(std::string_view scriptName) const noexcept;
+		[[nodiscard]] std::optional<std::string_view> GetEventNameByID(EventID eventID) const noexcept;
+		[[nodiscard]] bool IsValidEventID(EventID eventID) const noexcept;
 		void ClearInvalidScriptEvents() noexcept;
-		[[nodiscard]]
-		std::optional<std::reference_wrapper<AbstractEvent>> TryGetRegistryEvent(EventID eventID);
+		[[nodiscard]] std::optional<std::reference_wrapper<AbstractEvent>> TryGetRegistryEvent(EventID eventID);
 
-		[[nodiscard]]
-		std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator BeginRuntimeEvents() const;
-		[[nodiscard]]
-		std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator EndRuntimeEvents() const;
+		[[nodiscard]] std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator BeginRuntimeEvents() const;
+		[[nodiscard]] std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator EndRuntimeEvents() const;
 	};
 } // namespace tudov
