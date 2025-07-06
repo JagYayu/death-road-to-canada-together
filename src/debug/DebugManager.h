@@ -3,7 +3,10 @@
 #include "DebugConsole.h"
 #include "DebugProfiler.h"
 #include "IDebugElement.h"
+#include "graphic/Renderer.h"
 #include "util/Defs.h"
+
+#include <memory>
 
 namespace tudov
 {
@@ -17,7 +20,7 @@ namespace tudov
 		std::set<std::string_view> _shownElements;
 
 	  public:
-		Window &window;
+		std::weak_ptr<Window> window;
 		std::shared_ptr<DebugConsole> console;
 		std::shared_ptr<DebugProfiler> profiler;
 
@@ -26,7 +29,7 @@ namespace tudov
 		void RemoveElement(std::string_view element) noexcept;
 
 	  public:
-		explicit DebugManager(Window &window) noexcept;
+		explicit DebugManager(const std::weak_ptr<Window> &window) noexcept;
 
 		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 		void UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;

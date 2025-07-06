@@ -1,20 +1,16 @@
 #include "Engine.h"
 
-#include "graphic/DynamicBuffer.h"
-#include "graphic/RenderBuffer.h"
-#include "graphic/Windows.h"
-#include "graphic/sdl/SDLTexture.h"
+#include "debug/DebugManager.h"
 #include "resource/ResourceType.hpp"
 #include "util/Log.h"
 #include "util/StringUtils.hpp"
 
-#include <SDL3/SDL_system.h>
-#include <bgfx/bgfx.h>
-#include <bgfx/defines.h>
-#include <bgfx/platform.h>
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
 
 #include <memory>
 #include <regex>
+#include <stdexcept>
 #include <vector>
 
 using namespace tudov;
@@ -22,119 +18,50 @@ using namespace tudov;
 Engine::Engine() noexcept
     : _log(Log::Get("Engine")),
       _running(true),
-      _bgfxInitialized(false),
-      windows(*this),
       modManager(*this),
-      texture2DManager(),
-      fontManager()
+      imageManager(),
+      fontManager(),
+      mainWindow(nullptr)
 {
 }
 
 Engine::~Engine() noexcept
 {
-	if (_bgfxInitialized)
+	if (mainWindow)
 	{
-		bgfx::shutdown();
+		ImGui_ImplSDLRenderer3_Shutdown();
+		ImGui_ImplSDL3_Shutdown();
 	}
-}
-
-inline bgfx::PlatformData GetPlatformData(Window &window)
-{
-	SDL_PropertiesID props = SDL_GetWindowProperties(window.GetHandle());
-	bgfx::PlatformData pd{};
-
-#if defined(SDL_PLATFORM_WIN32)
-	pd.nwh = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
-	pd.type = bgfx::NativeWindowHandleType::Default;
-#elif defined(SDL_PLATFORM_MACOS)
-	// TODO
-#elif defined(SDL_PLATFORM_LINUX)
-	// TODO
-#endif
-
-	return pd;
-}
-
-void Engine::InitializeBGFXWindow(Window &window) noexcept
-{
-	bgfx::Init init{};
-	init.type = bgfx::RendererType::Count;
-	init.vendorId = BGFX_PCI_ID_NONE;
-	init.platformData = GetPlatformData(window);
-	init.resolution.width = 800;
-	init.resolution.height = 600;
-	init.resolution.reset = BGFX_RESET_VSYNC;
-
-	if (!bgfx::init(init))
-	{
-		_log->Error("Failed to initialize bgfx");
-	}
-	_bgfxInitialized = true;
-}
-
-void Engine::SwitchWindow(Window &window)
-{
-	bgfx::setPlatformData(GetPlatformData(window));
-
-	auto &&size = window.GetSize();
-	bgfx::reset(std::get<0>(size), std::get<1>(size), BGFX_RESET_VSYNC);
 }
 
 void Engine::Run(const MainArgs &args)
 {
-	SDL_SetLogPriorities(SDL_LOG_PRIORITY_VERBOSE);
-
 	_log->Debug("Initializing engine ...");
 	{
 		config.Load();
-		auto &&mainWindow = windows.CreateWindow("", config.GetWindowTitle(), config.GetWindowWidth(), config.GetWindowHeight());
-		mainWindow->Initialize();
-		InitializeBGFXWindow(*mainWindow);
+		InitializeMainWindow();
 		InitializeResources();
 		modManager.Initialize();
+		InstallToScriptEngine(modManager.scriptEngine);
 		modManager.LoadMods();
 	}
 	_log->Debug("Initialized engine");
 
-	std::shared_ptr<DynamicBuffer> buffer;
-
 	while (_running)
 	{
-		// if (!bgfx::renderFrame(10))
-		// {
-		// 	_log->Error("bgfx::renderFrame error");
-		// }
-
-		for (auto &&window : windows)
+		for (auto &&window : _windows)
 		{
-			window->PollEvents();
+			window->HandleEvents();
 		}
 
 		modManager.Update();
 
-		auto firstWindow = true;
+		debugManager->UpdateAndRender();
 
-		for (auto &&window : windows)
+		for (auto &&window : _windows)
 		{
-			if (firstWindow)
-			{
-				buffer = std::make_shared<DynamicBuffer>(window->renderer);
-				firstWindow = false;
-			}
-
-			buffer->Clear();
-			DynamicBuffer::Draw2DArgs args{};
-			args.tex = 1;
-			args.src = {0, 0, 24, 24};
-			args.dst = {0, 0, 800, 800};
-			buffer->Draw2D(args);
-			buffer->Render();
-
-			SwitchWindow(*window);
 			window->Render();
 		}
-
-		bgfx::frame();
 	}
 
 	_log->Debug("Deinitializing engine ...");
@@ -146,7 +73,25 @@ void Engine::Run(const MainArgs &args)
 
 void Engine::Quit()
 {
+	for (auto &&window : _windows)
+	{
+		window->Close();
+	}
 	_running = false;
+}
+
+void Engine::InitializeMainWindow()
+{
+	if (mainWindow)
+	{
+		throw std::runtime_error("Engine main window has already been initialized!");
+	}
+
+	mainWindow = std::make_shared<MainWindow>(*this);
+	AddWindow(mainWindow);
+	mainWindow->Initialize(config.GetWindowWidth(), config.GetWindowHeight(), config.GetWindowTitle());
+
+	debugManager = std::make_shared<DebugManager>(mainWindow);
 }
 
 void Engine::InitializeResources()
@@ -187,34 +132,37 @@ void Engine::InitializeResources()
 
 			auto &&path = entry.path();
 			auto &&it = mountDirectories.find(path.extension().string());
-			if (it != mountDirectories.end())
+			if (it == mountDirectories.end())
 			{
-				auto &&filePath = path.generic_string();
-				auto &&data = ReadFileToString(filePath, true);
-
-				// auto &&sdlRenderer = dynamic_cast<SDLRenderer *>(window.renderer.get());
-				// auto &&sdlSurface = std::make_shared<SDLSurface>(*sdlRenderer, std::string_view(data));
-				// TextureID textureID = texture2DManager.Load<Texture2D>(filePath, *(sdlSurface->GetRaw()));
-				// if (textureID)
-				// {
-				// 	fileCounts.try_emplace(it->second, 0).first->second++;
-				// }
-				// else
-				// {
-				// 	_log->Error("Texture ID of \"{}\" is 0!", filePath);
-				// }
-
-				// bitmap suppoert
-				// auto &&relative = std::filesystem::relative(path, mountDirectory).generic_string();
-				// for (auto &&pattern : mountBitmapPatterns)
-				// {
-				// 	if (std::regex_match(relative, pattern))
-				// 	{
-				// 		fontManager.AddBitmapFont(std::make_shared<BitmapFont>(textureID, std::string_view(data)));
-				// 		break;
-				// 	}
-				// }
+				continue;
 			}
+
+			auto &&filePath = path.generic_string();
+			auto imageID = imageManager.Load(filePath);
+			if (!imageID)
+			{
+				_log->Error("Image ID of \"{}\" is 0!", filePath);
+				continue;
+			}
+
+			auto &&image = imageManager.GetResource(imageID);
+			auto &&fileMemory = ReadFileToString(filePath, true);
+			image->Initialize(fileMemory);
+			if (image->IsValid())
+			{
+				fileCounts.try_emplace(it->second, 0).first->second++;
+			}
+
+			// bitmap suppoert
+			// auto &&relative = std::filesystem::relative(path, mountDirectory).generic_string();
+			// for (auto &&pattern : mountBitmapPatterns)
+			// {
+			// 	if (std::regex_match(relative, pattern))
+			// 	{
+			// 		fontManager.AddBitmapFont(std::make_shared<BitmapFont>(textureID, std::string_view(data)));
+			// 		break;
+			// 	}
+			// }
 		}
 	}
 
@@ -223,4 +171,23 @@ void Engine::InitializeResources()
 	{
 		_log->Info("{}: {}", ResourceTypeToStringView(fileType), count);
 	}
+}
+
+void Engine::AddWindow(const std::shared_ptr<Window> &window)
+{
+	_windows.emplace_back(window);
+}
+
+std::shared_ptr<Window> Engine::LuaGetMainWindow() noexcept
+{
+	return mainWindow;
+}
+
+void InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
+{
+	auto &&table = scriptEngine.CreateTable();
+
+	//
+
+	scriptEngine.SetReadonlyGlobal("Engine", table);
 }

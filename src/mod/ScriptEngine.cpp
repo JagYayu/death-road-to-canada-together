@@ -1,5 +1,6 @@
 #include "ScriptEngine.h"
 
+#include "LuaAPI.hpp"
 #include "ModManager.h"
 #include "ScriptLoader.h"
 #include "ScriptProvider.h"
@@ -63,16 +64,7 @@ void ScriptEngine::Initialize()
 	_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
 	_luaPostProcessSandboxing = scriptEngineModule.raw_get<sol::function>("postProcessSandboxing");
 
-	// _lua.new_usertype<ScriptEnum>("Enum", sol::no_constructor,
-	//                               "clear", &ScriptEnum::Clear,
-	//                               "draw", &ScriptEnum::Draw,
-	//                               "render", &ScriptEnum::Render,
-	//                               "sort", &ScriptEnum::Sort);
-	// {
-	// 	sol::table tbl = _lua.create_table();
-	// 	tbl.new_enum()
-	// 	_lua["Enum"] = tbl;
-	// }
+	LuaAPI::Install(_lua, &modManager.engine);
 
 	MakeReadonlyGlobal(_lua.globals());
 }
@@ -202,9 +194,8 @@ sol::table &ScriptEngine::GetSandboxedGlobals(std::string_view sandboxKey) noexc
 	    "utf8",
 	    "xpcall",
 	    // C++
-	    "Events",
-	    "Render",
-	    "Window",
+		"engine",
+		"events",
 	};
 
 	for (auto &&key : keys)

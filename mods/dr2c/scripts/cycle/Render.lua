@@ -10,15 +10,15 @@ local Render = {}
 -- 	"World",
 -- }
 
-local eventRenderGame = Events.new("RenderGame", {
+local eventRenderGame = events:new("RenderGame", {
 	"Camera",
 	"Sprites",
 	"Rooms",
 	"UI",
 })
 
-Events.add("Render", function()
-	Events.invoke(eventRenderGame, {})
+events:add("Render", function()
+	events:invoke(eventRenderGame, {})
 end, N_ "render")
 
 return Render

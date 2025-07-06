@@ -31,6 +31,7 @@ namespace tudov
 	using ResourceID = std::uint64_t;
 	using ScriptID = std::uint64_t;
 
+	using ImageID = ResourceID;
 	using TextureID = ResourceID;
 	using FontID = ResourceID;
 } // namespace tudov

@@ -39,6 +39,12 @@ namespace tudov
 			return it != _id2Entry.end() ? it->second.resource : nullptr;
 		}
 
+		inline std::string_view GetResourcePath(ResourceID id) const noexcept
+		{
+			auto &&it = _id2Entry.find(id);
+			return it != _id2Entry.end() ? it->second.path : "";
+		}
+
 		inline ResourceID GetResourceID(std::string_view path) const noexcept
 		{
 			auto &&it = _path2ID.find(path);

@@ -1,12 +1,12 @@
-local Camera = require "dr2c.render.Camera"
-local SpriteRenderer = {}
+-- local Camera = require "dr2c.render.Camera"
+-- local SpriteRenderer = {}
 
-function SpriteRenderer.test()
-end
+-- local renderer = Engine.getMainWindow().getRenderer()
 
-local renderer = Window.newRenderer()
+-- function SpriteRenderer.test()
+-- end
 
-Events.add("RenderGame", function(e)
+events:add("RenderGame", function(e)
 	-- renderer:setTransform(Camera.getTransform())
 
 	-- renderer:clear()
@@ -17,4 +17,4 @@ Events.add("RenderGame", function(e)
 	-- renderer:render()
 end, N_ "renderSprites")
 
-return SpriteRenderer
+-- return SpriteRenderer

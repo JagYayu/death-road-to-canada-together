@@ -1,69 +1,52 @@
 #pragma once
 
-#include "DynamicBuffer.h"
-#include "IRenderer.h"
-#include "View.h"
+#include "resource/TextureManager.hpp"
+#include "util/Log.h"
 
-
-#include "bgfx/defines.h"
+#include "SDL3/SDL_render.h"
 
 #include <memory>
 
 namespace tudov
 {
-	class Engine;
-	class DynamicBuffer;
+	class Window;
 
 	class Renderer
 	{
-	  public:
-		struct DrawArgs
-		{
-			ResourceID tex;
-			SDL_Rect src;
-			SDL_Rect dst;
-			std::float_t z;
-			SDL_Color color;
-			std::float_t angle;
-			glm::vec2 center;
-		};
+		friend class LuaAPI;
 
-		struct DrawTextArgs
+	  public:
+		struct RenderTextureCommand
 		{
-			std::string_view text;
-			std::vector<FontID> fonts;
-			std::int32_t fontSize;
-			std::float_t x;
-			std::float_t y;
-			std::float_t z;
-			std::float_t scale;
-			SDL_Color color;
-			glm::vec2 align;
-			std::float_t wrapWidth;
-			std::float_t shadow;
-			SDL_Color shadowColor;
+			
 		};
 
 	  private:
-		std::string _viewName;
+		std::shared_ptr<Log> _log;
+		SDL_Renderer *_sdlRenderer;
+
+		TextureManager textureManager;
 
 	  public:
 		Window &window;
 
+	  private:
+		std::shared_ptr<Texture> GetOrCreateTexture(ImageID imageID) noexcept;
+
+		void LuaDrawRect(const sol::table &args);
+		std::shared_ptr<Texture> LuaNewRenderTexture(std::int32_t width, std::int32_t height);
+
 	  public:
 		explicit Renderer(Window &window) noexcept;
 
-		// CreateStaticBuffer();
-
 		void Initialize() noexcept;
-		void Begin() noexcept;
-		void End() noexcept;
-		glm::mat3x3 GetTransform() noexcept;
-		void SetTransform(const glm::mat3x3 &mat3) noexcept;
-		void Sort() noexcept;
-		void Submit() noexcept;
-		sol::object LuaGetTransform() noexcept;
-		void LuaSetTransform(const sol::table &mat3) noexcept;
-		std::shared_ptr<DynamicBuffer> LuaNewDynamicBuffer() noexcept;
+
+		void SetRenderTarget(const std::shared_ptr<Texture> &texture = nullptr) noexcept;
+		void RenderTexture(const SDL_FRect &dst, const SDL_FRect &src, const std::shared_ptr<Texture> &texture = nullptr) noexcept;
+
+		void RenderPresent() noexcept;
+
+		SDL_Renderer *GetSDLRendererHandle() noexcept;
+		const SDL_Renderer *GetSDLRendererHandle() const noexcept;
 	};
 } // namespace tudov

@@ -66,6 +66,8 @@ namespace tudov
 		void HotReloadScriptPending(std::string scriptName, std::string scriptCode);
 
 		void Update();
+
+		void InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept;
 	};
 
 	ENABLE_ENUM_FLAG_OPERATORS(ModManager::ELoadState);

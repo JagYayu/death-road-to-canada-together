@@ -3,11 +3,9 @@
 #include "Mod.h"
 #include "ModConfig.hpp"
 #include "ModManager.h"
-#include "graphic/sdl/SDLTrueTypeFont.h"
 #include "program/Engine.h"
 #include "util/StringUtils.hpp"
 
-#include <FileWatch.hpp>
 #include <filesystem>
 #include <format>
 #include <memory>
@@ -52,6 +50,7 @@ ModConfig UnpackagedMod::LoadConfig(const std::filesystem::path &directory)
 UnpackagedMod::UnpackagedMod(ModManager &modManager, const std::filesystem::path &directory)
     : Mod(modManager, LoadConfig(directory)),
       log(Log::Get("UnpackagedMod")),
+      _loaded(false),
       _directory(directory)
 {
 }
@@ -101,7 +100,7 @@ void UnpackagedMod::Load()
 		return;
 	}
 
-	_fileWatcher = std::make_shared<filewatch::FileWatch<std::string>>(_directory.string(), [&](const std::string &filePath, const filewatch::Event changeType)
+	_fileWatcher = std::make_unique<filewatch::FileWatch<std::string>>(_directory.string(), [&](const std::string &filePath, const filewatch::Event changeType)
 	{
 		auto &&scriptProvider = modManager.scriptProvider;
 
@@ -170,19 +169,21 @@ void UnpackagedMod::Load()
 			auto &&scriptID = modManager.scriptProvider.AddScript(scriptName, oss.str(), namespace_);
 			_scripts.emplace_back(scriptID);
 		}
-		else if (IsFont(filePath))
-		{
-			auto fontID = modManager.engine.fontManager.Load<SDLTrueTypeFont>(filePath, ReadFileToString(filePath, true));
-			_fonts.emplace_back(fontID);
-		}
+		// else if (IsFont(filePath))
+		// {
+		// 	auto fontID = modManager.engine.fontManager.Load<SDLTrueTypeFont>(filePath, ReadFileToString(filePath, true));
+		// 	_fonts.emplace_back(fontID);
+		// }
 	}
 
 	log->Debug("Loaded unpacked mod from \"{}\"", dir);
+
+	_loaded = true;
 }
 
 void UnpackagedMod::Unload()
 {
-	if (!_fileWatcher)
+	if (!_loaded)
 	{
 		log->Warn("Mod has not been loaded");
 		return;

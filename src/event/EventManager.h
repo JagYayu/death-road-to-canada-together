@@ -18,6 +18,8 @@ namespace tudov
 
 	class EventManager
 	{
+		friend class LuaAPI;
+
 	  private:
 		std::shared_ptr<Log> _log;
 		EventID _latestEventID;
@@ -54,7 +56,13 @@ namespace tudov
 		void DeallocEventID(EventID eventID) noexcept;
 		void OnScriptsLoaded();
 
+		void LuaAdd(const sol::object &event, const sol::object &func, const sol::object &name, const sol::object &order, const sol::object &key, const sol::object &sequence);
+		EventID LuaNew(const sol::object &event, const sol::object &orders, const sol::object &keys);
+		void LuaInvoke(const sol::object &event, const sol::object &args, const sol::object &key);
+
 	  public:
+		void Initialize() noexcept;
+		void Deinitialize() noexcept;
 		void InstallToScriptEngine(ScriptEngine &scriptEngine);
 		void UninstallFromScriptEngine(ScriptEngine &scriptEngine);
 		void AttachToScriptLoader(ScriptLoader &scriptLoader) noexcept;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ResourceManager.hpp"
-#include "graphic/Texture2D.h"
+#include "graphic/Texture.h"
 #include "util/Defs.h"
 
 #include <string_view>
@@ -9,17 +9,17 @@
 namespace tudov
 {
 	template <>
-	inline ResourceManager<Texture2D>::ResourceManager() noexcept
+	inline ResourceManager<Texture>::ResourceManager() noexcept
 	    : _log(Log::Get("TextureManager"))
 	{
 	}
 
 	class ScriptEngine;
 
-	class Texture2DManager : public ResourceManager<Texture2D>
+	class TextureManager : public ResourceManager<Texture>
 	{
 	  public:
-		Texture2DManager() noexcept;
+		TextureManager() noexcept;
 
 		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 		void UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;

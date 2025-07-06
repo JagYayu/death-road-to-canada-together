@@ -34,7 +34,7 @@ local timer = 0
 -- 	print(e)
 -- end)
 
-Events.add("RenderGame", function(e)
+events.add("RenderGame", function(e)
 	-- -- TODO LERP POSITION
 	-- timer = timer + 1
 

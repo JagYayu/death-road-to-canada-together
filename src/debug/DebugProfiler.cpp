@@ -4,7 +4,6 @@
 #include "event/EventManager.h"
 #include "event/RuntimeEvent.h"
 #include "program/Engine.h"
-#include "util/Defs.h"
 #include "util/Utils.hpp"
 
 #include <algorithm>
@@ -13,7 +12,7 @@
 
 using namespace tudov;
 
-DebugProfiler::DebugProfiler(Window &window) noexcept
+DebugProfiler::DebugProfiler(const std::weak_ptr<Window>&window) noexcept
     : window(window)
 {
 }
@@ -38,9 +37,14 @@ struct DebugProfilerEntry
 
 void DebugProfiler::UpdateAndRender() noexcept
 {
+	if (window.expired())
+	{
+		return;
+	}
+	
 	if (ImGui::Begin("Profiler"))
 	{
-		_framerateBuffer.push(window.GetFramerate());
+		_framerateBuffer.push(window.lock()->GetFramerate());
 		{
 			float framerates[FramerateBufferSize];
 			for (std::uint64_t i = FramerateBufferSize; i-- > 0;)
@@ -68,7 +72,7 @@ void DebugProfiler::UpdateAndRender() noexcept
 
 		std::vector<DebugProfilerEntry> entries{};
 
-		auto &&eventManager = window.engine.modManager.eventManager;
+		auto &&eventManager = window.lock()->engine.modManager.eventManager;
 		for (auto &&it = eventManager.BeginRuntimeEvents(); it != eventManager.EndRuntimeEvents(); ++it)
 		{
 			auto &&event = *it->second;

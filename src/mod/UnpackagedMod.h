@@ -4,7 +4,10 @@
 #include "util/Defs.h"
 #include "util/Log.h"
 
-#include <FileWatch.hpp>
+#include "FileWatch.hpp"
+
+#include <memory>
+#include <regex>
 
 namespace tudov
 {
@@ -13,7 +16,8 @@ namespace tudov
 	  private:
 		std::shared_ptr<Log> _log;
 
-		std::shared_ptr<filewatch::FileWatch<std::string>> _fileWatcher;
+		bool _loaded;
+		std::unique_ptr<filewatch::FileWatch<std::string>> _fileWatcher;
 		std::filesystem::path _directory;
 
 		std::vector<std::regex> _scriptFilePatterns;

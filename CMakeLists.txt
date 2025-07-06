@@ -8,9 +8,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 # set(SDL3_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3-3.2.16")
 # set(SDL3_ttf_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3_ttf-3.2.2")
 # set(SDL3_image_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/SDL3_image-3.2.4")
-set(imgui_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui-1.91.9b")
 
-if (MSVC)
+if(MSVC)
     add_compile_options(/FS /Zc:preprocessor)
 endif()
 
@@ -18,10 +17,6 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
-
-	"${imgui_DIR}/*.cpp"
-    "${imgui_DIR}/*.c"
-    "${imgui_DIR}/*.hpp"
 )
 add_executable(dr2c ${SRC_FILES})
 
@@ -35,7 +30,7 @@ target_include_directories(dr2c PRIVATE
 # LuaJIT - from vcpkg dir
 find_path(LUAJIT_INCLUDE_DIR luajit.h PATHS "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include" PATH_SUFFIXES luajit)
 find_library(LUAJIT_LIBRARY NAMES lua51 PATHS "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib")
-if (NOT LUAJIT_INCLUDE_DIR OR NOT LUAJIT_LIBRARY)
+if(NOT LUAJIT_INCLUDE_DIR OR NOT LUAJIT_LIBRARY)
     message(FATAL_ERROR "LuaJIT not found")
 endif()
 target_include_directories(dr2c PRIVATE ${LUAJIT_INCLUDE_DIR})
@@ -44,6 +39,7 @@ target_link_libraries(dr2c PRIVATE ${LUAJIT_LIBRARY})
 # sol2 - from vcpkg
 find_package(sol2 CONFIG REQUIRED)
 target_link_libraries(dr2c PRIVATE sol2::sol2)
+
 
 # SDL3
 find_package(SDL3 CONFIG REQUIRED)
@@ -57,13 +53,9 @@ target_link_libraries(dr2c PRIVATE $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-s
 find_package(SDL3_ttf CONFIG REQUIRED)
 target_link_libraries(dr2c PRIVATE SDL3_ttf::SDL3_ttf)
 
-# bgfx
-find_package(bgfx CONFIG REQUIRED)
-target_link_libraries(dr2c PRIVATE bgfx::bx bgfx::bgfx bgfx::bimg bgfx::bimg_decode)
-
-# imgui - from thirdparty dir
-target_include_directories(dr2c PRIVATE ${imgui_DIR})
-target_include_directories(dr2c PRIVATE ${imgui_DIR}/backends)
+# imgui - from vcpkg
+find_package(imgui CONFIG REQUIRED)
+target_link_libraries(dr2c PRIVATE imgui::imgui)
 
 # glm - from thirdparty lib
 target_include_directories(dr2c PRIVATE ${CMAKE_SOURCE_DIR}/lib/glm-master)

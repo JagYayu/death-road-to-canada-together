@@ -37,14 +37,14 @@ void ModManager::Initialize()
 	};
 
 	scriptEngine.Initialize();
-	eventManager.InstallToScriptEngine(scriptEngine);
-	eventManager.AttachToScriptLoader(scriptEngine.scriptLoader);
+	eventManager.Initialize();
 }
 
 void ModManager::Deinitialize()
 {
-	eventManager.DetachFromScriptLoader(scriptEngine.scriptLoader);
-	eventManager.UninstallFromScriptEngine(scriptEngine);
+	eventManager.Deinitialize();
+	// eventManager.DetachFromScriptLoader(scriptEngine.scriptLoader);
+	// eventManager.UninstallFromScriptEngine(scriptEngine);
 }
 
 void ModManager::AddMod(const std::filesystem::path &modRoot)
@@ -218,4 +218,15 @@ void ModManager::Update()
 		scriptEngine.scriptLoader.HotReload(scriptIDs);
 		_hotReloadScriptsPending = nullptr;
 	}
+}
+
+void ModManager::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
+{
+	// eventManager.InstallToScriptEngine(scriptEngine);
+
+	// auto &&table = scriptEngine.CreateTable();
+
+	// //
+
+	// scriptEngine.SetReadonlyGlobal("Events", table);
 }

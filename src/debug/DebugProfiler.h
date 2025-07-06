@@ -4,6 +4,7 @@
 #include "IDebugElement.h"
 
 #include <cmath>
+#include <memory>
 
 namespace tudov
 {
@@ -19,9 +20,9 @@ namespace tudov
 		CircularBuffer<std::float_t, FramerateBufferSize> _framerateBuffer;
 
 	  public:
-		Window &window;
+		std::weak_ptr<Window> window;
 
-		DebugProfiler(Window &window) noexcept;
+		DebugProfiler(const std::weak_ptr<Window> &window) noexcept;
 
 		std::string_view GetName() noexcept override;
 		void UpdateAndRender() noexcept override;

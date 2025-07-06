@@ -1,5 +1,5 @@
 {
   "name": "dr2c",
   "version": "0.0.1",
-  "dependencies": ["imgui", "sdl3", "sdl3-image", "luajit", "sol2", "bgfx"]
+  "dependencies": ["imgui", "luajit", "sol2", "raylib"]
 }

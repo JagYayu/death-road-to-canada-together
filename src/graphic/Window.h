@@ -1,66 +1,53 @@
 #pragma once
 
-#include "DynamicBuffer.h"
-#include "ErrorOverlay.h"
 #include "Renderer.h"
-#include "debug/DebugManager.h"
-#include "mod/ScriptEngine.h"
+#include "util/Log.h"
 
-#include "SDL3/SDL.h"
-#include "SDL3/SDL_render.h"
-
+#include "SDL3/SDL_video.h"
 
 #include <cmath>
-#include <cstddef>
+#include <functional>
 #include <memory>
+#include <string_view>
 #include <tuple>
-
-typedef struct SDL_GLContextState *SDL_GLContext;
-class SDL_Window;
+#include <unordered_map>
+#include <vector>
 
 namespace tudov
 {
 	class Engine;
-	struct EventHandleKey;
-	class SDLRenderer;
-	class Texture2D;
+	class ScriptEngine;
 
 	class Window
 	{
-		friend SDLRenderer;
-
-	  private:
-		SDL_Window *_window;
-		SDL_Renderer *_renderer;
-		bool _initialized;
-		std::uint32_t _prevTick;
-		std::uint32_t _frame;
-		std::double_t _framerate;
-		ErrorOverlay _errorOverlay;
+	  protected:
+		std::shared_ptr<Log> _log;
+		SDL_Window *_sdlWindow;
+		bool _shouldClose;
 
 	  public:
 		Engine &engine;
-		Renderer renderer;
-		DebugManager debugManager;
+		std::shared_ptr<Renderer> renderer;
 
 	  public:
-		Window(Engine &engine);
+		explicit Window(Engine &engine, std::string_view logName = "Window") noexcept;
 		~Window() noexcept;
 
-	  private:
-		std::tuple<sol::table, EventHandleKey> ResolveKeyEvent(SDL_Event &event) noexcept;
-		std::tuple<sol::table, EventHandleKey> ResolveMouseButtonEvent(SDL_Event &event) noexcept;
-
+	  protected:
+		void HandleEvent(const SDL_Event &event) noexcept;
+	  
 	  public:
-		SDL_Window *GetHandle();
+		virtual void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept;
+		virtual void HandleEvents() noexcept;
+		virtual void Render() noexcept;
 
-		float GetFramerate() const noexcept;
+		void Close() noexcept;
+		bool ShouldClose() noexcept;
+
+		SDL_Window *GetSDLWindowHandle() noexcept;
+		std::int32_t GetWidth() const noexcept;
+		std::int32_t GetHeight() const noexcept;
 		std::tuple<std::int32_t, std::int32_t> GetSize() const noexcept;
-
-		void Initialize();
-		void Deinitialize() noexcept;
-		void InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept;
-		void PollEvents();
-		void Render();
+		std::float_t GetFramerate() const noexcept;
 	};
 } // namespace tudov

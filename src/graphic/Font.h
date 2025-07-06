@@ -4,7 +4,7 @@
 
 namespace tudov
 {
-	class Shader
+	class Font
 	{
 	};
 } // namespace tudov

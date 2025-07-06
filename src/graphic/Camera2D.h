@@ -1,10 +1,12 @@
 #pragma once
 
-#include <string_view>
+#include <string>
 
 namespace tudov
 {
-	class Shader
+	class Window;
+
+	class Camera2D
 	{
 	};
 } // namespace tudov

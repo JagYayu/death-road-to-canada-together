@@ -1,12 +1,11 @@
+#include "SDL3/SDL_init.h"
+#include "SDL3/SDL_messagebox.h"
+#include "imgui_impl_sdlrenderer3.h"
 #include "program/Engine.h"
 
-#include "SDL3/SDL_init.h"
-#include "SDL3/SDL_log.h"
+#include "SDL3/SDL.h"
 #include "SDL3/SDL_main.h"
-#include "SDL3_ttf/SDL_ttf.h"
 #include "imgui.h"
-#include "imgui_impl_sdl3.h"
-#include "imgui_impl_sdlrenderer3.h"
 
 using namespace tudov;
 
@@ -74,20 +73,9 @@ void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority
 
 int main(int argc, char **args)
 {
-	SDL_SetMainReady();
-
-	SDL_SetLogOutputFunction(SDLLogOutputCallback, nullptr);
-	SDL_SetLogPriorities(SDL_LOG_PRIORITY_INVALID);
 	if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS | SDL_INIT_SENSOR | SDL_INIT_CAMERA))
 	{
-		SDL_Log("SDL_Init failed: %s", SDL_GetError());
-		return -1;
-	}
-
-	if (!TTF_Init())
-	{
-		SDL_Log("TTF_init failed: %s", SDL_GetError());
-		return -1;
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error initializing SDL3", nullptr);
 	}
 
 	IMGUI_CHECKVERSION();
@@ -101,8 +89,6 @@ int main(int argc, char **args)
 
 	Engine().Run(MainArgs{argc, args});
 
-	ImGui_ImplSDLRenderer3_Shutdown();
-	ImGui_ImplSDL3_Shutdown();
 	ImGui::DestroyContext();
 
 	SDL_Quit();

@@ -1,6 +1,5 @@
 #include "EngineConfig.h"
 
-#include "graphic/ERenderBackend.h"
 #include "util/Defs.h"
 #include "util/Log.h"
 
@@ -23,7 +22,6 @@ constexpr const char *keyTitle = "title";
 constexpr const char *keyWidth = "width";
 constexpr const char *keyWindow = "window";
 
-static const auto valueRenderBackend = ERenderBackend::SDL;
 static const auto valueWindowFramelimit = 100;
 static const auto valueWindowFullscreen = false;
 static const auto valueWindowHeight = 720;
@@ -179,15 +177,16 @@ std::unordered_map<std::string, ResourceType> EngineConfig::GetMountFiles() noex
 	return files;
 }
 
-ERenderBackend EngineConfig::GetRenderBackend() noexcept
+bool EngineConfig::GetRenderBackend() noexcept
 {
-	auto &&renderBackend = _config[keyRenderBackend];
-	if (!renderBackend.is_string())
-	{
-		renderBackend = valueRenderBackend;
-		_config[keyRenderBackend] = renderBackend;
-	}
-	return renderBackend;
+	// auto &&renderBackend = _config[keyRenderBackend];
+	// if (!renderBackend.is_string())
+	// {
+	// 	renderBackend = valueRenderBackend;
+	// 	_config[keyRenderBackend] = renderBackend;
+	// }
+	// return renderBackend;
+	return false;
 }
 
 std::uint32_t EngineConfig::GetWindowFramelimit() noexcept

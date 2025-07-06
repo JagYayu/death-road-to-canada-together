@@ -2,16 +2,15 @@
 
 #include "DebugConsole.h"
 #include "graphic/Window.h"
-#include "program/Engine.h"
-#include "util/Defs.h"
+#include "imgui_impl_sdl3.h"
+#include "mod/ScriptEngine.h"
 
-#include <imgui.h>
-#include <imgui_impl_sdl3.h>
-#include <imgui_impl_sdlrenderer3.h>
+#include "imgui.h"
+#include "imgui_impl_sdlrenderer3.h"
 
 using namespace tudov;
 
-DebugManager::DebugManager(Window &window) noexcept
+DebugManager::DebugManager(const std::weak_ptr<Window> &window) noexcept
     : window(window),
       console(std::make_shared<DebugConsole>()),
       profiler(std::make_shared<DebugProfiler>(window)),
@@ -65,8 +64,8 @@ void DebugManager::UninstallFromScriptEngine(std::string_view name, ScriptEngine
 
 void DebugManager::UpdateAndRender() noexcept
 {
-	ImGui_ImplSDLRenderer3_NewFrame();
 	ImGui_ImplSDL3_NewFrame();
+	ImGui_ImplSDLRenderer3_NewFrame();
 	ImGui::NewFrame();
 
 	if (ImGui::BeginMainMenuBar())
@@ -107,5 +106,6 @@ void DebugManager::UpdateAndRender() noexcept
 	}
 
 	ImGui::EndFrame();
+
 	ImGui::Render();
 }

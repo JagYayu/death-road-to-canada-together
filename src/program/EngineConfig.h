@@ -3,9 +3,10 @@
 #include "resource/ResourceType.hpp"
 #include "util/Defs.h"
 #include "util/Log.h"
+#include "FileWatch.hpp"
 
-#include <FileWatch.hpp>
-#include <json.hpp>
+#include "json.hpp"
+
 #include <memory>
 #include <string>
 
@@ -37,7 +38,7 @@ namespace tudov
 		std::vector<std::string> GetMountDirectories() noexcept;
 		std::unordered_map<std::string, ResourceType> GetMountFiles() noexcept;
 		void GetDebugProfiling() noexcept;
-		ERenderBackend GetRenderBackend() noexcept;
+		bool GetRenderBackend() noexcept;
 		std::uint32_t GetWindowFramelimit() noexcept;
 		std::string_view GetWindowTitle() noexcept;
 		std::uint32_t GetWindowWidth() noexcept;
