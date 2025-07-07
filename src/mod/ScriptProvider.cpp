@@ -24,8 +24,8 @@ bool ScriptProvider::IsStaticScript(std::string_view scriptName)
 	return scriptName.starts_with(staticScriptPrefix);
 }
 
-ScriptProvider::ScriptProvider(ModManager &modManager)
-    : modManager(modManager),
+ScriptProvider::ScriptProvider(Context &context)
+    : _context(context),
       _log(Log::Get("ScriptProvider")),
       _latestScriptID(0)
 {
@@ -36,6 +36,11 @@ ScriptProvider::ScriptProvider(ModManager &modManager)
 
 		AddScriptImpl(scriptName, ReadFileToString(path));
 	}
+}
+
+Context &ScriptProvider::GetContext() noexcept
+{
+	return _context;
 }
 
 ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_)

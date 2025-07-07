@@ -4,6 +4,7 @@
 #include "ScriptProvider.h"
 #include "UnpackagedMod.h"
 #include "mod/ModEntry.hpp"
+#include "program/Context.h"
 #include "util/Defs.h"
 
 #include <memory>
@@ -11,12 +12,9 @@
 
 using namespace tudov;
 
-ModManager::ModManager(Engine &engine)
-    : engine(engine),
-      scriptEngine(*this),
-      scriptProvider(*this),
-      eventManager(*this),
-      _log(Log::Get("ModManager")),
+ModManager::ModManager(Context &context) noexcept
+    : _log(Log::Get("ModManager")),
+      _context(context),
       _loadState(ELoadState::None)
 {
 }
@@ -26,7 +24,12 @@ ModManager::~ModManager()
 	UnloadMods();
 }
 
-void ModManager::Initialize()
+Context &ModManager::GetContext() noexcept
+{
+	return _context;
+}
+
+void ModManager::Initialize() noexcept
 {
 	_directories = {
 	    "mods",
@@ -35,14 +38,10 @@ void ModManager::Initialize()
 	_requiredMods = {
 	    ModEntry("dr2c", Version(1, 0, 0), 0),
 	};
-
-	scriptEngine.Initialize();
-	eventManager.Initialize();
 }
 
-void ModManager::Deinitialize()
+void ModManager::Deinitialize() noexcept
 {
-	eventManager.Deinitialize();
 	// eventManager.DetachFromScriptLoader(scriptEngine.scriptLoader);
 	// eventManager.UninstallFromScriptEngine(scriptEngine);
 }
@@ -125,8 +124,8 @@ void ModManager::LoadMods()
 		mod->Load();
 	}
 
-	scriptEngine.scriptLoader.LoadAll();
-	scriptEngine.CollectGarbage();
+	GetScriptLoader()->LoadAll();
+	GetScriptEngine()->CollectGarbage();
 
 	_log->Debug("Loaded all required mods");
 
@@ -143,7 +142,7 @@ void ModManager::UnloadMods()
 
 	_log->Debug("Unloading all loaded mods ...");
 
-	scriptEngine.scriptLoader.UnloadAll();
+	GetScriptLoader()->UnloadAll();
 
 	for (auto &&mod : _loadedMods)
 	{
@@ -189,25 +188,28 @@ void ModManager::HotReloadScriptPending(std::string scriptName, std::string scri
 
 void ModManager::Update()
 {
-	if (!scriptEngine.scriptLoader.HasAnyLoadError())
+	if (!GetScriptLoader()->HasAnyLoadError())
 	{
-		eventManager.update->Invoke();
+		GetEventManager()->GetUpdateEvent().Invoke();
 	}
 
 	if (_hotReloadScriptsPending)
 	{
 		std::vector<ScriptID> scriptIDs{};
 
+		auto &&scriptLoader = GetScriptLoader();
+		auto &&scriptProvider = GetScriptProvider();
+
 		for (auto &&[scriptName, scriptCode] : *_hotReloadScriptsPending)
 		{
-			auto scriptID = scriptProvider.GetScriptIDByName(scriptName);
+			auto scriptID = scriptProvider->GetScriptIDByName(scriptName);
 
-			auto &&pendingScripts = scriptEngine.scriptLoader.Unload(scriptID);
+			auto &&pendingScripts = GetScriptLoader()->Unload(scriptID);
 			scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
 
-			auto &&namespace_ = scriptProvider.GetScriptNamespace(scriptID);
-			scriptProvider.RemoveScript(scriptID);
-			scriptID = scriptProvider.AddScript(scriptName, scriptCode, namespace_);
+			auto &&namespace_ = scriptProvider->GetScriptNamespace(scriptID);
+			scriptProvider->RemoveScript(scriptID);
+			scriptID = scriptProvider->AddScript(scriptName, scriptCode, namespace_);
 
 			scriptIDs.emplace_back(scriptID);
 		}
@@ -215,7 +217,7 @@ void ModManager::Update()
 		std::sort(scriptIDs.begin(), scriptIDs.end());
 		scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
 
-		scriptEngine.scriptLoader.HotReload(scriptIDs);
+		scriptLoader->HotReload(scriptIDs);
 		_hotReloadScriptsPending = nullptr;
 	}
 }

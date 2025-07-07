@@ -1,9 +1,9 @@
 #pragma once
 
+#include "FileWatch.hpp"
 #include "resource/ResourceType.hpp"
 #include "util/Defs.h"
 #include "util/Log.h"
-#include "FileWatch.hpp"
 
 #include "json.hpp"
 
@@ -19,7 +19,7 @@ namespace tudov
 	  private:
 		std::shared_ptr<Log> _log;
 		nlohmann::json _config;
-		std::unique_ptr<filewatch::FileWatch<std::string>> _fileWatcher;
+		filewatch::FileWatch<std::string> *_fileWatcher;
 
 	  public:
 		static constexpr std::string_view file = "config.json";

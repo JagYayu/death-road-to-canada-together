@@ -5,20 +5,19 @@
 using namespace tudov;
 
 Mod::Mod(ModManager &modManager)
-    : modManager(modManager)
+    : _modManager(modManager)
 {
 }
 
 Mod::Mod(ModManager &modManager, const ModConfig &config)
-    : modManager(modManager),
+    : _modManager(modManager),
       _config(config)
 {
 }
 
-void Mod::Reload()
+ModManager &Mod::GetModManager() noexcept
 {
-	Unload();
-	Load();
+	return _modManager;
 }
 
 ModConfig &Mod::GetConfig() noexcept

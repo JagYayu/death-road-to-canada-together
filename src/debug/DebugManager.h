@@ -10,8 +10,7 @@
 
 namespace tudov
 {
-	class ScriptEngine;
-	class Window;
+	class IWindow;
 
 	class DebugManager
 	{
@@ -20,7 +19,7 @@ namespace tudov
 		std::set<std::string_view> _shownElements;
 
 	  public:
-		std::weak_ptr<Window> window;
+		std::weak_ptr<IWindow> window;
 		std::shared_ptr<DebugConsole> console;
 		std::shared_ptr<DebugProfiler> profiler;
 
@@ -29,7 +28,7 @@ namespace tudov
 		void RemoveElement(std::string_view element) noexcept;
 
 	  public:
-		explicit DebugManager(const std::weak_ptr<Window> &window) noexcept;
+		explicit DebugManager(const std::weak_ptr<IWindow> &window) noexcept;
 
 		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 		void UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;

@@ -21,21 +21,32 @@
 
 using namespace tudov;
 
-EventManager::EventManager(ModManager &modManager)
-    : modManager(modManager),
+EventManager::EventManager(Context &context) noexcept
+    : _context(context),
       _log(Log::Get("EventManager")),
       _latestEventID(),
-      update(std::make_shared<RuntimeEvent>(*this, AllocEventID("Update"))),
-      render(std::make_shared<RuntimeEvent>(*this, AllocEventID("Render"))),
-      keyDown(std::make_shared<RuntimeEvent>(*this, AllocEventID("KeyDown"))),
-      keyUp(std::make_shared<RuntimeEvent>(*this, AllocEventID("KeyUp"))),
-      mouseMove(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseMove"))),
-      mouseButtonDown(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseButtonDown"))),
-      mouseButtonUp(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseButtonUp"))),
-      mouseWheel(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseWheel")))
+      _update(std::make_shared<RuntimeEvent>(*this, AllocEventID("Update"))),
+      _render(std::make_shared<RuntimeEvent>(*this, AllocEventID("Render"))),
+      _keyDown(std::make_shared<RuntimeEvent>(*this, AllocEventID("KeyDown"))),
+      _keyUp(std::make_shared<RuntimeEvent>(*this, AllocEventID("KeyUp"))),
+      _mouseMove(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseMove"))),
+      _mouseButtonDown(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseButtonDown"))),
+      _mouseButtonUp(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseButtonUp"))),
+      _mouseWheel(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseWheel")))
 {
-	_runtimeEvents.emplace(update->GetID(), update);
-	_runtimeEvents.emplace(render->GetID(), render);
+	InitRuntimeEvent(_update);
+	InitRuntimeEvent(_render);
+	InitRuntimeEvent(_keyDown);
+	InitRuntimeEvent(_keyUp);
+	InitRuntimeEvent(_mouseMove);
+	InitRuntimeEvent(_mouseButtonDown);
+	InitRuntimeEvent(_mouseButtonUp);
+	InitRuntimeEvent(_mouseWheel);
+}
+
+void EventManager::InitRuntimeEvent(std::shared_ptr<RuntimeEvent> &event) noexcept
+{
+	_runtimeEvents.emplace(event->GetID(), event);
 }
 
 EventManager::~EventManager()
@@ -84,7 +95,7 @@ void EventManager::OnScriptsLoaded()
 		{
 			auto &&eventName = _eventID2Name[eventID];
 			auto scriptID = loadtimeEvent->GetScriptID();
-			auto scriptName = modManager.scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
+			auto scriptName = GetScriptProvider()->GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
 			_log->Error("Attempt to add handlers to non-exist event <{}>\"{}\", source script <{}>\"{}\"", eventID, eventName, scriptID, scriptName);
 		}
 	}
@@ -92,7 +103,7 @@ void EventManager::OnScriptsLoaded()
 	_loadtimeEvents.clear();
 	_log->Trace("Cleared loadtime events");
 
-	auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
+	auto &&scriptLoader = GetScriptLoader();
 
 	for (auto &&[_, event] : _runtimeEvents)
 	{
@@ -101,17 +112,22 @@ void EventManager::OnScriptsLoaded()
 		{
 			for (auto &&it = event->BeginHandlers(); it != event->EndHandlers(); ++it)
 			{
-				scriptLoader.AddReverseDependency(it->scriptID, scriptID);
+				scriptLoader->AddReverseDependency(it->scriptID, scriptID);
 			}
 		}
 	}
 }
 
+Context &EventManager::GetContext() noexcept
+{
+	return _context;
+}
+
 void EventManager::Initialize() noexcept
 {
-	auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
+	auto &&scriptLoader = GetScriptLoader();
 
-	_onPreLoadAllScriptsHandlerID = scriptLoader.onPreLoadAllScripts += [this]()
+	_onPreLoadAllScriptsHandlerID = scriptLoader->GetOnPreLoadAllScripts() += [this]()
 	{
 		for (auto it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 		{
@@ -133,12 +149,12 @@ void EventManager::Initialize() noexcept
 		}
 	};
 
-	_onPostLoadAllScriptsHandlerID = scriptLoader.onPostLoadAllScripts += [this]()
+	_onPostLoadAllScriptsHandlerID = scriptLoader->GetOnPostLoadAllScripts() += [this]()
 	{
 		OnScriptsLoaded();
 	};
 
-	_onPreHotReloadScriptsHandlerID = scriptLoader.onPreHotReloadScripts += [this](const std::vector<ScriptID> &scriptIDs)
+	_onPreHotReloadScriptsHandlerID = scriptLoader->GetOnPreHotReloadScripts() += [this](const std::vector<ScriptID> &scriptIDs)
 	{
 		if (scriptIDs.empty())
 		{
@@ -147,18 +163,19 @@ void EventManager::Initialize() noexcept
 
 		ClearInvalidScriptEvents();
 
+		auto &&scriptProvider = *GetScriptProvider();
 		for (auto &&[_, event] : _runtimeEvents)
 		{
-			event->ClearInvalidScriptsHandlers(modManager.scriptProvider);
+			event->ClearInvalidScriptsHandlers(scriptProvider);
 		}
 	};
 
-	_onPreHotReloadScriptsHandlerID = scriptLoader.onPostHotReloadScripts += [this](const std::vector<ScriptID> &scriptIDs)
+	_onPreHotReloadScriptsHandlerID = scriptLoader->GetOnPreHotReloadScripts() += [this](const std::vector<ScriptID> &scriptIDs)
 	{
 		OnScriptsLoaded();
 	};
 
-	_onUnloadScriptHandlerID = scriptLoader.onUnloadScript += [this](ScriptID scriptID)
+	_onUnloadScriptHandlerID = scriptLoader->GetOnUnloadScript() += [this](ScriptID scriptID)
 	{
 		assert(scriptID && "invalid script id!");
 
@@ -177,25 +194,30 @@ void EventManager::Initialize() noexcept
 			}
 		}
 
+		auto &&scriptProvider = GetScriptProvider();
 		for (auto &&[_, event] : _runtimeEvents)
 		{
-			event->ClearSpecificScriptHandlers(modManager.scriptProvider, scriptID);
+			event->ClearSpecificScriptHandlers(*scriptProvider, scriptID);
 		}
 	};
 }
 
 void EventManager::Deinitialize() noexcept
 {
-	auto &&scriptLoader = modManager.scriptEngine.scriptLoader;
+	auto &&scriptLoader = GetScriptLoader();
 
-	scriptLoader.onPreLoadAllScripts -= _onPreLoadAllScriptsHandlerID;
-	scriptLoader.onPostLoadAllScripts -= _onPostLoadAllScriptsHandlerID;
-	scriptLoader.onPreHotReloadScripts -= _onPreHotReloadScriptsHandlerID;
-	scriptLoader.onPostHotReloadScripts -= _onPreHotReloadScriptsHandlerID;
-	scriptLoader.onUnloadScript -= _onUnloadScriptHandlerID;
+	scriptLoader->GetOnPreLoadAllScripts() -= _onPreLoadAllScriptsHandlerID;
+	scriptLoader->GetOnPostLoadAllScripts() -= _onPostLoadAllScriptsHandlerID;
+	scriptLoader->GetOnPreHotReloadScripts() -= _onPreHotReloadScriptsHandlerID;
+	scriptLoader->GetOnPostHotReloadScripts() -= _onPreHotReloadScriptsHandlerID;
+	scriptLoader->GetOnUnloadScript() -= _onUnloadScriptHandlerID;
 }
 
-void EventManager::InstallToScriptEngine(ScriptEngine &scriptEngine)
+void EventManager::InstallToScriptEngine(IScriptEngine &scriptEngine)
+{
+}
+
+void EventManager::UninstallFromScriptEngine(IScriptEngine &scriptEngine)
 {
 }
 
@@ -203,25 +225,25 @@ void EventManager::LuaAdd(const sol::object &event, const sol::object &func, con
 {
 	try
 	{
-		auto &&scriptEngine = modManager.scriptEngine;
+		auto &&scriptEngine = GetScriptEngine();
 
-		auto scriptID = scriptEngine.scriptLoader.GetLoadingScriptID();
+		auto scriptID = GetScriptLoader()->GetLoadingScriptID();
 		if (!scriptID)
 		{
-			scriptEngine.ThrowError("Failed to add event handler: must add at script load time");
+			scriptEngine->ThrowError("Failed to add event handler: must add at script load time");
 			return;
 		}
 
 		if (!event.valid() || !event.is<sol::string_view>())
 		{
-			scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#1 `event` type, expected string, got {}", GetLuaTypeStringView(event.get_type())));
+			scriptEngine->ThrowError(std::format("Failed to add event handler: invalid arg#1 `event` type, expected string, got {}", GetLuaTypeStringView(event.get_type())));
 			return;
 		}
 		std::string_view eventName = event.as<sol::string_view>();
 
 		if (!func.valid() || !func.is<sol::function>())
 		{
-			modManager.scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#2 `func` type, expected function, got {}", GetLuaTypeStringView(func.get_type())));
+			scriptEngine->ThrowError(std::format("Failed to add event handler: invalid arg#2 `func` type, expected function, got {}", GetLuaTypeStringView(func.get_type())));
 			return;
 		}
 		sol::function func_ = func.as<sol::function>();
@@ -237,7 +259,7 @@ void EventManager::LuaAdd(const sol::object &event, const sol::object &func, con
 		}
 		else
 		{
-			modManager.scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#3 `name` type, nil or string expected, got {}", GetLuaTypeStringView(name.get_type())));
+			scriptEngine->ThrowError(std::format("Failed to add event handler: invalid arg#3 `name` type, nil or string expected, got {}", GetLuaTypeStringView(name.get_type())));
 			return;
 		}
 
@@ -252,7 +274,7 @@ void EventManager::LuaAdd(const sol::object &event, const sol::object &func, con
 		}
 		else
 		{
-			modManager.scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#4 `order` type, nil or string expected, got {}", GetLuaTypeStringView(order.get_type())));
+			scriptEngine->ThrowError(std::format("Failed to add event handler: invalid arg#4 `order` type, nil or string expected, got {}", GetLuaTypeStringView(order.get_type())));
 			return;
 		}
 
@@ -271,7 +293,7 @@ void EventManager::LuaAdd(const sol::object &event, const sol::object &func, con
 		}
 		else
 		{
-			modManager.scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#5 `key` type, nil or number or number expected, got {}", GetLuaTypeStringView(key.get_type())));
+			scriptEngine->ThrowError(std::format("Failed to add event handler: invalid arg#5 `key` type, nil or number or number expected, got {}", GetLuaTypeStringView(key.get_type())));
 			return;
 		}
 
@@ -286,7 +308,7 @@ void EventManager::LuaAdd(const sol::object &event, const sol::object &func, con
 		}
 		else
 		{
-			modManager.scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#6 `sequence` type, nil or string expected, got {}", GetLuaTypeStringView(sequence.get_type())));
+			scriptEngine->ThrowError(std::format("Failed to add event handler: invalid arg#6 `sequence` type, nil or string expected, got {}", GetLuaTypeStringView(sequence.get_type())));
 			return;
 		}
 
@@ -324,12 +346,12 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 {
 	try
 	{
-		auto &&scriptEngine = modManager.scriptEngine;
+		auto &&scriptEngine = GetScriptEngine();
 
-		auto &&scriptID = scriptEngine.scriptLoader.GetLoadingScriptID();
+		auto &&scriptID = GetScriptLoader()->GetLoadingScriptID();
 		if (!scriptID)
 		{
-			scriptEngine.ThrowError("Failed to new event: must call at script load time");
+			scriptEngine->ThrowError("Failed to new event: must call at script load time");
 			return false;
 		}
 
@@ -346,7 +368,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 		}
 		else
 		{
-			scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#1 `event` type, string expected, got {}", GetLuaTypeStringView(event.get_type())));
+			scriptEngine->ThrowError(std::format("Failed to new event: invalid arg#1 `event` type, string expected, got {}", GetLuaTypeStringView(event.get_type())));
 			return false;
 		}
 
@@ -364,7 +386,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 				}
 				if (!val.is<sol::string_view>())
 				{
-					scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#2 'orders' type, table must be a string array, contains {}", GetLuaTypeStringView(tbl[i].get_type())));
+					scriptEngine->ThrowError(std::format("Failed to new event: invalid arg#2 'orders' type, table must be a string array, contains {}", GetLuaTypeStringView(tbl[i].get_type())));
 					return false;
 				}
 				orders_.emplace_back(val.as<sol::string_view>());
@@ -372,7 +394,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 		}
 		else
 		{
-			scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#2 'orders' type, table expected, got {}", GetLuaTypeStringView(orders.get_type())));
+			scriptEngine->ThrowError(std::format("Failed to new event: invalid arg#2 'orders' type, table expected, got {}", GetLuaTypeStringView(orders.get_type())));
 			return false;
 		}
 
@@ -385,7 +407,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 			{
 				if (!tbl[i].is<std::double_t>() && !tbl[i].is<sol::string_view>())
 				{
-					scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#2 'keys' type, table must be a number/string array, contains {}", GetLuaTypeStringView(tbl[i].get_type())));
+					scriptEngine->ThrowError(std::format("Failed to new event: invalid arg#2 'keys' type, table must be a number/string array, contains {}", GetLuaTypeStringView(tbl[i].get_type())));
 					return false;
 				}
 				keys_.emplace_back(EventHandleKey{tbl[i]});
@@ -397,7 +419,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 		}
 		else
 		{
-			scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#2 'keys' type, table or nil expected, got {}", GetLuaTypeStringView(keys.get_type())));
+			scriptEngine->ThrowError(std::format("Failed to new event: invalid arg#2 'keys' type, table or nil expected, got {}", GetLuaTypeStringView(keys.get_type())));
 			return false;
 		}
 
@@ -416,7 +438,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 		}
 		if (dup)
 		{
-			scriptEngine.ThrowError(std::format("Failed to new event <{}>\"{}\", already been registered", eventID, eventName));
+			scriptEngine->ThrowError(std::format("Failed to new event <{}>\"{}\", already been registered", eventID, eventName));
 			return false;
 		}
 
@@ -434,7 +456,7 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 {
 	try
 	{
-		auto &&scriptEngine = modManager.scriptEngine;
+		auto &&scriptEngine = GetScriptEngine();
 
 		RuntimeEvent *eventInstance;
 		if (event.is<EventID>())
@@ -442,7 +464,7 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 			auto &&it = _runtimeEvents.find(event.as<EventID>());
 			if (it == _runtimeEvents.end())
 			{
-				scriptEngine.ThrowError(std::format("Event not found"));
+				scriptEngine->ThrowError(std::format("Event not found"));
 				return;
 			}
 			eventInstance = it->second.get();
@@ -452,7 +474,7 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 			auto &&it = _runtimeEvents.find(_eventName2ID[event.as<std::string_view>()]);
 			if (it == _runtimeEvents.end())
 			{
-				scriptEngine.ThrowError(std::format("Event not found"));
+				scriptEngine->ThrowError(std::format("Event not found"));
 				return;
 			}
 			eventInstance = it->second.get();
@@ -478,18 +500,6 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 		UnhandledCppException(_log, e);
 		throw;
 	}
-}
-
-void EventManager::UninstallFromScriptEngine(ScriptEngine &scriptEngine)
-{
-}
-
-void EventManager::AttachToScriptLoader(ScriptLoader &scriptLoader) noexcept
-{
-}
-
-void EventManager::DetachFromScriptLoader(ScriptLoader &scriptLoader) noexcept
-{
 }
 
 EventID EventManager::GetEventIDByName(std::string_view eventName) const noexcept
@@ -519,10 +529,12 @@ bool EventManager::IsValidEventID(EventID eventID) const noexcept
 
 void EventManager::ClearInvalidScriptEvents() noexcept
 {
+	auto &&scriptProvider = GetScriptProvider();
+
 	for (auto &&it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 	{
 		auto &&scriptID = it->second->GetScriptID();
-		if (scriptID && !modManager.scriptProvider.IsValidScriptID(scriptID))
+		if (scriptID && !scriptProvider->IsValidScriptID(scriptID))
 		{
 			DeallocEventID(it->first);
 			_log->Trace("Clear invalid event <{}> from script <{}>", it->first, scriptID);
@@ -566,4 +578,44 @@ std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator Event
 std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator EventManager::EndRuntimeEvents() const
 {
 	return _runtimeEvents.end();
+}
+
+RuntimeEvent &EventManager::GetUpdateEvent() noexcept
+{
+	return *_update;
+}
+
+RuntimeEvent &EventManager::GetRenderEvent() noexcept
+{
+	return *_render;
+}
+
+RuntimeEvent &EventManager::GetKeyDownEvent() noexcept
+{
+	return *_keyDown;
+}
+
+RuntimeEvent &EventManager::GetKeyUpEvent() noexcept
+{
+	return *_keyUp;
+}
+
+RuntimeEvent &EventManager::GetMouseMoveEvent() noexcept
+{
+	return *_mouseMove;
+}
+
+RuntimeEvent &EventManager::GetMouseButtonDownEvent() noexcept
+{
+	return *_mouseButtonDown;
+}
+
+RuntimeEvent &EventManager::GetMouseButtonUpEvent() noexcept
+{
+	return *_mouseButtonUp;
+}
+
+RuntimeEvent &EventManager::GetMouseWheelEvent() noexcept
+{
+	return *_mouseWheel;
 }

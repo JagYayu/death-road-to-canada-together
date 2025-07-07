@@ -6,6 +6,7 @@
 #include "ScriptLoader.h"
 #include "ScriptProvider.h"
 #include "event/EventManager.h"
+#include "program/IEngineComponent.h"
 #include "util/Defs.h"
 #include "util/Log.h"
 
@@ -14,9 +15,30 @@
 
 namespace tudov
 {
-	class Engine;
+	class Context;
 
-	class ModManager
+	struct IModManager : public IEngineComponent
+	{
+		virtual void Initialize() noexcept = 0;
+		virtual void Deinitialize() noexcept = 0;
+
+		virtual bool IsNoModMatch() const = 0;
+		virtual bool IsModMatched(const Mod &mod) const = 0;
+
+		virtual void LoadMods() = 0;
+		virtual void UnloadMods() = 0;
+
+		virtual std::weak_ptr<Mod> GetLoadedMod(std::string_view namespace_) noexcept = 0;
+
+		virtual std::vector<ModEntry> &GetRequiredMods() noexcept = 0;
+		virtual const std::vector<ModEntry> &GetRequiredMods() const noexcept = 0;
+
+		virtual void HotReloadScriptPending(std::string scriptName, std::string scriptCode) = 0;
+
+		virtual void Update() = 0;
+	};
+
+	class ModManager : public IModManager
 	{
 	  public:
 		enum class ELoadState
@@ -29,6 +51,7 @@ namespace tudov
 
 	  private:
 		std::shared_ptr<Log> _log;
+		Context &_context;
 		ELoadState _loadState;
 
 		std::vector<std::filesystem::path> _directories;
@@ -38,34 +61,30 @@ namespace tudov
 		std::unique_ptr<std::unordered_map<std::string, std::string>> _hotReloadScriptsPending;
 
 	  public:
-		Engine &engine;
-		ScriptEngine scriptEngine;
-		ScriptProvider scriptProvider;
-		EventManager eventManager;
-
 		void AddMod(const std::filesystem::path &modRoot);
 
 	  public:
-		ModManager(Engine &engine);
+		explicit ModManager(Context &context) noexcept;
 		~ModManager();
 
-		void Initialize();
-		void Deinitialize();
+		Context &GetContext() noexcept override;
+		void Initialize() noexcept override;
+		void Deinitialize() noexcept override;
 
-		bool IsNoModMatch() const;
-		bool IsModMatched(const Mod &mod) const;
+		bool IsNoModMatch() const override;
+		bool IsModMatched(const Mod &mod) const override;
 
-		void LoadMods();
-		void UnloadMods();
+		void LoadMods() override;
+		void UnloadMods() override;
 
-		std::weak_ptr<Mod> GetLoadedMod(std::string_view namespace_) noexcept;
+		std::weak_ptr<Mod> GetLoadedMod(std::string_view namespace_) noexcept override;
 
-		std::vector<ModEntry> &GetRequiredMods() noexcept;
-		const std::vector<ModEntry> &GetRequiredMods() const noexcept;
+		std::vector<ModEntry> &GetRequiredMods() noexcept override;
+		const std::vector<ModEntry> &GetRequiredMods() const noexcept override;
 
-		void HotReloadScriptPending(std::string scriptName, std::string scriptCode);
+		void HotReloadScriptPending(std::string scriptName, std::string scriptCode) override;
 
-		void Update();
+		void Update() override;
 
 		void InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept;
 	};

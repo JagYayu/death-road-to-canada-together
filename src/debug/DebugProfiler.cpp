@@ -2,8 +2,7 @@
 
 #include "EventProfiler.h"
 #include "event/EventManager.h"
-#include "event/RuntimeEvent.h"
-#include "program/Engine.h"
+#include "graphic/Window.h"
 #include "util/Utils.hpp"
 
 #include <algorithm>
@@ -12,7 +11,7 @@
 
 using namespace tudov;
 
-DebugProfiler::DebugProfiler(const std::weak_ptr<Window>&window) noexcept
+DebugProfiler::DebugProfiler(const std::weak_ptr<IWindow> &window) noexcept
     : window(window)
 {
 }
@@ -41,7 +40,7 @@ void DebugProfiler::UpdateAndRender() noexcept
 	{
 		return;
 	}
-	
+
 	if (ImGui::Begin("Profiler"))
 	{
 		_framerateBuffer.push(window.lock()->GetFramerate());
@@ -72,8 +71,8 @@ void DebugProfiler::UpdateAndRender() noexcept
 
 		std::vector<DebugProfilerEntry> entries{};
 
-		auto &&eventManager = window.lock()->engine.modManager.eventManager;
-		for (auto &&it = eventManager.BeginRuntimeEvents(); it != eventManager.EndRuntimeEvents(); ++it)
+		auto &&eventManager = window.lock()->GetEventManager();
+		for (auto &&it = eventManager->BeginRuntimeEvents(); it != eventManager->EndRuntimeEvents(); ++it)
 		{
 			auto &&event = *it->second;
 			auto index = entries.size();
@@ -107,7 +106,7 @@ void DebugProfiler::UpdateAndRender() noexcept
 				entries.emplace_back(DebugProfilerEntry{
 				    .event = &event,
 				    .index = index,
-				    .header = eventManager.GetEventNameByID(event.GetID())->data(),
+				    .header = eventManager->GetEventNameByID(event.GetID())->data(),
 				    .durations = &durations,
 				    .memories = &memories,
 				    .avgDuration = Average(durations),
@@ -121,7 +120,7 @@ void DebugProfiler::UpdateAndRender() noexcept
 				entries.emplace_back(DebugProfilerEntry{
 				    .event = &event,
 				    .index = index,
-				    .header = eventManager.GetEventNameByID(event.GetID())->data(),
+				    .header = eventManager->GetEventNameByID(event.GetID())->data(),
 				    .durations = &durations,
 				    .memories = &memories,
 				    .avgDuration = FLT_MAX,

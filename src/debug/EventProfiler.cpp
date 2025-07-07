@@ -11,14 +11,14 @@ EventProfiler::EventProfiler() noexcept
 {
 }
 
-void EventProfiler::BeginEvent(ScriptEngine &engine) noexcept
+void EventProfiler::BeginEvent(IScriptEngine &engine) noexcept
 {
 	_time = std::chrono::high_resolution_clock::now();
 	_memory = engine.GetMemory();
 	_handlers = {};
 }
 
-void EventProfiler::EndEvent(ScriptEngine &engine) noexcept
+void EventProfiler::EndEvent(IScriptEngine &engine) noexcept
 {
 	std::uint64_t memory = 0;
 	if (engine.GetMemory() > _memory)
@@ -33,7 +33,7 @@ void EventProfiler::EndEvent(ScriptEngine &engine) noexcept
 	});
 }
 
-void EventProfiler::TraceHandler(ScriptEngine &engine, std::string_view handlerName) noexcept
+void EventProfiler::TraceHandler(IScriptEngine &engine, std::string_view handlerName) noexcept
 {
 	auto &&time = std::chrono::high_resolution_clock::now();
 	auto &&memory = engine.GetMemory();

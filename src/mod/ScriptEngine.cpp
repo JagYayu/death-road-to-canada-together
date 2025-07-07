@@ -1,6 +1,6 @@
 #include "ScriptEngine.h"
 
-#include "LuaAPI.hpp"
+#include "LuaAPI.h"
 #include "ModManager.h"
 #include "ScriptLoader.h"
 #include "ScriptProvider.h"
@@ -23,22 +23,24 @@
 
 using namespace tudov;
 
-ScriptEngine::ScriptEngine(ModManager &modManager)
-    : modManager(modManager),
-      scriptLoader(*this),
+ScriptEngine::ScriptEngine(Context &context) noexcept
+    : _context(context),
       _log(Log::Get("ScriptEngine")),
       _lua(),
       _luaInit()
 {
 }
 
-ScriptEngine::~ScriptEngine()
+ScriptEngine::~ScriptEngine() noexcept
 {
-	_persistVariables.clear();
-	_lua.collect_garbage();
 }
 
-void ScriptEngine::Initialize()
+Context&ScriptEngine::GetContext()noexcept 
+{
+	return _context;
+}
+
+void ScriptEngine::Initialize() noexcept
 {
 	if (_luaInit)
 	{
@@ -58,15 +60,23 @@ void ScriptEngine::Initialize()
 	_lua.open_libraries(sol::lib::table);
 	_lua.open_libraries(sol::lib::utf8);
 
+	auto &&scriptLoader = GetScriptLoader();
+
 	_luaThrowModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::function>();
-	_luaInspect = scriptLoader.Load("#lua.inspect")->GetTable().raw_get<sol::function>("inspect");
-	auto &&scriptEngineModule = scriptLoader.Load("#lua.ScriptEngine")->GetTable();
+	_luaInspect = scriptLoader->Load("#lua.inspect")->GetTable().raw_get<sol::function>("inspect");
+	auto &&scriptEngineModule = scriptLoader->Load("#lua.ScriptEngine")->GetTable();
 	_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
 	_luaPostProcessSandboxing = scriptEngineModule.raw_get<sol::function>("postProcessSandboxing");
 
-	LuaAPI::Install(_lua, &modManager.engine);
+	LuaAPI().Install(_lua, _context);
 
 	MakeReadonlyGlobal(_lua.globals());
+}
+
+void ScriptEngine::Deinitialize() noexcept
+{
+	_persistVariables.clear();
+	_lua.collect_garbage();
 }
 
 sol::state_view &ScriptEngine::GetState()
@@ -78,7 +88,7 @@ void ScriptEngine::SetReadonlyGlobal(const sol::string_view &key, sol::object va
 {
 	if (value.is<sol::table>())
 	{
-		_lua[key] = modManager.scriptEngine.MakeReadonlyGlobal(value.as<sol::table>());
+		_lua[key] = GetScriptEngine()->MakeReadonlyGlobal(value.as<sol::table>());
 	}
 	else
 	{
@@ -96,7 +106,7 @@ size_t ScriptEngine::GetMemory() const noexcept
 	return _lua.memory_used();
 }
 
-sol::table ScriptEngine::CreateTable(uint32_t arr, uint32_t hash)
+sol::table ScriptEngine::CreateTable(uint32_t arr, uint32_t hash) noexcept
 {
 	return _lua.create_table(arr, hash);
 }
@@ -106,7 +116,7 @@ sol::load_result ScriptEngine::LoadFunction(const std::string &name, std::string
 	return _lua.load(code, name, sol::load_mode::any);
 }
 
-int ScriptEngine::ThrowError(std::string_view message)
+int ScriptEngine::ThrowError(std::string_view message) noexcept
 {
 	lua_pushlstring(_lua, message.data(), message.size());
 	return lua_error(_lua);
@@ -194,8 +204,8 @@ sol::table &ScriptEngine::GetSandboxedGlobals(std::string_view sandboxKey) noexc
 	    "utf8",
 	    "xpcall",
 	    // C++
-		"engine",
-		"events",
+	    "engine",
+	    "events",
 	};
 
 	for (auto &&key : keys)
@@ -244,14 +254,15 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 	{
 		try
 		{
-			auto &&targetScriptID = modManager.scriptProvider.GetScriptIDByName(targetScriptName);
+			auto &&targetScriptID = GetScriptProvider()->GetScriptIDByName(targetScriptName);
 			if (targetScriptID)
 			{
-				scriptLoader.AddReverseDependency(scriptID, targetScriptID);
-				auto &&targetModule = scriptLoader.Load(targetScriptID);
+				auto &&scriptLoader = GetScriptLoader();
+				scriptLoader->AddReverseDependency(scriptID, targetScriptID);
+				auto &&targetModule = scriptLoader->Load(targetScriptID);
 				if (targetModule)
 				{
-					return targetModule->LazyLoad(scriptLoader);
+					return targetModule->LazyLoad(*scriptLoader);
 				}
 			}
 
@@ -275,7 +286,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 	{
 		try
 		{
-			auto &&name = modManager.scriptProvider.GetScriptNameByID(scriptID);
+			auto &&name = GetScriptProvider()->GetScriptNameByID(scriptID);
 			if (!name.has_value())
 			{
 				luaL_error(_lua, "Script module <%s> not found", scriptID);

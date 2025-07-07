@@ -82,7 +82,7 @@ EngineConfig::EngineConfig() noexcept
 {
 	EngineConfig::Load();
 
-	_fileWatcher = std::make_unique<filewatch::FileWatch<std::string>>(std::string(file), [&](std::string_view path, const filewatch::Event changeType)
+	_fileWatcher = new filewatch::FileWatch<std::string>(std::string(file), [&](std::string_view path, const filewatch::Event changeType)
 	{
 		EngineConfig::Load();
 	});
@@ -91,6 +91,7 @@ EngineConfig::EngineConfig() noexcept
 EngineConfig::~EngineConfig() noexcept
 {
 	Save();
+	delete _fileWatcher;
 }
 
 void EngineConfig::Save() noexcept

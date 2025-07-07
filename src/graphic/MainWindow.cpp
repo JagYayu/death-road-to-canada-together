@@ -8,18 +8,34 @@
 
 using namespace tudov;
 
-MainWindow::MainWindow(Engine &engine) noexcept
-    : Window(engine, "MainWindow")
+MainWindow::MainWindow(Context &context) noexcept
+    : Window(context, "MainWindow")
 {
+}
+
+static bool bSDLImGUI = false;
+
+MainWindow::~MainWindow() noexcept
+{
+	if (bSDLImGUI)
+	{
+		ImGui_ImplSDLRenderer3_Shutdown();
+		ImGui_ImplSDL3_Shutdown();
+		bSDLImGUI = false;
+	}
 }
 
 void MainWindow::Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept
 {
 	Window::Initialize(width, height, title);
 
-	auto sdlRenderer = renderer->GetSDLRendererHandle();
-	ImGui_ImplSDL3_InitForSDLRenderer(_sdlWindow, sdlRenderer);
-	ImGui_ImplSDLRenderer3_Init(sdlRenderer);
+	if (!bSDLImGUI)
+	{
+		auto sdlRenderer = renderer->GetSDLRendererHandle();
+		ImGui_ImplSDL3_InitForSDLRenderer(_sdlWindow, sdlRenderer);
+		ImGui_ImplSDLRenderer3_Init(sdlRenderer);
+		bSDLImGUI = true;
+	}
 }
 
 EventHandleKey MainWindow::GetKey() const noexcept

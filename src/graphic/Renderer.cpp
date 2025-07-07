@@ -1,9 +1,9 @@
 #include "Renderer.h"
-#include "Window.h"
-#include "program/Engine.h"
 
-#include "SDL3/SDL.h"
-#include "SDL3/SDL_Surface.h"
+#include "Window.h"
+#include "resource/ImageManager.hpp"
+
+#include "SDL3/SDL_surface.h"
 #include "SDL3/SDL_render.h"
 #include "sol/table.hpp"
 
@@ -32,13 +32,14 @@ std::shared_ptr<Texture> Renderer::GetOrCreateTexture(ImageID imageID) noexcept
 	auto &&texture = _textureManager.GetResource(imageID);
 	if (!texture) [[unlikely]]
 	{
-		auto &&image = window.engine.imageManager.GetResource(imageID);
+		auto &&imageManager = window.GetImageManager();
+		auto &&image = imageManager.GetResource(imageID);
 		if (!image)
 		{
 			return nullptr;
 		}
 
-		auto &&path = window.engine.imageManager.GetResourcePath(imageID);
+		auto &&path = imageManager.GetResourcePath(imageID);
 		auto textureID = _textureManager.Load(path, *this);
 		assert(textureID);
 		texture = _textureManager.GetResource(textureID);

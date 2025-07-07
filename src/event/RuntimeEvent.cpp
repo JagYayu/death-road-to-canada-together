@@ -6,8 +6,9 @@
 #include "event/RuntimeEvent.h"
 #include "mod/ModManager.h"
 #include "mod/ScriptProvider.h"
-#include "sol/types.hpp"
 #include "util/Defs.h"
+
+#include "sol/types.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -179,7 +180,7 @@ void RuntimeEvent::Invoke(const sol::object &args, EventHandleKey key)
 
 	if (_profile)
 	{
-		_profile->eventProfiler.BeginEvent(eventManager.modManager.scriptEngine);
+		_profile->eventProfiler.BeginEvent(*eventManager.GetScriptEngine());
 	}
 
 	try
@@ -206,7 +207,7 @@ void RuntimeEvent::Invoke(const sol::object &args, EventHandleKey key)
 
 	if (_profile)
 	{
-		_profile->eventProfiler.EndEvent(eventManager.modManager.scriptEngine);
+		_profile->eventProfiler.EndEvent(*eventManager.GetScriptEngine());
 	}
 }
 
@@ -214,7 +215,7 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, EventHandleKey key)
 {
 	if (_profile)
 	{
-		_profile->eventProfiler.BeginEvent(eventManager.modManager.scriptEngine);
+		_profile->eventProfiler.BeginEvent(*eventManager.GetScriptEngine());
 	}
 
 	try
@@ -229,7 +230,7 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, EventHandleKey key)
 
 					if (_profile)
 					{
-						_profile->eventProfiler.TraceHandler(eventManager.modManager.scriptEngine, handler.name);
+						_profile->eventProfiler.TraceHandler(*eventManager.GetScriptEngine(), handler.name);
 					}
 				}
 			}
@@ -242,7 +243,7 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, EventHandleKey key)
 
 				if (_profile)
 				{
-					_profile->eventProfiler.TraceHandler(eventManager.modManager.scriptEngine, handler.name);
+					_profile->eventProfiler.TraceHandler(*eventManager.GetScriptEngine(), handler.name);
 				}
 			}
 		}
@@ -254,7 +255,7 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, EventHandleKey key)
 
 	if (_profile)
 	{
-		_profile->eventProfiler.EndEvent(eventManager.modManager.scriptEngine);
+		_profile->eventProfiler.EndEvent(*eventManager.GetScriptEngine());
 	}
 }
 
@@ -277,15 +278,16 @@ void RuntimeEvent::ClearScriptHandlersImpl(std::function<bool(const EventHandler
 	}
 }
 
-void RuntimeEvent::ClearInvalidScriptsHandlers(const ScriptProvider &scriptProvider)
+void RuntimeEvent::ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider)
 {
+
 	ClearScriptHandlersImpl([&](const EventHandler &handler)
 	{
 		return !scriptProvider.IsValidScriptID(handler.scriptID);
 	});
 }
 
-void RuntimeEvent::ClearSpecificScriptHandlers(const ScriptProvider &scriptProvider, ScriptID scriptID)
+void RuntimeEvent::ClearSpecificScriptHandlers(const IScriptProvider &scriptProvider, ScriptID scriptID)
 {
 	ClearScriptHandlersImpl([this, scriptID](const EventHandler &handler)
 	{

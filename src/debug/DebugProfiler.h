@@ -8,7 +8,7 @@
 
 namespace tudov
 {
-	class Window;
+	class IWindow;
 
 	class DebugProfiler : public IDebugElement
 	{
@@ -20,9 +20,9 @@ namespace tudov
 		CircularBuffer<std::float_t, FramerateBufferSize> _framerateBuffer;
 
 	  public:
-		std::weak_ptr<Window> window;
+		std::weak_ptr<IWindow> window;
 
-		DebugProfiler(const std::weak_ptr<Window> &window) noexcept;
+		DebugProfiler(const std::weak_ptr<IWindow> &window) noexcept;
 
 		std::string_view GetName() noexcept override;
 		void UpdateAndRender() noexcept override;

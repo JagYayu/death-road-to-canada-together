@@ -1,11 +1,12 @@
 #pragma once
 
-#include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_rect.h"
+#include "program/IEngineComponent.h"
 #include "resource/TextureManager.hpp"
 #include "util/Defs.h"
 #include "util/Log.h"
 
+#include "SDL3/SDL_pixels.h"
+#include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 
 #include <cstdint>
@@ -16,7 +17,16 @@ namespace tudov
 {
 	class Window;
 
-	class Renderer
+	struct IRenderer
+	{
+		virtual void SetRenderTarget(const std::shared_ptr<Texture> &texture = nullptr) noexcept = 0;
+		virtual void DrawTexture(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src, std::float_t z) noexcept = 0;
+
+		virtual void Clear(const SDL_Color &color) noexcept = 0;
+		virtual void Render() noexcept = 0;
+	};
+
+	class Renderer : public IRenderer
 	{
 		friend class LuaAPI;
 
@@ -87,15 +97,15 @@ namespace tudov
 
 	  public:
 		explicit Renderer(Window &window) noexcept;
+		~Renderer() noexcept = default;
 
 		void Initialize() noexcept;
 
-		void SetDrawColor(const SDL_Color &color) noexcept;
-		void SetRenderTarget(const std::shared_ptr<Texture> &texture = nullptr) noexcept;
-		void DrawTexture(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src, std::float_t z) noexcept;
+		void SetRenderTarget(const std::shared_ptr<Texture> &texture = nullptr) noexcept override;
+		void DrawTexture(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src, std::float_t z) noexcept override;
 
-		void Clear(const SDL_Color &color) noexcept;
-		void Render() noexcept;
+		void Clear(const SDL_Color &color) noexcept override;
+		void Render() noexcept override;
 
 		SDL_Renderer *GetSDLRendererHandle() noexcept;
 		const SDL_Renderer *GetSDLRendererHandle() const noexcept;

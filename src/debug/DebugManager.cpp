@@ -10,7 +10,7 @@
 
 using namespace tudov;
 
-DebugManager::DebugManager(const std::weak_ptr<Window> &window) noexcept
+DebugManager::DebugManager(const std::weak_ptr<IWindow> &window) noexcept
     : window(window),
       console(std::make_shared<DebugConsole>()),
       profiler(std::make_shared<DebugProfiler>(window)),
@@ -51,11 +51,11 @@ void DebugManager::RemoveElement(std::string_view element) noexcept
 
 void DebugManager::InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
 {
-	auto &&debugs = scriptEngine.CreateTable();
+	// auto &&debugs = scriptEngine.CreateTable();
 
-	scriptEngine.scriptLoader.onPreLoadAllScripts += [&]() {};
+	// scriptEngine.scriptLoader.onPreLoadAllScripts += [&]() {};
 
-	scriptEngine.SetReadonlyGlobal(name, debugs);
+	// scriptEngine.SetReadonlyGlobal(name, debugs);
 }
 
 void DebugManager::UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept

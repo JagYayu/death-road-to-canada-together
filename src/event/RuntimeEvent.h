@@ -16,7 +16,7 @@
 namespace tudov
 {
 	class EventProfiler;
-	class ScriptProvider;
+	class IScriptProvider;
 
 	class RuntimeEvent : public AbstractEvent
 	{
@@ -70,8 +70,8 @@ namespace tudov
 		void Invoke(const sol::object &args = sol::lua_nil, EventHandleKey key = {});
 		void InvokeUncached(const sol::object &args = sol::lua_nil, EventHandleKey key = {});
 
-		void ClearInvalidScriptsHandlers(const ScriptProvider &scriptProvider);
-		void ClearSpecificScriptHandlers(const ScriptProvider &scriptProvider, ScriptID scriptID);
+		void ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider);
+		void ClearSpecificScriptHandlers(const IScriptProvider &scriptProvider, ScriptID scriptID);
 		void ClearScriptsHandlers();
 	};
 } // namespace tudov

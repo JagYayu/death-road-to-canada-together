@@ -10,7 +10,7 @@
 
 namespace tudov
 {
-	class ScriptEngine;
+	class IScriptEngine;
 
 	class EventProfiler
 	{
@@ -38,11 +38,11 @@ namespace tudov
 	  public:
 		explicit EventProfiler() noexcept;
 
-		void BeginEvent(ScriptEngine &engine) noexcept;
-		void EndEvent(ScriptEngine &engine) noexcept;
+		void BeginEvent(IScriptEngine &scriptEngine) noexcept;
+		void EndEvent(IScriptEngine &scriptEngine) noexcept;
 
-		void TraceHandler(ScriptEngine &engine, std::string_view handlerName) noexcept;
-		void EndHandler(ScriptEngine &engine, std::string_view handlerName) noexcept;
+		void TraceHandler(IScriptEngine &scriptEngine, std::string_view handlerName) noexcept;
+		void EndHandler(IScriptEngine &scriptEngine, std::string_view handlerName) noexcept;
 
 		const PerfEntries &GetPerfEntries() const noexcept;
 	};

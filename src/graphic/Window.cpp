@@ -2,19 +2,16 @@
 
 #include "Camera2D.h"
 #include "Renderer.h"
-#include "SDL3/SDL_render.h"
 #include "program/Engine.h"
 
-#include "SDL3/SDL.h"
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"
 #include <memory>
-#include <optional>
 
 using namespace tudov;
 
-Window::Window(Engine &engine, std::string_view logName) noexcept
-    : engine(engine),
+Window::Window(Context &context, std::string_view logName) noexcept
+    : _context(context),
       renderer(std::make_shared<Renderer>(*this)),
       _log(Log::Get(logName)),
       _sdlWindow(nullptr),
@@ -30,6 +27,16 @@ Window::~Window() noexcept
 	}
 }
 
+Context &Window::GetContext() noexcept
+{
+	return _context;
+}
+
+void Window::Initialize() noexcept
+{
+	Initialize(800, 600, "Untitled");
+}
+
 void Window::Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept
 {
 	_sdlWindow = SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE);
@@ -39,6 +46,11 @@ void Window::Initialize(std::int32_t width, std::int32_t height, std::string_vie
 	}
 
 	renderer->Initialize();
+}
+
+void Window::Deinitialize() noexcept
+{
+	Close();
 }
 
 void Window::Close() noexcept
@@ -67,19 +79,23 @@ void Window::HandleEvents() noexcept
 
 void Window::HandleEvent(const SDL_Event &event) noexcept
 {
-	auto &&eventManager = engine.modManager.eventManager;
+	auto &&eventManager = GetEventManager();
 
 	switch (event.type)
 	{
-		;
+	case SDL_EVENT_QUIT:
+		Close();
+		break;
+	case SDL_EVENT_LOW_MEMORY:
+		break;
 	}
 }
 
 void Window::Render() noexcept
 {
-	auto &&args = engine.modManager.scriptEngine.CreateTable(0, 1);
+	auto &&args = GetScriptEngine()->CreateTable(0, 1);
 	args["window"] = this;
-	engine.modManager.eventManager.render->Invoke(args, GetKey());
+	GetEventManager()->GetRenderEvent().Invoke(args, GetKey());
 }
 
 SDL_Window *Window::GetSDLWindowHandle() noexcept
@@ -110,5 +126,5 @@ std::tuple<std::int32_t, std::int32_t> Window::GetSize() const noexcept
 
 std::float_t Window::GetFramerate() const noexcept
 {
-	return engine.GetFramerate();
+	return _context.GetEngine().GetFramerate();
 }

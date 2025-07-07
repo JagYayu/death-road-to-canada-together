@@ -1,14 +1,15 @@
 #include "Engine.h"
 
+#include "Context.h"
 #include "SDL3/SDL_timer.h"
 #include "debug/DebugManager.h"
+#include "mod/LuaAPI.h"
 #include "resource/ResourceType.hpp"
 #include "util/Log.h"
+#include "util/MicrosImpl.h"
 #include "util/StringUtils.hpp"
 
-#include "imgui_impl_sdl3.h"
-#include "imgui_impl_sdlrenderer3.h"
-
+#include <algorithm>
 #include <memory>
 #include <regex>
 #include <stdexcept>
@@ -19,38 +20,52 @@ using namespace tudov;
 Engine::Engine() noexcept
     : _log(Log::Get("Engine")),
       _running(true),
-      modManager(*this),
-      imageManager(),
-      fontManager(),
-      mainWindow(nullptr)
+      _framerate(0),
+      _config(),
+      _imageManager(),
+      _fontManager(),
+      _luaAPI(std::make_shared<LuaAPI>()),
+      _mainWindow(nullptr),
+      _windows()
 {
+	context = Context(this);
+
+	_modManager = std::make_shared<ModManager>(context);
+	_scriptProvider = std::make_shared<ScriptProvider>(context);
+	_scriptLoader = std::make_shared<ScriptLoader>(context);
+	_scriptEngine = std::make_shared<ScriptEngine>(context);
+	_eventManager = std::make_shared<EventManager>(context);
 }
 
 Engine::~Engine() noexcept
 {
-	if (mainWindow)
-	{
-		ImGui_ImplSDLRenderer3_Shutdown();
-		ImGui_ImplSDL3_Shutdown();
-	}
+}
+
+bool IsWindowShouldClose(const std::shared_ptr<IWindow> &window) noexcept
+{
+	return window->ShouldClose();
 }
 
 void Engine::Run(const MainArgs &args)
 {
 	_log->Debug("Initializing engine ...");
 	{
-		config.Load();
+		_config.Load();
 		InitializeMainWindow();
 		InitializeResources();
-		modManager.Initialize();
-		InstallToScriptEngine(modManager.scriptEngine);
-		modManager.LoadMods();
+		_modManager->Initialize();
+		_scriptProvider->Initialize();
+		_scriptLoader->Initialize();
+		_scriptEngine->Initialize();
+		_eventManager->Initialize();
+		// InstallToScriptEngine(_modManager.scriptEngine);
+		_modManager->LoadMods();
 	}
 	_log->Debug("Initialized engine");
 
 	std::uint64_t prevNS = SDL_GetTicksNS();
 
-	while (_running)
+	while (_running && !_windows.empty())
 	{
 		uint64_t startNS = SDL_GetTicksNS();
 		uint64_t deltaNS = startNS - prevNS;
@@ -62,17 +77,19 @@ void Engine::Run(const MainArgs &args)
 			window->HandleEvents();
 		}
 
-		modManager.Update();
+		_modManager->Update();
 
-		debugManager->UpdateAndRender();
+		_debugManager->UpdateAndRender();
 
 		for (auto &&window : _windows)
 		{
 			window->Render();
 		}
 
+		_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
+
 		uint64_t elapsed = SDL_GetTicksNS() - startNS;
-		const uint64_t limit = 1'000'000'000ull / static_cast<uint64_t>(config.GetWindowFramelimit());
+		const uint64_t limit = 1'000'000'000ull / static_cast<uint64_t>(_config.GetWindowFramelimit());
 		if (elapsed < limit)
 		{
 			SDL_DelayPrecise(limit - elapsed);
@@ -81,7 +98,12 @@ void Engine::Run(const MainArgs &args)
 
 	_log->Debug("Deinitializing engine ...");
 	{
-		modManager.Deinitialize();
+		_modManager->UnloadMods();
+		_eventManager->Deinitialize();
+		_scriptEngine->Deinitialize();
+		_scriptLoader->Deinitialize();
+		_scriptProvider->Deinitialize();
+		_modManager->Deinitialize();
 	}
 	_log->Debug("Deinitialized engine");
 }
@@ -97,23 +119,23 @@ void Engine::Quit()
 
 void Engine::InitializeMainWindow()
 {
-	if (mainWindow)
+	if (_mainWindow)
 	{
 		throw std::runtime_error("Engine main window has already been initialized!");
 	}
 
-	mainWindow = std::make_shared<MainWindow>(*this);
-	AddWindow(mainWindow);
-	mainWindow->Initialize(config.GetWindowWidth(), config.GetWindowHeight(), config.GetWindowTitle());
+	_mainWindow = std::make_shared<MainWindow>(context);
+	AddWindow(_mainWindow);
+	_mainWindow->Initialize(_config.GetWindowWidth(), _config.GetWindowHeight(), _config.GetWindowTitle());
 
-	debugManager = std::make_shared<DebugManager>(mainWindow);
+	_debugManager = std::make_shared<DebugManager>(_mainWindow);
 }
 
 void Engine::InitializeResources()
 {
 	_log->Debug("Mounting resource files");
 
-	auto &&renderBackend = config.GetRenderBackend();
+	auto &&renderBackend = _config.GetRenderBackend();
 
 	// auto &&loadTexture = [this, renderBackend]() {
 	// 	switch (renderBackend) {
@@ -124,13 +146,13 @@ void Engine::InitializeResources()
 	std::unordered_map<ResourceType, std::uint32_t> fileCounts{};
 
 	std::vector<std::regex> mountBitmapPatterns{};
-	for (auto &&pattern : config.GetMountBitmaps())
+	for (auto &&pattern : _config.GetMountBitmaps())
 	{
 		mountBitmapPatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
 	}
 
-	auto &&mountDirectories = config.GetMountFiles();
-	for (auto &&mountDirectory : config.GetMountDirectories())
+	auto &&mountDirectories = _config.GetMountFiles();
+	for (auto &&mountDirectory : _config.GetMountDirectories())
 	{
 		if (!std::filesystem::exists(mountDirectory) || !std::filesystem::is_directory(mountDirectory))
 		{
@@ -153,14 +175,14 @@ void Engine::InitializeResources()
 			}
 
 			auto &&filePath = path.generic_string();
-			auto imageID = imageManager.Load(filePath);
+			auto imageID = _imageManager.Load(filePath);
 			if (!imageID)
 			{
 				_log->Error("Image ID of \"{}\" is 0!", filePath);
 				continue;
 			}
 
-			auto &&image = imageManager.GetResource(imageID);
+			auto &&image = _imageManager.GetResource(imageID);
 			auto &&fileMemory = ReadFileToString(filePath, true);
 			image->Initialize(fileMemory);
 			if (image->IsValid())
@@ -193,14 +215,21 @@ std::float_t Engine::GetFramerate() const noexcept
 	return _framerate;
 }
 
-void Engine::AddWindow(const std::shared_ptr<Window> &window)
+TUDOV_GEN_GETTER_SMART_PTR(std::shared_ptr, IWindow, Engine::GetMainWindow, _mainWindow, noexcept);
+
+void Engine::AddWindow(const std::shared_ptr<IWindow> &window)
 {
-	_windows.emplace_back(window);
+	_windows.emplace_back(window); // TODO
 }
 
-std::shared_ptr<Window> Engine::LuaGetMainWindow() noexcept
+void Engine::RemoveWindow(const std::shared_ptr<IWindow> &window)
 {
-	return mainWindow;
+	// TODO
+}
+
+std::shared_ptr<IWindow> Engine::LuaGetMainWindow() noexcept
+{
+	return _mainWindow;
 }
 
 void InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
