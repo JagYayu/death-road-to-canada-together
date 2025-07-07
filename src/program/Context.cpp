@@ -22,21 +22,7 @@ Engine &Context::GetEngine()
 	return *_engine;
 }
 
-const Engine &Context::GetEngine() const
-{
-	if (!_engine) [[unlikely]]
-	{
-		throw std::runtime_error(errorMessage);
-	}
-	return *_engine;
-}
-
 EngineConfig &Context::GetEngineConfig()
-{
-	return GetEngine()._config;
-}
-
-const EngineConfig &Context::GetEngineConfig() const
 {
 	return GetEngine()._config;
 }
@@ -46,17 +32,7 @@ ImageManager &Context::GetImageManager()
 	return GetEngine()._imageManager;
 }
 
-const ImageManager &Context::GetImageManager() const
-{
-	return GetEngine()._imageManager;
-}
-
 FontManager &Context::GetFontManager()
-{
-	return GetEngine()._fontManager;
-}
-
-const FontManager &Context::GetFontManager() const
 {
 	return GetEngine()._fontManager;
 }
@@ -66,17 +42,7 @@ std::weak_ptr<IEventManager> Context::GetEventManager()
 	return GetEngine()._eventManager;
 }
 
-std::weak_ptr<const IEventManager> Context::GetEventManager() const
-{
-	return GetEngine()._eventManager;
-}
-
 std::weak_ptr<IModManager> Context::GetModManager()
-{
-	return GetEngine()._modManager;
-}
-
-std::weak_ptr<const IModManager> Context::GetModManager() const
 {
 	return GetEngine()._modManager;
 }
@@ -86,27 +52,12 @@ std::weak_ptr<IScriptEngine> Context::GetScriptEngine()
 	return GetEngine()._scriptEngine;
 }
 
-std::weak_ptr<const IScriptEngine> Context::GetScriptEngine() const
-{
-	return GetEngine()._scriptEngine;
-}
-
 std::weak_ptr<IScriptLoader> Context::GetScriptLoader()
 {
 	return GetEngine()._scriptLoader;
 }
 
-std::weak_ptr<const IScriptLoader> Context::GetScriptLoader() const
-{
-	return GetEngine()._scriptLoader;
-}
-
 std::weak_ptr<IScriptProvider> Context::GetScriptProvider()
-{
-	return GetEngine()._scriptProvider;
-}
-
-std::weak_ptr<const IScriptProvider> Context::GetScriptProvider() const
 {
 	return GetEngine()._scriptProvider;
 }

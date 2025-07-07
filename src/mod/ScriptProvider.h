@@ -35,7 +35,8 @@ namespace tudov
 		virtual bool IsStaticScript(ScriptID scriptID) const noexcept = 0;
 
 		virtual ScriptID AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_) noexcept = 0;
-		virtual void RemoveScript(ScriptID scriptID) noexcept = 0;
+		virtual bool RemoveScript(ScriptID scriptID) noexcept = 0;
+		virtual bool RemoveScript(std::string_view scriptName) noexcept = 0;
 		virtual const std::string &GetScriptCode(ScriptID scriptID) const noexcept = 0;
 		virtual std::string_view GetScriptNamespace(ScriptID scriptID) noexcept = 0;
 
@@ -65,7 +66,7 @@ namespace tudov
 
 	  private:
 		ScriptID AddScriptImpl(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_ = emptyString);
-		void RemoveScriptImpl(ScriptID scriptID);
+		bool RemoveScriptImpl(ScriptID scriptID) noexcept;
 
 	  public:
 		Context &GetContext() noexcept override;
@@ -77,7 +78,8 @@ namespace tudov
 		bool IsStaticScript(ScriptID scriptID) const noexcept override;
 
 		ScriptID AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_) noexcept override;
-		void RemoveScript(ScriptID scriptID) noexcept override;
+		bool RemoveScript(ScriptID scriptID) noexcept override;
+		bool RemoveScript(std::string_view scriptName) noexcept override;
 		const std::string &GetScriptCode(ScriptID scriptID) const noexcept override;
 		std::string_view GetScriptNamespace(ScriptID scriptID) noexcept override;
 

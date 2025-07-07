@@ -25,8 +25,9 @@ Engine::Engine() noexcept
       _imageManager(),
       _fontManager(),
       _luaAPI(std::make_shared<LuaAPI>()),
-      _mainWindow(nullptr),
-      _windows()
+      _mainWindow(),
+      _windows(),
+      _debugManager()
 {
 	context = Context(this);
 
@@ -72,12 +73,12 @@ void Engine::Run(const MainArgs &args)
 		prevNS = startNS;
 		_framerate = 1'000'000'000.0 / deltaNS;
 
+		_modManager->Update();
+
 		for (auto &&window : _windows)
 		{
 			window->HandleEvents();
 		}
-
-		_modManager->Update();
 
 		_debugManager->UpdateAndRender();
 
@@ -89,7 +90,7 @@ void Engine::Run(const MainArgs &args)
 		_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
 
 		uint64_t elapsed = SDL_GetTicksNS() - startNS;
-		const uint64_t limit = 1'000'000'000ull / static_cast<uint64_t>(_config.GetWindowFramelimit());
+		uint64_t limit = 1'000'000'000ull / static_cast<uint64_t>(_config.GetWindowFramelimit());
 		if (elapsed < limit)
 		{
 			SDL_DelayPrecise(limit - elapsed);
@@ -119,16 +120,17 @@ void Engine::Quit()
 
 void Engine::InitializeMainWindow()
 {
-	if (_mainWindow)
+	if (!_mainWindow.expired())
 	{
 		throw std::runtime_error("Engine main window has already been initialized!");
 	}
 
-	_mainWindow = std::make_shared<MainWindow>(context);
-	AddWindow(_mainWindow);
-	_mainWindow->Initialize(_config.GetWindowWidth(), _config.GetWindowHeight(), _config.GetWindowTitle());
+	auto &&mainWindow = std::make_shared<MainWindow>(context);
+	AddWindow(mainWindow);
+	mainWindow->Initialize(_config.GetWindowWidth(), _config.GetWindowHeight(), _config.GetWindowTitle());
 
-	_debugManager = std::make_shared<DebugManager>(_mainWindow);
+	_mainWindow = mainWindow;
+	_debugManager = std::make_shared<DebugManager>(mainWindow);
 }
 
 void Engine::InitializeResources()
@@ -229,7 +231,7 @@ void Engine::RemoveWindow(const std::shared_ptr<IWindow> &window)
 
 std::shared_ptr<IWindow> Engine::LuaGetMainWindow() noexcept
 {
-	return _mainWindow;
+	return _mainWindow.expired() ? nullptr : _mainWindow.lock();
 }
 
 void InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept

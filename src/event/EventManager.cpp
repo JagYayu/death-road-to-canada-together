@@ -78,7 +78,11 @@ void EventManager::OnScriptsLoaded()
 
 	for (auto &&[eventID, loadtimeEvent] : _loadtimeEvents)
 	{
-		assert(eventID && "contains invalid event id!");
+		if (!eventID) [[unlikely]]
+		{
+			throw std::runtime_error("Loadtime events contains event with invalid id!");
+		}
+
 		if (_runtimeEvents.contains(eventID))
 		{
 			auto &&msg = std::format("duplicated event <{}>\"{}\"", eventID, GetEventNameByID(eventID)->data());
@@ -88,8 +92,15 @@ void EventManager::OnScriptsLoaded()
 		if (loadtimeEvent->IsBuilt())
 		{
 			auto &&runtimeEvent = std::make_shared<RuntimeEvent>(loadtimeEvent->ToRuntime());
-			_log->Trace("loadtime event converted to a runtime event <{}>\"{}\"", eventID, GetEventNameByID(eventID)->data());
-			_runtimeEvents.try_emplace(runtimeEvent->GetID(), runtimeEvent);
+			if (eventID != runtimeEvent->GetID())
+			{
+				_log->Error("Converted runtime event has different id to previous loadtime event! Expected <{}> but got <{}>", eventID, runtimeEvent->GetID());
+			}
+			else
+			{
+				_log->Trace("Loadtime event converted to a runtime event <{}>\"{}\"", eventID, GetEventNameByID(eventID)->data());
+				assert(_runtimeEvents.try_emplace(eventID, runtimeEvent).second);
+			}
 		}
 		else
 		{
@@ -104,10 +115,13 @@ void EventManager::OnScriptsLoaded()
 	_log->Trace("Cleared loadtime events");
 
 	auto &&scriptLoader = GetScriptLoader();
+	auto &&scriptProvider = GetScriptProvider();
 
 	for (auto &&[_, event] : _runtimeEvents)
 	{
 		auto scriptID = event->GetScriptID();
+		assert(!scriptID || scriptProvider->IsValidScriptID(scriptID) && "Invalid script detected!");
+
 		if (scriptID)
 		{
 			for (auto &&it = event->BeginHandlers(); it != event->EndHandlers(); ++it)
@@ -170,7 +184,7 @@ void EventManager::Initialize() noexcept
 		}
 	};
 
-	_onPreHotReloadScriptsHandlerID = scriptLoader->GetOnPreHotReloadScripts() += [this](const std::vector<ScriptID> &scriptIDs)
+	_onPostHotReloadScriptsHandlerID = scriptLoader->GetOnPostHotReloadScripts() += [this](const std::vector<ScriptID> &scriptIDs)
 	{
 		OnScriptsLoaded();
 	};
@@ -425,7 +439,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 
 		bool dup = false;
 		{
-			auto it = _loadtimeEvents.find(eventID);
+			auto &&it = _loadtimeEvents.find(eventID);
 			if (it == _loadtimeEvents.end())
 			{
 				auto &&loadtimeEvent = std::make_shared<LoadtimeEvent>(*this, eventID, scriptID, orders_, keys_);
@@ -461,23 +475,30 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 		RuntimeEvent *eventInstance;
 		if (event.is<EventID>())
 		{
-			auto &&it = _runtimeEvents.find(event.as<EventID>());
+			auto eventID = event.as<EventID>();
+			auto &&it = _runtimeEvents.find(eventID);
 			if (it == _runtimeEvents.end())
 			{
-				scriptEngine->ThrowError(std::format("Event not found"));
+				scriptEngine->ThrowError(std::format("Runtime event <{}> not found", eventID));
 				return;
 			}
 			eventInstance = it->second.get();
 		}
 		else if (event.is<sol::string_view>())
 		{
-			auto &&it = _runtimeEvents.find(_eventName2ID[event.as<std::string_view>()]);
+			auto eventName = event.as<std::string_view>();
+			auto &&it = _runtimeEvents.find(_eventName2ID[eventName]);
 			if (it == _runtimeEvents.end())
 			{
-				scriptEngine->ThrowError(std::format("Event not found"));
+				scriptEngine->ThrowError(std::format("Runtime event <{}> not found", eventName));
 				return;
 			}
 			eventInstance = it->second.get();
+		}
+		else
+		{
+			scriptEngine->ThrowError("Bad argument #1 to 'event': expected EventID or string");
+			return;
 		}
 
 		EventHandleKey k{nullptr};
@@ -490,10 +511,8 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 			k.value = key.as<std::string>();
 		}
 
-		if (eventInstance)
-		{
-			eventInstance->Invoke(args, k);
-		}
+		assert(eventInstance);
+		eventInstance->Invoke(args, k);
 	}
 	catch (const std::exception &e)
 	{

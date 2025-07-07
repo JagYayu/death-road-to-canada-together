@@ -15,6 +15,7 @@
 #include <cassert>
 #include <format>
 #include <optional>
+#include <stdexcept>
 #include <tuple>
 #include <vector>
 
@@ -215,32 +216,32 @@ Context &ScriptLoader::GetContext() noexcept
 	return _context;
 }
 
-DelegateEvent<> ScriptLoader::GetOnPreLoadAllScripts() noexcept
+DelegateEvent<> &ScriptLoader::GetOnPreLoadAllScripts() noexcept
 {
 	return _onPreLoadAllScripts;
 }
 
-DelegateEvent<> ScriptLoader::GetOnPostLoadAllScripts() noexcept
+DelegateEvent<> &ScriptLoader::GetOnPostLoadAllScripts() noexcept
 {
 	return _onPostLoadAllScripts;
 }
 
-DelegateEvent<const std::vector<ScriptID> &> ScriptLoader::GetOnPreHotReloadScripts() noexcept
+DelegateEvent<const std::vector<ScriptID> &> &ScriptLoader::GetOnPreHotReloadScripts() noexcept
 {
 	return _onPreHotReloadScripts;
 }
 
-DelegateEvent<const std::vector<ScriptID> &> ScriptLoader::GetOnPostHotReloadScripts() noexcept
+DelegateEvent<const std::vector<ScriptID> &> &ScriptLoader::GetOnPostHotReloadScripts() noexcept
 {
 	return _onPostHotReloadScripts;
 }
 
-DelegateEvent<ScriptID> ScriptLoader::GetOnLoadedScript() noexcept
+DelegateEvent<ScriptID> &ScriptLoader::GetOnLoadedScript() noexcept
 {
 	return _onLoadedScript;
 }
 
-DelegateEvent<ScriptID> ScriptLoader::GetOnUnloadScript() noexcept
+DelegateEvent<ScriptID> &ScriptLoader::GetOnUnloadScript() noexcept
 {
 	return _onUnloadScript;
 }
@@ -287,14 +288,25 @@ std::vector<ScriptID> ScriptLoader::GetDependencies(ScriptID scriptID) const
 void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 {
 	auto &&scriptProvider = GetScriptProvider();
-	if (!scriptProvider->IsValidScriptID(source) || !scriptProvider->IsValidScriptID(target))
+	if (!scriptProvider->IsValidScriptID(source) || !scriptProvider->IsValidScriptID(target)) [[unlikely]]
 	{
-		_log->Warn("Attempt to link invalid scripts to reverse dependency map: <{}> -> <{}>", source, target);
+		auto &&sourceName = scriptProvider->GetScriptNameByID(source);
+		auto &&targetName = scriptProvider->GetScriptNameByID(target);
+		_log->Warn("Attempt to link invalid scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
+		           source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
+		           target, targetName.has_value() ? targetName->data() : "#INVALID#");
 		return;
 	}
+
 	auto &&dependencies = _scriptReverseDependencies[target];
 	dependencies.insert(source);
 	// _scriptDependencyGraph.AddLink(from, to);
+	if (_log->CanTrace())
+	{
+		_log->Trace("Link scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
+		            source, scriptProvider->GetScriptNameByID(source)->data(),
+		            target, scriptProvider->GetScriptNameByID(target)->data());
+	}
 }
 
 void ScriptLoader::LoadAll()
@@ -433,14 +445,29 @@ std::vector<ScriptID> ScriptLoader::Unload(ScriptID scriptID)
 	return std::move(unloadedScripts);
 }
 
+std::vector<ScriptID> ScriptLoader::UnloadInvalids()
+{
+	// TODO
+	throw std::runtime_error("NOT IMPLEMENT YET");
+	// std::vector<ScriptID> unloadedScripts{};
+	// return std::move(unloadedScripts);
+}
+
 void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts)
 {
-	_log->Trace("Unloading script <{}> ...", scriptID);
+	auto &&scriptName = GetScriptProvider()->GetScriptNameByID(scriptID);
+	if (!scriptName.has_value()) [[unlikely]]
+	{
+		_log->Warn("Attempt to unload invalid script <{}> ...", scriptID);
+
+		return;
+	}
+
+	_log->Trace("Unloading script <{}>\"{}\" ...", scriptID, scriptName->data());
 
 	if (!_scriptModules.erase(scriptID))
 	{
-		_log->Error("Unload script <{}> failed: script not found", scriptID);
-
+		// _log->Warn("Unload script failed: module was not found in script loader", scriptID, scriptName->data());
 		return;
 	}
 
@@ -456,6 +483,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 	// _scriptErrorsCascaded.erase(scriptID);
 	// _scriptDependencyGraph.UnlinkOutgoing(scriptID);
 	_scriptReverseDependencies.erase(scriptID);
+
 	for (auto &&[_, dependencies] : _scriptReverseDependencies)
 	{
 		dependencies.erase(scriptID);
@@ -468,6 +496,16 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 void ScriptLoader::HotReload(const std::vector<ScriptID> &scriptIDs)
 {
 	_log->Debug("Hot reloading scripts ...");
+
+	if (_log->CanTrace())
+	{
+		auto &&scriptProvider = GetScriptProvider();
+		for (auto scriptID : scriptIDs)
+		{
+			auto &&scriptName = scriptProvider->GetScriptNameByID(scriptID);
+			_log->Trace("<{}>\"{}\"", scriptID, scriptName.has_value() ? scriptName->data() : "#INVALID#");
+		}
+	}
 
 	_onPreHotReloadScripts(scriptIDs);
 

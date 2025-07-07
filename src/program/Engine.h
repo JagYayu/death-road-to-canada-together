@@ -43,7 +43,7 @@ namespace tudov
 		std::shared_ptr<IScriptProvider> _scriptProvider;
 		std::shared_ptr<IEventManager> _eventManager;
 
-		std::shared_ptr<IWindow> _mainWindow;
+		std::weak_ptr<IWindow> _mainWindow;
 		std::vector<std::shared_ptr<IWindow>> _windows;
 		std::shared_ptr<DebugManager> _debugManager;
 

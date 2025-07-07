@@ -35,18 +35,18 @@ namespace tudov
 			virtual const sol::table &FullLoad(IScriptLoader &scriptLoader) = 0;
 		};
 
-		virtual DelegateEvent<> GetOnPreLoadAllScripts() noexcept = 0;
-		virtual DelegateEvent<> GetOnPostLoadAllScripts() noexcept = 0;
-		virtual DelegateEvent<const std::vector<ScriptID> &> GetOnPreHotReloadScripts() noexcept = 0;
-		virtual DelegateEvent<const std::vector<ScriptID> &> GetOnPostHotReloadScripts() noexcept = 0;
+		virtual DelegateEvent<> &GetOnPreLoadAllScripts() noexcept = 0;
+		virtual DelegateEvent<> &GetOnPostLoadAllScripts() noexcept = 0;
+		virtual DelegateEvent<const std::vector<ScriptID> &> &GetOnPreHotReloadScripts() noexcept = 0;
+		virtual DelegateEvent<const std::vector<ScriptID> &> &GetOnPostHotReloadScripts() noexcept = 0;
 		/*
 		 * Should be called right after a script was `RawLoaded` or `LazyLoaded`.
 		 */
-		virtual DelegateEvent<ScriptID> GetOnLoadedScript() = 0;
+		virtual DelegateEvent<ScriptID> &GetOnLoadedScript() = 0;
 		/*
 		 * Should be called before a script was unloaded.
 		 */
-		virtual DelegateEvent<ScriptID> GetOnUnloadScript() = 0;
+		virtual DelegateEvent<ScriptID> &GetOnUnloadScript() = 0;
 
 		virtual ScriptID GetLoadingScriptID() const noexcept = 0;
 		virtual std::optional<std::string_view> GetLoadingScriptName() const noexcept = 0;
@@ -65,9 +65,13 @@ namespace tudov
 		 */
 		virtual std::shared_ptr<IScriptLoader::IModule> Load(std::string_view scriptName) = 0;
 		/*
-		 * Try unload script's module, it also uninstall all scripts that depend on it, return a vector of script ids.
+		 * Try unload script's module, it also unload all scripts that depend on it, so it returns a vector of script ids.
 		 */
 		virtual std::vector<ScriptID> Unload(ScriptID scriptID) = 0;
+		/*
+		 * Try unload invalid scripts' modules that not provided by script provider.
+		 */
+		virtual std::vector<ScriptID> UnloadInvalids() = 0;
 		/*
 		 * Hot reload a vector of scripts.
 		 */
@@ -76,6 +80,36 @@ namespace tudov
 
 		virtual bool HasAnyLoadError() const noexcept = 0;
 		virtual std::vector<std::string> GetLoadErrors() noexcept = 0;
+
+		inline const DelegateEvent<> &GetOnPreLoadAllScripts() const noexcept
+		{
+			return const_cast<IScriptLoader *>(this)->GetOnPreLoadAllScripts();
+		}
+
+		inline const DelegateEvent<> &GetOnPostLoadAllScripts() const noexcept
+		{
+			return const_cast<IScriptLoader *>(this)->GetOnPostLoadAllScripts();
+		}
+
+		inline const DelegateEvent<const std::vector<ScriptID> &> &GetOnPreHotReloadScripts() const noexcept
+		{
+			return const_cast<IScriptLoader *>(this)->GetOnPreHotReloadScripts();
+		}
+
+		inline const DelegateEvent<const std::vector<ScriptID> &> &GetOnPostHotReloadScripts() const noexcept
+		{
+			return const_cast<IScriptLoader *>(this)->GetOnPostHotReloadScripts();
+		}
+
+		inline const DelegateEvent<ScriptID> &GetOnLoadedScript() const noexcept
+		{
+			return const_cast<IScriptLoader *>(this)->GetOnLoadedScript();
+		}
+
+		inline const DelegateEvent<ScriptID> &GetOnUnloadScript() const noexcept
+		{
+			return const_cast<IScriptLoader *>(this)->GetOnUnloadScript();
+		}
 	};
 
 	class ScriptLoader : public IScriptLoader
@@ -136,12 +170,12 @@ namespace tudov
 	  public:
 		Context &GetContext() noexcept override;
 
-		DelegateEvent<> GetOnPreLoadAllScripts() noexcept override;
-		DelegateEvent<> GetOnPostLoadAllScripts() noexcept override;
-		DelegateEvent<const std::vector<ScriptID> &> GetOnPreHotReloadScripts() noexcept override;
-		DelegateEvent<const std::vector<ScriptID> &> GetOnPostHotReloadScripts() noexcept override;
-		DelegateEvent<ScriptID> GetOnLoadedScript() noexcept override;
-		DelegateEvent<ScriptID> GetOnUnloadScript() noexcept override;
+		DelegateEvent<> &GetOnPreLoadAllScripts() noexcept override;
+		DelegateEvent<> &GetOnPostLoadAllScripts() noexcept override;
+		DelegateEvent<const std::vector<ScriptID> &> &GetOnPreHotReloadScripts() noexcept override;
+		DelegateEvent<const std::vector<ScriptID> &> &GetOnPostHotReloadScripts() noexcept override;
+		DelegateEvent<ScriptID> &GetOnLoadedScript() noexcept override;
+		DelegateEvent<ScriptID> &GetOnUnloadScript() noexcept override;
 
 		ScriptID GetLoadingScriptID() const noexcept override;
 		std::optional<std::string_view> GetLoadingScriptName() const noexcept override;
@@ -154,6 +188,7 @@ namespace tudov
 		std::shared_ptr<IScriptLoader::IModule> Load(ScriptID scriptID) override;
 		std::shared_ptr<IScriptLoader::IModule> Load(std::string_view scriptName) override;
 		std::vector<ScriptID> Unload(ScriptID scriptID) override;
+		std::vector<ScriptID> UnloadInvalids() override;
 		void HotReload(const std::vector<ScriptID> &scriptIDs) override;
 		void ProcessFullLoads() override;
 

@@ -1,13 +1,13 @@
 #include "VertexBuffer.h"
 
-using namespace tudov;
+// using namespace tudov;
 
-VertexBuffer::VertexBuffer() noexcept
-{
+// VertexBuffer::VertexBuffer() noexcept
+// {
 
-}
+// }
 
-void VertexBuffer::Render() noexcept
-{
-	// rlVertexBuffer(_vertexBuffer, 0, _verticesCount);
-}
+// void VertexBuffer::Render() noexcept
+// {
+// 	// rlVertexBuffer(_vertexBuffer, 0, _verticesCount);
+// }

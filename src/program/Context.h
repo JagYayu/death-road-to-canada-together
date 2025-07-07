@@ -36,14 +36,34 @@ namespace tudov
 		const FontManager &GetFontManager() const;
 
 		std::weak_ptr<IEventManager> GetEventManager();
-		std::weak_ptr<const IEventManager> GetEventManager() const;
 		std::weak_ptr<IModManager> GetModManager();
-		std::weak_ptr<const IModManager> GetModManager() const;
 		std::weak_ptr<IScriptEngine> GetScriptEngine();
-		std::weak_ptr<const IScriptEngine> GetScriptEngine() const;
 		std::weak_ptr<IScriptLoader> GetScriptLoader();
-		std::weak_ptr<const IScriptLoader> GetScriptLoader() const;
 		std::weak_ptr<IScriptProvider> GetScriptProvider();
-		std::weak_ptr<const IScriptProvider> GetScriptProvider() const;
+
+		inline std::weak_ptr<const IEventManager> GetEventManager() const
+		{
+			return const_cast<Context *>(this)->GetEventManager();
+		}
+
+		inline std::weak_ptr<const IModManager> GetModManager() const
+		{
+			return const_cast<Context *>(this)->GetModManager();
+		}
+
+		inline std::weak_ptr<const IScriptEngine> GetScriptEngine() const
+		{
+			return const_cast<Context *>(this)->GetScriptEngine();
+		}
+
+		inline std::weak_ptr<const IScriptLoader> GetScriptLoader() const
+		{
+			return const_cast<Context *>(this)->GetScriptLoader();
+		}
+
+		inline std::weak_ptr<const IScriptProvider> GetScriptProvider() const
+		{
+			return const_cast<Context *>(this)->GetScriptProvider();
+		}
 	};
 } // namespace tudov

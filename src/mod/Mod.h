@@ -34,7 +34,7 @@ namespace tudov
 		ModManager &_modManager;
 		ModConfig _config;
 
-		std::vector<ScriptID> _scripts;
+		std::vector<std::string> _scripts;
 		std::vector<FontID> _fonts;
 
 	  public:

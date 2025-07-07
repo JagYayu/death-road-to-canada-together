@@ -208,7 +208,10 @@ void ModManager::Update()
 			scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
 
 			auto &&namespace_ = scriptProvider->GetScriptNamespace(scriptID);
-			scriptProvider->RemoveScript(scriptID);
+			if (!scriptProvider->RemoveScript(scriptID)) [[unlikely]]
+			{
+				_log->Warn("Attempt to remove non-exist script id", scriptID);
+			}
 			scriptID = scriptProvider->AddScript(scriptName, scriptCode, namespace_);
 
 			scriptIDs.emplace_back(scriptID);

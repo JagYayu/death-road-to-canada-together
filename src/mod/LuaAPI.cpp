@@ -25,17 +25,17 @@ void LuaAPI::Install(sol::state &lua, Context &context) noexcept
 	lua.new_usertype<ModManager>("ModManager");
 
 	lua.new_usertype<EventManager>("EventManager",
-	                               "add", &EventManager::LuaAdd,
-	                               "new", &EventManager::LuaNew,
-	                               "invoke", &EventManager::LuaInvoke);
+	                                "add", &EventManager::LuaAdd,
+	                                "new", &EventManager::LuaNew,
+	                                "invoke", &EventManager::LuaInvoke);
 
 	lua.new_usertype<Window>("Window",
-	                         "renderer", &Window::renderer,
-	                         "close", &Window::Close,
-	                         "shouldClose", &Window::ShouldClose,
-	                         "getWidth", &Window::GetWidth,
-	                         "getHeight", &Window::GetHeight,
-	                         "getSize", &Window::GetSize);
+	                          "renderer", &Window::renderer,
+	                          "close", &Window::Close,
+	                          "shouldClose", &Window::ShouldClose,
+	                          "getWidth", &Window::GetWidth,
+	                          "getHeight", &Window::GetHeight,
+	                          "getSize", &Window::GetSize);
 
 	lua.new_usertype<Renderer>("Renderer",
 	                           "clear", &Renderer::LuaClear,
@@ -48,9 +48,10 @@ void LuaAPI::Install(sol::state &lua, Context &context) noexcept
 	lua["engine"] = &context.GetEngine();
 	lua["fonts"] = &context.GetFontManager();
 	lua["images"] = &context.GetImageManager();
-	lua["mods"] = context.GetModManager().lock();
-	lua["events"] = context.GetEventManager().lock();
-	lua["scriptEngine"] = context.GetScriptEngine().lock();
-	lua["scriptLoader"] = context.GetScriptLoader().lock();
-	lua["scriptProvider"] = context.GetScriptProvider().lock();
+
+	lua["mods"] = std::dynamic_pointer_cast<ModManager>(context.GetModManager().lock());
+	lua["events"] = std::dynamic_pointer_cast<EventManager>(context.GetEventManager().lock());
+	lua["scriptEngine"] = std::dynamic_pointer_cast<ScriptEngine>(context.GetScriptEngine().lock());
+	lua["scriptLoader"] = std::dynamic_pointer_cast<ScriptLoader>(context.GetScriptLoader().lock());
+	lua["scriptProvider"] = std::dynamic_pointer_cast<ScriptProvider>(context.GetScriptProvider().lock());
 }

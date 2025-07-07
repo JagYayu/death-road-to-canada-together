@@ -61,16 +61,17 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_
 	return id;
 }
 
-void ScriptProvider::RemoveScriptImpl(ScriptID scriptID)
+bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 {
 	auto &&it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())
 	{
-		_log->Warn("Attempt to remove non-exist scriptID: {}", scriptID);
-		return;
+		// _log->Warn("Attempt to remove non-exist scriptID: {}", scriptID);
+		return false;
 	}
 	_scriptName2ID.erase(it->second.name);
 	_scriptID2Entry.erase(it);
+	return true;
 }
 
 size_t ScriptProvider::GetCount() const noexcept
@@ -134,14 +135,23 @@ ScriptID ScriptProvider::AddScript(std::string_view scriptName, std::string_view
 	return AddScriptImpl(scriptName, scriptCode, namespace_);
 }
 
-void ScriptProvider::RemoveScript(ScriptID scriptID) noexcept
+bool ScriptProvider::RemoveScript(ScriptID scriptID) noexcept
 {
 	if (IsStaticScript(scriptID))
 	{
-		_log->Warn("Attempt to remove static script");
-		return;
+		return false;
 	}
-	RemoveScriptImpl(scriptID);
+	return RemoveScriptImpl(scriptID);
+}
+
+bool ScriptProvider::RemoveScript(std::string_view scriptName) noexcept
+{
+	auto scriptID = GetScriptIDByName(scriptName);
+	if (!scriptID)
+	{
+		return false;
+	}
+	return RemoveScript(scriptID);
 }
 
 const std::string &ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
