@@ -53,6 +53,10 @@ target_link_libraries(dr2c PRIVATE $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-s
 find_package(SDL3_ttf CONFIG REQUIRED)
 target_link_libraries(dr2c PRIVATE SDL3_ttf::SDL3_ttf)
 
+# enet
+find_package(unofficial-enet CONFIG REQUIRED)
+target_link_libraries(dr2c PRIVATE unofficial::enet::enet)
+
 # imgui - from vcpkg
 find_package(imgui CONFIG REQUIRED)
 target_link_libraries(dr2c PRIVATE imgui::imgui)

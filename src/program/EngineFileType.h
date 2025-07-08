@@ -2,7 +2,7 @@
 
 namespace tudov
 {
-	enum class EEngineFileType
+	enum class EngineFileType
 	{
 		Texture,
 	};

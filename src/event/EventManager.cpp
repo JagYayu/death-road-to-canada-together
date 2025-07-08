@@ -120,7 +120,7 @@ void EventManager::OnScriptsLoaded()
 	for (auto &&[_, event] : _runtimeEvents)
 	{
 		auto scriptID = event->GetScriptID();
-		assert(!scriptID || scriptProvider->IsValidScriptID(scriptID) && "Invalid script detected!");
+		assert(!scriptID || scriptProvider->IsValidScript(scriptID) && "Invalid script detected!");
 
 		if (scriptID)
 		{
@@ -466,7 +466,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 	}
 }
 
-void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, const sol::object &key)
+void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, const sol::object &key, const sol::object &uncached)
 {
 	try
 	{
@@ -512,7 +512,15 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 		}
 
 		assert(eventInstance);
-		eventInstance->Invoke(args, k);
+
+		if (!uncached.valid() || uncached.is<bool>() && !uncached.as<bool>()) [[unlikely]]
+		{
+			eventInstance->InvokeUncached(args, k);
+		}
+		else [[likely]]
+		{
+			eventInstance->Invoke(args, k);
+		}
 	}
 	catch (const std::exception &e)
 	{
@@ -553,7 +561,7 @@ void EventManager::ClearInvalidScriptEvents() noexcept
 	for (auto &&it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 	{
 		auto &&scriptID = it->second->GetScriptID();
-		if (scriptID && !scriptProvider->IsValidScriptID(scriptID))
+		if (scriptID && !scriptProvider->IsValidScript(scriptID))
 		{
 			DeallocEventID(it->first);
 			_log->Trace("Clear invalid event <{}> from script <{}>", it->first, scriptID);

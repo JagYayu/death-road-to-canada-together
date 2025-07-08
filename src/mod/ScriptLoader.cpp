@@ -246,6 +246,23 @@ DelegateEvent<ScriptID> &ScriptLoader::GetOnUnloadScript() noexcept
 	return _onUnloadScript;
 }
 
+bool ScriptLoader::Exists(ScriptID scriptID) noexcept
+{
+	return _scriptModules.contains(scriptID);
+}
+
+bool ScriptLoader::IsLazyLoaded(ScriptID scriptID) noexcept
+{
+	auto &&it = _scriptModules.find(scriptID);
+	return it == _scriptModules.end() ? false : it->second->IsLazyLoaded();
+}
+
+bool ScriptLoader::IsFullyLoaded(ScriptID scriptID) noexcept
+{
+	auto &&it = _scriptModules.find(scriptID);
+	return it == _scriptModules.end() ? false : it->second->IsFullyLoaded();
+}
+
 ScriptID ScriptLoader::GetLoadingScriptID() const noexcept
 {
 	return _loadingScript;
@@ -288,19 +305,31 @@ std::vector<ScriptID> ScriptLoader::GetDependencies(ScriptID scriptID) const
 void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 {
 	auto &&scriptProvider = GetScriptProvider();
-	if (!scriptProvider->IsValidScriptID(source) || !scriptProvider->IsValidScriptID(target)) [[unlikely]]
+	if (!scriptProvider->IsValidScript(source) || !scriptProvider->IsValidScript(target)) [[unlikely]]
 	{
 		auto &&sourceName = scriptProvider->GetScriptNameByID(source);
 		auto &&targetName = scriptProvider->GetScriptNameByID(target);
 		_log->Warn("Attempt to link invalid scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
 		           source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
 		           target, targetName.has_value() ? targetName->data() : "#INVALID#");
+
+		return;
+	}
+	if (scriptProvider->IsStaticScript(source) || scriptProvider->IsStaticScript(target)) [[unlikely]]
+	{
+		auto &&sourceName = scriptProvider->GetScriptNameByID(source);
+		auto &&targetName = scriptProvider->GetScriptNameByID(target);
+		_log->Warn("Attempt to link static scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
+		           source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
+		           target, targetName.has_value() ? targetName->data() : "#INVALID#");
+
 		return;
 	}
 
 	auto &&dependencies = _scriptReverseDependencies[target];
 	dependencies.insert(source);
 	// _scriptDependencyGraph.AddLink(from, to);
+
 	if (_log->CanTrace())
 	{
 		_log->Trace("Link scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
@@ -400,7 +429,7 @@ std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, 
 	auto &&[it, inserted] = _scriptModules.try_emplace(scriptID, module);
 	assert(inserted);
 
-	if (ScriptProvider::IsStaticScript(scriptName))
+	if (GetScriptProvider()->IsStaticScript(scriptName))
 	{
 		module->RawLoad(*this);
 		_log->Trace("Raw loaded script <{}>\"{}\"", scriptID, scriptName);
@@ -445,6 +474,27 @@ std::vector<ScriptID> ScriptLoader::Unload(ScriptID scriptID)
 	return std::move(unloadedScripts);
 }
 
+std::vector<ScriptID> ScriptLoader::UnloadBy(std::string_view namespace_)
+{
+	std::vector<ScriptID> unloadedScripts{};
+
+	std::vector<ScriptID> unloadingScripts{};
+	auto &&scriptProvider = GetScriptProvider();
+	for (auto &&[scriptID, _] : _scriptModules)
+	{
+		if (scriptProvider->GetScriptNamespace(scriptID) == namespace_)
+		{
+			unloadingScripts.emplace_back(scriptID);
+		}
+	}
+	for (auto scriptID : unloadingScripts)
+	{
+		UnloadImpl(scriptID, unloadedScripts);
+	}
+
+	return std::move(unloadedScripts);
+}
+
 std::vector<ScriptID> ScriptLoader::UnloadInvalids()
 {
 	// TODO
@@ -467,7 +517,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 
 	if (!_scriptModules.erase(scriptID))
 	{
-		// _log->Warn("Unload script failed: module was not found in script loader", scriptID, scriptName->data());
+		_log->Trace("Already unloaded");
 		return;
 	}
 
@@ -489,8 +539,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 		dependencies.erase(scriptID);
 	}
 
-	auto &&name = GetScriptProvider()->GetScriptNameByID(scriptID);
-	_log->Trace("Unloaded script <{}> \"{}\"", scriptID, name.value());
+	_log->Trace("Unloaded");
 }
 
 void ScriptLoader::HotReload(const std::vector<ScriptID> &scriptIDs)

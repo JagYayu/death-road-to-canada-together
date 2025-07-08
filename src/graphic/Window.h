@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Renderer.h"
-#include "program/IEngineComponent.h"
+#include "program/EngineComponent.h"
 #include "util/Log.h"
 
 #include <cmath>

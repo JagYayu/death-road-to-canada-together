@@ -15,20 +15,32 @@ namespace tudov
 		virtual void Load() = 0;
 		virtual void Unload() = 0;
 
+		virtual ModManager &GetModManager() noexcept = 0;
+		virtual ModConfig &GetConfig() noexcept = 0;
+
 		inline void Reload()
 		{
 			Unload();
 			Load();
 		}
 
-		virtual ModManager &GetModManager() noexcept = 0;
-		virtual ModConfig &GetConfig() noexcept = 0;
-		virtual const ModConfig &GetConfig() const noexcept = 0;
-		virtual const std::string &GetNamespace() const noexcept = 0;
-		virtual const std::string &GetScriptsDirectory() const noexcept = 0;
+		inline const ModConfig &GetConfig() const noexcept
+		{
+			return const_cast<IMod*>(this)->GetConfig();
+		}
+
+		inline std::string_view GetNamespace() const noexcept
+		{
+			return GetConfig().namespace_;
+		}
+
+		inline std::string_view GetScriptsDirectory() const noexcept
+		{
+			return GetConfig().scripts.directory;
+		}
 	};
 
-	class Mod : public IMod
+	class Mod : virtual public IMod
 	{
 	  protected:
 		ModManager &_modManager;
@@ -41,10 +53,7 @@ namespace tudov
 		explicit Mod(ModManager &modManager);
 		explicit Mod(ModManager &modManager, const ModConfig &config);
 
-		ModManager &GetModManager() noexcept;
-		ModConfig &GetConfig() noexcept;
-		const ModConfig &GetConfig() const noexcept;
-		const std::string &GetNamespace() const noexcept;
-		const std::string &GetScriptsDirectory() const noexcept;
+		ModManager &GetModManager() noexcept override;
+		ModConfig &GetConfig() noexcept override;
 	};
 } // namespace tudov

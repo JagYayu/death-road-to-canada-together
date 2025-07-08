@@ -2,10 +2,11 @@
 
 #include "ScriptProvider.h"
 #include "event/DelegateEvent.hpp"
-#include "program/IEngineComponent.h"
+#include "program/EngineComponent.h"
 #include "util/Defs.h"
 #include "util/DependencyGraph.hpp"
 #include "util/Log.h"
+#include "util/Micros.h"
 #include "util/StringUtils.hpp"
 
 #include <optional>
@@ -14,6 +15,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
@@ -48,9 +50,11 @@ namespace tudov
 		 */
 		virtual DelegateEvent<ScriptID> &GetOnUnloadScript() = 0;
 
+		virtual bool Exists(ScriptID scriptID) noexcept = 0;
+		virtual bool IsLazyLoaded(ScriptID scriptID) noexcept = 0;
+		virtual bool IsFullyLoaded(ScriptID scriptID) noexcept = 0;
 		virtual ScriptID GetLoadingScriptID() const noexcept = 0;
 		virtual std::optional<std::string_view> GetLoadingScriptName() const noexcept = 0;
-
 		virtual std::vector<ScriptID> GetDependencies(ScriptID scriptID) const = 0;
 		virtual void AddReverseDependency(ScriptID source, ScriptID target) = 0;
 
@@ -68,6 +72,7 @@ namespace tudov
 		 * Try unload script's module, it also unload all scripts that depend on it, so it returns a vector of script ids.
 		 */
 		virtual std::vector<ScriptID> Unload(ScriptID scriptID) = 0;
+		virtual std::vector<ScriptID> UnloadBy(std::string_view namespace_) = 0;
 		/*
 		 * Try unload invalid scripts' modules that not provided by script provider.
 		 */
@@ -109,6 +114,32 @@ namespace tudov
 		inline const DelegateEvent<ScriptID> &GetOnUnloadScript() const noexcept
 		{
 			return const_cast<IScriptLoader *>(this)->GetOnUnloadScript();
+		}
+
+		inline bool Exists(std::string_view scriptName) noexcept
+		{
+			return Exists(GetScriptIDByName(scriptName));
+		}
+
+		inline bool IsLazyLoaded(std::string_view scriptName) noexcept
+		{
+			return IsLazyLoaded(GetScriptIDByName(scriptName));
+		}
+
+		inline bool IsFullyLoaded(std::string_view scriptName) noexcept
+		{
+			return IsFullyLoaded(GetScriptIDByName(scriptName));
+		}
+
+		inline std::vector<ScriptID> Unload(std::string_view scriptName)
+		{
+			return Unload(GetScriptIDByName(scriptName));
+		}
+
+	  private:
+		FORCEINLINE ScriptID GetScriptIDByName(std::string_view scriptName)
+		{
+			return GetScriptProvider()->GetScriptIDByName(scriptName);
 		}
 	};
 
@@ -177,9 +208,11 @@ namespace tudov
 		DelegateEvent<ScriptID> &GetOnLoadedScript() noexcept override;
 		DelegateEvent<ScriptID> &GetOnUnloadScript() noexcept override;
 
+		bool Exists(ScriptID scriptID) noexcept override;
+		bool IsLazyLoaded(ScriptID scriptID) noexcept override;
+		bool IsFullyLoaded(ScriptID scriptID) noexcept override;
 		ScriptID GetLoadingScriptID() const noexcept override;
 		std::optional<std::string_view> GetLoadingScriptName() const noexcept override;
-
 		std::vector<ScriptID> GetDependencies(ScriptID scriptID) const override;
 		void AddReverseDependency(ScriptID source, ScriptID target) override;
 
@@ -188,6 +221,7 @@ namespace tudov
 		std::shared_ptr<IScriptLoader::IModule> Load(ScriptID scriptID) override;
 		std::shared_ptr<IScriptLoader::IModule> Load(std::string_view scriptName) override;
 		std::vector<ScriptID> Unload(ScriptID scriptID) override;
+		std::vector<ScriptID> UnloadBy(std::string_view namespace_) override;
 		std::vector<ScriptID> UnloadInvalids() override;
 		void HotReload(const std::vector<ScriptID> &scriptIDs) override;
 		void ProcessFullLoads() override;

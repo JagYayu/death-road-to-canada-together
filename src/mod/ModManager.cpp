@@ -15,7 +15,8 @@ using namespace tudov;
 ModManager::ModManager(Context &context) noexcept
     : _log(Log::Get("ModManager")),
       _context(context),
-      _loadState(ELoadState::None)
+      _loadState(ELoadState::None),
+      _virtualUnpackagedMod(*this, "")
 {
 }
 
@@ -105,7 +106,7 @@ void ModManager::LoadMods()
 		if (entry.is_directory())
 		{
 			auto &&dir = entry.path();
-			if (UnpackagedMod::IsValidDirectory(dir))
+			if (_virtualUnpackagedMod.IsValidDirectory(dir))
 			{
 				auto &&mod = std::make_shared<UnpackagedMod>(*this, dir);
 				if (IsModMatched(*mod))
@@ -177,13 +178,13 @@ const std::vector<ModEntry> &ModManager::GetRequiredMods() const noexcept
 	return _requiredMods;
 }
 
-void ModManager::HotReloadScriptPending(std::string scriptName, std::string scriptCode)
+void ModManager::HotReloadScriptPending(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptNamespace)
 {
 	if (!_hotReloadScriptsPending)
 	{
-		_hotReloadScriptsPending = std::make_unique<std::unordered_map<std::string, std::string>>();
+		_hotReloadScriptsPending = std::make_unique<THotReloadScriptsMap>();
 	}
-	(*_hotReloadScriptsPending)[scriptName] = scriptCode;
+	_hotReloadScriptsPending->try_emplace(std::string(scriptName), std::string(scriptCode), std::string(scriptNamespace));
 }
 
 void ModManager::Update()
@@ -193,36 +194,41 @@ void ModManager::Update()
 		GetEventManager()->GetUpdateEvent().Invoke();
 	}
 
-	if (_hotReloadScriptsPending)
+	if (!_hotReloadScriptsPending)
 	{
-		std::vector<ScriptID> scriptIDs{};
+		return;
+	}
 
-		auto &&scriptLoader = GetScriptLoader();
-		auto &&scriptProvider = GetScriptProvider();
+	std::vector<ScriptID> scriptIDs{};
 
-		for (auto &&[scriptName, scriptCode] : *_hotReloadScriptsPending)
+	auto &&scriptLoader = GetScriptLoader();
+	auto &&scriptProvider = GetScriptProvider();
+
+	for (auto &&[scriptName, entry] : *_hotReloadScriptsPending)
+	{
+		auto &&[scriptCode, scriptNamespace] = entry;
+
+		auto scriptID = scriptProvider->GetScriptIDByName(scriptName);
+		if (scriptID)
 		{
-			auto scriptID = scriptProvider->GetScriptIDByName(scriptName);
-
 			auto &&pendingScripts = GetScriptLoader()->Unload(scriptID);
 			scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
 
-			auto &&namespace_ = scriptProvider->GetScriptNamespace(scriptID);
 			if (!scriptProvider->RemoveScript(scriptID)) [[unlikely]]
 			{
 				_log->Warn("Attempt to remove non-exist script id", scriptID);
 			}
-			scriptID = scriptProvider->AddScript(scriptName, scriptCode, namespace_);
-
-			scriptIDs.emplace_back(scriptID);
 		}
 
-		std::sort(scriptIDs.begin(), scriptIDs.end());
-		scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
-
-		scriptLoader->HotReload(scriptIDs);
-		_hotReloadScriptsPending = nullptr;
+		scriptID = scriptProvider->AddScript(scriptName, scriptCode, scriptName);
+		scriptIDs.emplace_back(scriptID);
 	}
+
+	std::sort(scriptIDs.begin(), scriptIDs.end());
+	scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
+
+	scriptLoader->HotReload(scriptIDs);
+	_hotReloadScriptsPending = nullptr;
 }
 
 void ModManager::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept

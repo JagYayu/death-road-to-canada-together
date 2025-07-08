@@ -280,10 +280,9 @@ void RuntimeEvent::ClearScriptHandlersImpl(std::function<bool(const EventHandler
 
 void RuntimeEvent::ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider)
 {
-
 	ClearScriptHandlersImpl([&](const EventHandler &handler)
 	{
-		return !scriptProvider.IsValidScriptID(handler.scriptID);
+		return !scriptProvider.IsValidScript(handler.scriptID);
 	});
 }
 

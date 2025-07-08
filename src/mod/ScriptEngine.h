@@ -2,7 +2,7 @@
 
 #include "ScriptLoader.h"
 #include "ScriptProvider.h"
-#include "program/IEngineComponent.h"
+#include "program/EngineComponent.h"
 #include "sol/types.hpp"
 #include "util/Defs.h"
 #include "util/Utils.hpp"
@@ -33,6 +33,12 @@ namespace tudov
 		 * Dangerous function!
 		 */
 		virtual std::int32_t ThrowError(std::string_view message) noexcept = 0;
+
+		template <typename... Args>
+		inline std::int32_t ThrowError(std::format_string<Args...> fmt, Args &&...args) noexcept
+		{
+			return ThrowError(std::format(fmt, std::forward<Args>(args)...));
+		}
 	};
 
 	class ScriptEngine : public IScriptEngine
@@ -56,7 +62,7 @@ namespace tudov
 		~ScriptEngine() noexcept;
 
 	  public:
-		Context&GetContext()noexcept override;
+		Context &GetContext() noexcept override;
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
 

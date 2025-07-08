@@ -1,6 +1,7 @@
 #pragma once
 
-#include "util/Defs.h"
+#include <string>
+#include <vector>
 
 namespace tudov
 {
@@ -10,18 +11,21 @@ namespace tudov
 		std::vector<std::string> args;
 
 	  public:
+		explicit MainArgs();
 		explicit MainArgs(int argc, char **argv);
 
 		size_t size() const;
 
-		const std::string &operator[](size_t i) const
-		{
-			return args[i];
-		}
+		const std::string &operator[](size_t i) const;
 
 		auto begin() const;
 		auto end() const;
 	};
+
+	inline MainArgs::MainArgs()
+	    : MainArgs(0, nullptr)
+	{
+	}
 
 	inline MainArgs::MainArgs(int argc, char **argv)
 	{
@@ -34,6 +38,11 @@ namespace tudov
 	inline size_t MainArgs::size() const
 	{
 		return args.size();
+	}
+
+	inline const std::string &MainArgs::operator[](size_t i) const
+	{
+		return args[i];
 	}
 
 	inline auto MainArgs::begin() const

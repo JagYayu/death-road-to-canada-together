@@ -2,17 +2,7 @@
 
 Use a custom 2d game engine.
 
-- Full lua modding support: sol2 + luajit.
-- SDL3 cross platform media library.
-- WIP - networking, rollback system.
-
-```mermaid
-graph TD
-  Engine --> ModManager
-  ModManager --> ScriptEngine
-  ScriptEngine --> ScriptLoader
-  ModManager --> ScriptProvider
-  ModManager --> EventManager
-  Engine --> Window
-  Window --> IRenderer
-```
+- SDL3 cross platform media library: Windows/Linux/Android.
+- sol2 + luajit: Full lua modding support, with a mod live reloading system.
+- Localization support: switch languages in real-time.
+- TODO WIP - networking, frame sync + rollback system.

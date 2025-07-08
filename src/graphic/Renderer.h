@@ -1,6 +1,6 @@
 #pragma once
 
-#include "program/IEngineComponent.h"
+#include "program/EngineComponent.h"
 #include "resource/TextureManager.hpp"
 #include "util/Defs.h"
 #include "util/Log.h"

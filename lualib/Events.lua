@@ -36,7 +36,8 @@ function events:add(event, func, name, order, key, sequence) end
 --- @param event string | integer
 --- @param e any?
 --- @param key Tudov.Events.Key?
-function events:invoke(event, e, key) end
+--- @param uncached true?
+function events:invoke(event, e, key, uncached) end
 
 --- @param event string
 --- @param orders string[]?

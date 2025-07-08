@@ -1,10 +1,9 @@
-#include "SDL3/SDL_init.h"
-#include "SDL3/SDL_messagebox.h"
-#include "imgui_impl_sdlrenderer3.h"
 #include "program/Engine.h"
 
-#include "SDL3/SDL.h"
+#include "SDL3/SDL_init.h"
+#include "SDL3/SDL_log.h"
 #include "SDL3/SDL_main.h"
+#include "SDL3/SDL_messagebox.h"
 #include "imgui.h"
 
 using namespace tudov;
@@ -87,7 +86,7 @@ int main(int argc, char **args)
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	}
 
-	Engine().Run(MainArgs{argc, args});
+	Engine(MainArgs{argc, args}).Run();
 
 	ImGui::DestroyContext();
 

@@ -5,8 +5,9 @@
 #include "ScriptEngine.h"
 #include "ScriptLoader.h"
 #include "ScriptProvider.h"
+#include "UnpackagedMod.h"
 #include "event/EventManager.h"
-#include "program/IEngineComponent.h"
+#include "program/EngineComponent.h"
 #include "util/Defs.h"
 #include "util/Log.h"
 
@@ -33,7 +34,7 @@ namespace tudov
 		virtual std::vector<ModEntry> &GetRequiredMods() noexcept = 0;
 		virtual const std::vector<ModEntry> &GetRequiredMods() const noexcept = 0;
 
-		virtual void HotReloadScriptPending(std::string scriptName, std::string scriptCode) = 0;
+		virtual void HotReloadScriptPending(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptNamespace) = 0;
 
 		virtual void Update() = 0;
 	};
@@ -49,16 +50,20 @@ namespace tudov
 			HotReloading = 1 << 2,
 		};
 
+	  protected:
+		using THotReloadScriptsMap = std::unordered_map<std::string, std::tuple<std::string, std::string>>;
+
 	  private:
 		std::shared_ptr<Log> _log;
 		Context &_context;
 		ELoadState _loadState;
+		UnpackagedMod _virtualUnpackagedMod;
 
 		std::vector<std::filesystem::path> _directories;
 		std::vector<std::shared_ptr<Mod>> _loadedMods;
 		std::vector<ModEntry> _requiredMods;
 
-		std::unique_ptr<std::unordered_map<std::string, std::string>> _hotReloadScriptsPending;
+		std::unique_ptr<THotReloadScriptsMap> _hotReloadScriptsPending;
 
 	  public:
 		void AddMod(const std::filesystem::path &modRoot);
@@ -82,7 +87,7 @@ namespace tudov
 		std::vector<ModEntry> &GetRequiredMods() noexcept override;
 		const std::vector<ModEntry> &GetRequiredMods() const noexcept override;
 
-		void HotReloadScriptPending(std::string scriptName, std::string scriptCode) override;
+		void HotReloadScriptPending(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptNamespace) override;
 
 		void Update() override;
 

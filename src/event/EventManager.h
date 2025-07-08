@@ -4,7 +4,7 @@
 #include "LoadtimeEvent.h"
 #include "RuntimeEvent.h"
 #include "event/AddHandlerArgs.hpp"
-#include "program/IEngineComponent.h"
+#include "program/EngineComponent.h"
 #include "util/Defs.h"
 #include "util/StringUtils.hpp"
 
@@ -82,7 +82,7 @@ namespace tudov
 
 		void LuaAdd(const sol::object &event, const sol::object &func, const sol::object &name, const sol::object &order, const sol::object &key, const sol::object &sequence);
 		EventID LuaNew(const sol::object &event, const sol::object &orders, const sol::object &keys);
-		void LuaInvoke(const sol::object &event, const sol::object &args, const sol::object &key);
+		void LuaInvoke(const sol::object &event, const sol::object &args, const sol::object &key, const sol::object &uncached);
 
 	  public:
 		Context &GetContext() noexcept override;

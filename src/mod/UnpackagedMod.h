@@ -11,7 +11,12 @@
 
 namespace tudov
 {
-	class UnpackagedMod : public Mod
+	struct IUnpackagedMod : virtual public IMod
+	{
+
+	};
+
+	class UnpackagedMod : public Mod, public IUnpackagedMod
 	{
 	  private:
 		std::shared_ptr<Log> _log;
@@ -26,9 +31,6 @@ namespace tudov
 	  public:
 		std::shared_ptr<Log> log;
 
-		static bool IsValidDirectory(const std::filesystem::path &directory);
-		static ModConfig LoadConfig(const std::filesystem::path &directory);
-
 		explicit UnpackagedMod(ModManager &modManager, const std::filesystem::path &directory);
 
 	  private:
@@ -37,6 +39,9 @@ namespace tudov
 	  public:
 		bool IsScript(std::string_view file) const;
 		bool IsFont(std::string_view file) const;
+
+		bool IsValidDirectory(const std::filesystem::path &directory);
+		ModConfig LoadConfig(const std::filesystem::path &directory);
 
 		void Load() override;
 		void Unload() override;

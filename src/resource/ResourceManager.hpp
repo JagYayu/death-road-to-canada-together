@@ -76,7 +76,7 @@ namespace tudov
 			auto &&result = _id2Entry.try_emplace(id, entry);
 			_path2ID[std::string_view(result.first->second.path)] = id;
 
-			_log->Debug("Loaded resource <{}>\"{}\"", id, path);
+			_log->Trace("Loaded resource <{}>\"{}\"", id, path);
 
 			return id;
 		}

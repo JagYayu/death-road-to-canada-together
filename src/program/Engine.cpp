@@ -1,15 +1,18 @@
 #include "Engine.h"
 
 #include "Context.h"
+#include "EngineComponent.h"
 #include "SDL3/SDL_timer.h"
 #include "debug/DebugManager.h"
 #include "mod/LuaAPI.h"
 #include "resource/ResourceType.hpp"
+#include "scripts/GameScripts.h"
 #include "util/Log.h"
 #include "util/MicrosImpl.h"
 #include "util/StringUtils.hpp"
 
 #include <algorithm>
+#include <exception>
 #include <memory>
 #include <regex>
 #include <stdexcept>
@@ -17,7 +20,7 @@
 
 using namespace tudov;
 
-Engine::Engine() noexcept
+Engine::Engine(const MainArgs &args) noexcept
     : _log(Log::Get("Engine")),
       _running(true),
       _framerate(0),
@@ -27,7 +30,8 @@ Engine::Engine() noexcept
       _luaAPI(std::make_shared<LuaAPI>()),
       _mainWindow(),
       _windows(),
-      _debugManager()
+      _debugManager(),
+      mainArgs(args)
 {
 	context = Context(this);
 
@@ -36,6 +40,7 @@ Engine::Engine() noexcept
 	_scriptLoader = std::make_shared<ScriptLoader>(context);
 	_scriptEngine = std::make_shared<ScriptEngine>(context);
 	_eventManager = std::make_shared<EventManager>(context);
+	_gameScripts = std::make_shared<GameScripts>(context);
 }
 
 Engine::~Engine() noexcept
@@ -47,19 +52,28 @@ bool IsWindowShouldClose(const std::shared_ptr<IWindow> &window) noexcept
 	return window->ShouldClose();
 }
 
-void Engine::Run(const MainArgs &args)
+void Engine::Run()
 {
+	std::vector<std::shared_ptr<IEngineComponent>> engineComponents{
+	    _modManager,
+	    _scriptProvider,
+	    _scriptLoader,
+	    _scriptEngine,
+	    _eventManager,
+	    _gameScripts,
+	};
+
 	_log->Debug("Initializing engine ...");
 	{
 		_config.Load();
 		InitializeMainWindow();
 		InitializeResources();
-		_modManager->Initialize();
-		_scriptProvider->Initialize();
-		_scriptLoader->Initialize();
-		_scriptEngine->Initialize();
-		_eventManager->Initialize();
-		// InstallToScriptEngine(_modManager.scriptEngine);
+
+		for (auto &&it = engineComponents.begin(); it != engineComponents.end(); ++it)
+		{
+			it->get()->Initialize();
+		}
+
 		_modManager->LoadMods();
 	}
 	_log->Debug("Initialized engine");
@@ -89,8 +103,8 @@ void Engine::Run(const MainArgs &args)
 
 		_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
 
-		uint64_t elapsed = SDL_GetTicksNS() - startNS;
-		uint64_t limit = 1'000'000'000ull / static_cast<uint64_t>(_config.GetWindowFramelimit());
+		auto elapsed = SDL_GetTicksNS() - startNS;
+		auto limit = 1'000'000'000ull / uint64_t(_config.GetWindowFramelimit());
 		if (elapsed < limit)
 		{
 			SDL_DelayPrecise(limit - elapsed);
@@ -100,22 +114,22 @@ void Engine::Run(const MainArgs &args)
 	_log->Debug("Deinitializing engine ...");
 	{
 		_modManager->UnloadMods();
-		_eventManager->Deinitialize();
-		_scriptEngine->Deinitialize();
-		_scriptLoader->Deinitialize();
-		_scriptProvider->Deinitialize();
-		_modManager->Deinitialize();
+
+		for (auto &&it = engineComponents.rbegin(); it != engineComponents.rend(); ++it)
+		{
+			it->get()->Deinitialize();
+		}
 	}
 	_log->Debug("Deinitialized engine");
 }
 
 void Engine::Quit()
 {
+	_running = false;
 	for (auto &&window : _windows)
 	{
 		window->Close();
 	}
-	_running = false;
 }
 
 void Engine::InitializeMainWindow()
@@ -215,6 +229,51 @@ void Engine::InitializeResources()
 std::float_t Engine::GetFramerate() const noexcept
 {
 	return _framerate;
+}
+
+template <typename T>
+void Engine_ChangeEngineComponent(std::shared_ptr<Log> &log, std::string_view component, std::shared_ptr<T> &oldComponent, const std::shared_ptr<T> &newComponent) noexcept
+{
+	try
+	{
+		oldComponent->Deinitialize();
+		newComponent->Initialize();
+		oldComponent = newComponent;
+	}
+	catch (std::exception &e)
+	{
+		log->Error("Failed to change component `{}`: {}", component, e.what());
+	}
+}
+
+void Engine::ChangeModManager(const std::shared_ptr<IModManager> &modManager) noexcept
+{
+	Engine_ChangeEngineComponent(_log, "IModManager", _modManager, modManager);
+}
+
+void Engine::ChangeScriptEngine(const std::shared_ptr<IScriptEngine> &scriptEngine) noexcept
+{
+	Engine_ChangeEngineComponent(_log, "IScriptEngine", _scriptEngine, scriptEngine);
+}
+
+void Engine::ChangeScriptLoader(const std::shared_ptr<IScriptLoader> &scriptLoader) noexcept
+{
+	Engine_ChangeEngineComponent(_log, "IScriptLoader", _scriptLoader, scriptLoader);
+}
+
+void Engine::ChangeScriptProvider(const std::shared_ptr<IScriptProvider> &scriptProvider) noexcept
+{
+	Engine_ChangeEngineComponent(_log, "IScriptProvider", _scriptProvider, scriptProvider);
+}
+
+void Engine::ChangeEventManager(const std::shared_ptr<IEventManager> &eventManager) noexcept
+{
+	Engine_ChangeEngineComponent(_log, "IEventManager", _eventManager, eventManager);
+}
+
+void Engine::ChangeGameScripts(const std::shared_ptr<IGameScripts> &gameScripts) noexcept
+{
+	Engine_ChangeEngineComponent(_log, "IGameScripts", _gameScripts, gameScripts);
 }
 
 TUDOV_GEN_GETTER_SMART_PTR(std::shared_ptr, IWindow, Engine::GetMainWindow, _mainWindow, noexcept);

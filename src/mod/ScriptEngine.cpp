@@ -35,7 +35,7 @@ ScriptEngine::~ScriptEngine() noexcept
 {
 }
 
-Context&ScriptEngine::GetContext()noexcept 
+Context &ScriptEngine::GetContext() noexcept
 {
 	return _context;
 }
@@ -254,11 +254,16 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 	{
 		try
 		{
-			auto &&targetScriptID = GetScriptProvider()->GetScriptIDByName(targetScriptName);
+			auto &&scriptProvider = GetScriptProvider();
+			auto targetScriptID = scriptProvider->GetScriptIDByName(targetScriptName);
 			if (targetScriptID)
 			{
 				auto &&scriptLoader = GetScriptLoader();
-				scriptLoader->AddReverseDependency(scriptID, targetScriptID);
+				if (!scriptProvider->IsStaticScript(targetScriptID))
+				{
+					scriptLoader->AddReverseDependency(scriptID, targetScriptID);
+				}
+
 				auto &&targetModule = scriptLoader->Load(targetScriptID);
 				if (targetModule)
 				{
@@ -272,7 +277,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 				return virtualModule;
 			}
 
-			luaL_error(_lua, "Script module '%s' not found", targetScriptName.data());
+			GetScriptEngine()->ThrowError("Script module '%s' not found", targetScriptName.data());
 			return sol::nil;
 		}
 		catch (const std::exception &e)

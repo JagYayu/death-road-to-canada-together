@@ -9,19 +9,14 @@ using namespace tudov;
 
 using ScriptID = ScriptID;
 
+static constexpr const char *scriptPrefix = "#";
+static constexpr const char *scriptDirectory = "lua";
+static constexpr const char *scriptNamespace = "#lua";
+static constexpr const char *scriptNamespacePrefix = "#lua.";
+
 std::string StaticScriptNamespace(const std::string &path)
 {
-	return "#" + FilePathToLuaScriptName(path);
-}
-
-static constexpr const char *staticScriptPrefix = "#";
-static constexpr const char *staticScriptDirectory = "lua";
-static constexpr const char *staticScriptNamespace = "#lua";
-static constexpr const char *staticScriptNamespacePrefix = "#lua.";
-
-bool ScriptProvider::IsStaticScript(std::string_view scriptName)
-{
-	return scriptName.starts_with(staticScriptPrefix);
+	return scriptPrefix + FilePathToLuaScriptName(path);
 }
 
 ScriptProvider::ScriptProvider(Context &context)
@@ -61,33 +56,19 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_
 	return id;
 }
 
-bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
-{
-	auto &&it = _scriptID2Entry.find(scriptID);
-	if (it == _scriptID2Entry.end())
-	{
-		// _log->Warn("Attempt to remove non-exist scriptID: {}", scriptID);
-		return false;
-	}
-	_scriptName2ID.erase(it->second.name);
-	_scriptID2Entry.erase(it);
-	return true;
-}
-
 size_t ScriptProvider::GetCount() const noexcept
 {
 	return _scriptName2ID.size();
 }
 
-bool ScriptProvider::IsValidScriptID(ScriptID scriptID) const noexcept
+bool ScriptProvider::IsValidScript(ScriptID scriptID) const noexcept
 {
 	return _scriptID2Entry.contains(scriptID);
 }
 
-bool ScriptProvider::IsStaticScript(ScriptID scriptID) const noexcept
+bool ScriptProvider::IsStaticScript(std::string_view scriptName) const noexcept
 {
-	auto &&it = _scriptID2Entry.find(scriptID);
-	return it != _scriptID2Entry.end() && it->second.name.starts_with(staticScriptNamespace);
+	return scriptName.starts_with(scriptPrefix);
 }
 
 ScriptID ScriptProvider::GetScriptIDByName(std::string_view scriptName) const noexcept
@@ -99,7 +80,7 @@ ScriptID ScriptProvider::GetScriptIDByName(std::string_view scriptName) const no
 		return it->second;
 	}
 
-	name = staticScriptNamespacePrefix + std::string(scriptName);
+	name = scriptNamespacePrefix + std::string(scriptName);
 	it = _scriptName2ID.find(name);
 	if (it != _scriptName2ID.end())
 	{
@@ -121,7 +102,7 @@ std::optional<std::string_view> ScriptProvider::GetScriptNameByID(ScriptID scrip
 
 ScriptID ScriptProvider::AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_) noexcept
 {
-	if (scriptName.starts_with(staticScriptNamespace))
+	if (scriptName.starts_with(scriptNamespace))
 	{
 		_log->Info("Attempt to add static script");
 		return false;
@@ -137,21 +118,37 @@ ScriptID ScriptProvider::AddScript(std::string_view scriptName, std::string_view
 
 bool ScriptProvider::RemoveScript(ScriptID scriptID) noexcept
 {
-	if (IsStaticScript(scriptID))
+	if (IScriptProvider::IsStaticScript(scriptID))
 	{
 		return false;
 	}
 	return RemoveScriptImpl(scriptID);
 }
 
-bool ScriptProvider::RemoveScript(std::string_view scriptName) noexcept
+bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 {
-	auto scriptID = GetScriptIDByName(scriptName);
-	if (!scriptID)
+	auto &&it = _scriptID2Entry.find(scriptID);
+	if (it == _scriptID2Entry.end())
 	{
+		// _log->Warn("Attempt to remove non-exist scriptID: {}", scriptID);
 		return false;
 	}
-	return RemoveScript(scriptID);
+	_scriptName2ID.erase(it->second.name);
+	_scriptID2Entry.erase(it);
+	return true;
+}
+
+std::size_t ScriptProvider::RemoveScriptBy(std::string_view namespace_) noexcept
+{
+	return std::erase_if(_scriptID2Entry, [&](const std::pair<const ScriptID, Entry> &pair)
+	{
+		if (pair.second.namespace_ == namespace_)
+		{
+			_scriptName2ID.erase(pair.second.name);
+			return true;
+		}
+		return false;
+	});
 }
 
 const std::string &ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
@@ -174,35 +171,12 @@ std::string_view ScriptProvider::GetScriptNamespace(ScriptID scriptID) noexcept
 	return it->second.namespace_;
 }
 
-// bool ScriptProvider::ContainsScript(std::string_view scriptName) const
-// {
-// 	return _scriptCodes.contains(scriptName);
-// }
-
-// std::optional<std::string> ScriptProvider::TryResolveScriptName(std::string_view scriptName)
-// {
-// 	auto &&it = _scriptCodes.find(scriptName);
-// 	if (it != _scriptCodes.end())
-// 	{
-// 		return it->first;
-// 	}
-
-// 	auto &&resolvedScriptName = staticScriptNamespacePrefix + std::string(scriptName);
-// 	it = _scriptCodes.find(resolvedScriptName);
-// 	if (it != _scriptCodes.end())
-// 	{
-// 		return resolvedScriptName;
-// 	}
-
-// 	return nullopt;
-// }
-
-std::unordered_map<ScriptID, ScriptProvider::Entry>::const_iterator ScriptProvider::begin() const
+ScriptProvider::TScriptID2Entry::const_iterator ScriptProvider::begin() const
 {
 	return _scriptID2Entry.begin();
 }
 
-std::unordered_map<ScriptID, ScriptProvider::Entry>::const_iterator ScriptProvider::end() const
+ScriptProvider::TScriptID2Entry::const_iterator ScriptProvider::end() const
 {
 	return _scriptID2Entry.end();
 }

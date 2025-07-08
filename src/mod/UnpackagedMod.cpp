@@ -3,7 +3,7 @@
 #include "Mod.h"
 #include "ModConfig.hpp"
 #include "ModManager.h"
-#include "program/Engine.h"
+#include "resource/FontManager.hpp"
 #include "util/StringUtils.hpp"
 
 #include <filesystem>
@@ -15,37 +15,7 @@
 
 using namespace tudov;
 
-const std::filesystem::path &file = "Mod.json";
-
-bool UnpackagedMod::IsValidDirectory(const std::filesystem::path &directory)
-{
-	return std::filesystem::exists(directory / file);
-}
-
-ModConfig UnpackagedMod::LoadConfig(const std::filesystem::path &directory)
-{
-	auto &&path = directory / file;
-	std::ifstream file{path};
-	if (!file)
-	{
-		return ModConfig();
-	}
-
-	nlohmann::json json;
-	file >> json;
-	ModConfig config;
-	try
-	{
-		config = json.get<tudov::ModConfig>();
-	}
-	catch (...)
-	{
-		Log::Get("UnpackagedMod")->Error("Error parsing mod config file at: {}", path.string());
-		config = ModConfig();
-	}
-	file.close();
-	return config;
-}
+const std::filesystem::path &modConfigFile = "Mod.json";
 
 UnpackagedMod::UnpackagedMod(ModManager &modManager, const std::filesystem::path &directory)
     : Mod(modManager, LoadConfig(directory)),
@@ -92,6 +62,36 @@ bool UnpackagedMod::IsFont(std::string_view file) const
 	return RegexPatternMatch(file, _fontFilePatterns);
 }
 
+bool UnpackagedMod::IsValidDirectory(const std::filesystem::path &directory)
+{
+	return std::filesystem::exists(directory / modConfigFile);
+}
+
+ModConfig UnpackagedMod::LoadConfig(const std::filesystem::path &directory)
+{
+	auto &&path = directory / modConfigFile;
+	std::ifstream file{path};
+	if (!file)
+	{
+		return ModConfig();
+	}
+
+	nlohmann::json json;
+	file >> json;
+	ModConfig config;
+	try
+	{
+		config = json.get<tudov::ModConfig>();
+	}
+	catch (...)
+	{
+		Log::Get("UnpackagedMod")->Error("Error parsing mod config file at: {}", path.string());
+		config = ModConfig();
+	}
+	file.close();
+	return config;
+}
+
 void UnpackagedMod::Load()
 {
 	if (_fileWatcher)
@@ -124,7 +124,7 @@ void UnpackagedMod::Load()
 				oss << ins.rdbuf();
 				ins.close();
 
-				_modManager.HotReloadScriptPending(scriptName, oss.str());
+				_modManager.HotReloadScriptPending(scriptName, oss.str(), GetNamespace());
 
 				break;
 			}
@@ -193,10 +193,8 @@ void UnpackagedMod::Unload()
 
 	log->Debug("Unloading unpackaged mod from \"{}\"", dir);
 
-	for (auto &&scriptName : _scripts)
-	{
-		_modManager.GetScriptProvider()->RemoveScript(scriptName);
-	}
+	_modManager.GetScriptLoader()->UnloadBy(GetNamespace());
+	_modManager.GetScriptProvider()->RemoveScriptBy(GetNamespace());
 	_scripts.clear();
 
 	for (auto &&fontID : _fonts)
