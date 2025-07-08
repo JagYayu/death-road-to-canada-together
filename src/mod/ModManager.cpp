@@ -220,7 +220,7 @@ void ModManager::Update()
 			}
 		}
 
-		scriptID = scriptProvider->AddScript(scriptName, scriptCode, scriptName);
+		scriptID = scriptProvider->AddScript(scriptName, scriptCode, scriptNamespace);
 		scriptIDs.emplace_back(scriptID);
 	}
 

@@ -29,8 +29,6 @@ namespace tudov
 		std::vector<std::regex> _fontFilePatterns;
 
 	  public:
-		std::shared_ptr<Log> log;
-
 		explicit UnpackagedMod(ModManager &modManager, const std::filesystem::path &directory);
 
 	  private:

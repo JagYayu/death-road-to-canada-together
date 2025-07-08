@@ -83,9 +83,8 @@ void Engine::Run()
 	while (_running && !_windows.empty())
 	{
 		uint64_t startNS = SDL_GetTicksNS();
-		uint64_t deltaNS = startNS - prevNS;
 		prevNS = startNS;
-		_framerate = 1'000'000'000.0 / deltaNS;
+		_framerate = 1'000'000'000.0 / (startNS - prevNS);
 
 		_modManager->Update();
 

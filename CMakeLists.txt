@@ -56,6 +56,8 @@ target_link_libraries(dr2c PRIVATE SDL3_ttf::SDL3_ttf)
 # enet
 find_package(unofficial-enet CONFIG REQUIRED)
 target_link_libraries(dr2c PRIVATE unofficial::enet::enet)
+target_link_libraries(dr2c PRIVATE ws2_32)
+target_link_libraries(dr2c PRIVATE winmm)
 
 # imgui - from vcpkg
 find_package(imgui CONFIG REQUIRED)

@@ -576,20 +576,20 @@ void EventManager::ClearInvalidScriptEvents() noexcept
 
 std::optional<std::reference_wrapper<AbstractEvent>> EventManager::TryGetRegistryEvent(EventID eventID)
 {
-	if (!eventID)
+	if (!eventID) [[unlikely]]
 	{
 		throw std::runtime_error("invalid event id");
 	}
 	{
-		auto &&it = _loadtimeEvents.find(eventID);
-		if (it != _loadtimeEvents.end())
+		auto &&it = _runtimeEvents.find(eventID);
+		if (it != _runtimeEvents.end())
 		{
 			return *(it->second);
 		}
 	}
 	{
-		auto &&it = _runtimeEvents.find(eventID);
-		if (it != _runtimeEvents.end())
+		auto &&it = _loadtimeEvents.find(eventID);
+		if (it != _loadtimeEvents.end())
 		{
 			return *(it->second);
 		}

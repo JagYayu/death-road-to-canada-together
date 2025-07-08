@@ -246,7 +246,6 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 		catch (const std::exception &e)
 		{
 			UnhandledCppException(_log, e);
-			throw;
 		}
 	});
 
@@ -277,30 +276,29 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 				return virtualModule;
 			}
 
-			GetScriptEngine()->ThrowError("Script module '%s' not found", targetScriptName.data());
-			return sol::nil;
+			IScriptEngine::ThrowError("Script module '{}' not found", targetScriptName.data());
 		}
 		catch (const std::exception &e)
 		{
 			UnhandledCppException(_log, e);
-			throw;
 		}
+
+		return sol::nil;
 	});
 
 	env.set_function("N_", [&, scriptID](const sol::string_view &str)
 	{
 		try
 		{
-			auto &&name = GetScriptProvider()->GetScriptNameByID(scriptID);
-			if (!name.has_value())
+			auto &&name = GetScriptProvider()->GetScriptNamespace(scriptID);
+			if (name == "") [[unlikely]]
 			{
-				luaL_error(_lua, "Script module <%s> not found", scriptID);
-				return std::string("");
+				IScriptEngine::ThrowError("Script module <{}> not found", scriptID);
+				return std::string(str);
 			}
-			std::string_view src = name.value();
-			std::string result;
-			result.reserve(src.size() + 1 + str.size());
-			result.append(src);
+			std::string result{};
+			result.reserve(name.size() + 1 + str.size());
+			result.append(name);
 			result.push_back('_');
 			result.append(str);
 			return result;
@@ -308,8 +306,9 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 		catch (const std::exception &e)
 		{
 			UnhandledCppException(_log, e);
-			throw;
 		}
+
+		return std::string();
 	});
 
 	sol::set_environment(env, func);

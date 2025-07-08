@@ -27,7 +27,7 @@ namespace tudov
 				if (func.valid())
 				{
 					auto &&result = func(obj);
-					if (!result.valid())
+					if (!result.valid()) [[unlikely]]
 					{
 						sol::error err = result;
 						throw err;
@@ -46,7 +46,7 @@ namespace tudov
 			if (auto &&func = std::get_if<sol::function>(&function))
 			{
 				auto &&result = (*func)(obj, key);
-				if (!result.valid())
+				if (!result.valid()) [[unlikely]]
 				{
 					sol::error err = result;
 					throw err;

@@ -1,4 +1,4 @@
-local Enum = require "dr2c.utils.Enum"
+local Enum = require("dr2c.utils.Enum")
 local Render = {}
 
 -- Render.Buffers = Enum.sequence {
@@ -10,15 +10,16 @@ local Render = {}
 -- 	"World",
 -- }
 
-local eventRenderGame = events:new("RenderGame", {
+local eventRenderGame = events:new(N_("RenderGame"), {
 	"Camera",
 	"Sprites",
 	"Rooms",
 	"UI",
 })
 
-events:add(N_ "Render", function(e)
+print(N_("RenderGame"))
+events:add("Render", function(e)
 	events:invoke(eventRenderGame, e)
-end, N_ "render", nil, "Main")
+end, N_("render"), nil, "Main")
 
 return Render

@@ -19,7 +19,7 @@ const std::filesystem::path &modConfigFile = "Mod.json";
 
 UnpackagedMod::UnpackagedMod(ModManager &modManager, const std::filesystem::path &directory)
     : Mod(modManager, LoadConfig(directory)),
-      log(Log::Get("UnpackagedMod")),
+      _log(Log::Get("UnpackagedMod")),
       _loaded(false),
       _directory(directory)
 {
@@ -96,7 +96,7 @@ void UnpackagedMod::Load()
 {
 	if (_fileWatcher)
 	{
-		log->Warn("Mod has already loaded");
+		_log->Warn("Mod has already loaded");
 		return;
 	}
 
@@ -114,7 +114,7 @@ void UnpackagedMod::Load()
 				break;
 			case filewatch::Event::modified:
 			{
-				log->Debug("Script modified");
+				_log->Trace("Script modified: \"{}\"", filePath);
 
 				auto &&relative = std::filesystem::relative(filePath, GetScriptsDirectory());
 				auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relative.string()));
@@ -124,6 +124,8 @@ void UnpackagedMod::Load()
 				oss << ins.rdbuf();
 				ins.close();
 
+				auto namespace_ = GetNamespace();
+				_log->Error("{} /////", namespace_);
 				_modManager.HotReloadScriptPending(scriptName, oss.str(), GetNamespace());
 
 				break;
@@ -138,13 +140,13 @@ void UnpackagedMod::Load()
 	auto &&namespace_ = GetNamespace();
 	if (namespace_.empty())
 	{
-		log->Debug("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.string(), std::string_view(namespace_));
+		_log->Debug("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.string(), std::string_view(namespace_));
 		return;
 	}
 
 	auto &&dir = _directory.string();
 
-	log->Debug("Loading unpacked mod from \"{}\" ...", dir);
+	_log->Debug("Loading unpacked mod from \"{}\" ...", dir);
 
 	UpdateFilePatterns();
 
@@ -176,7 +178,7 @@ void UnpackagedMod::Load()
 		// }
 	}
 
-	log->Debug("Loaded unpacked mod from \"{}\"", dir);
+	_log->Debug("Loaded unpacked mod from \"{}\"", dir);
 
 	_loaded = true;
 }
@@ -185,13 +187,13 @@ void UnpackagedMod::Unload()
 {
 	if (!_loaded)
 	{
-		log->Warn("Mod has not been loaded");
+		_log->Warn("Mod has not been loaded");
 		return;
 	}
 
 	auto &&dir = _directory.string();
 
-	log->Debug("Unloading unpackaged mod from \"{}\"", dir);
+	_log->Debug("Unloading unpackaged mod from \"{}\"", dir);
 
 	_modManager.GetScriptLoader()->UnloadBy(GetNamespace());
 	_modManager.GetScriptProvider()->RemoveScriptBy(GetNamespace());
@@ -203,5 +205,5 @@ void UnpackagedMod::Unload()
 	}
 	_fonts.clear();
 
-	log->Debug("Unloaded unpackaged mod \"{}\"", dir);
+	_log->Debug("Unloaded unpackaged mod \"{}\"", dir);
 }

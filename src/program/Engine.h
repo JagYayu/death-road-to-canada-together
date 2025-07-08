@@ -65,6 +65,7 @@ namespace tudov
 	  public:
 		std::float_t GetFramerate() const noexcept;
 
+		// These functions are not fully tested yet, can lead to errors.
 		void ChangeModManager(const std::shared_ptr<IModManager> &modManager) noexcept;
 		void ChangeScriptEngine(const std::shared_ptr<IScriptEngine> &scriptEngine) noexcept;
 		void ChangeScriptLoader(const std::shared_ptr<IScriptLoader> &scriptLoader) noexcept;

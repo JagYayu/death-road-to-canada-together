@@ -1,10 +1,10 @@
 local EntitySchema = {}
 
-local eventEntitySchemaLoadComponents = events:new(N_("EntitySchemaLoadComponents"), {
+local eventEntitySchemaLoadComponents = events:new("EntitySchemaLoadComponents", {
 	"",
 })
 
-local eventEntitySchemaLoadEntities = events:new(N_("EntitySchemaLoadEntities"), {
+local eventEntitySchemaLoadEntities = events:new("EntitySchemaLoadEntities", {
 	"",
 })
 

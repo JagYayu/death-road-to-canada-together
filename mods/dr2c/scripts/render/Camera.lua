@@ -1,6 +1,6 @@
 --- @class Camera
 local Camera = {}
-local Matrix3x3 = require "dr2c.utils.Matrix3x3"
+local Matrix3x3 = require("dr2c.utils.Matrix3x3")
 
 local centerX = 0
 local centerY = 0
@@ -34,7 +34,7 @@ local timer = 0
 -- 	print(e)
 -- end)
 
-events:add("RenderGame", function(e)
+events:add(N_("RenderGame"), function(e)
 	-- -- TODO LERP POSITION
 	-- timer = timer + 1
 
@@ -47,6 +47,6 @@ events:add("RenderGame", function(e)
 	-- transform:scale(scaleX, scaleY)
 	-- transform:translate(viewWidth / 2, viewHeight / 2)
 	-- transform:translate(-centerX, -centerY)
-end, N_ "updateCamera", "Camera")
+end, N_("updateCamera"), "Camera")
 
-return Camera;
+return Camera
