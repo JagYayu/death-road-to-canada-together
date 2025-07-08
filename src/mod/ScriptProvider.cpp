@@ -7,8 +7,6 @@
 
 using namespace tudov;
 
-using ScriptID = ScriptID;
-
 static constexpr const char *scriptPrefix = "#";
 static constexpr const char *scriptDirectory = "lua";
 static constexpr const char *scriptNamespace = "#lua";
