@@ -1,9 +1,9 @@
-#include "ScriptLoader.h"
+#include "ScriptLoader.hpp"
 
-#include "ModManager.h"
-#include "ScriptEngine.h"
-#include "ScriptProvider.h"
-#include "util/Defs.h"
+#include "ModManager.hpp"
+#include "ScriptEngine.hpp"
+#include "ScriptProvider.hpp"
+#include "util/Defs.hpp"
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
 

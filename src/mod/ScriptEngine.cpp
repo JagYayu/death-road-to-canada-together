@@ -1,11 +1,11 @@
-#include "ScriptEngine.h"
+#include "ScriptEngine.hpp"
 
-#include "LuaAPI.h"
-#include "ModManager.h"
-#include "ScriptLoader.h"
-#include "ScriptProvider.h"
+#include "LuaAPI.hpp"
+#include "ModManager.hpp"
+#include "ScriptLoader.hpp"
+#include "ScriptProvider.hpp"
 #include "sol/table.hpp"
-#include "util/Defs.h"
+#include "util/Defs.hpp"
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
 

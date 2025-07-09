@@ -1,4 +1,4 @@
-#include "RenderTarget.h"
+#include "RenderTarget.hpp"
 
 using namespace tudov;
 

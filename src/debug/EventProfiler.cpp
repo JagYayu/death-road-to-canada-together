@@ -1,8 +1,8 @@
-#include "EventProfiler.h"
+#include "EventProfiler.hpp"
 
-#include "mod/ScriptEngine.h"
+#include "mod/ScriptEngine.hpp"
 
-#include "util/Defs.h"
+#include "util/Defs.hpp"
 
 using namespace tudov;
 

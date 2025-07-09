@@ -1,9 +1,9 @@
-#include "Texture.h"
+#include "Texture.hpp"
 
-#include "Renderer.h"
+#include "Renderer.hpp"
+#include "Image.hpp"
+
 #include "SDL3/SDL_pixels.h"
-#include "Image.h"
-
 #include "SDL3/SDL_render.h"
 #include "SDL3_image/SDL_image.h"
 

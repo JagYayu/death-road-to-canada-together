@@ -1,20 +1,17 @@
-#include "DebugProfiler.h"
+#include "DebugProfiler.hpp"
 
-#include "EventProfiler.h"
-#include "event/EventManager.h"
-#include "graphic/Window.h"
+#include "EventProfiler.hpp"
+#include "event/EventManager.hpp"
+#include "program/Engine.hpp"
+#include "program/Window.hpp"
 #include "util/Utils.hpp"
+
+#include "imgui.h"
 
 #include <algorithm>
 #include <cfloat>
-#include <imgui.h>
 
 using namespace tudov;
-
-DebugProfiler::DebugProfiler(const std::weak_ptr<IWindow> &window) noexcept
-    : window(window)
-{
-}
 
 std::string_view DebugProfiler::GetName() noexcept
 {
@@ -34,16 +31,11 @@ struct DebugProfilerEntry
 	float maxMemory;
 };
 
-void DebugProfiler::UpdateAndRender() noexcept
+void DebugProfiler::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept
 {
-	if (window.expired())
-	{
-		return;
-	}
-
 	if (ImGui::Begin("Profiler"))
 	{
-		_framerateBuffer.push(window.lock()->GetFramerate());
+		_framerateBuffer.push(window->GetEngine().GetFramerate());
 		{
 			float framerates[FramerateBufferSize];
 			for (std::uint64_t i = FramerateBufferSize; i-- > 0;)
@@ -71,7 +63,7 @@ void DebugProfiler::UpdateAndRender() noexcept
 
 		std::vector<DebugProfilerEntry> entries{};
 
-		auto &&eventManager = window.lock()->GetEventManager();
+		auto &&eventManager = window->GetEventManager();
 		for (auto &&it = eventManager->BeginRuntimeEvents(); it != eventManager->EndRuntimeEvents(); ++it)
 		{
 			auto &&event = *it->second;

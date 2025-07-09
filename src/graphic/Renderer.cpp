@@ -1,10 +1,10 @@
-#include "Renderer.h"
+#include "Renderer.hpp"
 
-#include "Window.h"
+#include "program/Window.hpp"
 #include "resource/ImageManager.hpp"
 
-#include "SDL3/SDL_surface.h"
 #include "SDL3/SDL_render.h"
+#include "SDL3/SDL_surface.h"
 #include "sol/table.hpp"
 
 #include <memory>

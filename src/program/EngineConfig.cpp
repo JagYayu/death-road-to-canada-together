@@ -1,7 +1,7 @@
-#include "EngineConfig.h"
+#include "EngineConfig.hpp"
 
-#include "util/Defs.h"
-#include "util/Log.h"
+#include "util/Defs.hpp"
+#include "util/Log.hpp"
 
 #include <json.hpp>
 

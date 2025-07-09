@@ -6,6 +6,8 @@
 -- function SpriteRenderer.test()
 -- end
 
+local entities = {}
+
 events:add(N_("RenderGame"), function(e)
 	e.window.renderer:clear()
 

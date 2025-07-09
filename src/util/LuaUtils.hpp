@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Defs.h"
-#include "mod/ScriptEngine.h"
+#include "Defs.hpp"
+#include "mod/ScriptEngine.hpp"
 
 #include <sol/types.hpp>
 

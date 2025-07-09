@@ -1,0 +1,34 @@
+#pragma once
+
+#include "IDebugElement.hpp"
+#include "util/Log.hpp"
+
+#include <imgui.h>
+
+namespace tudov
+{
+	class DebugConsole : public IDebugElement
+	{
+	  public:
+		struct Command
+		{
+		};
+
+	  private:
+		std::shared_ptr<Log> _log;
+
+		ImGuiTextBuffer _buffer;
+		ImGuiTextFilter _filter;
+		std::vector<uint32_t> _lineOffsets;
+		std::array<char, 256> _input;
+
+	  public:
+		explicit DebugConsole() noexcept;
+
+		std::string_view GetName() noexcept override;
+		void UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept;
+
+		void Log(std::string_view message);
+		void Clear();
+	};
+} // namespace tudov

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "EventHandler.hpp"
-#include "util/Defs.h"
+#include "util/Defs.hpp"
 
 namespace tudov
 {

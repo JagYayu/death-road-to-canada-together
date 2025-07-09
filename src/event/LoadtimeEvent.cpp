@@ -1,14 +1,15 @@
-#include "LoadtimeEvent.h"
+#include "LoadtimeEvent.hpp"
 
-#include "AbstractEvent.h"
+#include "AbstractEvent.hpp"
 #include "OverrideHandlerArgs.hpp"
-#include "RuntimeEvent.h"
-#include "util/Defs.h"
+#include "RuntimeEvent.hpp"
+#include "util/Defs.hpp"
+
 #include <variant>
 
 using namespace tudov;
 
-LoadtimeEvent::LoadtimeEvent(EventManager &eventManager, EventID eventID, ScriptID scriptID) noexcept
+LoadtimeEvent::LoadtimeEvent(IEventManager &eventManager, EventID eventID, ScriptID scriptID) noexcept
     : AbstractEvent(eventManager, eventID, scriptID),
       _built(false),
       _orders(),
@@ -17,7 +18,7 @@ LoadtimeEvent::LoadtimeEvent(EventManager &eventManager, EventID eventID, Script
 {
 }
 
-LoadtimeEvent::LoadtimeEvent(EventManager &eventManager, EventID eventID, ScriptID scriptID, const std::vector<std::string> &orders, const std::vector<EventHandleKey> &keys) noexcept
+LoadtimeEvent::LoadtimeEvent(IEventManager &eventManager, EventID eventID, ScriptID scriptID, const std::vector<std::string> &orders, const std::vector<EventHandleKey> &keys) noexcept
     : AbstractEvent(eventManager, eventID, scriptID),
       _built(true),
       _orders(orders),

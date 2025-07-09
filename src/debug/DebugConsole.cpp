@@ -1,9 +1,6 @@
-#include "DebugConsole.h"
-#include "util/Defs.h"
+#include "DebugConsole.hpp"
 
 #include <imgui.h>
-
-#include <cmath>
 
 using namespace tudov;
 
@@ -42,7 +39,7 @@ void DebugConsole::Log(std::string_view message)
 static bool my_tool_active = false;
 static float my_color = -1;
 
-void DebugConsole::UpdateAndRender() noexcept
+void DebugConsole::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept
 {
 	if (ImGui::Begin("Debug Console"))
 	{

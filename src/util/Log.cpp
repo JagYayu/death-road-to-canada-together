@@ -1,4 +1,4 @@
-#include "Log.h"
+#include "Log.hpp"
 #include "Utils.hpp"
 
 #include <chrono>

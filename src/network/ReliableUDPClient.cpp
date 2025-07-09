@@ -1,6 +1,11 @@
-#include "ReliableUDPClient.h"
+#include "ReliableUDPClient.hpp"
+
+#include "event/EventManager.hpp"
+#include "util/Defs.hpp"
 
 #include "enet/enet.h"
+
+#include <stdexcept>
 
 using namespace tudov;
 
@@ -35,8 +40,105 @@ ESocketType ReliableUDPClient::GetSocketType() const noexcept
 	return ESocketType::ReliableUDP;
 }
 
-void ReliableUDPClient::Connect(std::string_view address)
+bool ReliableUDPClient::IsConnecting() noexcept
 {
-	// ENetAddress
-	// _eNetHost=enet_host_create(address.)
+	return _isConnecting;
+}
+
+bool ReliableUDPClient::IsConnected() noexcept
+{
+	return !_isConnecting && _eNetPeer != nullptr;
+}
+
+void ReliableUDPClient::TryCreateENetHost()
+{
+	if (_eNetHost)
+	{
+		return;
+	}
+
+	_eNetHost = enet_host_create(nullptr, 1, NetworkChannelsLimit, 0, 0);
+	if (_eNetHost == nullptr)
+	{
+		throw std::runtime_error("Failed to create ENet client host");
+	}
+}
+
+void ReliableUDPClient::Connect(const IClient::ConnectArgs &baseArgs)
+{
+	auto &&args = dynamic_cast<const ReliableUDPConnectArgs &>(baseArgs);
+
+	TryCreateENetHost();
+
+	// size_t colonPos = address.find(':');
+	// if (colonPos == std::string_view::npos)
+	// {
+	// 	throw std::runtime_error("Invalid address format, expected \"<hostname>:<port>\"");
+	// }
+
+	// std::string hostname{address.substr(0, colonPos)};
+	// std::int32_t port = std::stoi(std::string(address.substr(colonPos + 1)));
+
+	ENetAddress enetAddress;
+	if (enet_address_set_host(&enetAddress, args.host.data()) != 0)
+	{
+		throw std::runtime_error("Failed to resolve hostname");
+	}
+	enetAddress.port = args.port;
+
+	_eNetPeer = enet_host_connect(_eNetHost, &enetAddress, NetworkChannelsLimit, 0);
+	if (_eNetPeer == nullptr)
+	{
+		throw std::runtime_error("Failed to create peer for connection");
+	}
+
+	_isConnecting = true;
+}
+
+void ReliableUDPClient::Disconnect()
+{
+}
+
+bool ReliableUDPClient::Update()
+{
+	if (!_eNetHost)
+	{
+		return false;
+	}
+
+	auto &&coreEvents = GetEventManager()->GetCoreEvents();
+
+	bool hasEvent = false;
+	ENetEvent event;
+	while (enet_host_service(_eNetHost, &event, 0) > 0)
+	{
+		hasEvent = true;
+
+		switch (event.type)
+		{
+		case ENET_EVENT_TYPE_CONNECT:
+		{
+			if (_isConnecting)
+			{
+				_isConnecting = false;
+
+				coreEvents.ClientConnect()->Invoke();
+			}
+			break;
+		}
+		case ENET_EVENT_TYPE_RECEIVE:
+			// OnDataReceived(event.packet->data, event.packet->dataLength);
+			// enet_packet_destroy(event.packet);
+			break;
+		case ENET_EVENT_TYPE_DISCONNECT:
+			// isConnecting = false;
+			// isConnected = false;
+			// OnDisconnected();
+			break;
+		default:
+			break;
+		}
+	}
+
+	return hasEvent;
 }

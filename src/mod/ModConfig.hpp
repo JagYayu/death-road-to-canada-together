@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/Version.h"
+#include "util/Version.hpp"
 
 #include <json.hpp>
 

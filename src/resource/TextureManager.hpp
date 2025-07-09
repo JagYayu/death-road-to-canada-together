@@ -1,8 +1,8 @@
 #pragma once
 
 #include "ResourceManager.hpp"
-#include "graphic/Texture.h"
-#include "util/Defs.h"
+#include "graphic/Texture.hpp"
+#include "util/Defs.hpp"
 
 #include <string_view>
 

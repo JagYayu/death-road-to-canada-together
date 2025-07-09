@@ -1,19 +1,19 @@
-#include "DebugManager.h"
+#include "DebugManager.hpp"
 
-#include "DebugConsole.h"
-#include "graphic/Window.h"
-#include "imgui_impl_sdl3.h"
-#include "mod/ScriptEngine.h"
+#include "DebugConsole.hpp"
+#include "DebugProfiler.hpp"
+#include "program/Window.hpp"
 
 #include "imgui.h"
+#include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
+#include <memory>
 
 using namespace tudov;
 
-DebugManager::DebugManager(const std::weak_ptr<IWindow> &window) noexcept
-    : window(window),
-      console(std::make_shared<DebugConsole>()),
-      profiler(std::make_shared<DebugProfiler>(window)),
+DebugManager::DebugManager() noexcept
+    : console(std::make_shared<DebugConsole>()),
+      profiler(std::make_shared<DebugProfiler>()),
       _elements(),
       _shownElements()
 {
@@ -49,20 +49,7 @@ void DebugManager::RemoveElement(std::string_view element) noexcept
 	_shownElements.erase(element);
 }
 
-void DebugManager::InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
-{
-	// auto &&debugs = scriptEngine.CreateTable();
-
-	// scriptEngine.scriptLoader.onPreLoadAllScripts += [&]() {};
-
-	// scriptEngine.SetReadonlyGlobal(name, debugs);
-}
-
-void DebugManager::UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
-{
-}
-
-void DebugManager::UpdateAndRender() noexcept
+void DebugManager::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept
 {
 	ImGui_ImplSDL3_NewFrame();
 	ImGui_ImplSDLRenderer3_NewFrame();
@@ -101,7 +88,7 @@ void DebugManager::UpdateAndRender() noexcept
 	{
 		if (_shownElements.contains(element->GetName()))
 		{
-			element->UpdateAndRender();
+			element->UpdateAndRender(window);
 		}
 	}
 

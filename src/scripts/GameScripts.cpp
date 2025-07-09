@@ -1,4 +1,4 @@
-#include "GameScripts.h"
+#include "GameScripts.hpp"
 
 using namespace tudov;
 

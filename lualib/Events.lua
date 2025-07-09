@@ -2,14 +2,14 @@
 
 --- @diagnostic disable: duplicate-doc-alias
 --- @alias Tudov.Events.EventName string
---- @alias Tudov.Events.EventName "Update"
 --- @alias Tudov.Events.EventName "KeyDown"
 --- @alias Tudov.Events.EventName "KeyUp"
 --- @alias Tudov.Events.EventName "MouseButtonDown"
 --- @alias Tudov.Events.EventName "MouseButtonUp"
 --- @alias Tudov.Events.EventName "MouseMove"
 --- @alias Tudov.Events.EventName "MouseWheel"
---- @alias Tudov.Events.EventName "Render"
+--- @alias Tudov.Events.EventName "TickRender"
+--- @alias Tudov.Events.EventName "TickUpdate"
 --- @diagnostic enable: duplicate-doc-alias
 
 --- @class Tudov.Events

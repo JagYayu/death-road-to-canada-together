@@ -1,10 +1,10 @@
-#include "AbstractEvent.h"
+#include "AbstractEvent.hpp"
 
-#include "util/Defs.h"
+#include "util/Defs.hpp"
 
 using namespace tudov;
 
-AbstractEvent::AbstractEvent(EventManager &eventManager, EventID eventID, ScriptID scriptID)
+AbstractEvent::AbstractEvent(IEventManager &eventManager, EventID eventID, ScriptID scriptID)
     : eventManager(eventManager),
       _id(eventID),
       _scriptID(scriptID)

@@ -2,7 +2,7 @@
 
 #include "EventHandleFunction.hpp"
 #include "EventHandleKey.hpp"
-#include "util/Defs.h"
+#include "util/Defs.hpp"
 
 #include <cmath>
 #include <sol/sol.hpp>

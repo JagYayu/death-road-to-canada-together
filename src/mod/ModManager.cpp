@@ -1,11 +1,11 @@
-#include "ModManager.h"
+#include "ModManager.hpp"
 
-#include "ScriptEngine.h"
-#include "ScriptProvider.h"
-#include "UnpackagedMod.h"
+#include "ScriptEngine.hpp"
+#include "ScriptProvider.hpp"
+#include "UnpackagedMod.hpp"
 #include "mod/ModEntry.hpp"
-#include "program/Context.h"
-#include "util/Defs.h"
+#include "program/Context.hpp"
+#include "util/Defs.hpp"
 
 #include <memory>
 #include <vector>
@@ -189,11 +189,6 @@ void ModManager::HotReloadScriptPending(std::string_view scriptName, std::string
 
 void ModManager::Update()
 {
-	if (!GetScriptLoader()->HasAnyLoadError())
-	{
-		GetEventManager()->GetUpdateEvent().Invoke();
-	}
-
 	if (!_hotReloadScriptsPending)
 	{
 		return;

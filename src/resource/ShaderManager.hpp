@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ResourceManager.hpp"
-#include "graphic/Shader.h"
+#include "graphic/Shader.hpp"
 
 #include <string_view>
 

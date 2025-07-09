@@ -1,12 +1,12 @@
-#include "RuntimeEvent.h"
+#include "RuntimeEvent.hpp"
 
-#include "AbstractEvent.h"
+#include "AbstractEvent.hpp"
 #include "EventHandler.hpp"
-#include "EventManager.h"
-#include "event/RuntimeEvent.h"
-#include "mod/ModManager.h"
-#include "mod/ScriptProvider.h"
-#include "util/Defs.h"
+#include "EventManager.hpp"
+#include "event/RuntimeEvent.hpp"
+#include "mod/ModManager.hpp"
+#include "mod/ScriptProvider.hpp"
+#include "util/Defs.hpp"
 
 #include "sol/types.hpp"
 
@@ -16,7 +16,7 @@
 
 using namespace tudov;
 
-RuntimeEvent::RuntimeEvent(EventManager &eventManager, EventID eventID, const std::vector<std::string> &orders, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys, ScriptID scriptID)
+RuntimeEvent::RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys, ScriptID scriptID)
     : AbstractEvent(eventManager, eventID, scriptID),
       _log(Log::Get("RuntimeEvent")),
       _orders(orders),

@@ -1,15 +1,17 @@
-#include "Engine.h"
+#include "Engine.hpp"
 
-#include "Context.h"
-#include "EngineComponent.h"
-#include "SDL3/SDL_timer.h"
-#include "debug/DebugManager.h"
-#include "mod/LuaAPI.h"
+#include "Context.hpp"
+#include "EngineComponent.hpp"
+#include "MainWindow.hpp"
+#include "debug/DebugManager.hpp"
+#include "mod/LuaAPI.hpp"
 #include "resource/ResourceType.hpp"
-#include "scripts/GameScripts.h"
-#include "util/Log.h"
-#include "util/MicrosImpl.h"
+#include "scripts/GameScripts.hpp"
+#include "util/Log.hpp"
+#include "util/MicrosImpl.hpp"
 #include "util/StringUtils.hpp"
+
+#include "SDL3/SDL_timer.h"
 
 #include <algorithm>
 #include <exception>
@@ -30,7 +32,7 @@ Engine::Engine(const MainArgs &args) noexcept
       _luaAPI(std::make_shared<LuaAPI>()),
       _mainWindow(),
       _windows(),
-      _debugManager(),
+      _debugManager(std::make_shared<DebugManager>()),
       mainArgs(args)
 {
 	context = Context(this);
@@ -56,11 +58,11 @@ void Engine::Run()
 {
 	std::vector<std::shared_ptr<IEngineComponent>> engineComponents{
 	    _modManager,
+	    _eventManager,
+	    _gameScripts,
 	    _scriptProvider,
 	    _scriptLoader,
 	    _scriptEngine,
-	    _eventManager,
-	    _gameScripts,
 	};
 
 	_log->Debug("Initializing engine ...");
@@ -83,17 +85,25 @@ void Engine::Run()
 	while (_running && !_windows.empty())
 	{
 		uint64_t startNS = SDL_GetTicksNS();
-		prevNS = startNS;
 		_framerate = 1'000'000'000.0 / (startNS - prevNS);
+		prevNS = startNS;
 
 		_modManager->Update();
+
+		if (!_scriptLoader->HasAnyLoadError())
+		{
+			_eventManager->GetCoreEvents().TickUpdate()->Invoke();
+		}
 
 		for (auto &&window : _windows)
 		{
 			window->HandleEvents();
 		}
 
-		_debugManager->UpdateAndRender();
+		if (!_mainWindow.expired())
+		{
+			_debugManager->UpdateAndRender(_mainWindow.lock());
+		}
 
 		for (auto &&window : _windows)
 		{
@@ -124,10 +134,15 @@ void Engine::Run()
 
 void Engine::Quit()
 {
-	_running = false;
-	for (auto &&window : _windows)
+	if (_running)
 	{
-		window->Close();
+		_log->Debug("Engine is pending quit!");
+
+		_running = false;
+		for (auto &&window : _windows)
+		{
+			window->Close();
+		}
 	}
 }
 
@@ -143,7 +158,6 @@ void Engine::InitializeMainWindow()
 	mainWindow->Initialize(_config.GetWindowWidth(), _config.GetWindowHeight(), _config.GetWindowTitle());
 
 	_mainWindow = mainWindow;
-	_debugManager = std::make_shared<DebugManager>(mainWindow);
 }
 
 void Engine::InitializeResources()
@@ -279,7 +293,7 @@ TUDOV_GEN_GETTER_SMART_PTR(std::shared_ptr, IWindow, Engine::GetMainWindow, _mai
 
 void Engine::AddWindow(const std::shared_ptr<IWindow> &window)
 {
-	_windows.emplace_back(window); // TODO
+	_windows.emplace_back(window);
 }
 
 void Engine::RemoveWindow(const std::shared_ptr<IWindow> &window)

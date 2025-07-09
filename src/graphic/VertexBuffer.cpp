@@ -1,4 +1,4 @@
-#include "VertexBuffer.h"
+#include "VertexBuffer.hpp"
 
 // using namespace tudov;
 

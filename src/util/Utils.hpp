@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Log.h"
-#include "util/Defs.h"
+#include "Log.hpp"
+#include "util/Defs.hpp"
 
 #include <sol/sol.hpp>
 #include <sol/types.hpp>

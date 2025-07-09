@@ -1,12 +1,13 @@
-#include "EventManager.h"
+#include "EventManager.hpp"
 
-#include "AbstractEvent.h"
-#include "RuntimeEvent.h"
-#include "event/LoadtimeEvent.h"
-#include "mod/ModManager.h"
-#include "mod/ScriptEngine.h"
-#include "mod/ScriptLoader.h"
-#include "util/Defs.h"
+#include "AbstractEvent.hpp"
+#include "CoreEvents.hpp"
+#include "RuntimeEvent.hpp"
+#include "event/LoadtimeEvent.hpp"
+#include "mod/ModManager.hpp"
+#include "mod/ScriptEngine.hpp"
+#include "mod/ScriptLoader.hpp"
+#include "util/Defs.hpp"
 #include "util/Utils.hpp"
 
 #include "sol/string_view.hpp"
@@ -24,29 +25,9 @@ using namespace tudov;
 EventManager::EventManager(Context &context) noexcept
     : _context(context),
       _log(Log::Get("EventManager")),
-      _latestEventID(),
-      _update(std::make_shared<RuntimeEvent>(*this, AllocEventID("Update"))),
-      _render(std::make_shared<RuntimeEvent>(*this, AllocEventID("Render"))),
-      _keyDown(std::make_shared<RuntimeEvent>(*this, AllocEventID("KeyDown"))),
-      _keyUp(std::make_shared<RuntimeEvent>(*this, AllocEventID("KeyUp"))),
-      _mouseMove(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseMove"))),
-      _mouseButtonDown(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseButtonDown"))),
-      _mouseButtonUp(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseButtonUp"))),
-      _mouseWheel(std::make_shared<RuntimeEvent>(*this, AllocEventID("MouseWheel")))
+      _latestEventID()
 {
-	InitRuntimeEvent(_update);
-	InitRuntimeEvent(_render);
-	InitRuntimeEvent(_keyDown);
-	InitRuntimeEvent(_keyUp);
-	InitRuntimeEvent(_mouseMove);
-	InitRuntimeEvent(_mouseButtonDown);
-	InitRuntimeEvent(_mouseButtonUp);
-	InitRuntimeEvent(_mouseWheel);
-}
-
-void EventManager::InitRuntimeEvent(std::shared_ptr<RuntimeEvent> &event) noexcept
-{
-	_runtimeEvents.emplace(event->GetID(), event);
+	_coreEvents = std::make_unique<CoreEvents>(*this);
 }
 
 EventManager::~EventManager()
@@ -137,13 +118,18 @@ Context &EventManager::GetContext() noexcept
 	return _context;
 }
 
+ICoreEvents &EventManager::GetCoreEvents() noexcept
+{
+	return *_coreEvents;
+}
+
 void EventManager::Initialize() noexcept
 {
 	auto &&scriptLoader = GetScriptLoader();
 
 	_onPreLoadAllScriptsHandlerID = scriptLoader->GetOnPreLoadAllScripts() += [this]()
 	{
-		for (auto it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
+		for (auto &&it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 		{
 			auto &&runtimeEvent = it->second;
 			if (runtimeEvent->GetScriptID())
@@ -605,44 +591,4 @@ std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator Event
 std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator EventManager::EndRuntimeEvents() const
 {
 	return _runtimeEvents.end();
-}
-
-RuntimeEvent &EventManager::GetUpdateEvent() noexcept
-{
-	return *_update;
-}
-
-RuntimeEvent &EventManager::GetRenderEvent() noexcept
-{
-	return *_render;
-}
-
-RuntimeEvent &EventManager::GetKeyDownEvent() noexcept
-{
-	return *_keyDown;
-}
-
-RuntimeEvent &EventManager::GetKeyUpEvent() noexcept
-{
-	return *_keyUp;
-}
-
-RuntimeEvent &EventManager::GetMouseMoveEvent() noexcept
-{
-	return *_mouseMove;
-}
-
-RuntimeEvent &EventManager::GetMouseButtonDownEvent() noexcept
-{
-	return *_mouseButtonDown;
-}
-
-RuntimeEvent &EventManager::GetMouseButtonUpEvent() noexcept
-{
-	return *_mouseButtonUp;
-}
-
-RuntimeEvent &EventManager::GetMouseWheelEvent() noexcept
-{
-	return *_mouseWheel;
 }

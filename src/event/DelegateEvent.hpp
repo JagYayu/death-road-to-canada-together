@@ -1,6 +1,8 @@
 #pragma once
 
-#include "util/Defs.h"
+#include "util/Defs.hpp"
+
+#include <functional>
 
 namespace tudov
 {

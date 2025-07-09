@@ -17,8 +17,7 @@ local eventRenderGame = events:new(N_("RenderGame"), {
 	"UI",
 })
 
-print(N_("RenderGame"))
-events:add("Render", function(e)
+events:add("TickRender", function(e)
 	events:invoke(eventRenderGame, e)
 end, N_("render"), nil, "Main")
 

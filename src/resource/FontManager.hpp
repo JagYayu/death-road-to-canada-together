@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ResourceManager.hpp"
-#include "graphic/Font.h"
+#include "graphic/Font.hpp"
 
 #include <string_view>
 

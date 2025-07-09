@@ -1,9 +1,8 @@
-#include "Image.h"
+#include "Image.hpp"
 
 #include "SDL3/SDL_Surface.h"
 #include "SDL3/SDL_error.h"
 #include "SDL3_image/SDL_image.h"
-
 
 using namespace tudov;
 

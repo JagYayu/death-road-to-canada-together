@@ -1,5 +1,5 @@
-#include "Version.h"
-#include "Defs.h"
+#include "Version.hpp"
+#include "Defs.hpp"
 
 #include <cstdint>
 #include <sstream>

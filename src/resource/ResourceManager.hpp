@@ -1,9 +1,9 @@
 #pragma once
 
-#include "util/Defs.h"
-#include "util/Log.h"
+#include "util/Defs.hpp"
+#include "util/Log.hpp"
 
-// #include "Texture.h"
+// #include "Texture.hpp"
 
 namespace tudov
 {
