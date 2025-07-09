@@ -14,6 +14,7 @@
 #include "scripts/GameScripts.hpp"
 
 #include <memory>
+#include <queue>
 #include <vector>
 
 namespace tudov
@@ -27,7 +28,10 @@ namespace tudov
 	  private:
 		std::shared_ptr<Log> _log;
 		bool _running;
+		std::float_t _previousTime;
 		std::float_t _framerate;
+		std::vector<std::shared_ptr<IEngineComponent>> _components;
+		std::vector<SDL_Event *> _events;
 
 		EngineConfig _config;
 		ImageManager _imageManager;
@@ -55,8 +59,9 @@ namespace tudov
 		~Engine() noexcept;
 
 	  private:
-		void InitializeMainWindow();
-		void InitializeResources();
+		void InitializeMainWindow() noexcept;
+		void InitializeResources() noexcept;
+		void HandleEvent(SDL_Event &event) noexcept;
 
 		std::shared_ptr<IWindow> LuaGetMainWindow() noexcept;
 
@@ -76,7 +81,11 @@ namespace tudov
 		void AddWindow(const std::shared_ptr<IWindow> &window);
 		void RemoveWindow(const std::shared_ptr<IWindow> &window);
 
-		void Run();
+		void Initialize() noexcept;
+		bool Tick() noexcept;
+		void Event(SDL_Event &event) noexcept;
+		void Deinitialize() noexcept;
+
 		void Quit();
 	};
 } // namespace tudov

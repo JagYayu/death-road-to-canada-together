@@ -5,17 +5,16 @@
 
 #include <memory>
 #include <string_view>
+#include <unordered_map>
 
 namespace tudov
 {
+	class LocalClient;
+
 	class LocalServer : public IServer
 	{
 	  public:
-		struct LocalHostArgs : public HostArgs
-		{
-			std::string_view host;
-			std::string_view port;
-		};
+		using HostArgs = IServer::HostArgs;
 
 	  private:
 		struct HostInfo
@@ -23,6 +22,7 @@ namespace tudov
 			std::string_view title = NetworkServerTitle;
 			std::string_view password = NetworkServerPassword;
 			std::uint32_t maximumClients = NetworkServerMaximumClients;
+			std::unordered_map<std::uint32_t, std::weak_ptr<LocalClient>> localClients;
 		};
 
 	  private:
@@ -50,9 +50,6 @@ namespace tudov
 
 		bool Update() override;
 
-		void Host(const LocalHostArgs &args)
-		{
-			return Host(static_cast<HostArgs>(args));
-		}
+		void AddClient(std::uint32_t uid, const std::weak_ptr<LocalClient> &localClient);
 	};
 } // namespace tudov

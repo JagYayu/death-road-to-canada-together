@@ -2,13 +2,19 @@
 
 #include "Client.hpp"
 
+#include <memory>
+
 namespace tudov
 {
-	class LocalClient : public IClient
+	class LocalServer;
+
+	class LocalClient : public IClient, public std::enable_shared_from_this<LocalClient>
 	{
 	  public:
-		struct LocalConnectArgs : public ConnectArgs
+		struct ConnectArgs : public IClient::ConnectArgs
 		{
+			std::int32_t user;
+			LocalServer *server;
 		};
 
 	  private:
@@ -25,14 +31,14 @@ namespace tudov
 
 		bool IsConnecting() noexcept override;
 		bool IsConnected() noexcept override;
-		void Connect(const ConnectArgs &args) override;
+		void Connect(const IClient::ConnectArgs &args) override;
 		void Disconnect() override;
 
 		bool Update() override;
 
-		inline void Connect(const LocalConnectArgs &args)
+		inline void Connect(const ConnectArgs &args)
 		{
-			Connect(static_cast<const ConnectArgs &>(args));
+			Connect(static_cast<const IClient::ConnectArgs &>(args));
 		}
 	};
 } // namespace tudov

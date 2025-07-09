@@ -5,50 +5,32 @@
 #include "SocketType.hpp"
 #include "program/EngineComponent.hpp"
 #include "util/Log.hpp"
+
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
 namespace tudov
 {
-	struct INetwork : public IEngineComponent
+	struct INetwork : public IEngineComponent, public ILogProvider
 	{
-		virtual IClient &GetClient() noexcept = 0;
-		virtual IServer &GetServer() noexcept = 0;
-		virtual void ChangeSocket(ESocketType socketType) = 0;
+		virtual std::weak_ptr<IClient> GetClient(std::int32_t uid = 0) noexcept = 0;
+		virtual std::weak_ptr<IServer> GetServer(std::int32_t uid = 0) noexcept = 0;
+		virtual std::vector<std::weak_ptr<IClient>> GetClients() noexcept = 0;
+		virtual std::vector<std::weak_ptr<IServer>> GetServers() noexcept = 0;
+		virtual void ChangeClientSocket(ESocketType socketType, std::int32_t uid = 0) = 0;
+		virtual void ChangeServerSocket(ESocketType socketType, std::int32_t uid = 0) = 0;
 
-		virtual inline std::int32_t GetLimitsPerUpdate() noexcept
-		{
-			return 3;
-		}
+		virtual std::int32_t GetLimitsPerUpdate() noexcept;
 
-		virtual inline bool Update() noexcept
-		{
-			auto &&client = GetClient();
-			auto &&server = GetServer();
+		virtual bool Update() noexcept;
 
-			std::int32_t limit = GetLimitsPerUpdate();
-			if (limit <= 0)
-			{
-				return true;
-			}
-
-			while (client.Update() | server.Update())
-			{
-				if (limit <= 0)
-				{
-					return true;
-				}
-				--limit;
-			}
-
-			return false;
-		}
-
-		inline const IClient &GetClient() const noexcept
+		inline std::weak_ptr<const IClient> GetClient() const noexcept
 		{
 			return const_cast<INetwork *>(this)->GetClient();
 		}
 
-		inline const IServer &GetServer() const noexcept
+		inline std::weak_ptr<const IServer> GetServer() const noexcept
 		{
 			return const_cast<INetwork *>(this)->GetServer();
 		}
@@ -59,8 +41,8 @@ namespace tudov
 	  private:
 		std::shared_ptr<Log> _log;
 		Context &_context;
-		std::shared_ptr<IClient> _client;
-		std::shared_ptr<IServer> _server;
+		std::unordered_map<std::int32_t, std::shared_ptr<IClient>> _clients;
+		std::unordered_map<std::int32_t, std::shared_ptr<IServer>> _servers;
 		ESocketType _socketType;
 
 	  public:
@@ -70,9 +52,11 @@ namespace tudov
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
 
-		IClient &GetClient() noexcept override;
-		IServer &GetServer() noexcept override;
-		void ChangeSocket(ESocketType socketType) override;
+		std::weak_ptr<IClient> GetClient(std::int32_t uid = 0) noexcept override;
+		std::weak_ptr<IServer> GetServer(std::int32_t uid = 0) noexcept override;
+		std::vector<std::weak_ptr<IClient>> GetClients() noexcept override;
+		std::vector<std::weak_ptr<IServer>> GetServers() noexcept override;
+		void ChangeClientSocket(ESocketType socketType, std::int32_t uid = 0) override;
 		bool Update() noexcept override;
 	};
 } // namespace tudov

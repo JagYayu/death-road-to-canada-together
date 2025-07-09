@@ -2,6 +2,8 @@
 
 #include "NetworkComponent.hpp"
 
+#include <string_view>
+
 namespace tudov
 {
 	struct IClient : public INetworkComponent
@@ -9,6 +11,8 @@ namespace tudov
 		struct ConnectArgs
 		{
 			virtual ~ConnectArgs() noexcept = default;
+
+			std::string_view password = "";
 		};
 
 		virtual void Connect(const ConnectArgs &address) = 0;

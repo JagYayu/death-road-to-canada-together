@@ -25,6 +25,7 @@ namespace tudov
 		virtual void Close() noexcept = 0;
 		virtual bool ShouldClose() noexcept = 0;
 		virtual void HandleEvents() noexcept = 0;
+		virtual bool HandleEvent(SDL_Event &event) noexcept = 0;
 		virtual void Render() noexcept = 0;
 	};
 
@@ -43,9 +44,6 @@ namespace tudov
 		explicit Window(Context &context, std::string_view logName = "Window") noexcept;
 		~Window() noexcept;
 
-	  protected:
-		void HandleEvent(const SDL_Event &event) noexcept;
-
 	  public:
 		Context &GetContext() noexcept override;
 		void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;
@@ -55,6 +53,7 @@ namespace tudov
 		void Close() noexcept override;
 		bool ShouldClose() noexcept override;
 		void HandleEvents() noexcept override;
+		bool HandleEvent(SDL_Event &event) noexcept override;
 		void Render() noexcept override;
 
 		virtual EventHandleKey GetKey() const noexcept;

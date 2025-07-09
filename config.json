@@ -14,7 +14,7 @@
 	},
 	"renderBackend": "SDL",
 	"window": {
-		"framelimit": 100,
+		"framelimit": 120,
 		"fullscreen": false,
 		"height": 720,
 		"title": "DR2C Together",

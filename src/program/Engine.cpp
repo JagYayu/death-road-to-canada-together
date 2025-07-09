@@ -3,6 +3,7 @@
 #include "Context.hpp"
 #include "EngineComponent.hpp"
 #include "MainWindow.hpp"
+#include "Window.hpp"
 #include "debug/DebugManager.hpp"
 #include "mod/LuaAPI.hpp"
 #include "resource/ResourceType.hpp"
@@ -17,7 +18,6 @@
 #include <exception>
 #include <memory>
 #include <regex>
-#include <stdexcept>
 #include <vector>
 
 using namespace tudov;
@@ -25,7 +25,6 @@ using namespace tudov;
 Engine::Engine(const MainArgs &args) noexcept
     : _log(Log::Get("Engine")),
       _running(true),
-      _framerate(0),
       _config(),
       _imageManager(),
       _fontManager(),
@@ -54,9 +53,9 @@ bool IsWindowShouldClose(const std::shared_ptr<IWindow> &window) noexcept
 	return window->ShouldClose();
 }
 
-void Engine::Run()
+void Engine::Initialize() noexcept
 {
-	std::vector<std::shared_ptr<IEngineComponent>> engineComponents{
+	_components = {
 	    _modManager,
 	    _eventManager,
 	    _gameScripts,
@@ -71,60 +70,90 @@ void Engine::Run()
 		InitializeMainWindow();
 		InitializeResources();
 
-		for (auto &&it = engineComponents.begin(); it != engineComponents.end(); ++it)
+		for (auto &&it = _components.begin(); it != _components.end(); ++it)
 		{
 			it->get()->Initialize();
 		}
 
 		_modManager->LoadMods();
+		_previousTime = SDL_GetTicksNS();
+		_framerate = 0;
 	}
 	_log->Debug("Initialized engine");
+}
 
-	std::uint64_t prevNS = SDL_GetTicksNS();
-
-	while (_running && !_windows.empty())
+bool Engine::Tick() noexcept
+{
+	if (!_running || _windows.empty())
 	{
-		uint64_t startNS = SDL_GetTicksNS();
-		_framerate = 1'000'000'000.0 / (startNS - prevNS);
-		prevNS = startNS;
-
-		_modManager->Update();
-
-		if (!_scriptLoader->HasAnyLoadError())
-		{
-			_eventManager->GetCoreEvents().TickUpdate()->Invoke();
-		}
-
-		for (auto &&window : _windows)
-		{
-			window->HandleEvents();
-		}
-
-		if (!_mainWindow.expired())
-		{
-			_debugManager->UpdateAndRender(_mainWindow.lock());
-		}
-
-		for (auto &&window : _windows)
-		{
-			window->Render();
-		}
-
-		_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
-
-		auto elapsed = SDL_GetTicksNS() - startNS;
-		auto limit = 1'000'000'000ull / uint64_t(_config.GetWindowFramelimit());
-		if (elapsed < limit)
-		{
-			SDL_DelayPrecise(limit - elapsed);
-		}
+		return false;
 	}
 
+	uint64_t startNS = SDL_GetTicksNS();
+	_framerate = 1'000'000'000.0 / (startNS - _previousTime);
+	_previousTime = startNS;
+
+	_modManager->Update();
+
+	if (!_scriptLoader->HasAnyLoadError())
+	{
+		_eventManager->GetCoreEvents().TickUpdate()->Invoke();
+	}
+
+	for (auto &&event : _events)
+	{
+		HandleEvent(*event);
+		delete event;
+	}
+	_events.clear();
+
+	for (auto &&window : _windows)
+	{
+		window->HandleEvents();
+	}
+
+	if (!_mainWindow.expired())
+	{
+		_debugManager->UpdateAndRender(_mainWindow.lock());
+	}
+
+	for (auto &&window : _windows)
+	{
+		window->Render();
+	}
+
+	_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
+
+	auto elapsed = SDL_GetTicksNS() - startNS;
+	auto limit = 1'000'000'000ull / uint64_t(_config.GetWindowFramelimit());
+	if (elapsed < limit)
+	{
+		SDL_DelayPrecise(limit - elapsed);
+	}
+
+	return true;
+}
+
+void Engine::HandleEvent(SDL_Event &event) noexcept
+{
+	for (auto &&window : _windows)
+	{
+		window->HandleEvent(event);
+	}
+}
+
+void Engine::Event(SDL_Event &event) noexcept
+{
+	_events.emplace_back(new SDL_Event(event));
+}
+
+void Engine::Deinitialize() noexcept
+{
 	_log->Debug("Deinitializing engine ...");
 	{
 		_modManager->UnloadMods();
 
-		for (auto &&it = engineComponents.rbegin(); it != engineComponents.rend(); ++it)
+		for (auto &&it = _components.rbegin(); it != _components.rend(); ++it)
 		{
 			it->get()->Deinitialize();
 		}
@@ -146,11 +175,11 @@ void Engine::Quit()
 	}
 }
 
-void Engine::InitializeMainWindow()
+void Engine::InitializeMainWindow() noexcept
 {
 	if (!_mainWindow.expired())
 	{
-		throw std::runtime_error("Engine main window has already been initialized!");
+		_log->Error("Engine main window has already been initialized!");
 	}
 
 	auto &&mainWindow = std::make_shared<MainWindow>(context);
@@ -160,7 +189,7 @@ void Engine::InitializeMainWindow()
 	_mainWindow = mainWindow;
 }
 
-void Engine::InitializeResources()
+void Engine::InitializeResources() noexcept
 {
 	_log->Debug("Mounting resource files");
 
@@ -304,13 +333,4 @@ void Engine::RemoveWindow(const std::shared_ptr<IWindow> &window)
 std::shared_ptr<IWindow> Engine::LuaGetMainWindow() noexcept
 {
 	return _mainWindow.expired() ? nullptr : _mainWindow.lock();
-}
-
-void InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
-{
-	auto &&table = scriptEngine.CreateTable();
-
-	//
-
-	scriptEngine.SetReadonlyGlobal("Engine", table);
 }

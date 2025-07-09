@@ -1,17 +1,14 @@
 #pragma once
 
-#include "Defs.hpp"
 #include "Micros.hpp"
 
 #include <json.hpp>
 #include <sol/lua_value.hpp>
 
 #include <atomic>
-#include <iostream>
 #include <mutex>
 #include <queue>
 #include <string>
-#include <thread>
 #include <unordered_map>
 
 namespace tudov
@@ -136,6 +133,79 @@ namespace tudov
 		FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args)
 		{
 			Output("Fatal", std::format(fmt, std::forward<Args>(args)...));
+		}
+	};
+
+	struct ILogProvider
+	{
+		virtual Log &GetLog() noexcept = 0;
+
+		const Log &GetLog() const noexcept
+		{
+			return const_cast<ILogProvider *>(this)->GetLog();
+		}
+
+		const std::string &GetModule() const;
+
+		FORCEINLINE Log::EVerbosity GetVerbosity() const
+		{
+			return GetLog().GetVerbosity();
+		}
+
+		FORCEINLINE bool CanTrace() const
+		{
+			return GetLog().CanTrace();
+		}
+		FORCEINLINE bool CanInfo() const
+		{
+			return GetLog().CanInfo();
+		}
+		FORCEINLINE bool CanDebug() const
+		{
+			return GetLog().CanDebug();
+		}
+		FORCEINLINE bool CanWarn() const
+		{
+			return GetLog().CanWarn();
+		}
+		FORCEINLINE bool CanError() const
+		{
+			return GetLog().CanError();
+		}
+		FORCEINLINE bool CanFatal() const
+		{
+			return GetLog().CanFatal();
+		}
+
+		template <typename... Args>
+		FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args)
+		{
+			GetLog().Trace(fmt, std::forward<Args>(args)...);
+		}
+		template <typename... Args>
+		FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args)
+		{
+			GetLog().Debug(fmt, std::forward<Args>(args)...);
+		}
+		template <typename... Args>
+		FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args)
+		{
+			GetLog().Info(fmt, std::forward<Args>(args)...);
+		}
+		template <typename... Args>
+		FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args)
+		{
+			GetLog().Warn(fmt, std::forward<Args>(args)...);
+		}
+		template <typename... Args>
+		FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args)
+		{
+			GetLog().Error(fmt, std::forward<Args>(args)...);
+		}
+		template <typename... Args>
+		FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args)
+		{
+			GetLog().Fatal(fmt, std::forward<Args>(args)...);
 		}
 	};
 } // namespace tudov

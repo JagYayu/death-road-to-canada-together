@@ -42,13 +42,25 @@ bool LocalServer::IsHosting() noexcept
 
 void LocalServer::Host(const HostArgs &args)
 {
+	_hostInfo = std::make_unique<HostInfo>(HostInfo{
+	    .title = args.title,
+	    .password = args.password,
+	    .maximumClients = args.maximumClients,
+	});
 }
 
 void LocalServer::Shutdown()
 {
+	_hostInfo = nullptr;
 }
 
 bool LocalServer::Update()
 {
 	return false;
+}
+
+void LocalServer::AddClient(std::uint32_t uid, const std::weak_ptr<LocalClient> &localClient)
+{
+	
+	// TODO
 }

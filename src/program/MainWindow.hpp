@@ -12,7 +12,7 @@ namespace tudov
 
 		virtual void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;
 		virtual EventHandleKey GetKey() const noexcept override;
-		virtual void HandleEvents() noexcept override;
+		virtual bool HandleEvent(SDL_Event &event) noexcept override;
 		virtual void Render() noexcept override;
 	};
 } // namespace tudov

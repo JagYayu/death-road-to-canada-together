@@ -1,10 +1,12 @@
 #include "Window.hpp"
 
+#include "SDL3/SDL_video.h"
 #include "event/EventManager.hpp"
 #include "graphic/Renderer.hpp"
 #include "mod/ScriptEngine.hpp"
 
 #include "SDL3/SDL_events.h"
+#include "SDL3/SDL_video.h"
 
 #include <memory>
 
@@ -60,17 +62,16 @@ EventHandleKey Window::GetKey() const noexcept
 
 void Window::HandleEvents() noexcept
 {
-	SDL_Event event;
-	while (SDL_PollEvent(&event))
-	{
-		HandleEvent(event);
-	}
 }
 
-void Window::HandleEvent(const SDL_Event &event) noexcept
+bool Window::HandleEvent(SDL_Event &event) noexcept
 {
-	auto &&eventManager = GetEventManager();
+	if (SDL_GetWindowID(_sdlWindow) != event.window.windowID)
+	{
+		return false;
+	}
 
+	auto &&eventManager = GetEventManager();
 	switch (event.type)
 	{
 	case SDL_EVENT_QUIT:
@@ -78,7 +79,13 @@ void Window::HandleEvent(const SDL_Event &event) noexcept
 		break;
 	case SDL_EVENT_LOW_MEMORY:
 		break;
+	case SDL_EVENT_MOUSE_MOTION:
+		break;
+	default:
+		break;
 	}
+
+	return true;
 }
 
 void Window::Render() noexcept
