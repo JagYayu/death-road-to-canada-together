@@ -14,10 +14,10 @@ namespace tudov
 {
 	struct INetwork : public IEngineComponent, public ILogProvider
 	{
-		virtual ~INetwork() noexcept = default;
+		~INetwork() noexcept override = default;
 
-		virtual std::weak_ptr<IClient> GetClient(std::int32_t uid = 0) noexcept = 0;
-		virtual std::weak_ptr<IServer> GetServer(std::int32_t uid = 0) noexcept = 0;
+		virtual IClient *GetClient(std::int32_t uid = 0) noexcept = 0;
+		virtual IServer *GetServer(std::int32_t uid = 0) noexcept = 0;
 		virtual std::vector<std::weak_ptr<IClient>> GetClients() noexcept = 0;
 		virtual std::vector<std::weak_ptr<IServer>> GetServers() noexcept = 0;
 		virtual void ChangeClientSocket(ESocketType socketType, std::int32_t uid = 0) = 0;
@@ -27,12 +27,12 @@ namespace tudov
 
 		virtual bool Update() noexcept;
 
-		inline std::weak_ptr<const IClient> GetClient() const noexcept
+		inline const IClient *GetClient() const noexcept
 		{
 			return const_cast<INetwork *>(this)->GetClient();
 		}
 
-		inline std::weak_ptr<const IServer> GetServer() const noexcept
+		inline const IServer *GetServer() const noexcept
 		{
 			return const_cast<INetwork *>(this)->GetServer();
 		}
@@ -49,13 +49,14 @@ namespace tudov
 
 	  public:
 		explicit Network(Context &context, ESocketType socketType = ESocketType::Local) noexcept;
+		~Network() noexcept override = default;
 
 		Context &GetContext() noexcept override;
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
 
-		std::weak_ptr<IClient> GetClient(std::int32_t uid = 0) noexcept override;
-		std::weak_ptr<IServer> GetServer(std::int32_t uid = 0) noexcept override;
+		IClient *GetClient(std::int32_t uid = 0) noexcept override;
+		IServer *GetServer(std::int32_t uid = 0) noexcept override;
 		std::vector<std::weak_ptr<IClient>> GetClients() noexcept override;
 		std::vector<std::weak_ptr<IServer>> GetServers() noexcept override;
 		void ChangeClientSocket(ESocketType socketType, std::int32_t uid = 0) override;

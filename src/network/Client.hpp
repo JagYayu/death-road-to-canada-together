@@ -2,6 +2,7 @@
 
 #include "NetworkComponent.hpp"
 
+#include <exception>
 #include <string_view>
 
 namespace tudov
@@ -21,6 +22,8 @@ namespace tudov
 		virtual void Disconnect() = 0;
 		virtual bool IsConnecting() noexcept = 0;
 		virtual bool IsConnected() noexcept = 0;
+		virtual void SendReliable(std::string_view data) = 0;
+		virtual void SendUnreliable(std::string_view data) = 0;
 
 		inline bool TryDisconnect() noexcept
 		{

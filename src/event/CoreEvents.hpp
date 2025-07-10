@@ -36,10 +36,13 @@ namespace tudov
 		[[nodiscard]] virtual TRuntimeEvent ServerConnect() noexcept = 0;
 		[[nodiscard]] virtual TRuntimeEvent ServerDisconnect() noexcept = 0;
 		[[nodiscard]] virtual TRuntimeEvent ServerMessage() noexcept = 0;
+
+		// Other events.
+		// [[nodiscard]] virtual TRuntimeEvent ConsoleCommand() noexcept = 0;
 	};
 
-	class IEventManager;
 	class EventManager;
+	struct IEventManager;
 
 	class CoreEvents : public ICoreEvents
 	{

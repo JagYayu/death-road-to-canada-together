@@ -9,6 +9,7 @@
 #include "mod/LuaAPI.hpp"
 #include "resource/ResourceType.hpp"
 #include "scripts/GameScripts.hpp"
+#include "sol/property.hpp"
 #include "util/Log.hpp"
 #include "util/MicrosImpl.hpp"
 #include "util/StringUtils.hpp"
@@ -85,6 +86,8 @@ void Engine::Initialize() noexcept
 		{
 			it->get()->Initialize();
 		}
+
+		InstallLuaAPIs();
 
 		_modManager->LoadMods();
 		_previousTime = SDL_GetTicksNS();
@@ -302,6 +305,29 @@ void Engine::InitializeResources() noexcept
 	for (auto [fileType, count] : fileCounts)
 	{
 		_log->Info("{}: {}", ResourceTypeToStringView(fileType), count);
+	}
+}
+
+void Engine::InstallLuaAPIs() noexcept
+{
+	static constexpr auto classname = "tudov_Engine";
+
+	_luaAPI->RegisterInstallation(classname, [this](sol::state &lua)
+	{
+		auto GetMainWindow = [this]()
+		{
+			return _mainWindow.lock().get();
+		};
+
+		lua.new_usertype<Engine>(classname,
+		                         "mainWindow", sol::readonly_property(GetMainWindow),
+		                         "quit", &Engine::Quit);
+		lua["engine"] = this;
+	});
+
+	for (auto &&component : _components)
+	{
+		component->ProvideLuaAPI(*_luaAPI);
 	}
 }
 

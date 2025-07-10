@@ -7,6 +7,7 @@
 #include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptLoader.hpp"
+#include "program/Context.hpp"
 #include "util/Defs.hpp"
 #include "util/Utils.hpp"
 
@@ -30,7 +31,7 @@ EventManager::EventManager(Context &context) noexcept
 	_coreEvents = std::make_unique<CoreEvents>(*this);
 }
 
-EventManager::~EventManager()
+EventManager::~EventManager() noexcept
 {
 }
 
@@ -55,6 +56,8 @@ void EventManager::DeallocEventID(EventID eventID) noexcept
 
 void EventManager::OnScriptsLoaded()
 {
+	auto &&scriptProvider = GetScriptProvider();
+
 	std::vector<std::reference_wrapper<LoadtimeEvent>> invalidEvents;
 
 	for (auto &&[eventID, loadtimeEvent] : _loadtimeEvents)
@@ -87,7 +90,7 @@ void EventManager::OnScriptsLoaded()
 		{
 			auto &&eventName = _eventID2Name[eventID];
 			auto scriptID = loadtimeEvent->GetScriptID();
-			auto scriptName = GetScriptProvider()->GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
+			auto scriptName = scriptProvider->GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
 			_log->Error("Attempt to add handlers to non-exist event <{}>\"{}\", source script <{}>\"{}\"", eventID, eventName, scriptID, scriptName);
 		}
 	}
@@ -96,7 +99,6 @@ void EventManager::OnScriptsLoaded()
 	_log->Trace("Cleared loadtime events");
 
 	auto &&scriptLoader = GetScriptLoader();
-	auto &&scriptProvider = GetScriptProvider();
 
 	for (auto &&[_, event] : _runtimeEvents)
 	{

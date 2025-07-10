@@ -1,18 +1,17 @@
 #pragma once
 
-#include <memory>
-
 namespace tudov
 {
 	class Config;
 	class Engine;
 	class ImageManager;
 	class FontManager;
-	class IEventManager;
-	class IModManager;
-	class IScriptEngine;
-	class IScriptLoader;
-	class IScriptProvider;
+	struct IEventManager;
+	struct ILuaAPI;
+	struct IModManager;
+	struct IScriptEngine;
+	struct IScriptLoader;
+	struct IScriptProvider;
 
 	class Context
 	{
@@ -29,55 +28,61 @@ namespace tudov
 		Engine &GetEngine();
 		const Engine &GetEngine() const;
 		Config &GetConfig();
-		const Config &GetEngineConfig() const;
+		const Config &GetConfig() const;
 		ImageManager &GetImageManager();
 		const ImageManager &GetImageManager() const;
 		FontManager &GetFontManager();
 		const FontManager &GetFontManager() const;
 
-		std::weak_ptr<IEventManager> GetEventManager();
-		std::weak_ptr<IModManager> GetModManager();
-		std::weak_ptr<IScriptEngine> GetScriptEngine();
-		std::weak_ptr<IScriptLoader> GetScriptLoader();
-		std::weak_ptr<IScriptProvider> GetScriptProvider();
+		IEventManager *GetEventManager();
+		ILuaAPI *GetLuaAPI();
+		IModManager *GetModManager();
+		IScriptEngine *GetScriptEngine();
+		IScriptLoader *GetScriptLoader();
+		IScriptProvider *GetScriptProvider();
 
-		inline std::weak_ptr<const IEventManager> GetEventManager() const
+		inline const IEventManager *GetEventManager() const
 		{
 			return const_cast<Context *>(this)->GetEventManager();
 		}
 
-		inline std::weak_ptr<const IModManager> GetModManager() const
+		inline ILuaAPI *GetLuaAPI() const
+		{
+			return const_cast<Context *>(this)->GetLuaAPI();
+		}
+
+		inline const IModManager *GetModManager() const
 		{
 			return const_cast<Context *>(this)->GetModManager();
 		}
 
-		inline std::weak_ptr<const IScriptEngine> GetScriptEngine() const
+		inline const IScriptEngine *GetScriptEngine() const
 		{
 			return const_cast<Context *>(this)->GetScriptEngine();
 		}
 
-		inline std::weak_ptr<const IScriptLoader> GetScriptLoader() const
+		inline const IScriptLoader *GetScriptLoader() const
 		{
 			return const_cast<Context *>(this)->GetScriptLoader();
 		}
 
-		inline std::weak_ptr<const IScriptProvider> GetScriptProvider() const
+		inline const IScriptProvider *GetScriptProvider() const
 		{
 			return const_cast<Context *>(this)->GetScriptProvider();
 		}
 	};
 
 	class Engine;
-	class IEventManager;
-	class IModManager;
-	class IScriptEngine;
-	class IScriptLoader;
-	class IScriptProvider;
+	struct IEventManager;
+	struct IModManager;
+	struct IScriptEngine;
+	struct IScriptLoader;
+	struct IScriptProvider;
 
 	struct IContextProvider
 	{
 		virtual ~IContextProvider() noexcept = default;
-		
+
 		virtual Context &GetContext() noexcept = 0;
 
 		const Context &GetContext() const noexcept
@@ -95,14 +100,14 @@ namespace tudov
 			return GetContext().GetEngine();
 		}
 
-		inline Config &GetEngineConfig() noexcept
+		inline Config &GetConfig() noexcept
 		{
 			return GetContext().GetConfig();
 		}
 
-		inline const Config &GetEngineConfig() const noexcept
+		inline const Config &GetConfig() const noexcept
 		{
-			return GetContext().GetEngineConfig();
+			return GetContext().GetConfig();
 		}
 
 		inline FontManager &GetFontManager() noexcept
@@ -125,64 +130,64 @@ namespace tudov
 			return GetContext().GetImageManager();
 		}
 
-		inline std::shared_ptr<IEventManager> GetEventManager() noexcept
+		inline IEventManager *GetEventManager() noexcept
 		{
-			auto &&ptr = GetContext().GetEventManager();
-			return ptr.expired() ? nullptr : ptr.lock();
+			return GetContext().GetEventManager();
 		}
 
-		inline std::shared_ptr<const IEventManager> GetEventManager() const noexcept
+		inline const IEventManager *GetEventManager() const noexcept
 		{
-			auto &&ptr = GetContext().GetEventManager();
-			return ptr.expired() ? nullptr : ptr.lock();
+			return GetContext().GetEventManager();
 		}
 
-		inline std::shared_ptr<IModManager> GetModManager() noexcept
+		inline ILuaAPI *GetLuaAPI() noexcept
 		{
-			auto &&ptr = GetContext().GetModManager();
-			return ptr.expired() ? nullptr : ptr.lock();
+			return GetContext().GetLuaAPI();
 		}
 
-		inline std::shared_ptr<const IModManager> GetModManager() const noexcept
+		inline const ILuaAPI *GetLuaAPI() const noexcept
 		{
-			auto &&ptr = GetContext().GetModManager();
-			return ptr.expired() ? nullptr : ptr.lock();
+			return GetContext().GetLuaAPI();
 		}
 
-		inline std::shared_ptr<IScriptEngine> GetScriptEngine() noexcept
+		inline IModManager *GetModManager() noexcept
 		{
-			auto &&ptr = GetContext().GetScriptEngine();
-			return ptr.expired() ? nullptr : ptr.lock();
+			return GetContext().GetModManager();
 		}
 
-		inline std::shared_ptr<const IScriptEngine> GetScriptEngine() const noexcept
+		inline const IModManager *GetModManager() const noexcept
 		{
-			auto &&ptr = GetContext().GetScriptEngine();
-			return ptr.expired() ? nullptr : ptr.lock();
+			return GetContext().GetModManager();
 		}
 
-		inline std::shared_ptr<IScriptLoader> GetScriptLoader() noexcept
+		inline IScriptEngine *GetScriptEngine() noexcept
 		{
-			auto &&ptr = GetContext().GetScriptLoader();
-			return ptr.expired() ? nullptr : ptr.lock();
+			return GetContext().GetScriptEngine();
 		}
 
-		inline std::shared_ptr<const IScriptLoader> GetScriptLoader() const noexcept
+		inline const IScriptEngine *GetScriptEngine() const noexcept
 		{
-			auto &&ptr = GetContext().GetScriptLoader();
-			return ptr.expired() ? nullptr : ptr.lock();
+			return GetContext().GetScriptEngine();
 		}
 
-		inline std::shared_ptr<IScriptProvider> GetScriptProvider() noexcept
+		inline IScriptLoader *GetScriptLoader() noexcept
 		{
-			auto &&ptr = GetContext().GetScriptProvider();
-			return ptr.expired() ? nullptr : ptr.lock();
+			return GetContext().GetScriptLoader();
 		}
 
-		inline std::shared_ptr<const IScriptProvider> GetScriptProvider() const noexcept
+		inline const IScriptLoader *GetScriptLoader() const noexcept
 		{
-			auto &&ptr = GetContext().GetScriptProvider();
-			return ptr.expired() ? nullptr : ptr.lock();
+			return GetContext().GetScriptLoader();
+		}
+
+		inline IScriptProvider *GetScriptProvider() noexcept
+		{
+			return GetContext().GetScriptProvider();
+		}
+
+		inline const IScriptProvider *GetScriptProvider() const noexcept
+		{
+			return GetContext().GetScriptProvider();
 		}
 	};
 } // namespace tudov

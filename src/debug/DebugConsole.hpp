@@ -26,9 +26,15 @@ namespace tudov
 		explicit DebugConsole() noexcept;
 
 		std::string_view GetName() noexcept override;
-		void UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept;
+		void UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept override;
 
-		void Log(std::string_view message);
+		void Output(std::string_view message);
 		void Clear();
+
+		template <typename... Args>
+		inline void Output(std::format_string<Args...> fmt, Args &&...args)
+		{
+			Output(std::format(fmt, std::forward<Args>(args)...));
+		}
 	};
 } // namespace tudov

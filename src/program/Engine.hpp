@@ -78,6 +78,7 @@ namespace tudov
 	  private:
 		void InitializeMainWindow() noexcept;
 		void InitializeResources() noexcept;
+		void InstallLuaAPIs() noexcept;
 		void HandleEvent(SDL_Event &event) noexcept;
 
 		std::shared_ptr<IWindow> LuaGetMainWindow() noexcept;

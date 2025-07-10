@@ -33,6 +33,8 @@ namespace tudov
 		bool IsConnected() noexcept override;
 		void Connect(const IClient::ConnectArgs &args) override;
 		void Disconnect() override;
+		void SendReliable(std::string_view data) override;
+		void SendUnreliable(std::string_view data) override;
 
 		bool Update() override;
 

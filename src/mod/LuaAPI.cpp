@@ -3,12 +3,22 @@
 #include "program/Engine.hpp"
 
 #include "sol/property.hpp"
+#include <tuple>
 
 using namespace tudov;
 
-void LuaAPI::RegisterInstallation(const TInstallation &installation) noexcept
+bool LuaAPI::RegisterInstallation(std::string_view name, const TInstallation &installation)
 {
-	_installations.emplace_back(installation);
+	for (auto &&installation : _installations)
+	{
+		if (std::get<0>(installation) == name) [[unlikely]]
+		{
+			return false;
+		}
+	}
+
+	_installations.emplace_back(name, installation);
+	return true;
 }
 
 decltype(auto) GetMainWindow(Context &context)
@@ -28,13 +38,13 @@ decltype(auto) GetMainWindow(Context &context)
 
 #define TUDOV_USERTYPE(Class, ...) lua.new_usertype<Class>("tudov_" #Class, __VA_ARGS__)
 
-void LuaAPI::Install(sol::state &lua, Context &context) noexcept
+void LuaAPI::Install(sol::state &lua, Context &context)
 {
 	// sol::readonly_property(F &&f)
 
-	TUDOV_USERTYPE(Engine,
-	               "mainWindow", GetMainWindow(context),
-	               "quit", &Engine::Quit);
+	// TUDOV_USERTYPE(Engine,
+	//                "mainWindow", GetMainWindow(context),
+	//                "quit", &Engine::Quit);
 
 	// TUDOV_USERTYPE(ModManager);
 
@@ -59,18 +69,18 @@ void LuaAPI::Install(sol::state &lua, Context &context) noexcept
 	               "setRenderTarget", &Renderer::SetRenderTarget,
 	               "renderTexture", &Renderer::DrawTexture);
 
-	lua["engine"] = &context.GetEngine();
+	// lua["engine"] = &context.GetEngine();
 	lua["fonts"] = &context.GetFontManager();
 	lua["images"] = &context.GetImageManager();
 
-	lua["mods"] = dynamic_cast<ModManager *>(context.GetModManager().lock().get());
-	lua["events"] = dynamic_cast<EventManager *>(context.GetEventManager().lock().get());
-	lua["scriptEngine"] = dynamic_cast<ScriptEngine *>(context.GetScriptEngine().lock().get());
-	lua["scriptLoader"] = dynamic_cast<ScriptLoader *>(context.GetScriptLoader().lock().get());
-	lua["scriptProvider"] = dynamic_cast<ScriptProvider *>(context.GetScriptProvider().lock().get());
+	lua["mods"] = dynamic_cast<ModManager *>(context.GetModManager());
+	lua["events"] = dynamic_cast<EventManager *>(context.GetEventManager());
+	lua["scriptEngine"] = dynamic_cast<ScriptEngine *>(context.GetScriptEngine());
+	lua["scriptLoader"] = dynamic_cast<ScriptLoader *>(context.GetScriptLoader());
+	lua["scriptProvider"] = dynamic_cast<ScriptProvider *>(context.GetScriptProvider());
 
 	for (auto &&installation : _installations)
 	{
-		installation(lua);
+		std::get<1>(installation)(lua);
 	}
 }

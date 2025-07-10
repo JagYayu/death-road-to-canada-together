@@ -37,38 +37,32 @@ FontManager &Context::GetFontManager()
 	return GetEngine()._fontManager;
 }
 
-std::weak_ptr<IEventManager> Context::GetEventManager()
+IEventManager *Context::GetEventManager()
 {
-	return GetEngine()._eventManager;
+	return GetEngine()._eventManager.get();
 }
 
-std::weak_ptr<IModManager> Context::GetModManager()
+ILuaAPI *Context::GetLuaAPI()
 {
-	return GetEngine()._modManager;
+	return GetEngine()._luaAPI.get();
 }
 
-std::weak_ptr<IScriptEngine> Context::GetScriptEngine()
+IModManager *Context::GetModManager()
 {
-	return GetEngine()._scriptEngine;
+	return GetEngine()._modManager.get();
 }
 
-std::weak_ptr<IScriptLoader> Context::GetScriptLoader()
+IScriptEngine *Context::GetScriptEngine()
 {
-	return GetEngine()._scriptLoader;
+	return GetEngine()._scriptEngine.get();
 }
 
-std::weak_ptr<IScriptProvider> Context::GetScriptProvider()
+IScriptLoader *Context::GetScriptLoader()
 {
-	return GetEngine()._scriptProvider;
+	return GetEngine()._scriptLoader.get();
 }
 
-// TUDOV_GEN_GETTER_REF(Engine, Context::GetEngine, *_engine, noexcept);
-// TUDOV_GEN_GETTER_REF(EngineConfig, Context::GetEngineConfig, _engine->_config, noexcept);
-// TUDOV_GEN_GETTER_REF(ImageManager, Context::GetImageManager, _engine->_imageManager, noexcept);
-// TUDOV_GEN_GETTER_REF(FontManager, Context::GetFontManager, _engine->_fontManager, noexcept);
-
-// TUDOV_GEN_GETTER_SMART_PTR(std::weak_ptr, IEventManager, Context::GetEventManager, _engine->_eventManager, noexcept);
-// TUDOV_GEN_GETTER_SMART_PTR(std::weak_ptr, IModManager, Context::GetModManager, _engine->_modManager, noexcept);
-// TUDOV_GEN_GETTER_SMART_PTR(std::weak_ptr, IScriptEngine, Context::GetScriptEngine, _engine->_scriptEngine, noexcept);
-// TUDOV_GEN_GETTER_SMART_PTR(std::weak_ptr, IScriptLoader, Context::GetScriptLoader, _engine->_scriptLoader, noexcept);
-// TUDOV_GEN_GETTER_SMART_PTR(std::weak_ptr, IScriptProvider, Context::GetScriptProvider, _engine->_scriptProvider, noexcept);
+IScriptProvider *Context::GetScriptProvider()
+{
+	return GetEngine()._scriptProvider.get();
+}

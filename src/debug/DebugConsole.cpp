@@ -1,5 +1,7 @@
 #include "DebugConsole.hpp"
 
+#include "event/EventManager.hpp"
+
 #include <imgui.h>
 
 using namespace tudov;
@@ -22,7 +24,7 @@ void DebugConsole::Clear()
 	_lineOffsets.push_back(0);
 }
 
-void DebugConsole::Log(std::string_view message)
+void DebugConsole::Output(std::string_view message)
 {
 	int old_size = _buffer.size();
 	_buffer.append(message.data());
@@ -89,7 +91,8 @@ void DebugConsole::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexc
 		{
 			if (_input[0])
 			{
-				Log(std::format("> {}\n", _input.data()));
+				Output("> {}\n", _input.data());
+				// window->GetEventManager()->GetCoreEvents().KeyDown()
 				// TODO: 处理命令
 				_input[0] = 0;
 			}

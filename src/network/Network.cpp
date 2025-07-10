@@ -91,16 +91,16 @@ void Network::Deinitialize() noexcept
 	_servers.clear();
 }
 
-std::weak_ptr<IClient> Network::GetClient(std::int32_t uid) noexcept
+IClient *Network::GetClient(std::int32_t uid) noexcept
 {
 	auto &&it = _clients.find(uid);
-	return it == _clients.end() ? std::weak_ptr<IClient>() : std::weak_ptr(it->second);
+	return it == _clients.end() ? nullptr : it->second.get();
 }
 
-std::weak_ptr<IServer> Network::GetServer(std::int32_t uid) noexcept
+IServer *Network::GetServer(std::int32_t uid) noexcept
 {
 	auto &&it = _servers.find(uid);
-	return it == _servers.end() ? std::weak_ptr<IServer>() : std::weak_ptr(it->second);
+	return it == _servers.end() ? nullptr : it->second.get();
 }
 
 std::vector<std::weak_ptr<IClient>> Network::GetClients() noexcept

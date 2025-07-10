@@ -5,17 +5,14 @@
 namespace tudov
 {
 	class Context;
+	struct ILuaAPI;
 
-	struct IEngineComponent : IContextProvider
+	struct IEngineComponent : public IContextProvider
 	{
-		virtual ~IEngineComponent() noexcept override = default;
+		~IEngineComponent() noexcept override = default;
 
-		virtual void Initialize() noexcept
-		{
-		}
-
-		virtual void Deinitialize() noexcept
-		{
-		}
+		virtual void Initialize() noexcept;
+		virtual void Deinitialize() noexcept;
+		virtual void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept;
 	};
 } // namespace tudov

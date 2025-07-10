@@ -16,11 +16,11 @@ namespace tudov
 {
 	class Context;
 	class Engine;
-	class IModManager;
-	class IScriptLoader;
 
 	struct IEventManager : public IEngineComponent
 	{
+		~IEventManager() noexcept override = default;
+		
 		virtual ICoreEvents &GetCoreEvents() noexcept = 0;
 		[[nodiscard]] virtual ScriptID GetEventIDByName(std::string_view scriptName) const noexcept = 0;
 		[[nodiscard]] virtual std::optional<std::string_view> GetEventNameByID(EventID eventID) const noexcept = 0;
@@ -77,11 +77,10 @@ namespace tudov
 		Context &GetContext() noexcept override;
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
+
 		ICoreEvents &GetCoreEvents() noexcept override;
 		void InstallToScriptEngine(IScriptEngine &scriptEngine);
 		void UninstallFromScriptEngine(IScriptEngine &scriptEngine);
-		void AttachToScriptLoader(IScriptLoader &scriptLoader) noexcept;
-		void DetachFromScriptLoader(IScriptLoader &scriptLoader) noexcept;
 
 		[[nodiscard]] ScriptID GetEventIDByName(std::string_view scriptName) const noexcept override;
 		[[nodiscard]] std::optional<std::string_view> GetEventNameByID(EventID eventID) const noexcept override;

@@ -39,9 +39,9 @@ void LocalClient::Connect(const IClient::ConnectArgs &baseArgs)
 	LocalServer *localServer = args.server;
 	if (localServer == nullptr)
 	{
-		if (auto &&server = GetNetwork().GetServer(); !server.expired())
+		if (auto &&server = GetNetwork().GetServer(); server != nullptr)
 		{
-			localServer = std::dynamic_pointer_cast<LocalServer>(server.lock()).get();
+			localServer = dynamic_cast<LocalServer *>(server);
 		}
 	}
 
@@ -52,6 +52,14 @@ void LocalClient::Connect(const IClient::ConnectArgs &baseArgs)
 void LocalClient::Disconnect()
 {
 	_connected = false;
+}
+
+void LocalClient::SendReliable(std::string_view data)
+{
+}
+
+void LocalClient::SendUnreliable(std::string_view data)
+{
 }
 
 bool LocalClient::Update()
