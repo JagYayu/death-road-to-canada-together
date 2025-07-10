@@ -15,6 +15,8 @@ namespace tudov
 			std::string_view password = "";
 		};
 
+		virtual ~IClient() noexcept override = default;
+
 		virtual void Connect(const ConnectArgs &address) = 0;
 		virtual void Disconnect() = 0;
 		virtual bool IsConnecting() noexcept = 0;

@@ -23,6 +23,8 @@ namespace tudov
 
 	struct IScriptEngine : IEngineComponent
 	{
+		virtual ~IScriptEngine() noexcept = default;
+
 		virtual size_t GetMemory() const noexcept = 0;
 		virtual sol::table CreateTable(std::uint32_t arr = 0, std::uint32_t hash = 0) noexcept = 0;
 		virtual void CollectGarbage() = 0;
@@ -59,7 +61,7 @@ namespace tudov
 
 	  public:
 		explicit ScriptEngine(Context &context) noexcept;
-		~ScriptEngine() noexcept;
+		~ScriptEngine() noexcept override;
 
 	  public:
 		Context &GetContext() noexcept override;

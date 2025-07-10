@@ -1,14 +1,18 @@
 #include "Log.hpp"
 #include "Utils.hpp"
 
+#include <cassert>
 #include <chrono>
 #include <format>
 #include <fstream>
+#include <memory>
+#include <stdexcept>
 
 using namespace tudov;
 
+static constexpr decltype(auto) defaultModule = "Log";
 static uint32_t logCount = 0;
-static std::thread logWorker;
+static std::unique_ptr<std::thread> logWorker;
 
 Log::EVerbosity _globalVerbosity = tudov::Log::EVerbosity::All;
 std::unordered_map<std::string, Log::EVerbosity> Log::_moduleVerbs{};
@@ -18,9 +22,8 @@ std::queue<Log::Entry> Log::_queue;
 std::mutex Log::_mutex;
 std::condition_variable Log::_cv;
 std::atomic<bool> Log::_exit = false;
-Log Log::instance{"Log"};
 
-std::shared_ptr<Log> Log::Get(std::string_view module)
+std::shared_ptr<Log> Log::Get(std::string_view module) noexcept
 {
 	auto &&str = std::string(module);
 	auto &&it = _logInstances.find(str);
@@ -34,7 +37,12 @@ std::shared_ptr<Log> Log::Get(std::string_view module)
 	return log;
 }
 
-void Log::CleanupExpired()
+Log &Log::GetInstance() noexcept
+{
+	return *Get(defaultModule);
+}
+
+void Log::CleanupExpired() noexcept
 {
 	for (auto &&it = _logInstances.begin(); it != _logInstances.end();)
 	{
@@ -50,6 +58,24 @@ void Log::CleanupExpired()
 	ShrinkUnorderedMap(_logInstances);
 }
 
+void Log::Quit() noexcept
+{
+	Output(defaultModule, VerbDebug, "Logging system quitting");
+
+	CleanupExpired();
+
+	if (!_logInstances.empty())
+	{
+		Output(defaultModule, VerbWarn, "Unresolved log pointers detected on application quit. Maybe memory leaked?");
+		for (auto &&[name, log] : _logInstances)
+		{
+			Output(defaultModule, VerbWarn, std::format("Log name \"{}\", ref count {}", name.data(), log.use_count()));
+		}
+	}
+
+	Exit();
+}
+
 Log::EVerbosity Log::GetVerbosity(const std::string &module)
 {
 	{
@@ -59,7 +85,7 @@ Log::EVerbosity Log::GetVerbosity(const std::string &module)
 			return it->second;
 		}
 	}
-	return (Log::EVerbosity)0;
+	return Log::EVerbosity::None;
 }
 
 std::optional<Log::EVerbosity> Log::GetVerbosityOverride(const std::string &module)
@@ -81,22 +107,30 @@ void Log::UpdateVerbosities(const nlohmann::json &config)
 {
 	if (!config.is_object())
 	{
-		instance.Warn("Cannot update verbosities by receiving a variable that not a json object");
+		GetInstance().Warn("Cannot update verbosities by receiving a variable that not a json object");
 		return;
 	}
+
+	// TODO
 }
 
 void Log::Exit() noexcept
 {
+	if (logWorker == nullptr)
+	{
+		return;
+	}
+
 	{
 		std::lock_guard<std::mutex> lock{_mutex};
 		_exit = true;
 	}
 	_cv.notify_all();
 
-	if (logWorker.joinable())
+	if (logWorker->joinable())
 	{
-		logWorker.join();
+		logWorker->join();
+		logWorker = nullptr;
 	}
 }
 
@@ -105,14 +139,17 @@ Log::Log(const std::string &module) noexcept
 {
 	if (logCount == 0)
 	{
-		logWorker = std::thread(Log::Process);
+		assert(logWorker == nullptr);
+		logWorker = std::make_unique<std::thread>(Log::Process);
+
+		Output(defaultModule, VerbDebug, "Logging system initialized");
 	}
-	logCount++;
+	++logCount;
 }
 
 Log::~Log() noexcept
 {
-	logCount--;
+	--logCount;
 	if (logCount == 0)
 	{
 		Exit();
@@ -157,14 +194,19 @@ bool Log::CanOutput(std::string_view verb) const
 	return true;
 }
 
-void Log::Output(std::string_view verb, const std::string_view &str) const
+void Log::Output(std::string_view verb, std::string_view str) const
+{
+	Output(_module, verb, str);
+}
+
+void Log::Output(std::string_view module, std::string_view verb, std::string_view str)
 {
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		_queue.push(Entry{
 		    .time = std::chrono::system_clock::now(),
 		    .verbosity = verb,
-		    .module = _module,
+		    .module = std::string(module),
 		    .message = std::string(str),
 		});
 	}

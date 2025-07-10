@@ -32,7 +32,7 @@ namespace tudov
 
 	  public:
 		explicit LocalServer(INetwork &network) noexcept;
-		~LocalServer() noexcept = default;
+		~LocalServer() noexcept override = default;
 
 	  private:
 		void TryCreateENetHost();

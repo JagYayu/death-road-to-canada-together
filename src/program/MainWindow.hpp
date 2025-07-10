@@ -8,7 +8,7 @@ namespace tudov
 	{
 	  public:
 		explicit MainWindow(Context &context) noexcept;
-		~MainWindow() noexcept;
+		~MainWindow() noexcept override;
 
 		virtual void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;
 		virtual EventHandleKey GetKey() const noexcept override;

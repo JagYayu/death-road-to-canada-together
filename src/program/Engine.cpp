@@ -3,6 +3,7 @@
 #include "Context.hpp"
 #include "EngineComponent.hpp"
 #include "MainWindow.hpp"
+#include "SDL3/SDL_events.h"
 #include "Window.hpp"
 #include "debug/DebugManager.hpp"
 #include "mod/LuaAPI.hpp"
@@ -24,7 +25,7 @@ using namespace tudov;
 
 Engine::Engine(const MainArgs &args) noexcept
     : _log(Log::Get("Engine")),
-      _running(true),
+      _state(EState::None),
       _config(),
       _imageManager(),
       _fontManager(),
@@ -46,6 +47,16 @@ Engine::Engine(const MainArgs &args) noexcept
 
 Engine::~Engine() noexcept
 {
+	switch (_state)
+	{
+	case EState::Initialized:
+	case EState::Quit:
+		Deinitialize();
+	default:
+		break;
+	}
+
+	Application::~Application();
 }
 
 bool IsWindowShouldClose(const std::shared_ptr<IWindow> &window) noexcept
@@ -78,13 +89,25 @@ void Engine::Initialize() noexcept
 		_modManager->LoadMods();
 		_previousTime = SDL_GetTicksNS();
 		_framerate = 0;
+		_state = EState::Initialized;
 	}
 	_log->Debug("Initialized engine");
 }
 
 bool Engine::Tick() noexcept
 {
-	if (!_running || _windows.empty())
+	switch (_state)
+	{
+	case EState::None:
+		return true;
+	case EState::Quit:
+	case EState::Deinitialized:
+		return false;
+	case EState::Initialized:
+		break;
+	}
+
+	if (_windows.empty())
 	{
 		return false;
 	}
@@ -144,11 +167,23 @@ void Engine::HandleEvent(SDL_Event &event) noexcept
 
 void Engine::Event(SDL_Event &event) noexcept
 {
+	switch (event.type)
+	{
+	case SDL_EVENT_QUIT:
+		Quit();
+		return;
+	}
+
 	_events.emplace_back(new SDL_Event(event));
 }
 
 void Engine::Deinitialize() noexcept
 {
+	if (_state != EState::Quit)
+	{
+		return;
+	}
+
 	_log->Debug("Deinitializing engine ...");
 	{
 		_modManager->UnloadMods();
@@ -157,17 +192,19 @@ void Engine::Deinitialize() noexcept
 		{
 			it->get()->Deinitialize();
 		}
+
+		_state = EState::Deinitialized;
 	}
 	_log->Debug("Deinitialized engine");
 }
 
 void Engine::Quit()
 {
-	if (_running)
+	if (_state == EState::Initialized)
 	{
 		_log->Debug("Engine is pending quit!");
 
-		_running = false;
+		_state = EState::Quit;
 		for (auto &&window : _windows)
 		{
 			window->Close();

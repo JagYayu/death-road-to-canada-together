@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Log.hpp"
-#include "util/Defs.hpp"
 
 #include <sol/sol.hpp>
 #include <sol/types.hpp>
@@ -66,6 +65,20 @@ namespace tudov
 			}
 		}
 		return std::nullopt;
+	}
+
+	template <typename T, typename TShared = std::shared_ptr<T>, typename TWeak = std::weak_ptr<T>, typename TSharedVec = std::vector<TShared>, typename TWeakVec = std::vector<TWeak>>
+	TWeakVec FromSharedToWeak(const TSharedVec &sharedVec)
+	{
+		TWeakVec weakVec;
+		weakVec.reserve(sharedVec.size());
+
+		for (auto &&sharedPtr : sharedVec)
+		{
+			weakVec.emplace_back(TWeak(sharedPtr));
+		}
+
+		return weakVec;
 	}
 
 	inline std::string_view GetLuaTypeStringView(sol::type luaType) noexcept

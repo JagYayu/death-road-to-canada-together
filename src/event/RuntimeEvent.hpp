@@ -37,7 +37,7 @@ namespace tudov
 
 	  private:
 		std::shared_ptr<Log> _log;
-		std::unique_ptr<Profile> _profile;
+		std::shared_ptr<Profile> _profile;
 		bool _handlersSortedCache;
 		std::optional<InvocationCache> _invocationCache;
 		std::unordered_map<EventHandleKey, InvocationCache, EventHandleKey::Hash, EventHandleKey::Equal> _invocationCaches;
@@ -47,6 +47,7 @@ namespace tudov
 
 	  public:
 		explicit RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = {""}, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys = {}, ScriptID scriptID = false);
+		~RuntimeEvent() noexcept override;
 
 	  private:
 		void ClearCaches();

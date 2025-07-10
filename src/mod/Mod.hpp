@@ -12,6 +12,8 @@ namespace tudov
 
 	struct IMod
 	{
+		virtual ~IMod() noexcept = default;
+		
 		virtual void Load() = 0;
 		virtual void Unload() = 0;
 

@@ -61,7 +61,7 @@ namespace tudov
 
 	  public:
 		explicit EventManager(Context &context) noexcept;
-		~EventManager();
+		~EventManager() noexcept override;
 
 	  private:
 		[[nodiscard]] EventID AllocEventID(std::string_view eventName) noexcept;

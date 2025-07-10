@@ -33,6 +33,7 @@ ScriptEngine::ScriptEngine(Context &context) noexcept
 
 ScriptEngine::~ScriptEngine() noexcept
 {
+	IScriptEngine::~IScriptEngine();
 }
 
 Context &ScriptEngine::GetContext() noexcept
@@ -206,6 +207,7 @@ sol::table &ScriptEngine::GetSandboxedGlobals(std::string_view sandboxKey) noexc
 	    // C++
 	    "engine",
 	    "events",
+	    "log",
 	};
 
 	for (auto &&key : keys)
@@ -226,9 +228,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 
 	sol::environment env{_lua, sol::create, sandboxKey.empty() ? _lua.globals().as<sol::table>() : GetSandboxedGlobals(sandboxKey)};
 
-	auto &&log = Log::Get(std::string(scriptName));
-
-	env.set_function("print", [&, log](const sol::variadic_args &args)
+	env.set_function("print", [&](const sol::variadic_args &args)
 	{
 		try
 		{
@@ -241,7 +241,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 				}
 				string.append(_luaInspect(arg));
 			}
-			log->Debug("{}", string.c_str());
+			Log::Get(std::string(scriptName))->Debug("{}", string.c_str());
 		}
 		catch (const std::exception &e)
 		{
@@ -249,7 +249,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 		}
 	});
 
-	env.set_function("require", [&, env, log, scriptID](const sol::string_view &targetScriptName) -> sol::object
+	env.set_function("require", [&, env, scriptID](const sol::string_view &targetScriptName) -> sol::object
 	{
 		try
 		{

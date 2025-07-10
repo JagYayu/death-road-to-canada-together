@@ -38,6 +38,14 @@ namespace tudov
 		};
 
 	  private:
+		static constexpr decltype(auto) VerbTrace = "Trace";
+		static constexpr decltype(auto) VerbInfo = "Info";
+		static constexpr decltype(auto) VerbDebug = "Debug";
+		static constexpr decltype(auto) VerbWarn = "Warn";
+		static constexpr decltype(auto) VerbError = "Error";
+		static constexpr decltype(auto) VerbFatal = "Fatal";
+
+	  private:
 		static EVerbosity _globalVerbosity;
 		static std::unordered_map<std::string, EVerbosity> _moduleVerbs;
 		static std::unordered_map<std::string, EVerbosity> _moduleVerbOverrides;
@@ -47,15 +55,15 @@ namespace tudov
 		static std::condition_variable _cv;
 		static std::atomic<bool> _exit;
 
-	  public:
-		static Log instance;
-
 	  private:
 		static void Process();
+		static void Output(std::string_view module, std::string_view verb, std::string_view str);
 
 	  public:
-		static std::shared_ptr<Log> Get(std::string_view module);
-		static void CleanupExpired();
+		static std::shared_ptr<Log> Get(std::string_view module) noexcept;
+		static Log &GetInstance() noexcept;
+		static void CleanupExpired() noexcept;
+		static void Quit() noexcept;
 		static EVerbosity GetVerbosity(const std::string &module);
 		static std::optional<EVerbosity> GetVerbosityOverride(const std::string &module);
 		static void SetVerbosityOverride(const std::string &module, EVerbosity verb);
@@ -66,7 +74,7 @@ namespace tudov
 		std::string _module;
 
 		bool CanOutput(std::string_view verb) const;
-		void Output(std::string_view verb, const std::string_view &str) const;
+		void Output(std::string_view verb, std::string_view str) const;
 
 	  public:
 		explicit Log(const std::string &module) noexcept;
@@ -81,63 +89,65 @@ namespace tudov
 
 		FORCEINLINE bool CanTrace() const
 		{
-			return CanOutput("Trace");
+			return CanOutput(VerbTrace);
 		}
 		FORCEINLINE bool CanInfo() const
 		{
-			return CanOutput("Info");
+			return CanOutput(VerbInfo);
 		}
 		FORCEINLINE bool CanDebug() const
 		{
-			return CanOutput("Debug");
+			return CanOutput(VerbDebug);
 		}
 		FORCEINLINE bool CanWarn() const
 		{
-			return CanOutput("Warn");
+			return CanOutput(VerbWarn);
 		}
 		FORCEINLINE bool CanError() const
 		{
-			return CanOutput("Error");
+			return CanOutput(VerbError);
 		}
 		FORCEINLINE bool CanFatal() const
 		{
-			return CanOutput("Fatal");
+			return CanOutput(VerbFatal);
 		}
 
 		template <typename... Args>
 		FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Trace", std::format(fmt, std::forward<Args>(args)...));
+			Output(VerbTrace, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
 		FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Debug", std::format(fmt, std::forward<Args>(args)...));
+			Output(VerbDebug, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
 		FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Info", std::format(fmt, std::forward<Args>(args)...));
+			Output(VerbInfo, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
 		FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Warn", std::format(fmt, std::forward<Args>(args)...));
+			Output(VerbWarn, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
 		FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Error", std::format(fmt, std::forward<Args>(args)...));
+			Output(VerbError, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
 		FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args)
 		{
-			Output("Fatal", std::format(fmt, std::forward<Args>(args)...));
+			Output(VerbFatal, std::format(fmt, std::forward<Args>(args)...));
 		}
 	};
 
 	struct ILogProvider
 	{
+		virtual ~ILogProvider() noexcept = default;
+
 		virtual Log &GetLog() noexcept = 0;
 
 		const Log &GetLog() const noexcept

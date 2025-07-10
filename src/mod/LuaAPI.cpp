@@ -63,11 +63,11 @@ void LuaAPI::Install(sol::state &lua, Context &context) noexcept
 	lua["fonts"] = &context.GetFontManager();
 	lua["images"] = &context.GetImageManager();
 
-	lua["mods"] = std::dynamic_pointer_cast<ModManager>(context.GetModManager().lock());
-	lua["events"] = std::dynamic_pointer_cast<EventManager>(context.GetEventManager().lock());
-	lua["scriptEngine"] = std::dynamic_pointer_cast<ScriptEngine>(context.GetScriptEngine().lock());
-	lua["scriptLoader"] = std::dynamic_pointer_cast<ScriptLoader>(context.GetScriptLoader().lock());
-	lua["scriptProvider"] = std::dynamic_pointer_cast<ScriptProvider>(context.GetScriptProvider().lock());
+	lua["mods"] = dynamic_cast<ModManager *>(context.GetModManager().lock().get());
+	lua["events"] = dynamic_cast<EventManager *>(context.GetEventManager().lock().get());
+	lua["scriptEngine"] = dynamic_cast<ScriptEngine *>(context.GetScriptEngine().lock().get());
+	lua["scriptLoader"] = dynamic_cast<ScriptLoader *>(context.GetScriptLoader().lock().get());
+	lua["scriptProvider"] = dynamic_cast<ScriptProvider *>(context.GetScriptProvider().lock().get());
 
 	for (auto &&installation : _installations)
 	{

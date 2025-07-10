@@ -2,35 +2,39 @@
 
 #include "FileWatch.hpp"
 #include "resource/ResourceType.hpp"
-#include "util/Defs.hpp"
 #include "util/Log.hpp"
 
 #include "json.hpp"
 
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace tudov
 {
-	enum class ERenderBackend;
-
-	class EngineConfig
+	class Config
 	{
+	  public:
+		static constexpr std::string_view File = "config.json";
+
+		static constexpr std::string_view DefaultWindowTitle = "DR2C";
+		static constexpr std::uint32_t DefaultWindowWidth = 1280;
+		static constexpr std::uint32_t DefaultWindowHeight = 720;
+
 	  private:
 		std::shared_ptr<Log> _log;
 		nlohmann::json _config;
 		filewatch::FileWatch<std::string> *_fileWatcher;
+		std::optional<std::uint32_t> _propertiesID;
 
 	  public:
-		static constexpr std::string_view file = "config.json";
+		Config() noexcept;
+		~Config() noexcept;
 
-		static constexpr std::string_view defaultWindowTitle = "DR2C";
-		static constexpr std::uint32_t defaultWindowWidth = 1280;
-		static constexpr std::uint32_t defaultWindowHeight = 720;
-
-		EngineConfig() noexcept;
-		~EngineConfig() noexcept;
-
+	  private:
+		std::uint32_t GetPropertiesID()noexcept;
+	  
+	  public:
 		void Save() noexcept;
 		void Load() noexcept;
 
@@ -47,5 +51,8 @@ namespace tudov
 		void SetWindowTitle(const std::string &) noexcept;
 		void SetWindowWidth(std::uint32_t) noexcept;
 		void SetWindowHeight(std::uint32_t) noexcept;
+
+		std::int64_t GetCustom(std::string_view key, std::int64_t default_) noexcept;
+		void SetCustom(std::string_view key, std::int64_t value) noexcept;
 	};
 } // namespace tudov

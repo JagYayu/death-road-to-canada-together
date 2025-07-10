@@ -22,7 +22,7 @@ Engine &Context::GetEngine()
 	return *_engine;
 }
 
-EngineConfig &Context::GetEngineConfig()
+Config &Context::GetConfig()
 {
 	return GetEngine()._config;
 }

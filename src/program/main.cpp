@@ -74,7 +74,7 @@ void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority
 	}
 }
 
-static std::unique_ptr<Engine> engine;
+static std::unique_ptr<Application> app;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 {
@@ -95,20 +95,20 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	}
 
-	engine = std::make_unique<Engine>(MainArgs(argc, argv));
-	engine->Initialize();
+	app = std::make_unique<Engine>(MainArgs(argc, argv));
+	app->Initialize();
 
 	return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
-	return engine->Tick() ? SDL_APP_CONTINUE : SDL_APP_SUCCESS;
+	return app->Tick() ? SDL_APP_CONTINUE : SDL_APP_SUCCESS;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
-	engine->Event(*event);
+	app->Event(*event);
 	return SDL_APP_CONTINUE;
 }
 
@@ -116,9 +116,12 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
 	if (result != SDL_APP_FAILURE)
 	{
-		engine->Deinitialize();
-		engine = nullptr;
+		app->Deinitialize();
+		app = nullptr;
 	}
+
+	Log::GetInstance().Info("Application quit, result code: {}", std::int32_t(result));
+	Log::Quit();
 }
 
 // int main(int argc, char **args)

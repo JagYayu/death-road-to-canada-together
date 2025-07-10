@@ -11,6 +11,10 @@ AbstractEvent::AbstractEvent(IEventManager &eventManager, EventID eventID, Scrip
 {
 }
 
+AbstractEvent::~AbstractEvent() noexcept
+{
+}
+
 EventID AbstractEvent::GetID() const noexcept
 {
 	return _id;

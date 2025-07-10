@@ -209,6 +209,7 @@ ScriptLoader::ScriptLoader(Context &context) noexcept
 
 ScriptLoader::~ScriptLoader() noexcept
 {
+	IScriptLoader::~IScriptLoader();
 }
 
 Context &ScriptLoader::GetContext() noexcept

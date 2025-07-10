@@ -28,6 +28,10 @@ RuntimeEvent::RuntimeEvent(IEventManager &eventManager, EventID eventID, const s
 	}
 }
 
+RuntimeEvent::~RuntimeEvent() noexcept
+{
+}
+
 std::vector<EventHandler>::const_iterator RuntimeEvent::BeginHandlers() const noexcept
 {
 	return _handlers.begin();

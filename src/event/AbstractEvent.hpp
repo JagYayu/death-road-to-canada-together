@@ -19,6 +19,7 @@ namespace tudov
 
 	  protected:
 		explicit AbstractEvent(IEventManager &eventManager, EventID eventID, ScriptID scriptID = false);
+		virtual ~AbstractEvent() noexcept;
 
 	  public:
 		void IsValid() const noexcept;

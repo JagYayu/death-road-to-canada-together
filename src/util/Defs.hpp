@@ -1,7 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <string_view>
+
+#define TUDOV_DEF inline constexpr decltype(auto)
 
 namespace tudov
 {
@@ -13,8 +14,16 @@ namespace tudov
 	using TextureID = ResourceID;
 	using FontID = ResourceID;
 
-	constexpr std::uint8_t NetworkChannelsLimit = 8;
-	constexpr std::uint32_t NetworkServerMaximumClients = 4;
-	constexpr std::string_view NetworkServerPassword = "";
-	constexpr std::string_view NetworkServerTitle = "Untitled";
+	TUDOV_DEF AppName = "DR2CT";
+	TUDOV_DEF AppOrganization = "Tudov";
+	TUDOV_DEF ConfigFile = "config.json";
+	TUDOV_DEF NetworkChannelsLimit = 8ui8;
+	TUDOV_DEF NetworkServerMaximumClients = 4ui32;
+	TUDOV_DEF NetworkServerPassword = "";
+	TUDOV_DEF NetworkServerTitle = "Untitled";
+	TUDOV_DEF WindowTitle = "DR2C Together";
+	TUDOV_DEF WindowWidth = 1280ui32;
+	TUDOV_DEF WindowHeight = 720ui32;
 } // namespace tudov
+
+#undef TUDOV_DEF

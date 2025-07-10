@@ -15,6 +15,8 @@ namespace tudov
 	{
 		using TInstallation = std::function<void(sol::state &)>;
 
+		virtual ~ILuaAPI() noexcept = default;
+
 		virtual void RegisterInstallation(const TInstallation &installation) noexcept = 0;
 		virtual void Install(sol::state &lua, Context &context) noexcept = 0;
 	};

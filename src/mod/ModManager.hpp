@@ -20,6 +20,8 @@ namespace tudov
 
 	struct IModManager : public IEngineComponent
 	{
+		virtual ~IModManager() noexcept = default;
+
 		virtual void Initialize() noexcept = 0;
 		virtual void Deinitialize() noexcept = 0;
 
@@ -70,7 +72,7 @@ namespace tudov
 
 	  public:
 		explicit ModManager(Context &context) noexcept;
-		~ModManager();
+		~ModManager() noexcept override;
 
 		Context &GetContext() noexcept override;
 		void Initialize() noexcept override;

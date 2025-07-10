@@ -5,7 +5,11 @@
 			"fonts/.*\\.png"
 		],
 		"directories": [
-			"assets"
+			"data",
+			"deathforth",
+			"fonts",
+			"gfx",
+			"shaders"
 		],
 		"files": {
 			".ogg": "Audio",

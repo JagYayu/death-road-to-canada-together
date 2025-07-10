@@ -23,7 +23,7 @@ namespace tudov
 
 	  public:
 		explicit LocalClient(INetwork &network) noexcept;
-		~LocalClient() noexcept = default;
+		~LocalClient() noexcept override = default;
 
 	  public:
 		INetwork &GetNetwork() noexcept override;

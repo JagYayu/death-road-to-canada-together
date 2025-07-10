@@ -42,7 +42,7 @@ namespace tudov
 
 	  public:
 		explicit Window(Context &context, std::string_view logName = "Window") noexcept;
-		~Window() noexcept;
+		~Window() noexcept override;
 
 	  public:
 		Context &GetContext() noexcept override;

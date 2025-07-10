@@ -37,6 +37,8 @@ namespace tudov
 			virtual const sol::table &FullLoad(IScriptLoader &scriptLoader) = 0;
 		};
 
+		virtual ~IScriptLoader() noexcept = default;
+
 		virtual DelegateEvent<> &GetOnPreLoadAllScripts() noexcept = 0;
 		virtual DelegateEvent<> &GetOnPostLoadAllScripts() noexcept = 0;
 		virtual DelegateEvent<const std::vector<ScriptID> &> &GetOnPreHotReloadScripts() noexcept = 0;
@@ -192,7 +194,7 @@ namespace tudov
 
 	  public:
 		explicit ScriptLoader(Context &context) noexcept;
-		~ScriptLoader() noexcept;
+		~ScriptLoader() noexcept override;
 
 	  private:
 		std::shared_ptr<Module> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);

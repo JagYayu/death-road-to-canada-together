@@ -13,7 +13,6 @@ namespace tudov
 {
 	struct IUnpackagedMod : virtual public IMod
 	{
-
 	};
 
 	class UnpackagedMod : public Mod, public IUnpackagedMod
@@ -30,6 +29,7 @@ namespace tudov
 
 	  public:
 		explicit UnpackagedMod(ModManager &modManager, const std::filesystem::path &directory);
+		virtual ~UnpackagedMod() noexcept = default;
 
 	  private:
 		void UpdateFilePatterns();

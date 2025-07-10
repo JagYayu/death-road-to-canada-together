@@ -32,6 +32,8 @@ namespace tudov
 		using TScriptID2Entry = std::unordered_map<ScriptID, Entry>;
 
 	  public:
+		virtual ~IScriptProvider() noexcept = default;
+
 		virtual size_t GetCount() const noexcept = 0;
 		virtual ScriptID GetScriptIDByName(std::string_view scriptName) const noexcept = 0;
 		virtual std::optional<std::string_view> GetScriptNameByID(ScriptID scriptID) const noexcept = 0;
@@ -90,7 +92,8 @@ namespace tudov
 		TScriptID2Entry _scriptID2Entry;
 
 	  public:
-		ScriptProvider(Context &context);
+		explicit ScriptProvider(Context &context) noexcept;
+		~ScriptProvider() override;
 
 	  private:
 		ScriptID AddScriptImpl(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_ = emptyString);

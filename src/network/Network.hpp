@@ -14,6 +14,8 @@ namespace tudov
 {
 	struct INetwork : public IEngineComponent, public ILogProvider
 	{
+		virtual ~INetwork() noexcept = default;
+
 		virtual std::weak_ptr<IClient> GetClient(std::int32_t uid = 0) noexcept = 0;
 		virtual std::weak_ptr<IServer> GetServer(std::int32_t uid = 0) noexcept = 0;
 		virtual std::vector<std::weak_ptr<IClient>> GetClients() noexcept = 0;

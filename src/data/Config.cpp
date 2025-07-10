@@ -1,5 +1,6 @@
-#include "EngineConfig.hpp"
+#include "Config.hpp"
 
+#include "SDL3/SDL_properties.h"
 #include "util/Defs.hpp"
 #include "util/Log.hpp"
 
@@ -77,28 +78,28 @@ nlohmann::json &GetWindow(nlohmann::json &config) noexcept
 	return window;
 }
 
-EngineConfig::EngineConfig() noexcept
+Config::Config() noexcept
     : _log(Log::Get("EngineConfig"))
 {
-	EngineConfig::Load();
+	Config::Load();
 
-	_fileWatcher = new filewatch::FileWatch<std::string>(std::string(file), [&](std::string_view path, const filewatch::Event changeType)
+	_fileWatcher = new filewatch::FileWatch<std::string>(std::string(ConfigFile), [&](std::string_view path, const filewatch::Event changeType)
 	{
-		EngineConfig::Load();
+		Config::Load();
 	});
 }
 
-EngineConfig::~EngineConfig() noexcept
+Config::~Config() noexcept
 {
 	Save();
 	delete _fileWatcher;
 }
 
-void EngineConfig::Save() noexcept
+void Config::Save() noexcept
 {
 	try
 	{
-		std::string f{file};
+		std::string f{ConfigFile};
 		std::ofstream out{f};
 		if (out.is_open())
 		{
@@ -117,11 +118,11 @@ void EngineConfig::Save() noexcept
 	}
 }
 
-void EngineConfig::Load() noexcept
+void Config::Load() noexcept
 {
 	try
 	{
-		std::ifstream f{std::string(file)};
+		std::ifstream f{std::string(ConfigFile)};
 		if (f.is_open())
 		{
 			_config = nlohmann::json::parse(f);
@@ -130,7 +131,7 @@ void EngineConfig::Load() noexcept
 		else
 		{
 			_config = nlohmann::json();
-			std::ofstream out{std::string(file)};
+			std::ofstream out{std::string(ConfigFile)};
 			out << _config.dump(4);
 			out.close();
 		}
@@ -142,7 +143,7 @@ void EngineConfig::Load() noexcept
 	}
 }
 
-std::vector<std::string> EngineConfig::GetMountBitmaps() noexcept
+std::vector<std::string> Config::GetMountBitmaps() noexcept
 {
 	auto &&mount = GetMount(_config);
 	auto &&bitmaps = mount[keyBitmaps];
@@ -154,7 +155,7 @@ std::vector<std::string> EngineConfig::GetMountBitmaps() noexcept
 	return bitmaps;
 }
 
-std::vector<std::string> EngineConfig::GetMountDirectories() noexcept
+std::vector<std::string> Config::GetMountDirectories() noexcept
 {
 	auto &&mount = GetMount(_config);
 	auto &&directories = mount[keyDirectories];
@@ -166,7 +167,7 @@ std::vector<std::string> EngineConfig::GetMountDirectories() noexcept
 	return directories;
 }
 
-std::unordered_map<std::string, ResourceType> EngineConfig::GetMountFiles() noexcept
+std::unordered_map<std::string, ResourceType> Config::GetMountFiles() noexcept
 {
 	auto &&mount = GetMount(_config);
 	auto &&files = mount[keyFiles];
@@ -178,7 +179,7 @@ std::unordered_map<std::string, ResourceType> EngineConfig::GetMountFiles() noex
 	return files;
 }
 
-bool EngineConfig::GetRenderBackend() noexcept
+bool Config::GetRenderBackend() noexcept
 {
 	// auto &&renderBackend = _config[keyRenderBackend];
 	// if (!renderBackend.is_string())
@@ -190,7 +191,7 @@ bool EngineConfig::GetRenderBackend() noexcept
 	return false;
 }
 
-std::uint32_t EngineConfig::GetWindowFramelimit() noexcept
+std::uint32_t Config::GetWindowFramelimit() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&framelimit = window[keyFramelimit];
@@ -202,50 +203,69 @@ std::uint32_t EngineConfig::GetWindowFramelimit() noexcept
 	return framelimit;
 }
 
-std::string_view EngineConfig::GetWindowTitle() noexcept
+std::string_view Config::GetWindowTitle() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&title = window[keyTitle];
 	if (!title.is_string())
 	{
-		title = defaultWindowTitle;
+		title = WindowTitle;
 		window[keyTitle] = title;
 	}
 	return title;
 }
 
-std::uint32_t EngineConfig::GetWindowWidth() noexcept
+std::uint32_t Config::GetWindowWidth() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&width = window[keyWidth];
 	if (!width.is_number_integer())
 	{
-		width = defaultWindowWidth;
+		width = WindowWidth;
 		window[keyWidth] = width;
 	}
 	return width;
 }
 
-std::uint32_t EngineConfig::GetWindowHeight() noexcept
+std::uint32_t Config::GetWindowHeight() noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&height = window[keyHeight];
 	if (!height.is_number_integer())
 	{
-		height = defaultWindowHeight;
+		height = WindowHeight;
 		window[keyHeight] = height;
 	}
 	return height;
 }
 
-void EngineConfig::SetWindowTitle(const std::string &) noexcept
+void Config::SetWindowTitle(const std::string &) noexcept
 {
 }
 
-void EngineConfig::SetWindowWidth(std::uint32_t) noexcept
+void Config::SetWindowWidth(std::uint32_t) noexcept
 {
 }
 
-void EngineConfig::SetWindowHeight(std::uint32_t) noexcept
+void Config::SetWindowHeight(std::uint32_t) noexcept
 {
+}
+
+std::uint32_t Config::GetPropertiesID() noexcept
+{
+	if (!_propertiesID.has_value()) [[unlikely]]
+	{
+		_propertiesID = SDL_CreateProperties();
+	}
+	return *_propertiesID;
+}
+
+std::int64_t Config::GetCustom(std::string_view key, std::int64_t default_) noexcept
+{
+	return SDL_GetNumberProperty(GetPropertiesID(), key.data(), default_);
+}
+
+void Config::SetCustom(std::string_view key, std::int64_t value) noexcept
+{
+	SDL_SetNumberProperty(GetPropertiesID(), key.data(), value);
 }

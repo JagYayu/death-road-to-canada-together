@@ -17,7 +17,7 @@ std::string StaticScriptNamespace(const std::string &path)
 	return scriptPrefix + FilePathToLuaScriptName(path);
 }
 
-ScriptProvider::ScriptProvider(Context &context)
+ScriptProvider::ScriptProvider(Context &context) noexcept
     : _context(context),
       _log(Log::Get("ScriptProvider")),
       _latestScriptID(0)
@@ -29,6 +29,10 @@ ScriptProvider::ScriptProvider(Context &context)
 
 		AddScriptImpl(scriptName, ReadFileToString(path));
 	}
+}
+
+ScriptProvider::~ScriptProvider()
+{
 }
 
 Context &ScriptProvider::GetContext() noexcept

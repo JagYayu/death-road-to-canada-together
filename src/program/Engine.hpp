@@ -1,10 +1,9 @@
 #pragma once
 
 #include "Context.hpp"
-#include "EngineConfig.hpp"
 #include "MainArgs.hpp"
-#include "MainWindow.hpp"
 #include "Window.hpp"
+#include "data/Config.hpp"
 #include "debug/DebugManager.hpp"
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
@@ -14,26 +13,44 @@
 #include "scripts/GameScripts.hpp"
 
 #include <memory>
-#include <queue>
 #include <vector>
 
 namespace tudov
 {
+	struct Application
+	{
+		virtual ~Application() noexcept = default;
+
+		virtual void Initialize() noexcept = 0;
+		virtual bool Tick() noexcept = 0;
+		virtual void Event(SDL_Event &event) noexcept = 0;
+		virtual void Deinitialize() noexcept = 0;
+	};
+
 	class Context;
 
-	class Engine
+	class Engine : public Application
 	{
 		friend Context;
 
 	  private:
+		enum class EState
+		{
+			None,
+			Initialized,
+			Quit,
+			Deinitialized,
+		};
+
+	  private:
 		std::shared_ptr<Log> _log;
-		bool _running;
+		EState _state;
 		std::float_t _previousTime;
 		std::float_t _framerate;
 		std::vector<std::shared_ptr<IEngineComponent>> _components;
 		std::vector<SDL_Event *> _events;
 
-		EngineConfig _config;
+		Config _config;
 		ImageManager _imageManager;
 		// ShaderManager shaderManager;
 		FontManager _fontManager;
@@ -56,7 +73,7 @@ namespace tudov
 
 	  public:
 		explicit Engine(const MainArgs &args = MainArgs()) noexcept;
-		~Engine() noexcept;
+		~Engine() noexcept override;
 
 	  private:
 		void InitializeMainWindow() noexcept;
@@ -66,6 +83,11 @@ namespace tudov
 		std::shared_ptr<IWindow> LuaGetMainWindow() noexcept;
 
 	  public:
+		void Initialize() noexcept override;
+		bool Tick() noexcept override;
+		void Event(SDL_Event &event) noexcept override;
+		void Deinitialize() noexcept override;
+
 		std::float_t GetFramerate() const noexcept;
 
 		// These functions are not fully tested yet, can lead to errors.
@@ -80,11 +102,6 @@ namespace tudov
 		std::shared_ptr<const IWindow> GetMainWindow() const noexcept;
 		void AddWindow(const std::shared_ptr<IWindow> &window);
 		void RemoveWindow(const std::shared_ptr<IWindow> &window);
-
-		void Initialize() noexcept;
-		bool Tick() noexcept;
-		void Event(SDL_Event &event) noexcept;
-		void Deinitialize() noexcept;
 
 		void Quit();
 	};

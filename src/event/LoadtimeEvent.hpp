@@ -21,7 +21,7 @@ namespace tudov
 	  public:
 		explicit LoadtimeEvent(IEventManager &eventManager, EventID eventID, ScriptID scriptID) noexcept;
 		explicit LoadtimeEvent(IEventManager &eventManager, EventID eventID, ScriptID scriptID, const std::vector<std::string> &orders, const std::vector<EventHandleKey> &keys) noexcept;
-		~LoadtimeEvent() noexcept;
+		~LoadtimeEvent() noexcept override;
 
 		virtual void Add(const AddHandlerArgs &handler) override;
 

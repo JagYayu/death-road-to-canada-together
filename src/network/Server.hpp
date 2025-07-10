@@ -19,6 +19,8 @@ namespace tudov
 			std::uint32_t maximumClients = NetworkServerMaximumClients;
 		};
 
+		virtual ~IServer() noexcept override = default;
+
 		virtual void Host(const HostArgs &args) = 0;
 		virtual void Shutdown() = 0;
 		virtual bool IsHosting() noexcept = 0;

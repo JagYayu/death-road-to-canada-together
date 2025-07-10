@@ -4,8 +4,8 @@
 
 namespace tudov
 {
+	class Config;
 	class Engine;
-	class EngineConfig;
 	class ImageManager;
 	class FontManager;
 	class IEventManager;
@@ -28,8 +28,8 @@ namespace tudov
 	  public:
 		Engine &GetEngine();
 		const Engine &GetEngine() const;
-		EngineConfig &GetEngineConfig();
-		const EngineConfig &GetEngineConfig() const;
+		Config &GetConfig();
+		const Config &GetEngineConfig() const;
 		ImageManager &GetImageManager();
 		const ImageManager &GetImageManager() const;
 		FontManager &GetFontManager();
@@ -76,6 +76,8 @@ namespace tudov
 
 	struct IContextProvider
 	{
+		virtual ~IContextProvider() noexcept = default;
+		
 		virtual Context &GetContext() noexcept = 0;
 
 		const Context &GetContext() const noexcept
@@ -93,12 +95,12 @@ namespace tudov
 			return GetContext().GetEngine();
 		}
 
-		inline EngineConfig &GetEngineConfig() noexcept
+		inline Config &GetEngineConfig() noexcept
 		{
-			return GetContext().GetEngineConfig();
+			return GetContext().GetConfig();
 		}
 
-		inline const EngineConfig &GetEngineConfig() const noexcept
+		inline const Config &GetEngineConfig() const noexcept
 		{
 			return GetContext().GetEngineConfig();
 		}

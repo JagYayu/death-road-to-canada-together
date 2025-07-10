@@ -8,6 +8,8 @@ namespace tudov
 
 	struct IEngineComponent : IContextProvider
 	{
+		virtual ~IEngineComponent() noexcept override = default;
+
 		virtual void Initialize() noexcept
 		{
 		}
