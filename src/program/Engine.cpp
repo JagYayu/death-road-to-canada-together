@@ -5,8 +5,10 @@
 #include "MainWindow.hpp"
 #include "SDL3/SDL_events.h"
 #include "Window.hpp"
+#include "debug/Debug.hpp"
 #include "debug/DebugManager.hpp"
 #include "mod/LuaAPI.hpp"
+#include "network/Network.hpp"
 #include "resource/ResourceType.hpp"
 #include "scripts/GameScripts.hpp"
 #include "sol/property.hpp"
@@ -38,6 +40,7 @@ Engine::Engine(const MainArgs &args) noexcept
 {
 	context = Context(this);
 
+	_network = std::make_shared<Network>(context);
 	_modManager = std::make_shared<ModManager>(context);
 	_scriptProvider = std::make_shared<ScriptProvider>(context);
 	_scriptLoader = std::make_shared<ScriptLoader>(context);
@@ -69,6 +72,7 @@ void Engine::Initialize() noexcept
 {
 	_components = {
 	    _modManager,
+	    _network,
 	    _eventManager,
 	    _gameScripts,
 	    _scriptProvider,
@@ -87,7 +91,8 @@ void Engine::Initialize() noexcept
 			it->get()->Initialize();
 		}
 
-		InstallLuaAPIs();
+		ProvideDebug(*_debugManager);
+		ProvideLuaAPI(*_luaAPI);
 
 		_modManager->LoadMods();
 		_previousTime = SDL_GetTicksNS();
@@ -308,7 +313,34 @@ void Engine::InitializeResources() noexcept
 	}
 }
 
-void Engine::InstallLuaAPIs() noexcept
+void Engine::ProvideDebug(IDebugManager &debugManager) noexcept
+{
+	if (auto &&debugConsole = debugManager.GetElement<DebugConsole>(); debugConsole != nullptr)
+	{
+		auto &&quit = [this](std::string_view)
+		{
+			this->Quit();
+
+			return std::vector<DebugConsole::Result>();
+		};
+
+		debugConsole->SetCommand({
+		    .name = "quit",
+		    .help = "quit: Shutdown engine.",
+		    .func = quit,
+		});
+	}
+
+	for (auto &&component : _components)
+	{
+		if (auto &&debugProvider = std::dynamic_pointer_cast<IDebugProvider>(component); debugProvider != nullptr)
+		{
+			debugProvider->ProvideDebug(*_debugManager);
+		}
+	}
+}
+
+void Engine::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
 {
 	static constexpr auto classname = "tudov_Engine";
 
@@ -327,7 +359,10 @@ void Engine::InstallLuaAPIs() noexcept
 
 	for (auto &&component : _components)
 	{
-		component->ProvideLuaAPI(*_luaAPI);
+		if (auto &&luaAPIProvider = std::dynamic_pointer_cast<ILuaAPIProvider>(component); luaAPIProvider != nullptr)
+		{
+			luaAPIProvider->ProvideLuaAPI(*_luaAPI);
+		}
 	}
 }
 
@@ -391,9 +426,4 @@ void Engine::AddWindow(const std::shared_ptr<IWindow> &window)
 void Engine::RemoveWindow(const std::shared_ptr<IWindow> &window)
 {
 	// TODO
-}
-
-std::shared_ptr<IWindow> Engine::LuaGetMainWindow() noexcept
-{
-	return _mainWindow.expired() ? nullptr : _mainWindow.lock();
 }

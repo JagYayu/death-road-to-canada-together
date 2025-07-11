@@ -20,9 +20,13 @@ namespace tudov
 		CircularBuffer<std::float_t, FramerateBufferSize> _framerateBuffer;
 
 	  public:
+		static std::string_view Name() noexcept;
+
+	  public:
 		std::weak_ptr<IWindow> window;
 
 		explicit DebugProfiler() noexcept = default;
+		~DebugProfiler() noexcept = default;
 
 		std::string_view GetName() noexcept override;
 		void UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept override;

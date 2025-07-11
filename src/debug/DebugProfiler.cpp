@@ -15,6 +15,11 @@ using namespace tudov;
 
 std::string_view DebugProfiler::GetName() noexcept
 {
+	return Name();
+}
+
+std::string_view DebugProfiler::Name() noexcept
+{
 	return "Profiler";
 }
 

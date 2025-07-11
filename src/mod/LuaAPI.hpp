@@ -35,4 +35,11 @@ namespace tudov
 		bool RegisterInstallation(std::string_view key, const TInstallation &installation) override;
 		void Install(sol::state &lua, Context &context) override;
 	};
+
+	struct ILuaAPIProvider
+	{
+		virtual ~ILuaAPIProvider() noexcept = default;
+		
+		virtual void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept = 0;
+	};
 } // namespace tudov

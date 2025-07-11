@@ -66,7 +66,7 @@ void ReliableUDPClient::TryCreateENetHost()
 
 void ReliableUDPClient::Connect(const IClient::ConnectArgs &baseArgs)
 {
-	auto &&args = dynamic_cast<const ReliableUDPConnectArgs &>(baseArgs);
+	auto &&args = dynamic_cast<const ConnectArgs &>(baseArgs);
 
 	TryCreateENetHost();
 
@@ -99,12 +99,31 @@ void ReliableUDPClient::Disconnect()
 {
 }
 
+FORCEINLINE void Send(ENetPeer *peer, std::string_view data, enet_uint32 flags)
+{
+	ENetPacket *packet = enet_packet_create(data.data(), data.length(), flags);
+	enet_peer_send(peer, 0, packet);
+	enet_packet_destroy(packet);
+}
+
+void ReliableUDPClient::SendReliable(std::string_view data)
+{
+	Send(_eNetPeer, data, ENET_PACKET_FLAG_RELIABLE);
+}
+
+void ReliableUDPClient::SendUnreliable(std::string_view data)
+{
+	Send(_eNetPeer, data, 0);
+}
+
 bool ReliableUDPClient::Update()
 {
 	if (!_eNetHost)
 	{
 		return false;
 	}
+
+	enet_host_flush(_eNetHost);
 
 	auto &&coreEvents = GetEventManager()->GetCoreEvents();
 

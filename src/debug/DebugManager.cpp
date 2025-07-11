@@ -23,6 +23,18 @@ DebugManager::DebugManager() noexcept
 	};
 }
 
+IDebugElement *DebugManager::GetElement(std::string_view elementName) noexcept
+{
+	for (auto &&element : _elements)
+	{
+		if (elementName == element->GetName())
+		{
+			return element.get();
+		}
+	}
+	return nullptr;
+}
+
 void DebugManager::AddElement(const std::shared_ptr<IDebugElement> &element) noexcept
 {
 	auto &&name = element->GetName();
@@ -36,17 +48,18 @@ void DebugManager::AddElement(const std::shared_ptr<IDebugElement> &element) noe
 	_elements.emplace_back(element);
 }
 
-void DebugManager::RemoveElement(std::string_view element) noexcept
+bool DebugManager::RemoveElement(std::string_view elementName) noexcept
 {
 	for (auto &&it = _elements.begin(); it != _elements.end(); ++it)
 	{
-		if (it->get()->GetName() == element)
+		if (it->get()->GetName() == elementName)
 		{
 			_elements.erase(it);
-			break;
+			_shownElements.erase(elementName);
+			return true;
 		}
 	}
-	_shownElements.erase(element);
+	return false;
 }
 
 void DebugManager::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept

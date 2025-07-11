@@ -2,6 +2,7 @@
 
 #include "LocalClient.hpp"
 #include "LocalServer.hpp"
+#include "SocketType.hpp"
 
 #include <memory>
 
@@ -54,11 +55,17 @@ bool INetwork::Update() noexcept
 	return false;
 }
 
-Network::Network(Context &context, ESocketType socketType) noexcept
+Network::Network(Context &context) noexcept
     : _log(Log::Get("Network")),
       _context(context),
-      _socketType(socketType)
+      _initialized(false),
+      _socketType(ESocketType::Local)
 {
+}
+
+Log &Network::GetLog() noexcept
+{
+	return *_log;
 }
 
 Context &Network::GetContext() noexcept
@@ -68,6 +75,11 @@ Context &Network::GetContext() noexcept
 
 void Network::Initialize() noexcept
 {
+	if (_initialized)
+	{
+		return;
+	}
+
 	auto &&client = std::make_shared<LocalClient>(*this);
 	auto &&server = std::make_shared<LocalServer>(*this);
 
@@ -83,12 +95,22 @@ void Network::Initialize() noexcept
 	connectArgs.server = server.get();
 	connectArgs.user = 0;
 	client->Connect(connectArgs);
+
+	_socketType = ESocketType::Local;
+	_initialized = true;
 }
 
 void Network::Deinitialize() noexcept
 {
+	if (!_initialized)
+	{
+		return;
+	}
+
 	_clients.clear();
 	_servers.clear();
+
+	_initialized = false;
 }
 
 IClient *Network::GetClient(std::int32_t uid) noexcept
@@ -123,7 +145,11 @@ std::vector<std::weak_ptr<IServer>> Network::GetServers() noexcept
 	return std::move(servers);
 }
 
-void Network::ChangeClientSocket(ESocketType socketType, std::int32_t uid)
+void Network::SetClient(ESocketType socketType, std::int32_t uid)
+{
+}
+
+void Network::SetServer(ESocketType socketType, std::int32_t uid)
 {
 }
 

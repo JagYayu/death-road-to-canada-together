@@ -4,9 +4,11 @@
 #include "MainArgs.hpp"
 #include "Window.hpp"
 #include "data/Config.hpp"
+#include "debug/Debug.hpp"
 #include "debug/DebugManager.hpp"
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
+#include "network/Network.hpp"
 #include "resource/FontManager.hpp"
 #include "resource/ImageManager.hpp"
 #include "resource/ShaderManager.hpp"
@@ -29,7 +31,7 @@ namespace tudov
 
 	class Context;
 
-	class Engine : public Application
+	class Engine : public Application, public IDebugProvider, public ILuaAPIProvider
 	{
 		friend Context;
 
@@ -56,6 +58,7 @@ namespace tudov
 		FontManager _fontManager;
 
 		std::shared_ptr<ILuaAPI> _luaAPI;
+		std::shared_ptr<INetwork> _network;
 		std::shared_ptr<IModManager> _modManager;
 		std::shared_ptr<IEventManager> _eventManager;
 		std::shared_ptr<IGameScripts> _gameScripts;
@@ -78,16 +81,16 @@ namespace tudov
 	  private:
 		void InitializeMainWindow() noexcept;
 		void InitializeResources() noexcept;
-		void InstallLuaAPIs() noexcept;
 		void HandleEvent(SDL_Event &event) noexcept;
-
-		std::shared_ptr<IWindow> LuaGetMainWindow() noexcept;
 
 	  public:
 		void Initialize() noexcept override;
 		bool Tick() noexcept override;
 		void Event(SDL_Event &event) noexcept override;
 		void Deinitialize() noexcept override;
+
+		void ProvideDebug(IDebugManager &debugManager) noexcept override;
+		void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
 
 		std::float_t GetFramerate() const noexcept;
 

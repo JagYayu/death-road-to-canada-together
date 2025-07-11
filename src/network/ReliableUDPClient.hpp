@@ -12,7 +12,7 @@ namespace tudov
 	class ReliableUDPClient : public IClient
 	{
 	  public:
-		struct ReliableUDPConnectArgs : public ConnectArgs
+		struct ConnectArgs : public IClient::ConnectArgs
 		{
 			std::string_view host;
 			std::uint16_t port;
@@ -32,18 +32,20 @@ namespace tudov
 		void TryCreateENetHost();
 
 	  public:
-		Context &GetContext() noexcept override;
 		ESocketType GetSocketType() const noexcept override;
+		Context &GetContext() noexcept override;
+		bool Update() override;
 
 		bool IsConnecting() noexcept override;
 		bool IsConnected() noexcept override;
-		void Connect(const ConnectArgs &address) override;
+		void Connect(const IClient::ConnectArgs &address) override;
 		void Disconnect() override;
+		void SendReliable(std::string_view data) override;
+		void SendUnreliable(std::string_view data) override;
 
-		bool Update() override;
-
-		void Connect(const ReliableUDPConnectArgs &args)
+		inline void Connect(const ConnectArgs &args)
 		{
+			Connect(static_cast<const IClient::ConnectArgs &>(args));
 		}
 	};
 } // namespace tudov

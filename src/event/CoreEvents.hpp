@@ -38,7 +38,6 @@ namespace tudov
 		[[nodiscard]] virtual TRuntimeEvent ServerMessage() noexcept = 0;
 
 		// Other events.
-		// [[nodiscard]] virtual TRuntimeEvent ConsoleCommand() noexcept = 0;
 	};
 
 	class EventManager;

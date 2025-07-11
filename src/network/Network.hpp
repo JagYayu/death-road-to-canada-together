@@ -20,8 +20,8 @@ namespace tudov
 		virtual IServer *GetServer(std::int32_t uid = 0) noexcept = 0;
 		virtual std::vector<std::weak_ptr<IClient>> GetClients() noexcept = 0;
 		virtual std::vector<std::weak_ptr<IServer>> GetServers() noexcept = 0;
-		virtual void ChangeClientSocket(ESocketType socketType, std::int32_t uid = 0) = 0;
-		virtual void ChangeServerSocket(ESocketType socketType, std::int32_t uid = 0) = 0;
+		virtual void SetClient(ESocketType socketType, std::int32_t uid = 0) = 0;
+		virtual void SetServer(ESocketType socketType, std::int32_t uid = 0) = 0;
 
 		virtual std::int32_t GetLimitsPerUpdate() noexcept;
 
@@ -45,11 +45,14 @@ namespace tudov
 		Context &_context;
 		std::unordered_map<std::int32_t, std::shared_ptr<IClient>> _clients;
 		std::unordered_map<std::int32_t, std::shared_ptr<IServer>> _servers;
+		bool _initialized;
 		ESocketType _socketType;
 
 	  public:
-		explicit Network(Context &context, ESocketType socketType = ESocketType::Local) noexcept;
+		explicit Network(Context &context) noexcept;
 		~Network() noexcept override = default;
+
+		Log &GetLog() noexcept override;
 
 		Context &GetContext() noexcept override;
 		void Initialize() noexcept override;
@@ -59,7 +62,8 @@ namespace tudov
 		IServer *GetServer(std::int32_t uid = 0) noexcept override;
 		std::vector<std::weak_ptr<IClient>> GetClients() noexcept override;
 		std::vector<std::weak_ptr<IServer>> GetServers() noexcept override;
-		void ChangeClientSocket(ESocketType socketType, std::int32_t uid = 0) override;
+		void SetClient(ESocketType socketType, std::int32_t uid = 0) override;
+		void SetServer(ESocketType socketType, std::int32_t uid = 0) override;
 		bool Update() noexcept override;
 	};
 } // namespace tudov
