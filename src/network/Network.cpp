@@ -3,8 +3,13 @@
 #include "LocalClient.hpp"
 #include "LocalServer.hpp"
 #include "SocketType.hpp"
+#include "debug/DebugManager.hpp"
 
+#include <cstdlib>
+#include <format>
 #include <memory>
+#include <string>
+#include <vector>
 
 using namespace tudov;
 
@@ -66,6 +71,113 @@ Network::Network(Context &context) noexcept
 Log &Network::GetLog() noexcept
 {
 	return *_log;
+}
+
+void Network::ProvideDebug(IDebugManager &debugManager) noexcept
+{
+	if (auto &&console = debugManager.GetElement<DebugConsole>(); console != nullptr)
+	{
+		auto &&clientConnect = [this](std::string_view arg)
+		{
+			std::vector<DebugConsole::Result> results{};
+
+			auto &&client = GetClient(_debugClientUID);
+			if (client == nullptr)
+			{
+				results.emplace_back(std::format("Client with uid {} does not exist", _debugClientUID), DebugConsole::Code::Failure);
+				return results;
+			}
+
+			auto spacePos = arg.find(' ');
+			if (spacePos == std::string_view::npos)
+			{
+				results.emplace_back("Bad command", DebugConsole::Code::Failure);
+				return results;
+			}
+
+			auto socket = arg.substr(0, spacePos);
+			auto &&socketType = StringToSocketType(socket);
+			if (!socketType.has_value())
+			{
+				results.emplace_back("Socket not provided", DebugConsole::Code::Failure);
+				return results;
+			}
+			SetClient(socketType.value(), _debugClientUID);
+
+			auto address = arg.substr(spacePos + 1);
+			address.remove_prefix(std::min(address.find_first_not_of(" "), address.size()));
+
+			if (auto &&localClient = dynamic_cast<LocalClient *>(client); localClient != nullptr)
+			{
+				LocalServer *server = nullptr;
+				try
+				{
+					server = dynamic_cast<LocalServer *>(GetServer(std::stoi(address.data())));
+				}
+				catch (std::exception &)
+				{
+				}
+
+				LocalClient::ConnectArgs args;
+				args.user = _debugClientUID;
+				args.server = server;
+				localClient->Connect(args);
+			}
+
+			return results;
+		};
+
+		console->SetCommand(DebugConsole::Command{
+		    .name = "clientConnect",
+		    .help = "clientConnect <socket> <address>: Connect current client to a server.",
+		    .func = clientConnect,
+		});
+
+		auto &&clientConnection = [this](std::string_view arg)
+		{
+			std::vector<DebugConsole::Result> results{};
+
+			return results;
+		};
+
+		console->SetCommand(DebugConsole::Command{
+		    .name = "clientConnection",
+		    .help = "clientConnection [uid]: Check client's connection info.",
+		    .func = clientConnection,
+		});
+
+		auto &&clientSet = [this](std::string_view arg)
+		{
+			auto prevUID = _debugClientUID;
+			_debugClientUID = std::stoi(arg.data());
+
+			std::vector<DebugConsole::Result> results{};
+			results.emplace_back(DebugConsole::Result{
+			    .message = std::format("Changed client uid from {} to {}", prevUID, _debugClientUID),
+			    .code = DebugConsole::Code::Success,
+			});
+			return results;
+		};
+
+		console->SetCommand(DebugConsole::Command{
+		    .name = "clientSet",
+		    .help = "clientSet <uid>: Change current client to specific uid.",
+		    .func = clientSet,
+		});
+
+		auto &&serverHost = [this](std::string_view arg)
+		{
+			std::vector<DebugConsole::Result> results{};
+
+			return results;
+		};
+
+		console->SetCommand(DebugConsole::Command{
+		    .name = "serverHost",
+		    .help = "serverHost <socket> <address>: Host server.",
+		    .func = serverHost,
+		});
+	}
 }
 
 Context &Network::GetContext() noexcept

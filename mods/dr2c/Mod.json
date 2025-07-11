@@ -3,8 +3,9 @@
 	"version": "1.0.0",
 	"name": "Death Road to Canada",
 	"author": "JagYayu",
-	"description": "Core mod for Death Road to Canada.",
+	"description": "Core mod for Death Road To Canada Together.",
 	"dependencies": {},
+	"client": false,
 	"scripts": {
 		"directory": "scripts",
 		"files": [

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <imgui.h>
+#include <tuple>
 
 using namespace tudov;
 
@@ -13,14 +14,41 @@ DebugConsole::DebugConsole() noexcept
 
 	_commands = {};
 
-	const auto name = "help";
 	auto &&help = [this](std::string_view)
 	{
 		std::vector<Result> results{};
+
+		size_t minLen = 0;
+		for (auto &&pair : _commands)
+		{
+			minLen = std::max(pair.second.name.size(), minLen);
+		}
+		for (auto &&[name, command] : _commands)
+		{
+			std::string str = name;
+			str.append(minLen - str.size(), ' ');
+			str.append(" - ");
+			str.append(command.help);
+			str.shrink_to_fit();
+			results.emplace_back(Result{
+			    .message = std::move(str),
+			});
+		}
+
+		std::sort(results.begin(), results.end(), [](const Result &l, const Result &r)
+		{
+			return l.message < r.message;
+		});
+
+		results.insert(results.begin(), Result{
+		                                    .message = "Listing all available commands",
+		                                    .code = Code::Success,
+		                                });
+
 		return results;
 	};
-	_commands[name] = Command{
-	    .name = name,
+	_commands["help"] = Command{
+	    .name = "help",
 	    .help = "help [regex] [max_cmds]: List `help` of all available/matched commands.",
 	    .func = help,
 	};
@@ -44,9 +72,8 @@ std::string_view DebugConsole::GetName() noexcept
 
 void DebugConsole::Clear()
 {
-	_textBuffer->clear();
-	_lineOffsets.clear();
-	_lineOffsets.push_back(0);
+	// _textBuffer->clear();
+	_lines.clear();
 }
 
 DebugConsole::Command *DebugConsole::GetCommand(std::string_view commandName) noexcept
@@ -66,10 +93,12 @@ void DebugConsole::SetCommand(const Command &command) noexcept
 void DebugConsole::Execute(std::string_view command) noexcept
 {
 	auto begin = command.find_first_not_of(" \t");
-	if (begin == std::string_view::npos)
+	if (begin == std::string_view::npos) [[unlikely]]
 	{
 		return;
 	}
+
+	Output("> {}\n", Code::None, command);
 
 	auto end = command.find_first_of(" \t", begin);
 	auto commandName = command.substr(begin, end - begin);
@@ -95,6 +124,7 @@ void DebugConsole::Execute(std::string_view command) noexcept
 
 	if (it == _commands.end())
 	{
+		Output("Unknown command \"{}\"", Code::Failure, command);
 		// Command not found - you might want to handle this case
 		// e.g., OutputMessage("Unknown command");
 		return;
@@ -110,13 +140,12 @@ void DebugConsole::Execute(std::string_view command) noexcept
 	{
 		results = {
 		    {
+		        .message = std::format("[C++ exception] {}", e.what()),
 		        .code = Code::Failure,
-		        .message = e.what(),
 		    },
 		};
 	}
 
-	Output("> {}\n", Code::None, command);
 	for (auto &&result : results)
 	{
 		Output(result.message.data(), result.code);
@@ -125,23 +154,16 @@ void DebugConsole::Execute(std::string_view command) noexcept
 
 void DebugConsole::Output(std::string_view message, Code code)
 {
-	auto old_size = _textBuffer->size();
-	_textBuffer->append(message.data());
-
-	for (auto new_size = _textBuffer->size(); old_size < new_size; old_size++)
-	{
-		if ((*_textBuffer)[old_size] == '\n')
-		{
-			_lineOffsets.push_back(old_size + 1);
-		}
-	}
+	_lines.emplace_back(std::string(message), code);
 }
-
-static bool my_tool_active = false;
-static float my_color = -1;
 
 void DebugConsole::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept
 {
+	static constexpr decltype(auto) colorFailure = ImVec4(1, 0, 0, 1);
+	static constexpr decltype(auto) colorSuccess = ImVec4(.2, 1, .2, 1);
+	static constexpr decltype(auto) colorWarn = ImVec4(1, 0, 0, 1);
+	static constexpr decltype(auto) colorDefault = ImVec4(1, 1, 1, 1);
+
 	if (ImGui::Begin("Debug Console"))
 	{
 		if (ImGui::Button("Clear"))
@@ -164,13 +186,29 @@ void DebugConsole::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexc
 			}
 
 			const char *buf = _textBuffer->begin();
-			for (int line_no = 0; line_no < _lineOffsets.size(); line_no++)
+			for (auto &&[message, code] : _lines)
 			{
-				auto &&line_start = buf + _lineOffsets[line_no];
-				auto &&line_end = (line_no + 1 < _lineOffsets.size()) ? buf + _lineOffsets[line_no + 1] - 1 : _textBuffer->end();
-				if (_textFilter->PassFilter(line_start, line_end))
+				if (_textFilter->PassFilter(message.c_str(), message.c_str() + message.size()))
 				{
-					ImGui::TextUnformatted(line_start, line_end);
+					switch (code)
+					{
+					case Code::Failure:
+					{
+						ImGui::TextColored(colorFailure, "%s", message.c_str());
+						break;
+					}
+					case Code::Success:
+					{
+						ImGui::TextColored(colorSuccess, "%s", message.c_str());
+						break;
+					}
+					case Code::Warn:
+					default:
+					{
+						ImGui::TextColored(colorDefault, "%s", message.c_str());
+						break;
+					}
+					}
 				}
 			}
 
@@ -191,9 +229,6 @@ void DebugConsole::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexc
 		{
 			Execute(input.data());
 		}
-
-		// TODO: 处理命令
-		input[0] = 0;
 	}
 	ImGui::End();
 }

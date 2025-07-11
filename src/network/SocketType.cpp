@@ -1,0 +1,14 @@
+#include "SocketType.hpp"
+
+using namespace tudov;
+
+std::optional<ESocketType> tudov::StringToSocketType(std::string_view str) noexcept
+{
+	if (str == "Local")
+		return std::make_optional(ESocketType::Local);
+	if (str == "ReliableUDP")
+		return std::make_optional(ESocketType::ReliableUDP);
+	if (str == "Steam")
+		return std::make_optional(ESocketType::Steam);
+	return std::nullopt;
+}

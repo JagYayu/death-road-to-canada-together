@@ -96,5 +96,5 @@ namespace tudov
 		void InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept;
 	};
 
-	ENABLE_ENUM_FLAG_OPERATORS(ModManager::ELoadState);
+	TUDOV_ENUM_FLAG_OPERATORS(ModManager::ELoadState);
 } // namespace tudov

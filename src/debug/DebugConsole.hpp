@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <map>
+#include <unordered_map>
 
 struct ImGuiTextBuffer;
 struct ImGuiTextFilter;
@@ -24,15 +25,22 @@ namespace tudov
 
 		struct Result
 		{
-			Code code;
 			std::string message;
+			Code code = Code::None;
 		};
 
 		struct Command
 		{
-			std::string_view name;
+			std::string name;
 			std::string help;
 			std::function<std::vector<Result>(std::string_view)> func;
+		};
+
+	  private:
+		struct TextBufferSegment
+		{
+			const char* begin;
+			const char* end;
 		};
 
 	  private:
@@ -41,7 +49,7 @@ namespace tudov
 
 		ImGuiTextBuffer *_textBuffer;
 		ImGuiTextFilter *_textFilter;
-		std::vector<uint32_t> _lineOffsets;
+		std::vector<std::tuple<std::string, Code>> _lines;
 
 	  public:
 		static std::string_view Name() noexcept;

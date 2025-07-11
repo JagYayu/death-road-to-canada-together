@@ -14,11 +14,7 @@
 
 #endif
 
-#include <type_traits>
-
-#include <type_traits>
-
-#define ENABLE_ENUM_FLAG_OPERATORS(E)                                 \
+#define TUDOV_ENUM_FLAG_OPERATORS(E)                                 \
 	inline E operator|(E a, E b)                                      \
 	{                                                                 \
 		using T = std::underlying_type_t<E>;                          \

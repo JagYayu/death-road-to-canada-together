@@ -1,0 +1,25 @@
+{
+	"car_unique_1_body": [
+		"gfx/cars/cars_unique_110x96.png",
+		0,
+		0,
+		110,
+		96
+	],
+	"car_unique_1_wheels": [
+		[
+			"gfx/cars/cars_unique_110x96.png",
+			110,
+			0,
+			110,
+			96
+		],
+		[
+			"gfx/cars/cars_unique_110x96.png",
+			220,
+			0,
+			110,
+			96
+		]
+	]
+}
