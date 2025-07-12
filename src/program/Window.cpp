@@ -1,13 +1,16 @@
 #include "Window.hpp"
 
+#include "SDL3/SDL_render.h"
 #include "SDL3/SDL_video.h"
 #include "event/EventManager.hpp"
 #include "graphic/Renderer.hpp"
 #include "mod/ScriptEngine.hpp"
+#include "program/Engine.hpp"
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"
 
+#include <cmath>
 #include <memory>
 
 using namespace tudov;
@@ -36,7 +39,7 @@ Context &Window::GetContext() noexcept
 
 void Window::Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept
 {
-	_sdlWindow = SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE);
+	_sdlWindow = SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 	if (!_sdlWindow)
 	{
 		_log->Error("Failed to initialize SDL3 Window");
@@ -90,8 +93,15 @@ bool Window::HandleEvent(SDL_Event &event) noexcept
 
 void Window::Render() noexcept
 {
+	RenderPreImpl();
+	renderer->Render();
+}
+
+void Window::RenderPreImpl() noexcept
+{
 	auto &&args = GetScriptEngine()->CreateTable(0, 1);
 	args["window"] = this;
+	args["isMain"] = GetEngine().GetMainWindow().get() == this;
 	GetEventManager()->GetCoreEvents().TickRender()->Invoke(args, GetKey());
 }
 
@@ -119,4 +129,9 @@ std::tuple<std::int32_t, std::int32_t> Window::GetSize() const noexcept
 	std::int32_t w, h;
 	SDL_GetWindowSize(_sdlWindow, &w, &h);
 	return {w, h};
+}
+
+std::float_t Window::GetDisplayScale() const noexcept
+{
+	return SDL_GetDisplayContentScale(SDL_GetDisplayForWindow(_sdlWindow));
 }

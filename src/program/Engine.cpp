@@ -7,6 +7,8 @@
 #include "Window.hpp"
 #include "debug/Debug.hpp"
 #include "debug/DebugManager.hpp"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
 #include "mod/LuaAPI.hpp"
 #include "network/Network.hpp"
 #include "resource/ResourceType.hpp"
@@ -19,9 +21,11 @@
 #include "SDL3/SDL_timer.h"
 
 #include <algorithm>
+#include <chrono>
 #include <exception>
 #include <memory>
 #include <regex>
+#include <thread>
 #include <vector>
 
 using namespace tudov;
@@ -47,10 +51,46 @@ Engine::Engine(const MainArgs &args) noexcept
 	_scriptEngine = std::make_shared<ScriptEngine>(context);
 	_eventManager = std::make_shared<EventManager>(context);
 	_gameScripts = std::make_shared<GameScripts>(context);
+
+	_loadingState = ELoadingState::Done;
+	_loadingThread = std::thread([this]()
+	{
+		while (!ShouldQuit())
+		{
+			if (_loadingState == ELoadingState::Pending)
+			{
+				_loadingState = ELoadingState::Loading;
+				SetLoadingInfo(Engine::LoadingInfoArgs{
+				    .title = "Loading",
+				    .description = "Please wait.",
+				    .progressValue = 0.0f,
+				    .progressTotal = 1.0f,
+				});
+
+				_modManager->Update();
+				_eventManager->GetCoreEvents().TickLoad()->Invoke();
+
+				SetLoadingInfo(Engine::LoadingInfoArgs{
+				    .title = "Loaded",
+				    .description = "Waiting to be ended.",
+				    .progressValue = 1.0f,
+				    .progressTotal = 1.0f,
+				});
+				_loadingState = ELoadingState::Done;
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+	});
 }
 
 Engine::~Engine() noexcept
 {
+	if (_loadingThread.joinable())
+	{
+		_loadingThread.join();
+	}
+
 	switch (_state)
 	{
 	case EState::Initialized:
@@ -63,9 +103,19 @@ Engine::~Engine() noexcept
 	Application::~Application();
 }
 
-bool IsWindowShouldClose(const std::shared_ptr<IWindow> &window) noexcept
+bool Engine::ShouldQuit() noexcept
 {
-	return window->ShouldClose();
+	switch (_state)
+	{
+	case EState::None:
+		return false;
+	case EState::Quit:
+	case EState::Deinitialized:
+		return true;
+	case EState::Initialized:
+		break;
+	}
+	return _windows.empty();
 }
 
 void Engine::Initialize() noexcept
@@ -102,50 +152,48 @@ void Engine::Initialize() noexcept
 	_log->Debug("Initialized engine");
 }
 
+bool IsWindowShouldClose(const std::shared_ptr<IWindow> &window) noexcept
+{
+	return window->ShouldClose();
+}
+
 bool Engine::Tick() noexcept
 {
-	switch (_state)
-	{
-	case EState::None:
-		return true;
-	case EState::Quit:
-	case EState::Deinitialized:
-		return false;
-	case EState::Initialized:
-		break;
-	}
-
-	if (_windows.empty())
+	if (ShouldQuit())
 	{
 		return false;
 	}
 
-	uint64_t startNS = SDL_GetTicksNS();
-	_framerate = 1'000'000'000.0 / (startNS - _previousTime);
-	_previousTime = startNS;
+	std::uint64_t beginNS = SDL_GetTicksNS();
+	_framerate = 1'000'000'000.0 / (beginNS - _previousTime);
+	_previousTime = beginNS;
 
-	_modManager->Update();
-
-	if (!_scriptLoader->HasAnyLoadError())
+	if (_loadingState == ELoadingState::Done)
 	{
-		_eventManager->GetCoreEvents().TickUpdate()->Invoke();
+		_loadingState = ELoadingState::Pending;
+		_loadingBeginNS = SDL_GetTicksNS();
 	}
 
-	for (auto &&event : _events)
+	if (_loadingState != ELoadingState::Loading)
 	{
-		HandleEvent(*event);
-		delete event;
-	}
-	_events.clear();
+		if (!_scriptLoader->HasAnyLoadError())
+		{
+			_eventManager->GetCoreEvents().TickUpdate()->Invoke();
+		}
 
-	for (auto &&window : _windows)
-	{
-		window->HandleEvents();
-	}
+		for (auto &&event : _sdlEvents)
+		{
+			HandleEvent(*event);
+			delete event;
+		}
+		_sdlEvents.clear();
 
-	if (!_mainWindow.expired())
-	{
-		_debugManager->UpdateAndRender(_mainWindow.lock());
+		for (auto &&window : _windows)
+		{
+			window->HandleEvents();
+		}
+
+		_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
 	}
 
 	for (auto &&window : _windows)
@@ -153,10 +201,12 @@ bool Engine::Tick() noexcept
 		window->Render();
 	}
 
-	_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
+	ImGui::EndFrame();
+	ImGui::Render();
 
-	auto elapsed = SDL_GetTicksNS() - startNS;
+	std::uint64_t endNS = SDL_GetTicksNS();
 	auto limit = 1'000'000'000ull / uint64_t(_config.GetWindowFramelimit());
+	auto elapsed = endNS - beginNS;
 	if (elapsed < limit)
 	{
 		SDL_DelayPrecise(limit - elapsed);
@@ -182,7 +232,7 @@ void Engine::Event(SDL_Event &event) noexcept
 		return;
 	}
 
-	_events.emplace_back(new SDL_Event(event));
+	_sdlEvents.emplace_back(new SDL_Event(event));
 }
 
 void Engine::Deinitialize() noexcept
@@ -228,10 +278,12 @@ void Engine::InitializeMainWindow() noexcept
 	}
 
 	auto &&mainWindow = std::make_shared<MainWindow>(context);
-	AddWindow(mainWindow);
 	mainWindow->Initialize(_config.GetWindowWidth(), _config.GetWindowHeight(), _config.GetWindowTitle());
-
+	AddWindow(mainWindow);
 	_mainWindow = mainWindow;
+
+	_debugManager = std::make_shared<DebugManager>();
+	mainWindow->SetDebugManager(_debugManager);
 }
 
 void Engine::InitializeResources() noexcept
@@ -366,11 +418,6 @@ void Engine::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
 	}
 }
 
-std::float_t Engine::GetFramerate() const noexcept
-{
-	return _framerate;
-}
-
 template <typename T>
 void Engine_ChangeEngineComponent(std::shared_ptr<Log> &log, std::string_view component, std::shared_ptr<T> &oldComponent, const std::shared_ptr<T> &newComponent) noexcept
 {
@@ -416,6 +463,16 @@ void Engine::ChangeGameScripts(const std::shared_ptr<IGameScripts> &gameScripts)
 	Engine_ChangeEngineComponent(_log, "IGameScripts", _gameScripts, gameScripts);
 }
 
+std::float_t Engine::GetFramerate() const noexcept
+{
+	return _framerate;
+}
+
+std::uint64_t Engine::GetTick() const noexcept
+{
+	return SDL_GetTicksNS();
+}
+
 TUDOV_GEN_GETTER_SMART_PTR(std::shared_ptr, IWindow, Engine::GetMainWindow, _mainWindow, noexcept);
 
 void Engine::AddWindow(const std::shared_ptr<IWindow> &window)
@@ -426,4 +483,37 @@ void Engine::AddWindow(const std::shared_ptr<IWindow> &window)
 void Engine::RemoveWindow(const std::shared_ptr<IWindow> &window)
 {
 	// TODO
+}
+
+Engine::ELoadingState Engine::GetLoadingState() noexcept
+{
+	return _loadingState.load();
+}
+
+bool Engine::IsLoadingLagged() noexcept
+{
+	return (SDL_GetTicksNS() - _loadingBeginNS) > (1'000'000'000ull / uint64_t(_config.GetWindowFramelimit() / 10));
+}
+
+std::uint64_t Engine::GetLoadingBeginTick() const noexcept
+{
+	return _loadingBeginNS;
+}
+
+Engine::LoadingInfo *Engine::GetLoadingInfo() noexcept
+{
+	return &_loadingInfo;
+}
+
+void Engine::SetLoadingInfo(LoadingInfoArgs loadingInfo) noexcept
+{
+	if (_loadingState == Engine::ELoadingState::Loading)
+	{
+		_loadingInfoMutex.lock();
+		_loadingInfo.title = loadingInfo.title.has_value() ? loadingInfo.title.value() : _loadingInfo.title;
+		_loadingInfo.description = loadingInfo.description.has_value() ? loadingInfo.description.value() : _loadingInfo.description;
+		_loadingInfo.progressValue = loadingInfo.progressValue.has_value() ? loadingInfo.progressValue.value() : _loadingInfo.progressValue;
+		_loadingInfo.progressTotal = loadingInfo.progressTotal.has_value() ? loadingInfo.progressTotal.value() : _loadingInfo.progressTotal;
+		_loadingInfoMutex.unlock();
+	}
 }

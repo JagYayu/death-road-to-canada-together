@@ -36,11 +36,11 @@ struct DebugProfilerEntry
 	float maxMemory;
 };
 
-void DebugProfiler::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept
+void DebugProfiler::UpdateAndRender(IWindow &window) noexcept
 {
 	if (ImGui::Begin("Profiler"))
 	{
-		_framerateBuffer.push(window->GetEngine().GetFramerate());
+		_framerateBuffer.push(window.GetEngine().GetFramerate());
 		{
 			float framerates[FramerateBufferSize];
 			for (std::uint64_t i = FramerateBufferSize; i-- > 0;)
@@ -68,7 +68,7 @@ void DebugProfiler::UpdateAndRender(const std::shared_ptr<IWindow> &window) noex
 
 		std::vector<DebugProfilerEntry> entries{};
 
-		auto &&eventManager = window->GetEventManager();
+		auto &&eventManager = window.GetEventManager();
 		for (auto &&it = eventManager->BeginRuntimeEvents(); it != eventManager->EndRuntimeEvents(); ++it)
 		{
 			auto &&event = *it->second;

@@ -29,6 +29,6 @@ namespace tudov
 		~DebugProfiler() noexcept = default;
 
 		std::string_view GetName() noexcept override;
-		void UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept override;
+		void UpdateAndRender(IWindow &window) noexcept override;
 	};
 } // namespace tudov

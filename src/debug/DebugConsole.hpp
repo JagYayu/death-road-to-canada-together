@@ -60,7 +60,7 @@ namespace tudov
 
 	  public:
 		std::string_view GetName() noexcept override;
-		void UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept override;
+		void UpdateAndRender(IWindow &window) noexcept override;
 
 		Command *GetCommand(std::string_view commandName) noexcept;
 		void SetCommand(const Command &command) noexcept;

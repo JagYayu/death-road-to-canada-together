@@ -4,8 +4,13 @@
 
 namespace tudov
 {
+	struct IDebugManager;
+
 	class MainWindow : public Window
 	{
+	  private:
+		std::weak_ptr<IDebugManager> _debugManager;
+
 	  public:
 		explicit MainWindow(Context &context) noexcept;
 		~MainWindow() noexcept override;
@@ -14,5 +19,7 @@ namespace tudov
 		virtual EventHandleKey GetKey() const noexcept override;
 		virtual bool HandleEvent(SDL_Event &event) noexcept override;
 		virtual void Render() noexcept override;
+
+		void SetDebugManager(const std::shared_ptr<IDebugManager> &debugManager) noexcept;
 	};
 } // namespace tudov

@@ -5,8 +5,6 @@
 #include "program/Window.hpp"
 
 #include "imgui.h"
-#include "imgui_impl_sdl3.h"
-#include "imgui_impl_sdlrenderer3.h"
 #include <memory>
 
 using namespace tudov;
@@ -62,14 +60,12 @@ bool DebugManager::RemoveElement(std::string_view elementName) noexcept
 	return false;
 }
 
-void DebugManager::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept
+void DebugManager::UpdateAndRender(IWindow &window) noexcept
 {
-	ImGui_ImplSDL3_NewFrame();
-	ImGui_ImplSDLRenderer3_NewFrame();
-	ImGui::NewFrame();
-
 	if (ImGui::BeginMainMenuBar())
 	{
+		ImGui::SetWindowFontScale(window.GetDisplayScale());
+
 		ImGui::BeginChild("##DebugManager", ImVec2(0, 30), false, ImGuiWindowFlags_HorizontalScrollbar);
 
 		for (size_t i = 0; i < _elements.size(); ++i)
@@ -104,8 +100,4 @@ void DebugManager::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexc
 			element->UpdateAndRender(window);
 		}
 	}
-
-	ImGui::EndFrame();
-
-	ImGui::Render();
 }

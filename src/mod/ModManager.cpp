@@ -5,9 +5,11 @@
 #include "UnpackagedMod.hpp"
 #include "mod/ModEntry.hpp"
 #include "program/Context.hpp"
+#include "program/Engine.hpp"
 #include "util/Defs.hpp"
 
 #include <memory>
+#include <thread>
 #include <vector>
 
 using namespace tudov;
@@ -20,7 +22,7 @@ ModManager::ModManager(Context &context) noexcept
 {
 }
 
-ModManager::~ModManager()
+ModManager::~ModManager() noexcept
 {
 	UnloadMods();
 }
@@ -39,6 +41,7 @@ void ModManager::Initialize() noexcept
 	_requiredMods = {
 	    ModEntry("dr2c", Version(1, 0, 0), 0),
 	};
+	_hotReloadScriptsPending = nullptr;
 }
 
 void ModManager::Deinitialize() noexcept

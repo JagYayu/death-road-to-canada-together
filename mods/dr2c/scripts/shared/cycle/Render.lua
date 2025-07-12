@@ -1,4 +1,4 @@
-local Enum = require("dr2c.utils.Enum")
+local Enum = require("dr2c.shared.utils.Enum")
 local Render = {}
 
 -- Render.Buffers = Enum.sequence {

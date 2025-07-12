@@ -124,8 +124,6 @@ void UnpackagedMod::Load()
 				oss << ins.rdbuf();
 				ins.close();
 
-				auto namespace_ = GetNamespace();
-				_log->Error("{} /////", namespace_);
 				_modManager.HotReloadScriptPending(scriptName, oss.str(), GetNamespace());
 
 				break;

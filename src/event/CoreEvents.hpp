@@ -10,6 +10,7 @@ namespace tudov
 
 		// Tick events.
 
+		[[nodiscard]] virtual TRuntimeEvent TickLoad() noexcept = 0;
 		[[nodiscard]] virtual TRuntimeEvent TickUpdate() noexcept = 0;
 		[[nodiscard]] virtual TRuntimeEvent TickRender() noexcept = 0;
 
@@ -60,6 +61,7 @@ namespace tudov
 		TRuntimeEvent _serverConnect;
 		TRuntimeEvent _serverDisconnect;
 		TRuntimeEvent _serverMessage;
+		TRuntimeEvent _tickLoad;
 		TRuntimeEvent _tickRender;
 		TRuntimeEvent _tickUpdate;
 
@@ -78,6 +80,7 @@ namespace tudov
 		[[nodiscard]] TRuntimeEvent ServerConnect() noexcept override;
 		[[nodiscard]] TRuntimeEvent ServerDisconnect() noexcept override;
 		[[nodiscard]] TRuntimeEvent ServerMessage() noexcept override;
+		[[nodiscard]] TRuntimeEvent TickLoad() noexcept override;
 		[[nodiscard]] TRuntimeEvent TickRender() noexcept override;
 		[[nodiscard]] TRuntimeEvent TickUpdate() noexcept override;
 	};

@@ -157,7 +157,7 @@ void DebugConsole::Output(std::string_view message, Code code)
 	_lines.emplace_back(std::string(message), code);
 }
 
-void DebugConsole::UpdateAndRender(const std::shared_ptr<IWindow> &window) noexcept
+void DebugConsole::UpdateAndRender(IWindow &window) noexcept
 {
 	static constexpr decltype(auto) colorFailure = ImVec4(1, 0, 0, 1);
 	static constexpr decltype(auto) colorSuccess = ImVec4(.2, 1, .2, 1);

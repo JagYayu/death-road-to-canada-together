@@ -3,6 +3,7 @@
 #include "ModManager.hpp"
 #include "ScriptEngine.hpp"
 #include "ScriptProvider.hpp"
+#include "program/Engine.hpp"
 #include "util/Defs.hpp"
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
@@ -52,35 +53,41 @@ const sol::table &ScriptLoader::Module::GetTable()
 	return _table;
 }
 
-const sol::table &ScriptLoader::Module::RawLoad(IScriptLoader &iScriptLoader)
+const sol::table &ScriptLoader::Module::RawLoad(IScriptLoader &scriptLoader)
 {
 	if (_fullyLoaded)
 	{
 		return _table;
 	}
 
-	auto &&scriptLoader = static_cast<ScriptLoader &>(iScriptLoader);
-
 	assert(_scriptID);
-	auto previousLoadingScript = scriptLoader._loadingScript;
-	scriptLoader._loadingScript = _scriptID;
+
+	auto &&parent = static_cast<ScriptLoader &>(scriptLoader);
+	auto &&engine = scriptLoader.GetEngine();
+
+	engine.SetLoadingDescription(scriptLoader.GetScriptProvider()->GetScriptNameByID(_scriptID).value());
+
+	auto previousLoadingScript = parent._loadingScript;
+	parent._loadingScript = _scriptID;
 	auto &&result = _func();
 	if (result.get<sol::object>(1))
 	{
-		scriptLoader._log->Warn("'{}': Does not support receiving multiple return values", iScriptLoader.GetLoadingScriptName().value());
+		parent._log->Warn("'{}': Does not support receiving multiple return values", scriptLoader.GetLoadingScriptName().value());
 	}
 
-	scriptLoader._loadingScript = previousLoadingScript;
+	parent._loadingScript = previousLoadingScript;
 	if (result.get<sol::object>(0).get_type() == sol::type::table)
 	{
 		_table = result.get<sol::object>(0);
 	}
 	else
 	{
-		_table = iScriptLoader.GetScriptEngine()->CreateTable();
+		_table = scriptLoader.GetScriptEngine()->CreateTable();
 	}
 
 	_fullyLoaded = true;
+	engine.IncreaseLoadingProgress(1);
+
 	return _table;
 }
 
@@ -120,9 +127,13 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 		return _table;
 	}
 
-	auto &&parent = static_cast<ScriptLoader &>(scriptLoader);
-
 	assert(_scriptID);
+
+	auto &&parent = static_cast<ScriptLoader &>(scriptLoader);
+	auto &&engine = parent.GetEngine();
+
+	engine.SetLoadingDescription(parent.GetScriptProvider()->GetScriptNameByID(_scriptID).value());
+
 	auto previousScriptID = parent._loadingScript;
 	parent._loadingScript = _scriptID;
 
@@ -189,6 +200,7 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 
 	parent._loadingScript = previousScriptID;
 	_fullyLoaded = true;
+	engine.IncreaseLoadingProgress(1);
 
 	return _table;
 }
@@ -343,6 +355,15 @@ void ScriptLoader::LoadAll()
 {
 	_log->Debug("Loading provided scripts ...");
 
+	auto &&scriptProvider = GetScriptProvider();
+
+	GetEngine().SetLoadingInfo(Engine::LoadingInfoArgs{
+	    .title = "Loading scripts",
+	    .description = "",
+	    .progressValue = 0.0f,
+	    .progressTotal = std::float_t(scriptProvider->GetCount()),
+	});
+
 	_onPreLoadAllScripts();
 
 	if (!_scriptModules.empty())
@@ -352,10 +373,6 @@ void ScriptLoader::LoadAll()
 
 	_scriptModules.clear();
 	_scriptErrors.clear();
-	// _scriptErrorsCascaded.clear();
-	// _scriptDependencyGraph.Clear();
-
-	auto &&scriptProvider = GetScriptProvider();
 
 	auto &&count = scriptProvider->GetCount();
 	for (auto &&[scriptID, entry] : *scriptProvider)
@@ -546,6 +563,13 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 void ScriptLoader::HotReload(const std::vector<ScriptID> &scriptIDs)
 {
 	_log->Debug("Hot reloading scripts ...");
+
+	GetEngine().SetLoadingInfo(Engine::LoadingInfoArgs{
+	    .title = "Loading scripts",
+	    .description = "",
+	    .progressValue = 0.0f,
+	    .progressTotal = std::float_t(scriptIDs.size()),
+	});
 
 	if (_log->CanTrace())
 	{

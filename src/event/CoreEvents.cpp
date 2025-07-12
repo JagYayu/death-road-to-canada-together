@@ -25,6 +25,7 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 	TUDOV_CORE_EVENTS_GEN_INIT(_serverConnect, "ServerConnect");
 	TUDOV_CORE_EVENTS_GEN_INIT(_serverDisconnect, "ServerDisconnect");
 	TUDOV_CORE_EVENTS_GEN_INIT(_serverMessage, "ServerMessage");
+	TUDOV_CORE_EVENTS_GEN_INIT(_tickLoad, "TickLoad");
 	TUDOV_CORE_EVENTS_GEN_INIT(_tickRender, "TickRender");
 	TUDOV_CORE_EVENTS_GEN_INIT(_tickUpdate, "TickUpdate");
 }
@@ -48,5 +49,6 @@ TUDOV_CORE_EVENTS_GEN_GETTER(MouseWheel, _mouseWheel);
 TUDOV_CORE_EVENTS_GEN_GETTER(ServerConnect, _serverConnect);
 TUDOV_CORE_EVENTS_GEN_GETTER(ServerDisconnect, _serverDisconnect);
 TUDOV_CORE_EVENTS_GEN_GETTER(ServerMessage, _serverMessage);
+TUDOV_CORE_EVENTS_GEN_GETTER(TickLoad, _tickLoad);
 TUDOV_CORE_EVENTS_GEN_GETTER(TickUpdate, _tickUpdate);
 TUDOV_CORE_EVENTS_GEN_GETTER(TickRender, _tickRender);

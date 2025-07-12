@@ -21,6 +21,7 @@ namespace tudov
 		virtual void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept = 0;
 		virtual std::int32_t GetWidth() const noexcept = 0;
 		virtual std::int32_t GetHeight() const noexcept = 0;
+		virtual std::float_t GetDisplayScale() const noexcept = 0;
 		virtual std::tuple<std::int32_t, std::int32_t> GetSize() const noexcept = 0;
 		virtual void Close() noexcept = 0;
 		virtual bool ShouldClose() noexcept = 0;
@@ -44,12 +45,16 @@ namespace tudov
 		explicit Window(Context &context, std::string_view logName = "Window") noexcept;
 		~Window() noexcept override;
 
+		protected:
+		void RenderPreImpl() noexcept;
+
 	  public:
 		Context &GetContext() noexcept override;
 		void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;
 		std::int32_t GetWidth() const noexcept override;
 		std::int32_t GetHeight() const noexcept override;
 		std::tuple<std::int32_t, std::int32_t> GetSize() const noexcept override;
+		std::float_t GetDisplayScale() const noexcept override;
 		void Close() noexcept override;
 		bool ShouldClose() noexcept override;
 		void HandleEvents() noexcept override;

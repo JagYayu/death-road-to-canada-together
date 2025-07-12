@@ -1,4 +1,4 @@
-local Function = require "dr2c.utils.Function"
+local Function = require "dr2c.shared.utils.Function"
 local Table = {}
 
 local _ScriptEngine = require "#lua.ScriptEngine"
