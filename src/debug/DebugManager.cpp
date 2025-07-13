@@ -64,32 +64,33 @@ void DebugManager::UpdateAndRender(IWindow &window) noexcept
 {
 	if (ImGui::BeginMainMenuBar())
 	{
-		ImGui::SetWindowFontScale(window.GetDisplayScale());
+		// ImGui::SetWindowFontScale(window.GetDisplayScale());
 
-		ImGui::BeginChild("##DebugManager", ImVec2(0, 30), false, ImGuiWindowFlags_HorizontalScrollbar);
-
-		for (size_t i = 0; i < _elements.size(); ++i)
+		if (ImGui::BeginChild("##DebugManager", ImVec2(0, 48), false, ImGuiWindowFlags_HorizontalScrollbar))
 		{
-			ImGui::PushID(i);
-
-			auto &&name = _elements[i]->GetName();
-			if (ImGui::Button(name.data()))
+			for (size_t i = 0; i < _elements.size(); ++i)
 			{
-				if (_shownElements.contains(name))
+				ImGui::PushID(i);
+
+				auto &&name = _elements[i]->GetName();
+				if (ImGui::Button(name.data()))
 				{
-					_shownElements.erase(name);
+					if (_shownElements.contains(name))
+					{
+						_shownElements.erase(name);
+					}
+					else
+					{
+						_shownElements.emplace(name);
+					}
 				}
-				else
-				{
-					_shownElements.emplace(name);
-				}
+				ImGui::SameLine();
+
+				ImGui::PopID();
 			}
-			ImGui::SameLine();
 
-			ImGui::PopID();
+			ImGui::EndChild();
 		}
-
-		ImGui::EndChild();
 		ImGui::EndMainMenuBar();
 	}
 

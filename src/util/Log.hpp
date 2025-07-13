@@ -82,63 +82,63 @@ namespace tudov
 
 		const std::string &GetModule() const;
 
-		FORCEINLINE EVerbosity GetVerbosity() const
+		TUDOV_FORCEINLINE EVerbosity GetVerbosity() const
 		{
 			return GetVerbosity(_module);
 		}
 
-		FORCEINLINE bool CanTrace() const
+		TUDOV_FORCEINLINE bool CanTrace() const
 		{
 			return CanOutput(VerbTrace);
 		}
-		FORCEINLINE bool CanInfo() const
+		TUDOV_FORCEINLINE bool CanInfo() const
 		{
 			return CanOutput(VerbInfo);
 		}
-		FORCEINLINE bool CanDebug() const
+		TUDOV_FORCEINLINE bool CanDebug() const
 		{
 			return CanOutput(VerbDebug);
 		}
-		FORCEINLINE bool CanWarn() const
+		TUDOV_FORCEINLINE bool CanWarn() const
 		{
 			return CanOutput(VerbWarn);
 		}
-		FORCEINLINE bool CanError() const
+		TUDOV_FORCEINLINE bool CanError() const
 		{
 			return CanOutput(VerbError);
 		}
-		FORCEINLINE bool CanFatal() const
+		TUDOV_FORCEINLINE bool CanFatal() const
 		{
 			return CanOutput(VerbFatal);
 		}
 
 		template <typename... Args>
-		FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args)
 		{
 			Output(VerbTrace, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args)
 		{
 			Output(VerbDebug, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args)
 		{
 			Output(VerbInfo, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args)
 		{
 			Output(VerbWarn, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args)
 		{
 			Output(VerbError, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args)
 		{
 			Output(VerbFatal, std::format(fmt, std::forward<Args>(args)...));
 		}
@@ -157,63 +157,63 @@ namespace tudov
 
 		const std::string &GetModule() const;
 
-		FORCEINLINE Log::EVerbosity GetVerbosity() const
+		TUDOV_FORCEINLINE Log::EVerbosity GetVerbosity() const
 		{
 			return GetLog().GetVerbosity();
 		}
 
-		FORCEINLINE bool CanTrace() const
+		TUDOV_FORCEINLINE bool CanTrace() const
 		{
 			return GetLog().CanTrace();
 		}
-		FORCEINLINE bool CanInfo() const
+		TUDOV_FORCEINLINE bool CanInfo() const
 		{
 			return GetLog().CanInfo();
 		}
-		FORCEINLINE bool CanDebug() const
+		TUDOV_FORCEINLINE bool CanDebug() const
 		{
 			return GetLog().CanDebug();
 		}
-		FORCEINLINE bool CanWarn() const
+		TUDOV_FORCEINLINE bool CanWarn() const
 		{
 			return GetLog().CanWarn();
 		}
-		FORCEINLINE bool CanError() const
+		TUDOV_FORCEINLINE bool CanError() const
 		{
 			return GetLog().CanError();
 		}
-		FORCEINLINE bool CanFatal() const
+		TUDOV_FORCEINLINE bool CanFatal() const
 		{
 			return GetLog().CanFatal();
 		}
 
 		template <typename... Args>
-		FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args)
 		{
 			GetLog().Trace(fmt, std::forward<Args>(args)...);
 		}
 		template <typename... Args>
-		FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args)
 		{
 			GetLog().Debug(fmt, std::forward<Args>(args)...);
 		}
 		template <typename... Args>
-		FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args)
 		{
 			GetLog().Info(fmt, std::forward<Args>(args)...);
 		}
 		template <typename... Args>
-		FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args)
 		{
 			GetLog().Warn(fmt, std::forward<Args>(args)...);
 		}
 		template <typename... Args>
-		FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args)
 		{
 			GetLog().Error(fmt, std::forward<Args>(args)...);
 		}
 		template <typename... Args>
-		FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args)
+		TUDOV_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args)
 		{
 			GetLog().Fatal(fmt, std::forward<Args>(args)...);
 		}

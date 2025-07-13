@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AbstractEvent.hpp"
+#include "EventHandler.hpp"
 #include "debug/EventProfiler.hpp"
 #include "util/Defs.hpp"
 #include "util/Log.hpp"
@@ -20,7 +21,7 @@ namespace tudov
 
 	class RuntimeEvent : public AbstractEvent
 	{
-		using InvocationCache = std::vector<EventHandleFunction>;
+		using InvocationCache = std::vector<EventHandler *>;
 
 		struct Profile
 		{
@@ -68,8 +69,8 @@ namespace tudov
 
 		void Add(const AddHandlerArgs &args) override;
 
-		void Invoke(const sol::object &args = sol::lua_nil, EventHandleKey key = {});
-		void InvokeUncached(const sol::object &args = sol::lua_nil, EventHandleKey key = {});
+		void Invoke(const sol::object &args = sol::lua_nil, const EventHandleKey &key = {});
+		void InvokeUncached(const sol::object &args = sol::lua_nil, const EventHandleKey &key = {});
 
 		void ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider);
 		void ClearSpecificScriptHandlers(const IScriptProvider &scriptProvider, ScriptID scriptID);

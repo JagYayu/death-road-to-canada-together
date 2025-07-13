@@ -139,7 +139,7 @@ namespace tudov
 		}
 
 	  private:
-		FORCEINLINE ScriptID GetScriptIDByName(std::string_view scriptName)
+		TUDOV_FORCEINLINE ScriptID GetScriptIDByName(std::string_view scriptName)
 		{
 			return GetScriptProvider()->GetScriptIDByName(scriptName);
 		}

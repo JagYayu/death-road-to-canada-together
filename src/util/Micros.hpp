@@ -2,19 +2,19 @@
 
 #ifdef _MSC_VER
 
-#ifndef FORCEINLINE
-#define FORCEINLINE __forceinline
+#ifndef TUDOV_FORCEINLINE
+#define TUDOV_FORCEINLINE __forceinline
 #endif
 
 #else
 
-#ifndef FORCEINLINE
-#define FORCEINLINE inline
+#ifndef TUDOV_FORCEINLINE
+#define TUDOV_FORCEINLINE inline
 #endif
 
 #endif
 
-#define TUDOV_ENUM_FLAG_OPERATORS(E)                                 \
+#define TUDOV_ENUM_FLAG_OPERATORS(E)                                  \
 	inline E operator|(E a, E b)                                      \
 	{                                                                 \
 		using T = std::underlying_type_t<E>;                          \

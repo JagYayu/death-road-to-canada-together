@@ -18,7 +18,8 @@ local eventRenderGame = events:new(N_("RenderGame"), {
 })
 
 events:add("TickRender", function(e)
+	-- print(e)
 	events:invoke(eventRenderGame, e)
-end, N_("render"), nil, "Main")
+end, N_("renderGame"), nil, "Main")
 
 return Render

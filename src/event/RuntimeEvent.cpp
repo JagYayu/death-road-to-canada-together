@@ -12,6 +12,8 @@
 
 #include <cassert>
 #include <cstddef>
+#include <memory>
+#include <utility>
 #include <variant>
 
 using namespace tudov;
@@ -139,47 +141,52 @@ std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 	return _handlers;
 }
 
-void RuntimeEvent::Invoke(const sol::object &args, EventHandleKey key)
+template <typename... TArgs>
+TUDOV_FORCEINLINE void PCallHandler(std::shared_ptr<Log> &log, EventHandler &handler, TArgs &&...args)
 {
-	if (_profile && _profile->traceHandlers)
+	try
 	{
-		InvokeUncached(args, key);
-		return;
+		handler.function(std::forward<TArgs>(args)...);
 	}
+	catch (std::exception &e)
+	{
+		log->Error("{}", e.what());
+	}
+}
 
+void RuntimeEvent::Invoke(const sol::object &args, const EventHandleKey &key)
+{
 	InvocationCache *cache;
-	if (!std::holds_alternative<std::nullptr_t>(key.value))
+	bool anyKey = key.IsAny();
+
+	if (anyKey)
 	{
-		auto &&it = _invocationCaches.find(key);
-		if (it != _invocationCaches.end())
-		{
-			cache = &it->second;
-		}
-		else
-		{
-			cache = &_invocationCaches.try_emplace(key, InvocationCache()).first->second;
-			for (auto &&handler : GetSortedHandlers())
-			{
-				if (handler.key == key)
-				{
-					cache->emplace_back(handler.function);
-				}
-			}
-		}
-	}
-	else
-	{
-		if (!_invocationCache.has_value())
+		if (!_invocationCache.has_value()) [[unlikely]]
 		{
 			_invocationCache = InvocationCache();
 
 			for (auto &&handler : GetSortedHandlers())
 			{
-				_invocationCache->emplace_back(handler.function);
+				_invocationCache->emplace_back(&handler);
 			}
 		}
 
 		cache = &_invocationCache.value();
+	}
+	else if (auto &&it = _invocationCaches.find(key); it != _invocationCaches.end()) [[likely]]
+	{
+		cache = &it->second;
+	}
+	else [[unlikely]]
+	{
+		cache = &_invocationCaches.try_emplace(key, InvocationCache()).first->second;
+		for (auto &&handler : GetSortedHandlers())
+		{
+			if (handler.key.Match(key))
+			{
+				cache->emplace_back(&handler);
+			}
+		}
 	}
 
 	if (_profile)
@@ -187,26 +194,19 @@ void RuntimeEvent::Invoke(const sol::object &args, EventHandleKey key)
 		_profile->eventProfiler.BeginEvent(*eventManager.GetScriptEngine());
 	}
 
-	try
+	if (anyKey)
 	{
-		if (!std::holds_alternative<std::nullptr_t>(key.value))
+		for (auto &&handler : *cache)
 		{
-			for (auto &&function : *cache)
-			{
-				function(args, key);
-			}
-		}
-		else
-		{
-			for (auto &&function : *cache)
-			{
-				function(args);
-			}
+			PCallHandler(_log, *handler, args);
 		}
 	}
-	catch (std::exception &e)
+	else
 	{
-		_log->Error("{}", e.what());
+		for (auto &&handler : *cache)
+		{
+			PCallHandler(_log, *handler, args, key);
+		}
 	}
 
 	if (_profile)
@@ -215,27 +215,41 @@ void RuntimeEvent::Invoke(const sol::object &args, EventHandleKey key)
 	}
 }
 
-void RuntimeEvent::InvokeUncached(const sol::object &args, EventHandleKey key)
+void RuntimeEvent::InvokeUncached(const sol::object &args, const EventHandleKey &key)
 {
 	if (_profile)
 	{
 		_profile->eventProfiler.BeginEvent(*eventManager.GetScriptEngine());
 	}
 
-	try
+	if (std::holds_alternative<std::nullptr_t>(key.value))
 	{
-		if (!std::holds_alternative<std::nullptr_t>(key.value))
+		if (_profile && _profile->traceHandlers)
 		{
 			for (auto &&handler : _handlers)
 			{
-				if (handler.key == key)
+				PCallHandler(_log, handler, args);
+				_profile->eventProfiler.TraceHandler(*eventManager.GetScriptEngine(), handler.name);
+			}
+		}
+		else
+		{
+			for (auto &&handler : _handlers)
+			{
+				PCallHandler(_log, handler, args, key);
+			}
+		}
+	}
+	else // !anyKey
+	{
+		if (_profile && _profile->traceHandlers)
+		{
+			for (auto &&handler : _handlers)
+			{
+				if (handler.key.Match(key))
 				{
-					handler.function(args, key);
-
-					if (_profile)
-					{
-						_profile->eventProfiler.TraceHandler(*eventManager.GetScriptEngine(), handler.name);
-					}
+					PCallHandler(_log, handler, args);
+					_profile->eventProfiler.TraceHandler(*eventManager.GetScriptEngine(), handler.name);
 				}
 			}
 		}
@@ -243,18 +257,12 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, EventHandleKey key)
 		{
 			for (auto &&handler : _handlers)
 			{
-				handler.function(args);
-
-				if (_profile)
+				if (handler.key.Match(key))
 				{
-					_profile->eventProfiler.TraceHandler(*eventManager.GetScriptEngine(), handler.name);
+					PCallHandler(_log, handler, args, key);
 				}
 			}
 		}
-	}
-	catch (std::exception &e)
-	{
-		_log->Error("{}", e.what());
 	}
 
 	if (_profile)

@@ -6,19 +6,14 @@
 -- function SpriteRenderer.test()
 -- end
 
-local entities = {}
+local renderTarget
 
 events:add(N_("RenderGame"), function(e)
-	e.window.renderer:clear()
+	renderTarget = renderTarget or e.window.renderer:newRenderTarget()
+	renderTarget:beginTarget()
 
-	-- renderer:setTransform(Camera.getTransform())
-
-	-- renderer:clear()
-
-	-- -- buffer:draw(0, 0, 1000, 1000, 1, 0, 0, 240, 240, -1, 0, 0, 0, 0)
-	-- renderer:drawText("hello world", { 36, 1 }, 16, 100, 100, -1, 1, 0, 0, 0, 1)
-
-	-- renderer:render()
-end, N_("renderSprites"), nil)
+	renderTarget:endTarget()
+	-- local p = print(1);
+end, N_("renderSprites"), "Main")
 
 -- return SpriteRenderer

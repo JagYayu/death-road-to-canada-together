@@ -2,6 +2,7 @@
 
 #include "EngineComponent.hpp"
 #include "graphic/Renderer.hpp"
+#include "mod/LuaAPI.hpp"
 #include "util/Log.hpp"
 
 #include <memory>
@@ -30,8 +31,11 @@ namespace tudov
 		virtual void Render() noexcept = 0;
 	};
 
-	class Window : public IWindow
+	class Window : public IWindow, public ILuaAPIProvider
 	{
+		protected:
+		static ILuaAPI::TInstallation windowLuaAPIInstallation;
+		
 	  protected:
 		Context &_context;
 		std::shared_ptr<Log> _log;
@@ -45,10 +49,12 @@ namespace tudov
 		explicit Window(Context &context, std::string_view logName = "Window") noexcept;
 		~Window() noexcept override;
 
-		protected:
+	  protected:
 		void RenderPreImpl() noexcept;
 
 	  public:
+		void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
+
 		Context &GetContext() noexcept override;
 		void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;
 		std::int32_t GetWidth() const noexcept override;

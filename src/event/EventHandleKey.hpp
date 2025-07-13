@@ -33,9 +33,19 @@ namespace tudov
 
 		std::variant<std::nullptr_t, std::double_t, std::string> value;
 
-		bool operator==(const EventHandleKey &other) const
+		inline bool operator==(const EventHandleKey &other) const
 		{
 			return value == other.value;
+		}
+
+		inline bool IsAny() const noexcept
+		{
+			return std::holds_alternative<std::nullptr_t>(value);
+		}
+
+		inline bool Match(const EventHandleKey &key) const noexcept
+		{
+			return IsAny() || value == key.value;
 		}
 	};
 } // namespace tudov

@@ -69,7 +69,7 @@ void ScriptEngine::Initialize() noexcept
 	_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
 	_luaPostProcessSandboxing = scriptEngineModule.raw_get<sol::function>("postProcessSandboxing");
 
-	LuaAPI().Install(_lua, _context);
+	GetLuaAPI()->Install(_lua, _context);
 
 	MakeReadonlyGlobal(_lua.globals());
 }
@@ -228,7 +228,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 
 	sol::environment env{_lua, sol::create, sandboxKey.empty() ? _lua.globals().as<sol::table>() : GetSandboxedGlobals(sandboxKey)};
 
-	env.set_function("print", [&](const sol::variadic_args &args)
+	env.set_function("print", [this, scriptName](const sol::variadic_args &args)
 	{
 		try
 		{

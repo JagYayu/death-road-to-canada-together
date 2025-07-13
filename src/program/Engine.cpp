@@ -136,15 +136,16 @@ void Engine::Initialize() noexcept
 		InitializeMainWindow();
 		InitializeResources();
 
+		ProvideLuaAPI(*_luaAPI);
+
 		for (auto &&it = _components.begin(); it != _components.end(); ++it)
 		{
 			it->get()->Initialize();
 		}
 
 		ProvideDebug(*_debugManager);
-		ProvideLuaAPI(*_luaAPI);
 
-		_modManager->LoadMods();
+		_modManager->LoadModsDeferred();
 		_previousTime = SDL_GetTicksNS();
 		_framerate = 0;
 		_state = EState::Initialized;
@@ -394,16 +395,14 @@ void Engine::ProvideDebug(IDebugManager &debugManager) noexcept
 
 void Engine::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
 {
-	static constexpr auto classname = "tudov_Engine";
-
-	_luaAPI->RegisterInstallation(classname, [this](sol::state &lua)
+	_luaAPI->RegisterInstallation("tudov_Engine", [this](sol::state &lua)
 	{
 		auto GetMainWindow = [this]()
 		{
 			return _mainWindow.lock().get();
 		};
 
-		lua.new_usertype<Engine>(classname,
+		lua.new_usertype<Engine>("tudov_Engine",
 		                         "mainWindow", sol::readonly_property(GetMainWindow),
 		                         "quit", &Engine::Quit);
 		lua["engine"] = this;
@@ -414,6 +413,14 @@ void Engine::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
 		if (auto &&luaAPIProvider = std::dynamic_pointer_cast<ILuaAPIProvider>(component); luaAPIProvider != nullptr)
 		{
 			luaAPIProvider->ProvideLuaAPI(*_luaAPI);
+		}
+	}
+
+	if (!_mainWindow.expired())
+	{
+		if (auto &&luaAPIProvider = std::dynamic_pointer_cast<ILuaAPIProvider>(_mainWindow.lock()); luaAPIProvider != nullptr)
+		{
+			luaAPIProvider->ProvideLuaAPI(luaAPI);
 		}
 	}
 }

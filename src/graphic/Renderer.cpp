@@ -1,5 +1,6 @@
 #include "Renderer.hpp"
 
+#include "RenderTarget.hpp"
 #include "program/Window.hpp"
 #include "resource/ImageManager.hpp"
 
@@ -7,12 +8,14 @@
 #include "SDL3/SDL_surface.h"
 #include "sol/table.hpp"
 
+#include <cmath>
 #include <memory>
+#include <utility>
 
 using namespace tudov;
 
 Renderer::Renderer(Window &window) noexcept
-    : window(window),
+    : _window(window),
       _log(Log::Get("Renderer")),
       _sdlRenderer(nullptr)
 {
@@ -20,19 +23,48 @@ Renderer::Renderer(Window &window) noexcept
 
 void Renderer::Initialize() noexcept
 {
-	_sdlRenderer = SDL_CreateRenderer(window.GetSDLWindowHandle(), nullptr);
+	_sdlRenderer = SDL_CreateRenderer(_window.GetSDLWindowHandle(), nullptr);
 	if (!_sdlRenderer)
 	{
 		_log->Error("Failed to create SDL3 Renderer");
 	}
 }
 
-std::shared_ptr<Texture> Renderer::GetOrCreateTexture(ImageID imageID) noexcept
+ILuaAPI::TInstallation Renderer::rendererLuaAPIInstallation = [](sol::state &lua)
+{
+	lua.new_usertype<Renderer>("tudov_Renderer",
+	                           "clear", &Renderer::LuaClear,
+	                           "render", &Renderer::Render,
+	                           "drawRect", &Renderer::LuaDrawTexture,
+	                           "newRenderTarget", &Renderer::LuaNewRenderTarget,
+	                           "renderTexture", &Renderer::DrawTexture);
+
+	lua.new_usertype<RenderTarget>("tudov_RenderTarget",
+	                               "beginTarget", &RenderTarget::LuaBeginTarget,
+	                               "endTarget", &RenderTarget::LuaEndTarget);
+};
+
+void Renderer::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
+{
+	luaAPI.RegisterInstallation("tudov_Renderer", rendererLuaAPIInstallation);
+}
+
+IWindow &Renderer::GetWindow() noexcept
+{
+	return _window;
+}
+
+Context &Renderer::GetContext() noexcept
+{
+	return _window.GetContext();
+}
+
+std::shared_ptr<Texture> Renderer::GetOrCreateImageTexture(ImageID imageID) noexcept
 {
 	auto &&texture = _textureManager.GetResource(imageID);
 	if (!texture) [[unlikely]]
 	{
-		auto &&imageManager = window.GetImageManager();
+		auto &&imageManager = _window.GetImageManager();
 		auto &&image = imageManager.GetResource(imageID);
 		if (!image)
 		{
@@ -49,22 +81,76 @@ std::shared_ptr<Texture> Renderer::GetOrCreateTexture(ImageID imageID) noexcept
 	return texture;
 }
 
-void Renderer::SetRenderTarget(const std::shared_ptr<Texture> &texture) noexcept
+std::weak_ptr<Texture> Renderer::CreateTexture(std::int32_t width, std::int32_t height, SDL_PixelFormat format, SDL_TextureAccess access) noexcept
 {
-	SDL_SetRenderTarget(_sdlRenderer, texture->GetSDLTextureHandle());
+	auto &&texture = std::make_shared<Texture>(*this);
+	texture->Initialize(width, height, format, access);
+	_heldTextures[texture.get()->GetSDLTextureHandle()] = texture;
+	return texture;
+}
+
+std::weak_ptr<Texture> Renderer::CreateTexture(Image &image)
+{
+	auto &&texture = std::make_shared<Texture>(*this);
+	texture->Initialize(image);
+	_heldTextures[texture.get()->GetSDLTextureHandle()] = texture;
+	return texture;
+}
+
+bool Renderer::DestroyTexture(const std::shared_ptr<Texture> &texture) noexcept
+{
+	return _heldTextures.erase(texture.get()->GetSDLTextureHandle());
+}
+
+std::shared_ptr<Texture> Renderer::GetRenderTexture() noexcept
+{
+	if (auto &&sdlTexture = SDL_GetRenderTarget(_sdlRenderer); sdlTexture != nullptr)
+	{
+		auto &&it = _heldTextures.find(sdlTexture);
+		if (it != _heldTextures.end())
+		{
+			return it->second;
+		}
+	}
+	return nullptr;
+}
+
+void Renderer::SetRenderTexture(const std::shared_ptr<Texture> &texture) noexcept
+{
+	if (auto &&sdlTexture = SDL_GetRenderTarget(_sdlRenderer); sdlTexture != nullptr)
+	{
+		_heldTextures.erase(sdlTexture);
+	}
+
+	if (texture != nullptr)
+	{
+		SDL_SetRenderTarget(_sdlRenderer, texture->GetSDLTextureHandle());
+		_heldTextures[texture.get()->GetSDLTextureHandle()] = texture;
+	}
 }
 
 void Renderer::DrawTexture(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src, std::float_t z) noexcept
 {
-	// TODO
-	// SDL_RenderTexture(_sdlRenderer, texture->GetSDLTextureHandle(), &src, &dst);
+	DrawTextureCommand cmd{};
+
+	cmd.tex = texture->GetSDLTextureHandle();
+	cmd.dst = dst;
+	cmd.src = src;
+	cmd.ang = 0;
+	cmd.nulls = DrawTextureCommand::Ori;
+
+	_renderCommands.emplace_back(RenderCommand{
+	    .drawTexture = cmd,
+	    .type = RenderCommandType::DrawTexture,
+	    .z = z,
+	});
 }
 
 void Renderer::LuaDrawTexture(const sol::table &args)
 {
 	DrawTextureCommand cmd{};
 
-	auto texture = GetOrCreateTexture(args.get_or<ImageID>("image", 0));
+	auto texture = GetOrCreateImageTexture(args.get_or<ImageID>("image", 0));
 	if (!texture) [[unlikely]]
 	{
 		_log->Error("Failed to draw rect: invalid 'image'");
@@ -118,15 +204,13 @@ void Renderer::LuaDrawTexture(const sol::table &args)
 	    .type = RenderCommandType::DrawTexture,
 	    .z = args.get_or("z", 0.0f),
 	});
-	// SDL_RenderTextureRotated(_sdlRenderer, texture->GetSDLTextureHandle(),
-	//                          psrc, &dst, angle, pcenter, SDL_FLIP_NONE);
 }
 
-std::shared_ptr<Texture> Renderer::LuaNewRenderTexture(std::int32_t width, std::int32_t height)
+std::shared_ptr<RenderTarget> Renderer::LuaNewRenderTarget(const sol::object &width, const sol::object &height)
 {
-	auto &&texture = std::make_shared<Texture>(*this);
-	texture->Initialize(width, height, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET);
-	return texture;
+	return std::make_shared<RenderTarget>(*this,
+	                                      width.is<double_t>() ? int32_t(width.as<double_t>()) : _window.GetWidth(),
+	                                      height.is<double_t>() ? int32_t(height.as<double_t>()) : _window.GetHeight());
 }
 
 void Renderer::Clear(const SDL_Color &color) noexcept
@@ -173,11 +257,6 @@ void Renderer::Render() noexcept
 }
 
 SDL_Renderer *Renderer::GetSDLRendererHandle() noexcept
-{
-	return _sdlRenderer;
-}
-
-const SDL_Renderer *Renderer::GetSDLRendererHandle() const noexcept
 {
 	return _sdlRenderer;
 }

@@ -29,6 +29,7 @@ namespace tudov
 		virtual bool IsModMatched(const Mod &mod) const = 0;
 
 		virtual void LoadMods() = 0;
+		virtual void LoadModsDeferred() = 0;
 		virtual void UnloadMods() = 0;
 
 		virtual std::weak_ptr<Mod> GetLoadedMod(std::string_view namespace_) noexcept = 0;
@@ -47,9 +48,10 @@ namespace tudov
 		enum class ELoadState
 		{
 			None = 0,
-			AllLoading = 1 << 0,
-			AllUnloading = 1 << 1,
-			HotReloading = 1 << 2,
+			LoadPending = 1 << 0,
+			Loading = 1 << 1,
+			Unloading = 1 << 2,
+			HotReloading = 1 << 3,
 		};
 
 	  protected:
@@ -82,6 +84,7 @@ namespace tudov
 		bool IsModMatched(const Mod &mod) const override;
 
 		void LoadMods() override;
+		void LoadModsDeferred() override;
 		void UnloadMods() override;
 
 		std::weak_ptr<Mod> GetLoadedMod(std::string_view namespace_) noexcept override;
@@ -92,8 +95,6 @@ namespace tudov
 		void HotReloadScriptPending(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptNamespace) override;
 
 		void Update() override;
-
-		void InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept;
 	};
 
 	TUDOV_ENUM_FLAG_OPERATORS(ModManager::ELoadState);

@@ -75,11 +75,11 @@ bool ModManager::IsModMatched(const Mod &mod) const
 
 void ModManager::LoadMods()
 {
-	if ((_loadState & ELoadState::AllLoading) != ELoadState::None)
+	if ((_loadState & ELoadState::Loading) != ELoadState::None)
 	{
 		return;
 	}
-	_loadState |= ELoadState::AllLoading;
+	_loadState |= ELoadState::Loading;
 
 	_log->Debug("Loading all required mods ...");
 
@@ -133,16 +133,24 @@ void ModManager::LoadMods()
 
 	_log->Debug("Loaded all required mods");
 
-	_loadState &= ~ELoadState::AllLoading;
+	_loadState &= ~ELoadState::Loading;
+}
+
+void ModManager::LoadModsDeferred()
+{
+	if ((_loadState & ELoadState::Loading) == ELoadState::None)
+	{
+		_loadState |= ELoadState::LoadPending;
+	}
 }
 
 void ModManager::UnloadMods()
 {
-	if ((_loadState & ELoadState::AllUnloading) != ELoadState::None)
+	if ((_loadState & ELoadState::Unloading) != ELoadState::None)
 	{
 		return;
 	}
-	_loadState |= ELoadState::AllUnloading;
+	_loadState |= ELoadState::Unloading;
 
 	_log->Debug("Unloading all loaded mods ...");
 
@@ -156,7 +164,7 @@ void ModManager::UnloadMods()
 
 	_log->Debug("Unloaded all loaded mods");
 
-	_loadState &= ~ELoadState::AllUnloading;
+	_loadState &= ~ELoadState::Unloading;
 }
 
 std::weak_ptr<Mod> ModManager::GetLoadedMod(std::string_view namespace_) noexcept
@@ -192,50 +200,43 @@ void ModManager::HotReloadScriptPending(std::string_view scriptName, std::string
 
 void ModManager::Update()
 {
-	if (!_hotReloadScriptsPending)
+	if ((_loadState & ELoadState::LoadPending) == ELoadState::LoadPending)
 	{
-		return;
+		LoadMods();
+		_loadState &= ~ELoadState::LoadPending;
+		_hotReloadScriptsPending = nullptr;
 	}
-
-	std::vector<ScriptID> scriptIDs{};
-
-	auto &&scriptLoader = GetScriptLoader();
-	auto &&scriptProvider = GetScriptProvider();
-
-	for (auto &&[scriptName, entry] : *_hotReloadScriptsPending)
+	else if (_hotReloadScriptsPending)
 	{
-		auto &&[scriptCode, scriptNamespace] = entry;
+		std::vector<ScriptID> scriptIDs{};
 
-		auto scriptID = scriptProvider->GetScriptIDByName(scriptName);
-		if (scriptID)
+		auto &&scriptLoader = GetScriptLoader();
+		auto &&scriptProvider = GetScriptProvider();
+
+		for (auto &&[scriptName, entry] : *_hotReloadScriptsPending)
 		{
-			auto &&pendingScripts = GetScriptLoader()->Unload(scriptID);
-			scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
+			auto &&[scriptCode, scriptNamespace] = entry;
 
-			if (!scriptProvider->RemoveScript(scriptID)) [[unlikely]]
+			auto scriptID = scriptProvider->GetScriptIDByName(scriptName);
+			if (scriptID)
 			{
-				_log->Warn("Attempt to remove non-exist script id", scriptID);
+				auto &&pendingScripts = GetScriptLoader()->Unload(scriptID);
+				scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
+
+				if (!scriptProvider->RemoveScript(scriptID)) [[unlikely]]
+				{
+					_log->Warn("Attempt to remove non-exist script id", scriptID);
+				}
 			}
+
+			scriptID = scriptProvider->AddScript(scriptName, scriptCode, scriptNamespace);
+			scriptIDs.emplace_back(scriptID);
 		}
 
-		scriptID = scriptProvider->AddScript(scriptName, scriptCode, scriptNamespace);
-		scriptIDs.emplace_back(scriptID);
+		std::sort(scriptIDs.begin(), scriptIDs.end());
+		scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
+
+		scriptLoader->HotReload(scriptIDs);
+		_hotReloadScriptsPending = nullptr;
 	}
-
-	std::sort(scriptIDs.begin(), scriptIDs.end());
-	scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
-
-	scriptLoader->HotReload(scriptIDs);
-	_hotReloadScriptsPending = nullptr;
-}
-
-void ModManager::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
-{
-	// eventManager.InstallToScriptEngine(scriptEngine);
-
-	// auto &&table = scriptEngine.CreateTable();
-
-	// //
-
-	// scriptEngine.SetReadonlyGlobal("Events", table);
 }

@@ -53,21 +53,21 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	               "new", &EventManager::LuaNew,
 	               "invoke", &EventManager::LuaInvoke);
 
-	TUDOV_USERTYPE(Window,
-	               "renderer", &Window::renderer,
-	               "close", &Window::Close,
-	               "shouldClose", &Window::ShouldClose,
-	               "getWidth", &Window::GetWidth,
-	               "getHeight", &Window::GetHeight,
-	               "getSize", &Window::GetSize);
+	// TUDOV_USERTYPE(Window,
+	//                "renderer", &Window::renderer,
+	//                "close", &Window::Close,
+	//                "shouldClose", &Window::ShouldClose,
+	//                "getWidth", &Window::GetWidth,
+	//                "getHeight", &Window::GetHeight,
+	//                "getSize", &Window::GetSize);
 
-	TUDOV_USERTYPE(Renderer,
-	               "clear", &Renderer::LuaClear,
-	               "render", &Renderer::Render,
-	               "drawRect", &Renderer::LuaDrawTexture,
-	               "newRenderTexture", &Renderer::LuaNewRenderTexture,
-	               "setRenderTarget", &Renderer::SetRenderTarget,
-	               "renderTexture", &Renderer::DrawTexture);
+	// TUDOV_USERTYPE(Renderer,
+	//                "clear", &Renderer::LuaClear,
+	//                "render", &Renderer::Render,
+	//                "drawRect", &Renderer::LuaDrawTexture,
+	//                "newRenderTexture", &Renderer::LuaNewRenderTexture,
+	//                "setRenderTexture", &Renderer::SetRenderTexture,
+	//                "renderTexture", &Renderer::DrawTexture);
 
 	// lua["engine"] = &context.GetEngine();
 	lua["fonts"] = &context.GetFontManager();

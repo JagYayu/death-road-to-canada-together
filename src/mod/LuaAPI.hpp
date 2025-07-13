@@ -3,7 +3,6 @@
 #include "ScriptEngine.hpp"
 
 #include "sol/state.hpp"
-#include "util/Log.hpp"
 
 #include <functional>
 #include <string_view>
@@ -39,7 +38,7 @@ namespace tudov
 	struct ILuaAPIProvider
 	{
 		virtual ~ILuaAPIProvider() noexcept = default;
-		
+
 		virtual void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept = 0;
 	};
 } // namespace tudov

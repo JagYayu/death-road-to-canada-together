@@ -159,7 +159,7 @@ namespace tudov
 		unorderedMap.swap(trimmed);
 	}
 
-	FORCEINLINE void UnhandledCppException(std::shared_ptr<Log> &log, const std::exception &e)
+	TUDOV_FORCEINLINE void UnhandledCppException(std::shared_ptr<Log> &log, const std::exception &e)
 	{
 		log->Fatal("Unhandled C++ exception occurred: {}", e.what());
 	}

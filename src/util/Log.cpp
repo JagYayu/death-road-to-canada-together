@@ -202,7 +202,7 @@ void Log::Output(std::string_view verb, std::string_view str) const
 void Log::Output(std::string_view module, std::string_view verb, std::string_view str)
 {
 	{
-		std::lock_guard<std::mutex> lock(_mutex);
+		std::lock_guard<std::mutex> lock{_mutex};
 		_queue.push(Entry{
 		    .time = std::chrono::system_clock::now(),
 		    .verbosity = verb,

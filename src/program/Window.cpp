@@ -1,6 +1,5 @@
 #include "Window.hpp"
 
-#include "SDL3/SDL_render.h"
 #include "SDL3/SDL_video.h"
 #include "event/EventManager.hpp"
 #include "graphic/Renderer.hpp"
@@ -30,6 +29,27 @@ Window::~Window() noexcept
 	{
 		SDL_DestroyWindow(_sdlWindow);
 	}
+}
+
+ILuaAPI::TInstallation Window::windowLuaAPIInstallation = [](sol::state &lua)
+{
+	lua.new_usertype<Window>("tudov_Window",
+	                         "renderer", &Window::renderer,
+	                         "close", &Window::Close,
+	                         "shouldClose", &Window::ShouldClose,
+	                         "getWidth", &Window::GetWidth,
+	                         "getHeight", &Window::GetHeight,
+	                         "getSize", &Window::GetSize);
+};
+
+void Window::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
+{
+	if (auto &&luaAPIProvider = std::dynamic_pointer_cast<Renderer>(renderer); luaAPIProvider != nullptr)
+	{
+		luaAPIProvider->ProvideLuaAPI(luaAPI);
+	}
+
+	luaAPI.RegisterInstallation("tudov_Window", windowLuaAPIInstallation);
 }
 
 Context &Window::GetContext() noexcept
@@ -100,9 +120,11 @@ void Window::Render() noexcept
 void Window::RenderPreImpl() noexcept
 {
 	auto &&args = GetScriptEngine()->CreateTable(0, 1);
-	args["window"] = this;
+	auto &&key = GetKey();
 	args["isMain"] = GetEngine().GetMainWindow().get() == this;
-	GetEventManager()->GetCoreEvents().TickRender()->Invoke(args, GetKey());
+	args["key"] = &key;
+	args["window"] = this;
+	GetEventManager()->GetCoreEvents().TickRender()->Invoke(args, key);
 }
 
 SDL_Window *Window::GetSDLWindowHandle() noexcept
