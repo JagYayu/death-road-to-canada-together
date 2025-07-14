@@ -276,6 +276,7 @@ void RuntimeEvent::ClearCaches()
 	_handlersSortedCache = false;
 	_invocationCache = std::nullopt;
 	_invocationCaches.clear();
+	_log->Trace("Runtime event <{}> cleared caches", _id);
 }
 
 void RuntimeEvent::ClearScriptHandlersImpl(std::function<bool(const EventHandler &)> pred)

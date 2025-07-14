@@ -54,6 +54,7 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_
 	++_latestScriptID;
 	auto &&id = _latestScriptID;
 	auto &&name = _scriptID2Entry.try_emplace(id, std::string(scriptName), std::string(scriptCode), namespace_).first->second.name;
+	_log->Trace("Add script <{}>\"{}\"", id, name);
 	_scriptName2ID.emplace(name, id);
 	return id;
 }
@@ -132,9 +133,9 @@ bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 	auto &&it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())
 	{
-		// _log->Warn("Attempt to remove non-exist scriptID: {}", scriptID);
 		return false;
 	}
+	_log->Trace("Remove script <{}>\"{}\"", scriptID, it->second.name);
 	_scriptName2ID.erase(it->second.name);
 	_scriptID2Entry.erase(it);
 	return true;

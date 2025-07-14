@@ -20,7 +20,7 @@ namespace tudov
 	struct IEventManager : public IEngineComponent
 	{
 		~IEventManager() noexcept override = default;
-		
+
 		virtual ICoreEvents &GetCoreEvents() noexcept = 0;
 		[[nodiscard]] virtual ScriptID GetEventIDByName(std::string_view scriptName) const noexcept = 0;
 		[[nodiscard]] virtual std::optional<std::string_view> GetEventNameByID(EventID eventID) const noexcept = 0;

@@ -4,6 +4,7 @@
 #include "ModManager.hpp"
 #include "ScriptLoader.hpp"
 #include "ScriptProvider.hpp"
+#include "sol/error.hpp"
 #include "sol/table.hpp"
 #include "util/Defs.hpp"
 #include "util/StringUtils.hpp"
@@ -12,6 +13,7 @@
 #include <cassert>
 #include <corecrt_terminate.h>
 #include <sol/environment.hpp>
+#include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/load_result.hpp>
 #include <sol/sol.hpp>
@@ -19,6 +21,7 @@
 #include <sol/types.hpp>
 #include <sol/variadic_args.hpp>
 
+#include <tuple>
 #include <unordered_map>
 
 using namespace tudov;
@@ -66,6 +69,7 @@ void ScriptEngine::Initialize() noexcept
 	_luaThrowModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::function>();
 	_luaInspect = scriptLoader->Load("#lua.inspect")->GetTable().raw_get<sol::function>("inspect");
 	auto &&scriptEngineModule = scriptLoader->Load("#lua.ScriptEngine")->GetTable();
+	scriptEngineModule.raw_get<sol::function>("initialize")();
 	_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
 	_luaPostProcessSandboxing = scriptEngineModule.raw_get<sol::function>("postProcessSandboxing");
 
@@ -228,7 +232,13 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 
 	sol::environment env{_lua, sol::create, sandboxKey.empty() ? _lua.globals().as<sol::table>() : GetSandboxedGlobals(sandboxKey)};
 
-	env.set_function("print", [this, scriptName](const sol::variadic_args &args)
+	if (!env.valid()) [[unlikely]]
+	{
+		_log->Error("Failed to create Lua environment!");
+		return;
+	}
+
+	env["print"] = [this, scriptName](const sol::variadic_args &args)
 	{
 		try
 		{
@@ -247,7 +257,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 		{
 			UnhandledCppException(_log, e);
 		}
-	});
+	};
 
 	env.set_function("require", [&, env, scriptID](const sol::string_view &targetScriptName) -> sol::object
 	{
@@ -277,6 +287,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 			}
 
 			IScriptEngine::ThrowError("Script module '{}' not found", targetScriptName.data());
+			// return sol::error(std::format("Script module '{}' not found", targetScriptName.data()));
 		}
 		catch (const std::exception &e)
 		{

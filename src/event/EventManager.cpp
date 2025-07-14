@@ -487,6 +487,7 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 		{
 			scriptEngine->ThrowError("Bad argument #1 to 'event': expected EventID or string");
 			return;
+			// return sol::error("Bad argument #1 to 'event': expected EventID or string");
 		}
 
 		EventHandleKey k{nullptr};
@@ -552,7 +553,7 @@ void EventManager::ClearInvalidScriptEvents() noexcept
 		if (scriptID && !scriptProvider->IsValidScript(scriptID))
 		{
 			DeallocEventID(it->first);
-			_log->Trace("Clear invalid event <{}> from script <{}>", it->first, scriptID);
+			_log->Trace("Clear invalid event <{}>, script <{}>", it->first, scriptID);
 			it = _runtimeEvents.erase(it);
 		}
 		else

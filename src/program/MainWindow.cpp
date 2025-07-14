@@ -92,7 +92,7 @@ void MainWindow::Render() noexcept
 	ImGui::NewFrame();
 	{
 		auto &&engine = GetEngine();
-		if (engine.GetLoadingState() != Engine::ELoadingState::Loading)
+		if (engine.GetLoadingState() != Engine::ELoadingState::InProgress)
 		{
 			RenderPreImpl();
 
@@ -151,17 +151,17 @@ void MainWindow::RenderLoadingGUI(Engine &engine) noexcept
 
 		{
 			auto rep = ((engine.GetTick() - engine.GetLoadingBeginTick()) / 200'000'000) % 4;
-			ImGui::Text("%s%s", loadingInfo->title.c_str(), std::string(rep, '.').c_str());
+			ImGui::Text("%s%s", loadingInfo.title.c_str(), std::string(rep, '.').c_str());
 			ImGui::Spacing();
 		}
 		{
-			auto value = loadingInfo->progressValue;
-			auto total = loadingInfo->progressTotal;
+			auto value = loadingInfo.progressValue;
+			auto total = loadingInfo.progressTotal;
 			ImGui::ProgressBar(value / total, ImVec2(width, 0.0f), std::format("{}/{}", value, total).c_str());
 			ImGui::Spacing();
 		}
 		{
-			ImGui::TextDisabled("%s", loadingInfo->description.c_str());
+			ImGui::TextDisabled("%s", loadingInfo.description.c_str());
 		}
 
 		ImGui::End();

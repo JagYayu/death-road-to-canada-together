@@ -111,10 +111,10 @@ const sol::table &ScriptLoader::Module::LazyLoad(IScriptLoader &iScriptLoader)
 	{
 		return FullLoad(iScriptLoader)[key];
 	};
-	metatable["__newindex"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	metatable["__newindex"] = [](const sol::this_state &ts, const sol::object &, const sol::object &key)
 	{
-		iScriptLoader.GetScriptEngine()->ThrowError("Attempt to modify readonly table");
-		return;
+		// iScriptLoader.GetScriptEngine()->ThrowError("Attempt to modify readonly table");
+		return sol::error("Attempt to modify readonly table");
 	};
 
 	return _table;
@@ -143,23 +143,26 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 	auto &&metatable = scriptEngine->CreateTable(0, 2);
 	_table[sol::metatable_key] = metatable;
 
-	metatable["__index"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	metatable["__index"] = [this, parent](const sol::this_state &ts, const sol::object &, const sol::object &key)
 	{
 		if (auto &&prevScriptID = FindPreviousInStack(parent._scriptLoopLoadStack, _scriptID); prevScriptID.has_value())
 		{
 			auto &&scriptProvider = parent.GetScriptProvider();
 			auto scriptName = scriptProvider->GetScriptNameByID(_scriptID);
 			auto prevScriptName = scriptProvider->GetScriptNameByID(*prevScriptID);
-			parent.GetScriptEngine()->ThrowError(std::format("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *scriptName, *prevScriptID, *prevScriptName));
+			// parent.GetScriptEngine()->ThrowError(std::format("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *scriptName, *prevScriptID, *prevScriptName));
+			return sol::error(std::format("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *scriptName, *prevScriptID, *prevScriptName));
 		}
 		else
 		{
-			parent.GetScriptEngine()->ThrowError("Attempt to access incomplete module");
+			return sol::error("Attempt to access incomplete module");
+			// parent.GetScriptEngine()->ThrowError("Attempt to access incomplete module");
 		}
 	};
-	metatable["__newindex"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	metatable["__newindex"] = [](const sol::this_state &ts, const sol::object &, const sol::object &key)
 	{
-		scriptLoader.GetScriptEngine()->ThrowError("Attempt to modify readonly module");
+		// scriptLoader.GetScriptEngine()->ThrowError("Attempt to modify readonly module");
+		return sol::error("Attempt to modify readonly module");
 	};
 
 	parent._scriptLoopLoadStack.emplace_back(_scriptID);
@@ -317,6 +320,11 @@ std::vector<ScriptID> ScriptLoader::GetDependencies(ScriptID scriptID) const
 
 void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 {
+	if (source == target)
+	{
+		return;
+	}
+
 	auto &&scriptProvider = GetScriptProvider();
 	if (!scriptProvider->IsValidScript(source) || !scriptProvider->IsValidScript(target)) [[unlikely]]
 	{
@@ -403,14 +411,14 @@ std::shared_ptr<IScriptLoader::IModule> ScriptLoader::Load(ScriptID scriptID)
 {
 	if (!scriptID)
 	{
-		_log->Warn("Attempt to load invalid script <{}>", scriptID);
+		_log->Warn("Attempt to load invalid script <{}>: id is 0", scriptID);
 		return nullptr;
 	}
 	auto &&scriptProvider = GetScriptProvider();
 	auto &&scriptName = scriptProvider->GetScriptNameByID(scriptID);
 	if (!scriptName.has_value())
 	{
-		_log->Warn("Attempt to load invalid script <{}>: missing script name", scriptID);
+		_log->Warn("Attempt to load invalid script <{}>: not provided", scriptID);
 		return nullptr;
 	}
 

@@ -12,7 +12,7 @@
 			".*\\.lua$"
 		],
 		"closedSource": false,
-		"sandbox": true
+		"sandbox": false
 	},
 	"audios": {
 		"directory": "audios",

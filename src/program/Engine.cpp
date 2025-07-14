@@ -7,8 +7,6 @@
 #include "Window.hpp"
 #include "debug/Debug.hpp"
 #include "debug/DebugManager.hpp"
-#include "imgui_impl_sdl3.h"
-#include "imgui_impl_sdlrenderer3.h"
 #include "mod/LuaAPI.hpp"
 #include "network/Network.hpp"
 #include "resource/ResourceType.hpp"
@@ -21,12 +19,16 @@
 #include "SDL3/SDL_timer.h"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <exception>
 #include <memory>
+#include <mutex>
 #include <regex>
 #include <thread>
 #include <vector>
+
+static constexpr bool DebugSingleThread = false;
 
 using namespace tudov;
 
@@ -55,11 +57,16 @@ Engine::Engine(const MainArgs &args) noexcept
 	_loadingState = ELoadingState::Done;
 	_loadingThread = std::thread([this]()
 	{
-		while (!ShouldQuit())
+		while (!DebugSingleThread && !ShouldQuit())
 		{
-			if (_loadingState == ELoadingState::Pending)
+			if (!_loadingMutex.try_lock())
 			{
-				_loadingState = ELoadingState::Loading;
+				continue;
+			}
+			_loadingMutex.unlock();
+
+			if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::InProgress))
+			{
 				SetLoadingInfo(Engine::LoadingInfoArgs{
 				    .title = "Loading",
 				    .description = "Please wait.",
@@ -76,7 +83,8 @@ Engine::Engine(const MainArgs &args) noexcept
 				    .progressValue = 1.0f,
 				    .progressTotal = 1.0f,
 				});
-				_loadingState = ELoadingState::Done;
+
+				_loadingState.store(ELoadingState::Done, std::memory_order_release);
 			}
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -169,41 +177,48 @@ bool Engine::Tick() noexcept
 	_framerate = 1'000'000'000.0 / (beginNS - _previousTime);
 	_previousTime = beginNS;
 
-	if (_loadingState == ELoadingState::Done)
+	if (ELoadingState expected = ELoadingState::Done; _loadingState.compare_exchange_strong(expected, ELoadingState::Pending))
 	{
-		_loadingState = ELoadingState::Pending;
+		// recording background loading ticks.
 		_loadingBeginNS = SDL_GetTicksNS();
 	}
 
-	if (_loadingState != ELoadingState::Loading)
+	if (DebugSingleThread)
 	{
-		if (!_scriptLoader->HasAnyLoadError())
-		{
-			_eventManager->GetCoreEvents().TickUpdate()->Invoke();
-		}
+		_modManager->Update();
+		_eventManager->GetCoreEvents().TickLoad()->Invoke();
+	}
 
-		for (auto &&event : _sdlEvents)
+	{
+		std::lock_guard<std::mutex> lock{_loadingMutex};
+
+		if (_loadingState.load() != ELoadingState::InProgress)
 		{
-			HandleEvent(*event);
-			delete event;
+			if (!_scriptLoader->HasAnyLoadError())
+			{
+				_eventManager->GetCoreEvents().TickUpdate()->Invoke();
+			}
+
+			for (auto &&event : _sdlEvents)
+			{
+				HandleEvent(*event);
+				delete event;
+			}
+			_sdlEvents.clear();
+
+			for (auto &&window : _windows)
+			{
+				window->HandleEvents();
+			}
+
+			_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
 		}
-		_sdlEvents.clear();
 
 		for (auto &&window : _windows)
 		{
-			window->HandleEvents();
+			window->Render();
 		}
-
-		_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
 	}
-
-	for (auto &&window : _windows)
-	{
-		window->Render();
-	}
-
-	ImGui::EndFrame();
-	ImGui::Render();
 
 	std::uint64_t endNS = SDL_GetTicksNS();
 	auto limit = 1'000'000'000ull / uint64_t(_config.GetWindowFramelimit());
@@ -440,36 +455,6 @@ void Engine_ChangeEngineComponent(std::shared_ptr<Log> &log, std::string_view co
 	}
 }
 
-void Engine::ChangeModManager(const std::shared_ptr<IModManager> &modManager) noexcept
-{
-	Engine_ChangeEngineComponent(_log, "IModManager", _modManager, modManager);
-}
-
-void Engine::ChangeScriptEngine(const std::shared_ptr<IScriptEngine> &scriptEngine) noexcept
-{
-	Engine_ChangeEngineComponent(_log, "IScriptEngine", _scriptEngine, scriptEngine);
-}
-
-void Engine::ChangeScriptLoader(const std::shared_ptr<IScriptLoader> &scriptLoader) noexcept
-{
-	Engine_ChangeEngineComponent(_log, "IScriptLoader", _scriptLoader, scriptLoader);
-}
-
-void Engine::ChangeScriptProvider(const std::shared_ptr<IScriptProvider> &scriptProvider) noexcept
-{
-	Engine_ChangeEngineComponent(_log, "IScriptProvider", _scriptProvider, scriptProvider);
-}
-
-void Engine::ChangeEventManager(const std::shared_ptr<IEventManager> &eventManager) noexcept
-{
-	Engine_ChangeEngineComponent(_log, "IEventManager", _eventManager, eventManager);
-}
-
-void Engine::ChangeGameScripts(const std::shared_ptr<IGameScripts> &gameScripts) noexcept
-{
-	Engine_ChangeEngineComponent(_log, "IGameScripts", _gameScripts, gameScripts);
-}
-
 std::float_t Engine::GetFramerate() const noexcept
 {
 	return _framerate;
@@ -507,14 +492,15 @@ std::uint64_t Engine::GetLoadingBeginTick() const noexcept
 	return _loadingBeginNS;
 }
 
-Engine::LoadingInfo *Engine::GetLoadingInfo() noexcept
+Engine::LoadingInfo Engine::GetLoadingInfo() noexcept
 {
-	return &_loadingInfo;
+	std::lock_guard<std::mutex> lock{_loadingInfoMutex};
+	return _loadingInfo;
 }
 
 void Engine::SetLoadingInfo(LoadingInfoArgs loadingInfo) noexcept
 {
-	if (_loadingState == Engine::ELoadingState::Loading)
+	if (_loadingState.load() == ELoadingState::InProgress)
 	{
 		_loadingInfoMutex.lock();
 		_loadingInfo.title = loadingInfo.title.has_value() ? loadingInfo.title.value() : _loadingInfo.title;

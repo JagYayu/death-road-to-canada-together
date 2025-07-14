@@ -4,6 +4,9 @@ local enumTables
 local type = type
 
 return {
+	initialize = function()
+		-- jit.off()
+	end,
 	markAsLocked = function(t)
 		if type(t) == "table" then
 			lockedMetatables[t] = true

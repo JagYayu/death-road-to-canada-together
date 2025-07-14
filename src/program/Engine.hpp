@@ -42,7 +42,7 @@ namespace tudov
 		{
 			Done,
 			Pending,
-			Loading,
+			InProgress,
 		};
 
 		struct LoadingInfoArgs
@@ -79,6 +79,7 @@ namespace tudov
 		std::vector<SDL_Event *> _sdlEvents;
 		std::atomic<ELoadingState> _loadingState;
 		std::thread _loadingThread;
+		std::mutex _loadingMutex;
 		std::uint64_t _loadingBeginNS;
 		LoadingInfo _loadingInfo;
 		std::mutex _loadingInfoMutex;
@@ -124,21 +125,13 @@ namespace tudov
 		void ProvideDebug(IDebugManager &debugManager) noexcept override;
 		void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
 
-		// These functions are not fully tested yet, can lead to errors.
-		void ChangeModManager(const std::shared_ptr<IModManager> &modManager) noexcept;
-		void ChangeScriptEngine(const std::shared_ptr<IScriptEngine> &scriptEngine) noexcept;
-		void ChangeScriptLoader(const std::shared_ptr<IScriptLoader> &scriptLoader) noexcept;
-		void ChangeScriptProvider(const std::shared_ptr<IScriptProvider> &scriptProvider) noexcept;
-		void ChangeEventManager(const std::shared_ptr<IEventManager> &eventManager) noexcept;
-		void ChangeGameScripts(const std::shared_ptr<IGameScripts> &gameScripts) noexcept;
-
 		// Basic operations.
 
 		std::float_t GetFramerate() const noexcept;
 		std::uint64_t GetTick() const noexcept;
 		void Quit();
 
-		// Windows operations
+		// Windows operations.
 
 		std::shared_ptr<IWindow> GetMainWindow() noexcept;
 		std::shared_ptr<const IWindow> GetMainWindow() const noexcept;
@@ -150,10 +143,12 @@ namespace tudov
 		bool IsLoadingLagged() noexcept;
 		ELoadingState GetLoadingState() noexcept;
 		std::uint64_t GetLoadingBeginTick() const noexcept;
-		LoadingInfo *GetLoadingInfo() noexcept;
+		LoadingInfo GetLoadingInfo() noexcept;
 		void SetLoadingInfo(LoadingInfoArgs loadingInfo) noexcept;
 
-		inline const LoadingInfo *GetLoadingInfo() const noexcept
+		// Inline implementations.
+
+		inline const LoadingInfo GetLoadingInfo() const noexcept
 		{
 			return const_cast<Engine *>(this)->GetLoadingInfo();
 		}
@@ -162,10 +157,11 @@ namespace tudov
 		{
 			auto &&info = GetLoadingInfo();
 			SetLoadingInfo(LoadingInfoArgs{
-			    .progressValue = info->progressValue + value,
+			    .progressValue = info.progressValue + value,
 			});
 			return *this;
 		}
+
 		inline Engine &SetLoadingDescription(std::string_view description) noexcept
 		{
 			auto &&info = GetLoadingInfo();

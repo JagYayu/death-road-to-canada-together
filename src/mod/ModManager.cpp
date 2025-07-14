@@ -129,7 +129,6 @@ void ModManager::LoadMods()
 	}
 
 	GetScriptLoader()->LoadAll();
-	GetScriptEngine()->CollectGarbage();
 
 	_log->Debug("Loaded all required mods");
 
@@ -237,6 +236,8 @@ void ModManager::Update()
 		scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
 
 		scriptLoader->HotReload(scriptIDs);
+		GetScriptEngine()->CollectGarbage();
+
 		_hotReloadScriptsPending = nullptr;
 	}
 }

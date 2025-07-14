@@ -43,7 +43,7 @@ namespace tudov
 
 		void operator()(const sol::object &obj, const EventHandleKey &key) const
 		{
-			if (auto &&func = std::get_if<sol::function>(&function))
+			if (auto &&func = std::get_if<sol::function>(&function); func != nullptr)
 			{
 				auto &&result = (*func)(obj, key);
 				if (!result.valid()) [[unlikely]]
