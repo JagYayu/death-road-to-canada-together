@@ -42,7 +42,7 @@ SDL_Rect &RenderTarget::GetRect() noexcept
 	return _rect;
 }
 
-TUDOV_FORCEINLINE void AssertTextureExpired(std::weak_ptr<Texture> &texture)
+TE_FORCEINLINE void AssertTextureExpired(std::weak_ptr<Texture> &texture)
 {
 	if (texture.expired()) [[unlikely]]
 	{

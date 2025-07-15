@@ -1,8 +1,8 @@
 #pragma once
 
-#include "SDL3/SDL_Surface.h"
-
 #include <string_view>
+
+struct SDL_Surface;
 
 namespace tudov
 {

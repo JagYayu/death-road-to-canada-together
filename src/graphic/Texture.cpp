@@ -24,7 +24,7 @@ Texture::~Texture() noexcept
 	}
 }
 
-TUDOV_FORCEINLINE void AssertInitialization(SDL_Texture *sdlTexture)
+TE_FORCEINLINE void AssertInitialization(SDL_Texture *sdlTexture)
 {
 	if (sdlTexture == nullptr) [[unlikely]]
 	{

@@ -2,8 +2,6 @@
 
 #include "ScriptEngine.hpp"
 
-#include "sol/state.hpp"
-
 #include <functional>
 #include <string_view>
 #include <tuple>

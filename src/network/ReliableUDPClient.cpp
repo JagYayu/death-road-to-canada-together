@@ -99,7 +99,7 @@ void ReliableUDPClient::Disconnect()
 {
 }
 
-TUDOV_FORCEINLINE void Send(ENetPeer *peer, std::string_view data, enet_uint32 flags)
+TE_FORCEINLINE void Send(ENetPeer *peer, std::string_view data, enet_uint32 flags)
 {
 	ENetPacket *packet = enet_packet_create(data.data(), data.length(), flags);
 	enet_peer_send(peer, 0, packet);

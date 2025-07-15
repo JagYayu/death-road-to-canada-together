@@ -3,12 +3,10 @@
 #include "Mod.hpp"
 #include "ModEntry.hpp"
 #include "ScriptEngine.hpp"
-#include "ScriptLoader.hpp"
 #include "ScriptProvider.hpp"
 #include "UnpackagedMod.hpp"
 #include "event/EventManager.hpp"
 #include "program/EngineComponent.hpp"
-#include "util/Defs.hpp"
 #include "util/Log.hpp"
 
 #include <filesystem>
@@ -97,5 +95,5 @@ namespace tudov
 		void Update() override;
 	};
 
-	TUDOV_ENUM_FLAG_OPERATORS(ModManager::ELoadState);
+	TE_ENUM_FLAG_OPERATORS(ModManager::ELoadState);
 } // namespace tudov

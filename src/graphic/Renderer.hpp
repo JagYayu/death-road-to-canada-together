@@ -7,10 +7,6 @@
 #include "util/Defs.hpp"
 #include "util/Log.hpp"
 
-#include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_rect.h"
-#include "SDL3/SDL_render.h"
-
 #include <cstdint>
 #include <memory>
 #include <vector>

@@ -1,17 +1,11 @@
 #pragma once
 
 #include "ScriptLoader.hpp"
-#include "ScriptProvider.hpp"
 #include "program/EngineComponent.hpp"
-#include "sol/types.hpp"
 #include "util/Defs.hpp"
-#include "util/Utils.hpp"
 
-#include <sol/forward.hpp>
-#include <sol/load_result.hpp>
-#include <sol/sol.hpp>
-#include <sol/string_view.hpp>
-#include <sol/table.hpp>
+#include "sol/load_result.hpp"
+#include "sol/state.hpp"
 
 #include <memory>
 #include <string_view>

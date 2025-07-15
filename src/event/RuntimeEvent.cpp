@@ -142,7 +142,7 @@ std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 }
 
 template <typename... TArgs>
-TUDOV_FORCEINLINE void PCallHandler(std::shared_ptr<Log> &log, EventHandler &handler, TArgs &&...args)
+TE_FORCEINLINE void PCallHandler(std::shared_ptr<Log> &log, EventHandler &handler, TArgs &&...args)
 {
 	try
 	{

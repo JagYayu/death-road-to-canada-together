@@ -4,20 +4,17 @@
 #include "event/DelegateEvent.hpp"
 #include "program/EngineComponent.hpp"
 #include "util/Defs.hpp"
-#include "util/DependencyGraph.hpp"
 #include "util/Log.hpp"
 #include "util/Micros.hpp"
-#include "util/StringUtils.hpp"
 
-#include <optional>
 #include <sol/table.hpp>
 
-#include <map>
-#include <set>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace tudov
@@ -139,7 +136,7 @@ namespace tudov
 		}
 
 	  private:
-		TUDOV_FORCEINLINE ScriptID GetScriptIDByName(std::string_view scriptName)
+		TE_FORCEINLINE ScriptID GetScriptIDByName(std::string_view scriptName)
 		{
 			return GetScriptProvider()->GetScriptIDByName(scriptName);
 		}
