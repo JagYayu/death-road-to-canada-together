@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AddHandlerArgs.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 
 namespace tudov
 {

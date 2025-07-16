@@ -1,10 +1,10 @@
 #pragma once
 
 #include "NetworkComponent.hpp"
-#include "util/Defs.hpp"
+#include "data/Constants.hpp"
+#include "util/Definitions.hpp"
 
 #include <optional>
-#include <string_view>
 
 namespace tudov
 {

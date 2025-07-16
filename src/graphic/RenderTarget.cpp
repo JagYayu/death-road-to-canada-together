@@ -21,7 +21,7 @@ using namespace tudov;
 	{                                                                                      \
 		Log::Get("RenderTarget")->Error("C++ exception in `" #Function "`: {}", e.what()); \
 	}                                                                                      \
-	TUDOV_GEN_END
+	TE_GEN_END
 
 RenderTarget::RenderTarget(Renderer &renderer, std::int32_t width, std::int32_t height) noexcept
     : _renderer(renderer)

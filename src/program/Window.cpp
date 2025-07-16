@@ -31,26 +31,26 @@ Window::~Window() noexcept
 	}
 }
 
-ILuaAPI::TInstallation Window::windowLuaAPIInstallation = [](sol::state &lua)
-{
-	lua.new_usertype<Window>("tudov_Window",
-	                         "renderer", &Window::renderer,
-	                         "close", &Window::Close,
-	                         "shouldClose", &Window::ShouldClose,
-	                         "getWidth", &Window::GetWidth,
-	                         "getHeight", &Window::GetHeight,
-	                         "getSize", &Window::GetSize);
-};
+// ILuaAPI::TInstallation Window::windowLuaAPIInstallation = [](sol::state &lua)
+// {
+// 	lua.new_usertype<Window>("tudov_Window",
+// 	                         "renderer", &Window::renderer,
+// 	                         "close", &Window::Close,
+// 	                         "shouldClose", &Window::ShouldClose,
+// 	                         "getWidth", &Window::GetWidth,
+// 	                         "getHeight", &Window::GetHeight,
+// 	                         "getSize", &Window::GetSize);
+// };
 
-void Window::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
-{
-	if (auto &&luaAPIProvider = std::dynamic_pointer_cast<Renderer>(renderer); luaAPIProvider != nullptr)
-	{
-		luaAPIProvider->ProvideLuaAPI(luaAPI);
-	}
+// void Window::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
+// {
+// 	if (auto &&luaAPIProvider = std::dynamic_pointer_cast<Renderer>(renderer); luaAPIProvider != nullptr)
+// 	{
+// 		luaAPIProvider->ProvideLuaAPI(luaAPI);
+// 	}
 
-	luaAPI.RegisterInstallation("tudov_Window", windowLuaAPIInstallation);
-}
+// 	luaAPI.RegisterInstallation("tudov_Window", windowLuaAPIInstallation);
+// }
 
 Context &Window::GetContext() noexcept
 {
@@ -119,12 +119,12 @@ void Window::Render() noexcept
 
 void Window::RenderPreImpl() noexcept
 {
-	auto &&args = GetScriptEngine()->CreateTable(0, 1);
+	auto &&args = GetScriptEngine().CreateTable(0, 1);
 	auto &&key = GetKey();
 	args["isMain"] = GetEngine().GetMainWindow().get() == this;
 	args["key"] = &key;
 	args["window"] = this;
-	GetEventManager()->GetCoreEvents().TickRender()->Invoke(args, key);
+	GetEventManager().GetCoreEvents().TickRender().Invoke(args, key);
 }
 
 SDL_Window *Window::GetSDLWindowHandle() noexcept

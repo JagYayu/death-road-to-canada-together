@@ -3,7 +3,7 @@
 #include "AbstractEvent.hpp"
 #include "OverrideHandlerArgs.hpp"
 #include "RuntimeEvent.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 
 #include <variant>
 

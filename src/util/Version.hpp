@@ -1,11 +1,9 @@
 #pragma once
 
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 
-#include <compare>
 #include <iostream>
 #include <json.hpp>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -50,7 +48,7 @@ namespace std
 			std::size_t h = 0;
 			for (auto &&part : v)
 			{
-				h ^= std::hash<int32_t>()(part) + 0x9e3779b9 + (h << 6) + (h >> 2);
+				h ^= std::hash<int32_t>{}(part) + 0x9e3779b9 + (h << 6) + (h >> 2);
 			}
 			return h;
 		}

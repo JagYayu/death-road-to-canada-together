@@ -7,35 +7,35 @@
 
 using namespace tudov;
 
-#define TUDOV_CORE_EVENTS_GEN_INIT(Field, Name)                                            \
+#define TE_CORE_EVENTS_GEN_INIT(Field, Name)                                               \
 	Field = std::make_shared<RuntimeEvent>(eventManager, eventManager.AllocEventID(Name)); \
 	eventManager._runtimeEvents.try_emplace(Field->GetID(), Field)
 
 CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 {
-	TUDOV_CORE_EVENTS_GEN_INIT(_clientConnect, "ClientConnect");
-	TUDOV_CORE_EVENTS_GEN_INIT(_clientDisconnect, "ClientDisconnect");
-	TUDOV_CORE_EVENTS_GEN_INIT(_clientMessage, "ClientMessage");
-	TUDOV_CORE_EVENTS_GEN_INIT(_keyDown, "KeyDown");
-	TUDOV_CORE_EVENTS_GEN_INIT(_keyUp, "KeyUp");
-	TUDOV_CORE_EVENTS_GEN_INIT(_mouseMove, "MouseMove");
-	TUDOV_CORE_EVENTS_GEN_INIT(_mouseButtonDown, "MouseButtonDown");
-	TUDOV_CORE_EVENTS_GEN_INIT(_mouseButtonUp, "MouseButtonUp");
-	TUDOV_CORE_EVENTS_GEN_INIT(_mouseWheel, "MouseWheel");
-	TUDOV_CORE_EVENTS_GEN_INIT(_serverConnect, "ServerConnect");
-	TUDOV_CORE_EVENTS_GEN_INIT(_serverDisconnect, "ServerDisconnect");
-	TUDOV_CORE_EVENTS_GEN_INIT(_serverMessage, "ServerMessage");
-	TUDOV_CORE_EVENTS_GEN_INIT(_tickLoad, "TickLoad");
-	TUDOV_CORE_EVENTS_GEN_INIT(_tickRender, "TickRender");
-	TUDOV_CORE_EVENTS_GEN_INIT(_tickUpdate, "TickUpdate");
+	TE_CORE_EVENTS_GEN_INIT(_clientConnect, "ClientConnect");
+	TE_CORE_EVENTS_GEN_INIT(_clientDisconnect, "ClientDisconnect");
+	TE_CORE_EVENTS_GEN_INIT(_clientMessage, "ClientMessage");
+	TE_CORE_EVENTS_GEN_INIT(_keyDown, "KeyDown");
+	TE_CORE_EVENTS_GEN_INIT(_keyUp, "KeyUp");
+	TE_CORE_EVENTS_GEN_INIT(_mouseMove, "MouseMove");
+	TE_CORE_EVENTS_GEN_INIT(_mouseButtonDown, "MouseButtonDown");
+	TE_CORE_EVENTS_GEN_INIT(_mouseButtonUp, "MouseButtonUp");
+	TE_CORE_EVENTS_GEN_INIT(_mouseWheel, "MouseWheel");
+	TE_CORE_EVENTS_GEN_INIT(_serverConnect, "ServerConnect");
+	TE_CORE_EVENTS_GEN_INIT(_serverDisconnect, "ServerDisconnect");
+	TE_CORE_EVENTS_GEN_INIT(_serverMessage, "ServerMessage");
+	TE_CORE_EVENTS_GEN_INIT(_tickLoad, "TickLoad");
+	TE_CORE_EVENTS_GEN_INIT(_tickRender, "TickRender");
+	TE_CORE_EVENTS_GEN_INIT(_tickUpdate, "TickUpdate");
 }
 
-#define TUDOV_CORE_EVENTS_GEN_GETTER(Func, Field)         \
-	CoreEvents::TRuntimeEvent CoreEvents::Func() noexcept \
-	{                                                     \
-		return Field;                                     \
-	}                                                     \
-	TUDOV_GEN_END
+#define TUDOV_CORE_EVENTS_GEN_GETTER(Func, Field) \
+	RuntimeEvent &CoreEvents::Func() noexcept     \
+	{                                             \
+		return *Field;                            \
+	}                                             \
+	TE_GEN_END
 
 TUDOV_CORE_EVENTS_GEN_GETTER(ClientConnect, _clientConnect);
 TUDOV_CORE_EVENTS_GEN_GETTER(ClientDisconnect, _clientDisconnect);

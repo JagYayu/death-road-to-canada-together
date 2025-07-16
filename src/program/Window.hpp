@@ -6,9 +6,9 @@
 #include "util/Log.hpp"
 
 #include <memory>
-#include <string_view>
 #include <tuple>
 
+union SDL_Event;
 struct SDL_Window;
 
 namespace tudov
@@ -31,7 +31,7 @@ namespace tudov
 		virtual void Render() noexcept = 0;
 	};
 
-	class Window : public IWindow, public ILuaAPIProvider
+	class Window : public IWindow
 	{
 		protected:
 		static ILuaAPI::TInstallation windowLuaAPIInstallation;
@@ -53,7 +53,7 @@ namespace tudov
 		void RenderPreImpl() noexcept;
 
 	  public:
-		void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
+		// void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
 
 		Context &GetContext() noexcept override;
 		void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;

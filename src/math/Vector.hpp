@@ -1,7 +1,5 @@
 #pragma once
 
-#include "util/Micros.hpp"
-
 #include <array>
 #include <cmath>
 #include <cstddef>

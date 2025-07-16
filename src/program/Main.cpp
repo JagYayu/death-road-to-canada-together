@@ -1,15 +1,15 @@
 #include "MainArgs.hpp"
 #include "program/Engine.hpp"
+#include "util/Log.hpp"
+
 #include <memory>
 
 #define SDL_MAIN_USE_CALLBACKS
 
-#include "SDL3/SDL_hints.h"
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_main.h"
 #include "SDL3/SDL_messagebox.h"
-#include "imgui.h"
 
 using namespace tudov;
 

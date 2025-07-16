@@ -2,7 +2,7 @@
 
 #include "ScriptLoader.hpp"
 #include "program/EngineComponent.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 
 #include "sol/load_result.hpp"
 #include "sol/state.hpp"

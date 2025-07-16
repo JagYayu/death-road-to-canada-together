@@ -24,45 +24,45 @@ Engine &Context::GetEngine()
 
 Config &Context::GetConfig()
 {
-	return GetEngine()._config;
+	return *GetEngine()._config;
 }
 
 ImageManager &Context::GetImageManager()
 {
-	return GetEngine()._imageManager;
+	return *GetEngine()._imageManager;
 }
 
 FontManager &Context::GetFontManager()
 {
-	return GetEngine()._fontManager;
+	return *GetEngine()._fontManager;
 }
 
-IEventManager *Context::GetEventManager()
+IEventManager &Context::GetEventManager()
 {
-	return GetEngine()._eventManager.get();
+	return *GetEngine()._eventManager;
 }
 
-ILuaAPI *Context::GetLuaAPI()
+ILuaAPI &Context::GetLuaAPI()
 {
-	return GetEngine()._luaAPI.get();
+	return *GetEngine()._luaAPI;
 }
 
-IModManager *Context::GetModManager()
+IModManager &Context::GetModManager()
 {
-	return GetEngine()._modManager.get();
+	return *GetEngine()._modManager;
 }
 
-IScriptEngine *Context::GetScriptEngine()
+IScriptEngine &Context::GetScriptEngine()
 {
-	return GetEngine()._scriptEngine.get();
+	return *GetEngine()._scriptEngine;
 }
 
-IScriptLoader *Context::GetScriptLoader()
+IScriptLoader &Context::GetScriptLoader()
 {
-	return GetEngine()._scriptLoader.get();
+	return *GetEngine()._scriptLoader.get();
 }
 
-IScriptProvider *Context::GetScriptProvider()
+IScriptProvider &Context::GetScriptProvider()
 {
-	return GetEngine()._scriptProvider.get();
+	return *GetEngine()._scriptProvider.get();
 }

@@ -140,16 +140,16 @@ namespace tudov
 		}
 	}
 
-	template <typename K, typename V, typename Hash = std::hash<K>, typename KeyEqual = std::equal_to<K>, typename Alloc = std::allocator<std::pair<const K, V>>>
-	void ShrinkUnorderedMap(std::unordered_map<K, V, Hash, KeyEqual, Alloc> &unorderedMap) noexcept
+	template <typename K, typename V, typename Hash = std::hash<K>, typename Equal = std::equal_to<K>, typename Alloc = std::allocator<std::pair<const K, V>>>
+	void ShrinkUnorderedMap(std::unordered_map<K, V, Hash, Equal, Alloc> &unorderedMap) noexcept
 	{
 		if (unorderedMap.empty())
 		{
-			std::unordered_map<K, V, Hash, KeyEqual, Alloc>().swap(unorderedMap);
+			std::unordered_map<K, V, Hash, Equal, Alloc>().swap(unorderedMap);
 			return;
 		}
 
-		std::unordered_map<K, V, Hash, KeyEqual, Alloc> trimmed;
+		std::unordered_map<K, V, Hash, Equal, Alloc> trimmed;
 		trimmed.reserve(unorderedMap.size());
 		for (auto &pair : unorderedMap)
 		{

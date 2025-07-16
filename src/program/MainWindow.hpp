@@ -2,6 +2,8 @@
 
 #include "Window.hpp"
 
+union SDL_Event;
+
 namespace tudov
 {
 	class Engine;

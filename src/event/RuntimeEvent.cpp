@@ -6,7 +6,7 @@
 #include "event/RuntimeEvent.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptProvider.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 
 #include "sol/types.hpp"
 
@@ -191,7 +191,7 @@ void RuntimeEvent::Invoke(const sol::object &args, const EventHandleKey &key)
 
 	if (_profile)
 	{
-		_profile->eventProfiler.BeginEvent(*eventManager.GetScriptEngine());
+		_profile->eventProfiler.BeginEvent(eventManager.GetScriptEngine());
 	}
 
 	if (anyKey)
@@ -211,7 +211,7 @@ void RuntimeEvent::Invoke(const sol::object &args, const EventHandleKey &key)
 
 	if (_profile)
 	{
-		_profile->eventProfiler.EndEvent(*eventManager.GetScriptEngine());
+		_profile->eventProfiler.EndEvent(eventManager.GetScriptEngine());
 	}
 }
 
@@ -219,7 +219,7 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, const EventHandleKey 
 {
 	if (_profile)
 	{
-		_profile->eventProfiler.BeginEvent(*eventManager.GetScriptEngine());
+		_profile->eventProfiler.BeginEvent(eventManager.GetScriptEngine());
 	}
 
 	if (std::holds_alternative<std::nullptr_t>(key.value))
@@ -229,7 +229,7 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, const EventHandleKey 
 			for (auto &&handler : _handlers)
 			{
 				PCallHandler(_log, handler, args);
-				_profile->eventProfiler.TraceHandler(*eventManager.GetScriptEngine(), handler.name);
+				_profile->eventProfiler.TraceHandler(eventManager.GetScriptEngine(), handler.name);
 			}
 		}
 		else
@@ -249,7 +249,7 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, const EventHandleKey 
 				if (handler.key.Match(key))
 				{
 					PCallHandler(_log, handler, args);
-					_profile->eventProfiler.TraceHandler(*eventManager.GetScriptEngine(), handler.name);
+					_profile->eventProfiler.TraceHandler(eventManager.GetScriptEngine(), handler.name);
 				}
 			}
 		}
@@ -267,7 +267,7 @@ void RuntimeEvent::InvokeUncached(const sol::object &args, const EventHandleKey 
 
 	if (_profile)
 	{
-		_profile->eventProfiler.EndEvent(*eventManager.GetScriptEngine());
+		_profile->eventProfiler.EndEvent(eventManager.GetScriptEngine());
 	}
 }
 

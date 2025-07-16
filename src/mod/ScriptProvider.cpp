@@ -1,6 +1,6 @@
 #include "ScriptProvider.hpp"
 
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 
 #include <filesystem>

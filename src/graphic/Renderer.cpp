@@ -30,24 +30,24 @@ void Renderer::Initialize() noexcept
 	}
 }
 
-ILuaAPI::TInstallation Renderer::rendererLuaAPIInstallation = [](sol::state &lua)
-{
-	lua.new_usertype<Renderer>("tudov_Renderer",
-	                           "clear", &Renderer::LuaClear,
-	                           "render", &Renderer::Render,
-	                           "drawRect", &Renderer::LuaDrawTexture,
-	                           "newRenderTarget", &Renderer::LuaNewRenderTarget,
-	                           "renderTexture", &Renderer::DrawTexture);
+// ILuaAPI::TInstallation Renderer::rendererLuaAPIInstallation = [](sol::state &lua)
+// {
+// 	lua.new_usertype<Renderer>("tudov_Renderer",
+// 	                           "clear", &Renderer::LuaClear,
+// 	                           "render", &Renderer::Render,
+// 	                           "drawRect", &Renderer::LuaDrawTexture,
+// 	                           "newRenderTarget", &Renderer::LuaNewRenderTarget,
+// 	                           "renderTexture", &Renderer::DrawTexture);
 
-	lua.new_usertype<RenderTarget>("tudov_RenderTarget",
-	                               "beginTarget", &RenderTarget::LuaBeginTarget,
-	                               "endTarget", &RenderTarget::LuaEndTarget);
-};
+// 	lua.new_usertype<RenderTarget>("tudov_RenderTarget",
+// 	                               "beginTarget", &RenderTarget::LuaBeginTarget,
+// 	                               "endTarget", &RenderTarget::LuaEndTarget);
+// };
 
-void Renderer::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
-{
-	luaAPI.RegisterInstallation("tudov_Renderer", rendererLuaAPIInstallation);
-}
+// void Renderer::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
+// {
+// 	luaAPI.RegisterInstallation("tudov_Renderer", rendererLuaAPIInstallation);
+// }
 
 IWindow &Renderer::GetWindow() noexcept
 {

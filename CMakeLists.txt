@@ -23,6 +23,10 @@ target_include_directories(dr2c PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# EASTL - from vcpkg
+find_package(EASTL CONFIG REQUIRED)
+target_link_libraries(dr2c PRIVATE EASTL)
+
 # LuaJIT - from vcpkg dir
 find_path(LUAJIT_INCLUDE_DIR luajit.h PATHS "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include" PATH_SUFFIXES luajit)
 find_library(LUAJIT_LIBRARY NAMES lua51 PATHS "${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib")
@@ -35,7 +39,6 @@ target_link_libraries(dr2c PRIVATE ${LUAJIT_LIBRARY})
 # sol2 - from vcpkg
 find_package(sol2 CONFIG REQUIRED)
 target_link_libraries(dr2c PRIVATE sol2::sol2)
-
 
 # SDL3
 find_package(SDL3 CONFIG REQUIRED)

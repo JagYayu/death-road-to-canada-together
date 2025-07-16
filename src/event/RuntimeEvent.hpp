@@ -3,16 +3,13 @@
 #include "AbstractEvent.hpp"
 #include "EventHandler.hpp"
 #include "debug/EventProfiler.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 #include "util/Log.hpp"
 
 #include <optional>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
-
-#include <string>
 #include <unordered_set>
-#include <vector>
 
 namespace tudov
 {

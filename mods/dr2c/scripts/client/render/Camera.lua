@@ -34,7 +34,10 @@ local timer = 0
 -- 	print(e)
 -- end)
 
+local rendererTarget
+
 events:add(N_("RenderGame"), function(e)
+	rendererTarget= rendererTarget or e.window.renderer:newRenderTarget()
 	-- -- TODO LERP POSITION
 	-- timer = timer + 1
 

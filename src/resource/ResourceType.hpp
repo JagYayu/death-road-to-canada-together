@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 
 #include <json.hpp>
 

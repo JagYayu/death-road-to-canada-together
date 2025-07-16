@@ -4,13 +4,13 @@
 #include "DelegateEvent.hpp"
 #include "LoadtimeEvent.hpp"
 #include "RuntimeEvent.hpp"
+#include "mod/LuaAPI.hpp"
 #include "program/EngineComponent.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 
-#include <memory>
 #include <sol/sol.hpp>
 
-#include <string_view>
+#include <memory>
 
 namespace tudov
 {
@@ -40,6 +40,9 @@ namespace tudov
 	{
 		friend class CoreEvents;
 		friend class LuaAPI;
+
+		private:
+		static ILuaAPI::TInstallation rendererLuaAPIInstallation;
 
 	  protected:
 		Context &_context;
@@ -74,6 +77,8 @@ namespace tudov
 		void LuaInvoke(const sol::object &event, const sol::object &args, const sol::object &key, const sol::object &uncached);
 
 	  public:
+		// void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
+
 		Context &GetContext() noexcept override;
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;

@@ -1,42 +1,41 @@
 #pragma once
 
 #include "RuntimeEvent.hpp"
+#include "util/Definitions.hpp"
 
 namespace tudov
 {
 	struct ICoreEvents
 	{
-		using TRuntimeEvent = std::shared_ptr<RuntimeEvent>;
-
 		// Tick events.
 
-		[[nodiscard]] virtual TRuntimeEvent TickLoad() noexcept = 0;
-		[[nodiscard]] virtual TRuntimeEvent TickUpdate() noexcept = 0;
-		[[nodiscard]] virtual TRuntimeEvent TickRender() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &TickLoad() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &TickUpdate() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &TickRender() noexcept = 0;
 
 		// Keyboard events.
 
-		[[nodiscard]] virtual TRuntimeEvent KeyDown() noexcept = 0;
-		[[nodiscard]] virtual TRuntimeEvent KeyUp() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &KeyDown() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &KeyUp() noexcept = 0;
 
 		// Mouse events.
 
-		[[nodiscard]] virtual TRuntimeEvent MouseMove() noexcept = 0;
-		[[nodiscard]] virtual TRuntimeEvent MouseButtonDown() noexcept = 0;
-		[[nodiscard]] virtual TRuntimeEvent MouseButtonUp() noexcept = 0;
-		[[nodiscard]] virtual TRuntimeEvent MouseWheel() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &MouseMove() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &MouseButtonDown() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &MouseButtonUp() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &MouseWheel() noexcept = 0;
 
 		// Network events.
 
 		/*
 		 * Client observer. Invoke when a client connected to current server.
 		 */
-		[[nodiscard]] virtual TRuntimeEvent ClientConnect() noexcept = 0;
-		[[nodiscard]] virtual TRuntimeEvent ClientDisconnect() noexcept = 0;
-		[[nodiscard]] virtual TRuntimeEvent ClientMessage() noexcept = 0;
-		[[nodiscard]] virtual TRuntimeEvent ServerConnect() noexcept = 0;
-		[[nodiscard]] virtual TRuntimeEvent ServerDisconnect() noexcept = 0;
-		[[nodiscard]] virtual TRuntimeEvent ServerMessage() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &ClientConnect() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &ClientDisconnect() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &ClientMessage() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &ServerConnect() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &ServerDisconnect() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &ServerMessage() noexcept = 0;
 
 		// Other events.
 	};
@@ -47,6 +46,9 @@ namespace tudov
 	class CoreEvents : public ICoreEvents
 	{
 		friend EventManager;
+
+	  private:
+		using TRuntimeEvent = std::shared_ptr<RuntimeEvent>;
 
 	  private:
 		TRuntimeEvent _clientConnect;
@@ -68,20 +70,20 @@ namespace tudov
 	  public:
 		explicit CoreEvents(EventManager &eventManager) noexcept;
 
-		[[nodiscard]] TRuntimeEvent ClientConnect() noexcept override;
-		[[nodiscard]] TRuntimeEvent ClientDisconnect() noexcept override;
-		[[nodiscard]] TRuntimeEvent ClientMessage() noexcept override;
-		[[nodiscard]] TRuntimeEvent KeyDown() noexcept override;
-		[[nodiscard]] TRuntimeEvent KeyUp() noexcept override;
-		[[nodiscard]] TRuntimeEvent MouseMove() noexcept override;
-		[[nodiscard]] TRuntimeEvent MouseButtonDown() noexcept override;
-		[[nodiscard]] TRuntimeEvent MouseButtonUp() noexcept override;
-		[[nodiscard]] TRuntimeEvent MouseWheel() noexcept override;
-		[[nodiscard]] TRuntimeEvent ServerConnect() noexcept override;
-		[[nodiscard]] TRuntimeEvent ServerDisconnect() noexcept override;
-		[[nodiscard]] TRuntimeEvent ServerMessage() noexcept override;
-		[[nodiscard]] TRuntimeEvent TickLoad() noexcept override;
-		[[nodiscard]] TRuntimeEvent TickRender() noexcept override;
-		[[nodiscard]] TRuntimeEvent TickUpdate() noexcept override;
+		[[nodiscard]] RuntimeEvent &ClientConnect() noexcept override;
+		[[nodiscard]] RuntimeEvent &ClientDisconnect() noexcept override;
+		[[nodiscard]] RuntimeEvent &ClientMessage() noexcept override;
+		[[nodiscard]] RuntimeEvent &KeyDown() noexcept override;
+		[[nodiscard]] RuntimeEvent &KeyUp() noexcept override;
+		[[nodiscard]] RuntimeEvent &MouseMove() noexcept override;
+		[[nodiscard]] RuntimeEvent &MouseButtonDown() noexcept override;
+		[[nodiscard]] RuntimeEvent &MouseButtonUp() noexcept override;
+		[[nodiscard]] RuntimeEvent &MouseWheel() noexcept override;
+		[[nodiscard]] RuntimeEvent &ServerConnect() noexcept override;
+		[[nodiscard]] RuntimeEvent &ServerDisconnect() noexcept override;
+		[[nodiscard]] RuntimeEvent &ServerMessage() noexcept override;
+		[[nodiscard]] RuntimeEvent &TickLoad() noexcept override;
+		[[nodiscard]] RuntimeEvent &TickRender() noexcept override;
+		[[nodiscard]] RuntimeEvent &TickUpdate() noexcept override;
 	};
 } // namespace tudov

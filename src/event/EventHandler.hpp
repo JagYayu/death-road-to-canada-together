@@ -2,10 +2,11 @@
 
 #include "EventHandleFunction.hpp"
 #include "EventHandleKey.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
+
+#include <sol/sol.hpp>
 
 #include <cmath>
-#include <sol/sol.hpp>
 
 namespace tudov
 {

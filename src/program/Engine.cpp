@@ -3,24 +3,28 @@
 #include "Context.hpp"
 #include "EngineComponent.hpp"
 #include "MainWindow.hpp"
-#include "SDL3/SDL_events.h"
 #include "Window.hpp"
+#include "data/Config.hpp"
 #include "debug/Debug.hpp"
 #include "debug/DebugManager.hpp"
 #include "mod/LuaAPI.hpp"
+#include "mod/ModManager.hpp"
 #include "network/Network.hpp"
+#include "resource/FontManager.hpp"
+#include "resource/ImageManager.hpp"
 #include "resource/ResourceType.hpp"
 #include "scripts/GameScripts.hpp"
-#include "sol/property.hpp"
 #include "util/Log.hpp"
 #include "util/MicrosImpl.hpp"
 #include "util/StringUtils.hpp"
 
+#include "SDL3/SDL_events.h"
 #include "SDL3/SDL_timer.h"
 
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <exception>
 #include <memory>
 #include <mutex>
@@ -35,9 +39,9 @@ using namespace tudov;
 Engine::Engine(const MainArgs &args) noexcept
     : _log(Log::Get("Engine")),
       _state(EState::None),
-      _config(),
-      _imageManager(),
-      _fontManager(),
+      _config(std::make_shared<Config>()),
+      _imageManager(std::make_shared<ImageManager>()),
+      _fontManager(std::make_shared<FontManager>()),
       _luaAPI(std::make_shared<LuaAPI>()),
       _mainWindow(),
       _windows(),
@@ -75,7 +79,7 @@ Engine::Engine(const MainArgs &args) noexcept
 				});
 
 				_modManager->Update();
-				_eventManager->GetCoreEvents().TickLoad()->Invoke();
+				_eventManager->GetCoreEvents().TickLoad().Invoke();
 
 				SetLoadingInfo(Engine::LoadingInfoArgs{
 				    .title = "Loaded",
@@ -140,11 +144,11 @@ void Engine::Initialize() noexcept
 
 	_log->Debug("Initializing engine ...");
 	{
-		_config.Load();
+		_config->Load();
 		InitializeMainWindow();
 		InitializeResources();
 
-		ProvideLuaAPI(*_luaAPI);
+		// ProvideLuaAPI(*_luaAPI);
 
 		for (auto &&it = _components.begin(); it != _components.end(); ++it)
 		{
@@ -186,7 +190,20 @@ bool Engine::Tick() noexcept
 	if (DebugSingleThread)
 	{
 		_modManager->Update();
-		_eventManager->GetCoreEvents().TickLoad()->Invoke();
+		_eventManager->GetCoreEvents().TickLoad().Invoke();
+	}
+	else
+	{
+		// update loading info.
+		if (_loadingInfo.progressVisualValue >= _loadingInfo.progressValue)
+		{
+			_loadingInfo.progressVisualValue = _loadingInfo.progressValue;
+		}
+		else
+		{
+			std::float_t factor = 1.0f - std::exp(-GetDeltaTime() / 0.1f);
+			_loadingInfo.progressVisualValue = std::lerp(_loadingInfo.progressVisualValue, _loadingInfo.progressValue, factor);
+		}
 	}
 
 	{
@@ -196,7 +213,7 @@ bool Engine::Tick() noexcept
 		{
 			if (!_scriptLoader->HasAnyLoadError())
 			{
-				_eventManager->GetCoreEvents().TickUpdate()->Invoke();
+				_eventManager->GetCoreEvents().TickUpdate().Invoke();
 			}
 
 			for (auto &&event : _sdlEvents)
@@ -221,7 +238,7 @@ bool Engine::Tick() noexcept
 	}
 
 	std::uint64_t endNS = SDL_GetTicksNS();
-	auto limit = 1'000'000'000ull / uint64_t(_config.GetWindowFramelimit());
+	auto limit = 1'000'000'000ull / uint64_t(_config->GetWindowFramelimit());
 	auto elapsed = endNS - beginNS;
 	if (elapsed < limit)
 	{
@@ -294,7 +311,7 @@ void Engine::InitializeMainWindow() noexcept
 	}
 
 	auto &&mainWindow = std::make_shared<MainWindow>(context);
-	mainWindow->Initialize(_config.GetWindowWidth(), _config.GetWindowHeight(), _config.GetWindowTitle());
+	mainWindow->Initialize(_config->GetWindowWidth(), _config->GetWindowHeight(), _config->GetWindowTitle());
 	AddWindow(mainWindow);
 	_mainWindow = mainWindow;
 
@@ -306,7 +323,7 @@ void Engine::InitializeResources() noexcept
 {
 	_log->Debug("Mounting resource files");
 
-	auto &&renderBackend = _config.GetRenderBackend();
+	auto &&renderBackend = _config->GetRenderBackend();
 
 	// auto &&loadTexture = [this, renderBackend]() {
 	// 	switch (renderBackend) {
@@ -317,17 +334,17 @@ void Engine::InitializeResources() noexcept
 	std::unordered_map<ResourceType, std::uint32_t> fileCounts{};
 
 	std::vector<std::regex> mountBitmapPatterns{};
-	for (auto &&pattern : _config.GetMountBitmaps())
+	for (auto &&pattern : _config->GetMountBitmaps())
 	{
 		mountBitmapPatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
 	}
 
-	auto &&mountDirectories = _config.GetMountFiles();
-	for (auto &&mountDirectory : _config.GetMountDirectories())
+	auto &&mountDirectories = _config->GetMountFiles();
+	for (auto &&mountDirectory : _config->GetMountDirectories())
 	{
-		if (!std::filesystem::exists(mountDirectory) || !std::filesystem::is_directory(mountDirectory))
+		if (!std::filesystem::exists(mountDirectory.data()) || !std::filesystem::is_directory(mountDirectory.data()))
 		{
-			_log->Warn("Invalid directory for mounting resources: {}", mountDirectory);
+			_log->Warn("Invalid directory for mounting resources: {}", mountDirectory.data());
 			continue;
 		}
 
@@ -346,14 +363,14 @@ void Engine::InitializeResources() noexcept
 			}
 
 			auto &&filePath = path.generic_string();
-			auto imageID = _imageManager.Load(filePath);
+			auto imageID = _imageManager->Load(filePath);
 			if (!imageID)
 			{
 				_log->Error("Image ID of \"{}\" is 0!", filePath);
 				continue;
 			}
 
-			auto &&image = _imageManager.GetResource(imageID);
+			auto &&image = _imageManager->GetResource(imageID);
 			auto &&fileMemory = ReadFileToString(filePath, true);
 			image->Initialize(fileMemory);
 			if (image->IsValid())
@@ -377,7 +394,7 @@ void Engine::InitializeResources() noexcept
 	_log->Debug("Mounted all resource files");
 	for (auto [fileType, count] : fileCounts)
 	{
-		_log->Info("{}: {}", ResourceTypeToStringView(fileType), count);
+		_log->Info("{}: {}", ResourceTypeToStringView(fileType).data(), count);
 	}
 }
 
@@ -408,37 +425,37 @@ void Engine::ProvideDebug(IDebugManager &debugManager) noexcept
 	}
 }
 
-void Engine::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
-{
-	_luaAPI->RegisterInstallation("tudov_Engine", [this](sol::state &lua)
-	{
-		auto GetMainWindow = [this]()
-		{
-			return _mainWindow.lock().get();
-		};
+// void Engine::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
+// {
+// 	_luaAPI->RegisterInstallation("tudov_Engine", [this](sol::state &lua)
+// 	{
+// 		auto GetMainWindow = [this]()
+// 		{
+// 			return _mainWindow.lock().get();
+// 		};
 
-		lua.new_usertype<Engine>("tudov_Engine",
-		                         "mainWindow", sol::readonly_property(GetMainWindow),
-		                         "quit", &Engine::Quit);
-		lua["engine"] = this;
-	});
+// 		lua.new_usertype<Engine>("tudov_Engine",
+// 		                         "mainWindow", sol::readonly_property(GetMainWindow),
+// 		                         "quit", &Engine::Quit);
+// 		lua["engine"] = this;
+// 	});
 
-	for (auto &&component : _components)
-	{
-		if (auto &&luaAPIProvider = std::dynamic_pointer_cast<ILuaAPIProvider>(component); luaAPIProvider != nullptr)
-		{
-			luaAPIProvider->ProvideLuaAPI(*_luaAPI);
-		}
-	}
+// 	for (auto &&component : _components)
+// 	{
+// 		if (auto &&luaAPIProvider = std::dynamic_pointer_cast<ILuaAPIProvider>(component); luaAPIProvider != nullptr)
+// 		{
+// 			luaAPIProvider->ProvideLuaAPI(*_luaAPI);
+// 		}
+// 	}
 
-	if (!_mainWindow.expired())
-	{
-		if (auto &&luaAPIProvider = std::dynamic_pointer_cast<ILuaAPIProvider>(_mainWindow.lock()); luaAPIProvider != nullptr)
-		{
-			luaAPIProvider->ProvideLuaAPI(luaAPI);
-		}
-	}
-}
+// 	if (!_mainWindow.expired())
+// 	{
+// 		if (auto &&luaAPIProvider = std::dynamic_pointer_cast<ILuaAPIProvider>(_mainWindow.lock()); luaAPIProvider != nullptr)
+// 		{
+// 			luaAPIProvider->ProvideLuaAPI(luaAPI);
+// 		}
+// 	}
+// }
 
 template <typename T>
 void Engine_ChangeEngineComponent(std::shared_ptr<Log> &log, std::string_view component, std::shared_ptr<T> &oldComponent, const std::shared_ptr<T> &newComponent) noexcept
@@ -451,7 +468,7 @@ void Engine_ChangeEngineComponent(std::shared_ptr<Log> &log, std::string_view co
 	}
 	catch (std::exception &e)
 	{
-		log->Error("Failed to change component `{}`: {}", component, e.what());
+		log->Error("Failed to change component `{}`: {}", component.data(), e.what());
 	}
 }
 
@@ -460,12 +477,17 @@ std::float_t Engine::GetFramerate() const noexcept
 	return _framerate;
 }
 
+std::float_t Engine::GetDeltaTime() const noexcept
+{
+	return 1 / _framerate;
+}
+
 std::uint64_t Engine::GetTick() const noexcept
 {
 	return SDL_GetTicksNS();
 }
 
-TUDOV_GEN_GETTER_SMART_PTR(std::shared_ptr, IWindow, Engine::GetMainWindow, _mainWindow, noexcept);
+TE_GEN_GETTER_SMART_PTR(std::shared_ptr, IWindow, Engine::GetMainWindow, _mainWindow, noexcept);
 
 void Engine::AddWindow(const std::shared_ptr<IWindow> &window)
 {
@@ -484,7 +506,7 @@ Engine::ELoadingState Engine::GetLoadingState() noexcept
 
 bool Engine::IsLoadingLagged() noexcept
 {
-	return (SDL_GetTicksNS() - _loadingBeginNS) > (1'000'000'000ull / uint64_t(_config.GetWindowFramelimit() / 10));
+	return (SDL_GetTicksNS() - _loadingBeginNS) > (1'000'000'000ull / uint64_t(_config->GetWindowFramelimit() / 10));
 }
 
 std::uint64_t Engine::GetLoadingBeginTick() const noexcept

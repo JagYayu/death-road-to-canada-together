@@ -3,7 +3,7 @@
 #include "ScriptProvider.hpp"
 #include "event/DelegateEvent.hpp"
 #include "program/EngineComponent.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 #include "util/Log.hpp"
 #include "util/Micros.hpp"
 
@@ -138,7 +138,7 @@ namespace tudov
 	  private:
 		TE_FORCEINLINE ScriptID GetScriptIDByName(std::string_view scriptName)
 		{
-			return GetScriptProvider()->GetScriptIDByName(scriptName);
+			return GetScriptProvider().GetScriptIDByName(scriptName);
 		}
 	};
 

@@ -6,10 +6,9 @@
 #include "mod/ModEntry.hpp"
 #include "program/Context.hpp"
 #include "program/Engine.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 
 #include <memory>
-#include <thread>
 #include <vector>
 
 using namespace tudov;
@@ -128,7 +127,7 @@ void ModManager::LoadMods()
 		mod->Load();
 	}
 
-	GetScriptLoader()->LoadAll();
+	GetScriptLoader().LoadAll();
 
 	_log->Debug("Loaded all required mods");
 
@@ -153,7 +152,7 @@ void ModManager::UnloadMods()
 
 	_log->Debug("Unloading all loaded mods ...");
 
-	GetScriptLoader()->UnloadAll();
+	GetScriptLoader().UnloadAll();
 
 	for (auto &&mod : _loadedMods)
 	{
@@ -216,27 +215,27 @@ void ModManager::Update()
 		{
 			auto &&[scriptCode, scriptNamespace] = entry;
 
-			auto scriptID = scriptProvider->GetScriptIDByName(scriptName);
+			auto scriptID = scriptProvider.GetScriptIDByName(scriptName);
 			if (scriptID)
 			{
-				auto &&pendingScripts = GetScriptLoader()->Unload(scriptID);
+				auto &&pendingScripts = GetScriptLoader().Unload(scriptID);
 				scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
 
-				if (!scriptProvider->RemoveScript(scriptID)) [[unlikely]]
+				if (!scriptProvider.RemoveScript(scriptID)) [[unlikely]]
 				{
 					_log->Warn("Attempt to remove non-exist script id", scriptID);
 				}
 			}
 
-			scriptID = scriptProvider->AddScript(scriptName, scriptCode, scriptNamespace);
+			scriptID = scriptProvider.AddScript(scriptName, scriptCode, scriptNamespace);
 			scriptIDs.emplace_back(scriptID);
 		}
 
 		std::sort(scriptIDs.begin(), scriptIDs.end());
 		scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
 
-		scriptLoader->HotReload(scriptIDs);
-		GetScriptEngine()->CollectGarbage();
+		scriptLoader.HotReload(scriptIDs);
+		GetScriptEngine().CollectGarbage();
 
 		_hotReloadScriptsPending = nullptr;
 	}

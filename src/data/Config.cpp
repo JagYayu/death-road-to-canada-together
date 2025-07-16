@@ -1,9 +1,9 @@
 #include "Config.hpp"
 
-#include "SDL3/SDL_properties.h"
-#include "util/Defs.hpp"
+#include "data/Constants.hpp"
 #include "util/Log.hpp"
 
+#include "SDL3/SDL_properties.h"
 #include <json.hpp>
 
 #include <fstream>
@@ -83,7 +83,7 @@ Config::Config() noexcept
 {
 	Config::Load();
 
-	_fileWatcher = new filewatch::FileWatch<std::string>(std::string(ConfigFile), [&](std::string_view path, const filewatch::Event changeType)
+	_fileWatcher = new filewatch::FileWatch<std::string>(std::string(AppConfigFile), [&](std::string_view path, const filewatch::Event changeType)
 	{
 		Config::Load();
 	});
@@ -99,7 +99,7 @@ void Config::Save() noexcept
 {
 	try
 	{
-		std::string f{ConfigFile};
+		std::string f = AppConfigFile;
 		std::ofstream out{f};
 		if (out.is_open())
 		{
@@ -122,16 +122,16 @@ void Config::Load() noexcept
 {
 	try
 	{
-		std::ifstream f{std::string(ConfigFile)};
-		if (f.is_open())
+		std::ifstream in{AppConfigFile};
+		if (in.is_open())
 		{
-			_config = nlohmann::json::parse(f);
-			f.close();
+			_config = nlohmann::json::parse(in);
+			in.close();
 		}
 		else
 		{
 			_config = nlohmann::json();
-			std::ofstream out{std::string(ConfigFile)};
+			std::ofstream out{std::string(AppConfigFile)};
 			out << _config.dump(4);
 			out.close();
 		}

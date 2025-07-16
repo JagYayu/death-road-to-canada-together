@@ -21,7 +21,7 @@ namespace tudov
 		std::optional<std::uint32_t> _propertiesID;
 
 	  public:
-		Config() noexcept;
+		explicit Config() noexcept;
 		~Config() noexcept;
 
 	  private:

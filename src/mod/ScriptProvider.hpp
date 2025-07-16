@@ -1,7 +1,7 @@
 #pragma once
 
 #include "program/EngineComponent.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 #include "util/Log.hpp"
 #include "util/StringUtils.hpp"
 

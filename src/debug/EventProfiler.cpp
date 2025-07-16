@@ -2,7 +2,7 @@
 
 #include "mod/ScriptEngine.hpp"
 
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 
 using namespace tudov;
 

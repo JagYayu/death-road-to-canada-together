@@ -6,7 +6,6 @@
 #include "event/CoreEvents.hpp"
 #include "event/EventManager.hpp"
 
-
 #include "enet/enet.h"
 
 using namespace tudov;
@@ -78,7 +77,7 @@ bool ReliableUDPServer::Update() noexcept
 	{
 		update = true;
 
-		auto &&coreEvents = GetEventManager()->GetCoreEvents();
+		auto &&coreEvents = GetEventManager().GetCoreEvents();
 
 		switch (event.type)
 		{
@@ -135,5 +134,4 @@ bool ReliableUDPServer::Update() noexcept
 void ReliableUDPServer::ProvideDebug(IDebugManager &debugManager) noexcept
 {
 	auto &&debugConsole = debugManager.GetElement<DebugConsole>();
-	
 }

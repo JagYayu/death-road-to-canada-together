@@ -4,7 +4,7 @@
 #include "ScriptEngine.hpp"
 #include "ScriptProvider.hpp"
 #include "program/Engine.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
 
@@ -65,7 +65,7 @@ const sol::table &ScriptLoader::Module::RawLoad(IScriptLoader &scriptLoader)
 	auto &&parent = static_cast<ScriptLoader &>(scriptLoader);
 	auto &&engine = scriptLoader.GetEngine();
 
-	engine.SetLoadingDescription(scriptLoader.GetScriptProvider()->GetScriptNameByID(_scriptID).value());
+	engine.SetLoadingDescription(scriptLoader.GetScriptProvider().GetScriptNameByID(_scriptID).value());
 
 	auto previousLoadingScript = parent._loadingScript;
 	parent._loadingScript = _scriptID;
@@ -82,11 +82,11 @@ const sol::table &ScriptLoader::Module::RawLoad(IScriptLoader &scriptLoader)
 	}
 	else
 	{
-		_table = scriptLoader.GetScriptEngine()->CreateTable();
+		_table = scriptLoader.GetScriptEngine().CreateTable();
 	}
 
 	_fullyLoaded = true;
-	engine.IncreaseLoadingProgress(1);
+	engine.ChangeLoadingProgress(1);
 
 	return _table;
 }
@@ -95,7 +95,7 @@ const sol::table &ScriptLoader::Module::LazyLoad(IScriptLoader &iScriptLoader)
 {
 	if (!_table.valid())
 	{
-		_table = iScriptLoader.GetScriptEngine()->CreateTable();
+		_table = iScriptLoader.GetScriptEngine().CreateTable();
 	}
 
 	if (_table[sol::metatable_key].valid())
@@ -103,7 +103,7 @@ const sol::table &ScriptLoader::Module::LazyLoad(IScriptLoader &iScriptLoader)
 		return _table;
 	}
 
-	sol::table metatable = iScriptLoader.GetScriptEngine()->CreateTable();
+	sol::table metatable = iScriptLoader.GetScriptEngine().CreateTable();
 
 	_table[sol::metatable_key] = metatable;
 
@@ -132,15 +132,15 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 	auto &&parent = static_cast<ScriptLoader &>(scriptLoader);
 	auto &&engine = parent.GetEngine();
 
-	engine.SetLoadingDescription(parent.GetScriptProvider()->GetScriptNameByID(_scriptID).value());
+	engine.SetLoadingDescription(parent.GetScriptProvider().GetScriptNameByID(_scriptID).value());
 
 	auto previousScriptID = parent._loadingScript;
 	parent._loadingScript = _scriptID;
 
 	auto &&scriptEngine = parent.GetScriptEngine();
 
-	_table = scriptEngine->CreateTable();
-	auto &&metatable = scriptEngine->CreateTable(0, 2);
+	_table = scriptEngine.CreateTable();
+	auto &&metatable = scriptEngine.CreateTable(0, 2);
 	_table[sol::metatable_key] = metatable;
 
 	metatable["__index"] = [this, parent](const sol::this_state &ts, const sol::object &, const sol::object &key)
@@ -148,8 +148,8 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 		if (auto &&prevScriptID = FindPreviousInStack(parent._scriptLoopLoadStack, _scriptID); prevScriptID.has_value())
 		{
 			auto &&scriptProvider = parent.GetScriptProvider();
-			auto scriptName = scriptProvider->GetScriptNameByID(_scriptID);
-			auto prevScriptName = scriptProvider->GetScriptNameByID(*prevScriptID);
+			auto scriptName = scriptProvider.GetScriptNameByID(_scriptID);
+			auto prevScriptName = scriptProvider.GetScriptNameByID(*prevScriptID);
 			// parent.GetScriptEngine()->ThrowError(std::format("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *scriptName, *prevScriptID, *prevScriptName));
 			return sol::error(std::format("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *scriptName, *prevScriptID, *prevScriptName));
 		}
@@ -195,7 +195,7 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 			{
 				parent._log->Warn("'{}': Does not support receiving non-table values", parent.GetLoadingScriptName().value());
 			}
-			tbl = scriptEngine->CreateTable();
+			tbl = scriptEngine.CreateTable();
 		}
 	}
 
@@ -203,7 +203,7 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 
 	parent._loadingScript = previousScriptID;
 	_fullyLoaded = true;
-	engine.IncreaseLoadingProgress(1);
+	engine.ChangeLoadingProgress(1);
 
 	return _table;
 }
@@ -286,7 +286,7 @@ ScriptID ScriptLoader::GetLoadingScriptID() const noexcept
 
 std::optional<std::string_view> ScriptLoader::GetLoadingScriptName() const noexcept
 {
-	return GetScriptProvider()->GetScriptNameByID(_loadingScript);
+	return GetScriptProvider().GetScriptNameByID(_loadingScript);
 }
 
 void GetScriptDependencies(const std::unordered_map<ScriptID, std::unordered_set<ScriptID>> &scriptDependencies, ScriptID scriptID, std::vector<ScriptID> &sources, std::unordered_set<ScriptID> &visited)
@@ -326,20 +326,20 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 	}
 
 	auto &&scriptProvider = GetScriptProvider();
-	if (!scriptProvider->IsValidScript(source) || !scriptProvider->IsValidScript(target)) [[unlikely]]
+	if (!scriptProvider.IsValidScript(source) || !scriptProvider.IsValidScript(target)) [[unlikely]]
 	{
-		auto &&sourceName = scriptProvider->GetScriptNameByID(source);
-		auto &&targetName = scriptProvider->GetScriptNameByID(target);
+		auto &&sourceName = scriptProvider.GetScriptNameByID(source);
+		auto &&targetName = scriptProvider.GetScriptNameByID(target);
 		_log->Warn("Attempt to link invalid scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
 		           source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
 		           target, targetName.has_value() ? targetName->data() : "#INVALID#");
 
 		return;
 	}
-	if (scriptProvider->IsStaticScript(source) || scriptProvider->IsStaticScript(target)) [[unlikely]]
+	if (scriptProvider.IsStaticScript(source) || scriptProvider.IsStaticScript(target)) [[unlikely]]
 	{
-		auto &&sourceName = scriptProvider->GetScriptNameByID(source);
-		auto &&targetName = scriptProvider->GetScriptNameByID(target);
+		auto &&sourceName = scriptProvider.GetScriptNameByID(source);
+		auto &&targetName = scriptProvider.GetScriptNameByID(target);
 		_log->Warn("Attempt to link static scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
 		           source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
 		           target, targetName.has_value() ? targetName->data() : "#INVALID#");
@@ -354,8 +354,8 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 	if (_log->CanTrace())
 	{
 		_log->Trace("Link scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
-		            source, scriptProvider->GetScriptNameByID(source)->data(),
-		            target, scriptProvider->GetScriptNameByID(target)->data());
+		            source, scriptProvider.GetScriptNameByID(source)->data(),
+		            target, scriptProvider.GetScriptNameByID(target)->data());
 	}
 }
 
@@ -369,7 +369,7 @@ void ScriptLoader::LoadAll()
 	    .title = "Loading scripts",
 	    .description = "",
 	    .progressValue = 0.0f,
-	    .progressTotal = std::float_t(scriptProvider->GetCount()),
+	    .progressTotal = std::float_t(scriptProvider.GetCount()),
 	});
 
 	_onPreLoadAllScripts();
@@ -382,8 +382,8 @@ void ScriptLoader::LoadAll()
 	_scriptModules.clear();
 	_scriptErrors.clear();
 
-	auto &&count = scriptProvider->GetCount();
-	for (auto &&[scriptID, entry] : *scriptProvider)
+	auto &&count = scriptProvider.GetCount();
+	for (auto &&[scriptID, entry] : scriptProvider)
 	{
 		LoadImpl(scriptID, entry.name, entry.code, entry.namespace_);
 	}
@@ -399,7 +399,7 @@ void ScriptLoader::LoadAll()
 
 std::shared_ptr<IScriptLoader::IModule> ScriptLoader::Load(std::string_view scriptName)
 {
-	auto &&scriptID = GetScriptProvider()->GetScriptIDByName(scriptName);
+	auto &&scriptID = GetScriptProvider().GetScriptIDByName(scriptName);
 	if (!scriptID)
 	{
 		return nullptr;
@@ -415,15 +415,15 @@ std::shared_ptr<IScriptLoader::IModule> ScriptLoader::Load(ScriptID scriptID)
 		return nullptr;
 	}
 	auto &&scriptProvider = GetScriptProvider();
-	auto &&scriptName = scriptProvider->GetScriptNameByID(scriptID);
+	auto &&scriptName = scriptProvider.GetScriptNameByID(scriptID);
 	if (!scriptName.has_value())
 	{
 		_log->Warn("Attempt to load invalid script <{}>: not provided", scriptID);
 		return nullptr;
 	}
 
-	auto &&scriptCode = scriptProvider->GetScriptCode(scriptID);
-	auto &&scriptNamespace = scriptProvider->GetScriptNamespace(scriptID);
+	auto &&scriptCode = scriptProvider.GetScriptCode(scriptID);
+	auto &&scriptNamespace = scriptProvider.GetScriptNamespace(scriptID);
 	return LoadImpl(scriptID, scriptName.value(), scriptCode, scriptNamespace);
 }
 
@@ -442,7 +442,7 @@ std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, 
 	_scriptErrors.erase(scriptID);
 	// _scriptErrorsCascaded.erase(scriptID);
 
-	auto &&result = GetScriptEngine()->LoadFunction(std::string(scriptName), scriptCode);
+	auto &&result = GetScriptEngine().LoadFunction(std::string(scriptName), scriptCode);
 	if (!result.valid())
 	{
 		_log->Debug("Failed to load script <{}>\"{}\": {}", scriptID, scriptName, result.get<sol::error>().what());
@@ -455,7 +455,7 @@ std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, 
 	auto &&[it, inserted] = _scriptModules.try_emplace(scriptID, module);
 	assert(inserted);
 
-	if (GetScriptProvider()->IsStaticScript(scriptName))
+	if (GetScriptProvider().IsStaticScript(scriptName))
 	{
 		module->RawLoad(*this);
 		_log->Trace("Raw loaded script <{}>\"{}\"", scriptID, scriptName);
@@ -465,13 +465,13 @@ std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, 
 		std::string_view sandboxKey = emptyString;
 		if (namespace_ != emptyString)
 		{
-			auto &&mod = GetModManager()->GetLoadedMod(namespace_);
+			auto &&mod = GetModManager().GetLoadedMod(namespace_);
 			if (!mod.expired() && mod.lock()->GetConfig().scripts.sandbox)
 			{
 				sandboxKey = namespace_;
 			}
 		}
-		GetScriptEngine()->InitializeScriptFunction(scriptID, scriptName, function, sandboxKey);
+		GetScriptEngine().InitializeScriptFunction(scriptID, scriptName, function, sandboxKey);
 		_log->Trace("Lazy loaded script <{}>\"{}\"", scriptID, scriptName);
 	}
 
@@ -486,7 +486,7 @@ void ScriptLoader::UnloadAll()
 
 	for (auto &&it : _scriptModules)
 	{
-		if (!scriptProvider->GetScriptNameByID(it.first))
+		if (!scriptProvider.GetScriptNameByID(it.first))
 		{
 			Unload(it.first);
 		}
@@ -508,7 +508,7 @@ std::vector<ScriptID> ScriptLoader::UnloadBy(std::string_view namespace_)
 	auto &&scriptProvider = GetScriptProvider();
 	for (auto &&[scriptID, _] : _scriptModules)
 	{
-		if (scriptProvider->GetScriptNamespace(scriptID) == namespace_)
+		if (scriptProvider.GetScriptNamespace(scriptID) == namespace_)
 		{
 			unloadingScripts.emplace_back(scriptID);
 		}
@@ -531,7 +531,7 @@ std::vector<ScriptID> ScriptLoader::UnloadInvalids()
 
 void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts)
 {
-	auto &&scriptName = GetScriptProvider()->GetScriptNameByID(scriptID);
+	auto &&scriptName = GetScriptProvider().GetScriptNameByID(scriptID);
 	if (!scriptName.has_value()) [[unlikely]]
 	{
 		_log->Warn("Attempt to unload invalid script <{}> ...", scriptID);
@@ -584,7 +584,7 @@ void ScriptLoader::HotReload(const std::vector<ScriptID> &scriptIDs)
 		auto &&scriptProvider = GetScriptProvider();
 		for (auto scriptID : scriptIDs)
 		{
-			auto &&scriptName = scriptProvider->GetScriptNameByID(scriptID);
+			auto &&scriptName = scriptProvider.GetScriptNameByID(scriptID);
 			_log->Trace("<{}>\"{}\"", scriptID, scriptName.has_value() ? scriptName->data() : "#INVALID#");
 		}
 	}
@@ -613,7 +613,7 @@ void ScriptLoader::ProcessFullLoads()
 		if (!module->IsFullyLoaded())
 		{
 			module->FullLoad(*this);
-			_log->Trace("Fully loaded script \"{}\"", GetScriptProvider()->GetScriptNameByID(scriptID).value());
+			_log->Trace("Fully loaded script \"{}\"", GetScriptProvider().GetScriptNameByID(scriptID).value());
 		}
 	}
 

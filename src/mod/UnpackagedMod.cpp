@@ -166,7 +166,7 @@ void UnpackagedMod::Load()
 
 			auto &&relative = std::filesystem::relative(std::filesystem::relative(filePath, _directory), GetScriptsDirectory());
 			auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", namespace_, relative.string()));
-			_modManager.GetScriptProvider()->AddScript(scriptName, oss.str(), namespace_);
+			_modManager.GetScriptProvider().AddScript(scriptName, oss.str(), namespace_);
 			_scripts.emplace_back(scriptName);
 		}
 		// else if (IsFont(filePath))
@@ -193,8 +193,8 @@ void UnpackagedMod::Unload()
 
 	_log->Debug("Unloading unpackaged mod from \"{}\"", dir);
 
-	_modManager.GetScriptLoader()->UnloadBy(GetNamespace());
-	_modManager.GetScriptProvider()->RemoveScriptBy(GetNamespace());
+	_modManager.GetScriptLoader().UnloadBy(GetNamespace());
+	_modManager.GetScriptProvider().RemoveScriptBy(GetNamespace());
 	_scripts.clear();
 
 	for (auto &&fontID : _fonts)

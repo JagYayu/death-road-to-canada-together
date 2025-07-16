@@ -33,7 +33,7 @@ namespace tudov
 		void Install(sol::state &lua, Context &context) override;
 	};
 
-	struct ILuaAPIProvider
+	struct [[deprecated("DO NOT USE")]] ILuaAPIProvider
 	{
 		virtual ~ILuaAPIProvider() noexcept = default;
 

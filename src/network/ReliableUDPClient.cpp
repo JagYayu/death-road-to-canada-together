@@ -1,7 +1,7 @@
 #include "ReliableUDPClient.hpp"
 
+#include "data/Constants.hpp"
 #include "event/EventManager.hpp"
-#include "util/Defs.hpp"
 
 #include "enet/enet.h"
 
@@ -125,7 +125,7 @@ bool ReliableUDPClient::Update()
 
 	enet_host_flush(_eNetHost);
 
-	auto &&coreEvents = GetEventManager()->GetCoreEvents();
+	auto &&coreEvents = GetEventManager().GetCoreEvents();
 
 	bool hasEvent = false;
 	ENetEvent event;
@@ -141,7 +141,7 @@ bool ReliableUDPClient::Update()
 			{
 				_isConnecting = false;
 
-				coreEvents.ClientConnect()->Invoke();
+				coreEvents.ClientConnect().Invoke();
 			}
 			break;
 		}

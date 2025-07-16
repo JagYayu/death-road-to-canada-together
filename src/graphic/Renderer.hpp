@@ -4,7 +4,7 @@
 #include "program/Context.hpp"
 #include "resource/TextureManager.hpp"
 #include "sol/table.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 #include "util/Log.hpp"
 
 #include <cstdint>
@@ -32,7 +32,7 @@ namespace tudov
 		virtual void Render() noexcept = 0;
 	};
 
-	class Renderer : public IRenderer, public IContextProvider, public ILuaAPIProvider
+	class Renderer : public IRenderer, public IContextProvider
 	{
 		friend class LuaAPI;
 
@@ -86,7 +86,7 @@ namespace tudov
 		};
 
 	  private:
-		static ILuaAPI::TInstallation rendererLuaAPIInstallation;
+		// static ILuaAPI::TInstallation rendererLuaAPIInstallation;
 
 	  private:
 		Window &_window;
@@ -110,7 +110,7 @@ namespace tudov
 
 		void Initialize() noexcept;
 
-		void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
+		// void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
 
 		IWindow &GetWindow() noexcept override;
 		Context &GetContext() noexcept override;

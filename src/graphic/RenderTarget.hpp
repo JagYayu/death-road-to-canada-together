@@ -8,11 +8,13 @@
 namespace tudov
 {
 	class Engine;
+	class LuaAPI;
 	class Renderer;
 	class Texture;
 
 	class RenderTarget
 	{
+		friend LuaAPI;
 		friend Renderer;
 
 	  private:
@@ -27,7 +29,7 @@ namespace tudov
 	  private:
 		void LuaBeginTarget() noexcept;
 		void LuaEndTarget() noexcept;
-	  
+
 	  public:
 		SDL_Rect &GetRect() noexcept;
 		void BeginTarget();

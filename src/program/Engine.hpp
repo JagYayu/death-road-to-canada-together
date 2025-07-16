@@ -2,22 +2,18 @@
 
 #include "Context.hpp"
 #include "MainArgs.hpp"
-#include "Window.hpp"
-#include "data/Config.hpp"
 #include "debug/Debug.hpp"
-#include "debug/DebugManager.hpp"
-#include "mod/LuaAPI.hpp"
-#include "mod/ModManager.hpp"
-#include "network/Network.hpp"
-#include "resource/FontManager.hpp"
-#include "resource/ImageManager.hpp"
-#include "resource/ShaderManager.hpp"
-#include "scripts/GameScripts.hpp"
+#include "program/EngineComponent.hpp"
 
 #include <atomic>
+#include <cmath>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <thread>
 #include <vector>
+
+union SDL_Event;
 
 namespace tudov
 {
@@ -32,8 +28,13 @@ namespace tudov
 	};
 
 	class Context;
+	class Log;
+	struct IGameScripts;
+	struct ILuaAPI;
+	struct INetwork;
+	struct IWindow;
 
-	class Engine : public Application, public IDebugProvider, public ILuaAPIProvider
+	class Engine : public Application, public IDebugProvider
 	{
 		friend Context;
 
@@ -64,10 +65,26 @@ namespace tudov
 
 		struct LoadingInfo
 		{
+			friend Engine;
+
+		  private:
+			std::float_t progressVisualValue = 0.0f;
+
+		  public:
 			std::string title;
 			std::string description;
-			std::float_t progressValue;
-			std::float_t progressTotal;
+			std::float_t progressValue = 0.0f;
+			std::float_t progressTotal = 0.0f;
+
+			constexpr std::float_t GetVisualProgressValue() const noexcept
+			{
+				return progressVisualValue;
+			}
+
+			constexpr std::float_t GetVisualProgress() const noexcept
+			{
+				return progressVisualValue / progressTotal;
+			}
 		};
 
 	  private:
@@ -84,10 +101,10 @@ namespace tudov
 		LoadingInfo _loadingInfo;
 		std::mutex _loadingInfoMutex;
 
-		Config _config;
-		ImageManager _imageManager;
+		std::shared_ptr<Config> _config;
+		std::shared_ptr<ImageManager> _imageManager;
 		// ShaderManager shaderManager;
-		FontManager _fontManager;
+		std::shared_ptr<FontManager> _fontManager;
 
 		std::shared_ptr<ILuaAPI> _luaAPI;
 		std::shared_ptr<INetwork> _network;
@@ -100,7 +117,7 @@ namespace tudov
 
 		std::weak_ptr<IWindow> _mainWindow;
 		std::vector<std::shared_ptr<IWindow>> _windows;
-		std::shared_ptr<DebugManager> _debugManager;
+		std::shared_ptr<IDebugManager> _debugManager;
 
 	  public:
 		MainArgs mainArgs;
@@ -123,11 +140,12 @@ namespace tudov
 		void Deinitialize() noexcept override;
 
 		void ProvideDebug(IDebugManager &debugManager) noexcept override;
-		void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
+		// void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
 
 		// Basic operations.
 
 		std::float_t GetFramerate() const noexcept;
+		std::float_t GetDeltaTime() const noexcept;
 		std::uint64_t GetTick() const noexcept;
 		void Quit();
 
@@ -153,7 +171,7 @@ namespace tudov
 			return const_cast<Engine *>(this)->GetLoadingInfo();
 		}
 
-		inline Engine &IncreaseLoadingProgress(std::float_t value) noexcept
+		inline Engine &ChangeLoadingProgress(std::float_t value) noexcept
 		{
 			auto &&info = GetLoadingInfo();
 			SetLoadingInfo(LoadingInfoArgs{

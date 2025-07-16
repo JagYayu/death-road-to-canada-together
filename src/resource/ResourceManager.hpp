@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 #include "util/Log.hpp"
 
 // #include "Texture.hpp"

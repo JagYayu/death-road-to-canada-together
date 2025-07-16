@@ -6,7 +6,7 @@
 #include "ScriptProvider.hpp"
 #include "sol/error.hpp"
 #include "sol/table.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
 
@@ -67,13 +67,13 @@ void ScriptEngine::Initialize() noexcept
 	auto &&scriptLoader = GetScriptLoader();
 
 	_luaThrowModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::function>();
-	_luaInspect = scriptLoader->Load("#lua.inspect")->GetTable().raw_get<sol::function>("inspect");
-	auto &&scriptEngineModule = scriptLoader->Load("#lua.ScriptEngine")->GetTable();
+	_luaInspect = scriptLoader.Load("#lua.inspect")->GetTable().raw_get<sol::function>("inspect");
+	auto &&scriptEngineModule = scriptLoader.Load("#lua.ScriptEngine")->GetTable();
 	scriptEngineModule.raw_get<sol::function>("initialize")();
 	_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
 	_luaPostProcessSandboxing = scriptEngineModule.raw_get<sol::function>("postProcessSandboxing");
 
-	GetLuaAPI()->Install(_lua, _context);
+	GetLuaAPI().Install(_lua, _context);
 
 	MakeReadonlyGlobal(_lua.globals());
 }
@@ -93,7 +93,7 @@ void ScriptEngine::SetReadonlyGlobal(const sol::string_view &key, sol::object va
 {
 	if (value.is<sol::table>())
 	{
-		_lua[key] = GetScriptEngine()->MakeReadonlyGlobal(value.as<sol::table>());
+		_lua[key] = GetScriptEngine().MakeReadonlyGlobal(value.as<sol::table>());
 	}
 	else
 	{
@@ -264,19 +264,19 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 		try
 		{
 			auto &&scriptProvider = GetScriptProvider();
-			auto targetScriptID = scriptProvider->GetScriptIDByName(targetScriptName);
+			auto targetScriptID = scriptProvider.GetScriptIDByName(targetScriptName);
 			if (targetScriptID)
 			{
 				auto &&scriptLoader = GetScriptLoader();
-				if (!scriptProvider->IsStaticScript(targetScriptID))
+				if (!scriptProvider.IsStaticScript(targetScriptID))
 				{
-					scriptLoader->AddReverseDependency(scriptID, targetScriptID);
+					scriptLoader.AddReverseDependency(scriptID, targetScriptID);
 				}
 
-				auto &&targetModule = scriptLoader->Load(targetScriptID);
+				auto &&targetModule = scriptLoader.Load(targetScriptID);
 				if (targetModule)
 				{
-					return targetModule->LazyLoad(*scriptLoader);
+					return targetModule->LazyLoad(scriptLoader);
 				}
 			}
 
@@ -301,7 +301,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 	{
 		try
 		{
-			auto &&name = GetScriptProvider()->GetScriptNamespace(scriptID);
+			auto &&name = GetScriptProvider().GetScriptNamespace(scriptID);
 			if (name == "") [[unlikely]]
 			{
 				IScriptEngine::ThrowError("Script module <{}> not found", scriptID);

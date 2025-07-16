@@ -1,11 +1,12 @@
 #include "MainWindow.hpp"
 
-#include "SDL3/SDL_rect.h"
 #include "Window.hpp"
+#include "debug/DebugManager.hpp"
 #include "event/EventHandleKey.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "program/Engine.hpp"
 
+#include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_video.h"
 #include "imgui_freetype.h"
 #include "imgui_impl_sdl3.h"
@@ -155,9 +156,8 @@ void MainWindow::RenderLoadingGUI(Engine &engine) noexcept
 			ImGui::Spacing();
 		}
 		{
-			auto value = loadingInfo.progressValue;
-			auto total = loadingInfo.progressTotal;
-			ImGui::ProgressBar(value / total, ImVec2(width, 0.0f), std::format("{}/{}", value, total).c_str());
+			auto visual = loadingInfo.GetVisualProgress();
+			ImGui::ProgressBar(visual, ImVec2(width, 0.0f), std::format("{}/{}", loadingInfo.progressValue, loadingInfo.progressTotal).c_str());
 			ImGui::Spacing();
 		}
 		{

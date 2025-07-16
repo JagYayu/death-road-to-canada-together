@@ -3,13 +3,11 @@
 #include "Micros.hpp"
 
 #include <json.hpp>
+#include <queue>
 #include <sol/lua_value.hpp>
 
 #include <atomic>
 #include <mutex>
-#include <queue>
-#include <string>
-#include <unordered_map>
 
 namespace tudov
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vector.hpp"
+#include "std::vector.hpp"
 #include "util/Micros.hpp"
 
 #include <array>
@@ -67,9 +67,9 @@ namespace tudov::impl
 			return result;
 		}
 
-		inline constexpr Vector<N, T> Origin() const noexcept
+		inline constexpr std::vector<N, T> Origin() const noexcept
 		{
-			return Vector<N, T>(this->point);
+			return std::vector<N, T>(this->point);
 		}
 
 		inline constexpr T Size() const noexcept

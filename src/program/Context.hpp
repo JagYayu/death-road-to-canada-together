@@ -34,39 +34,39 @@ namespace tudov
 		FontManager &GetFontManager();
 		const FontManager &GetFontManager() const;
 
-		IEventManager *GetEventManager();
-		ILuaAPI *GetLuaAPI();
-		IModManager *GetModManager();
-		IScriptEngine *GetScriptEngine();
-		IScriptLoader *GetScriptLoader();
-		IScriptProvider *GetScriptProvider();
+		IEventManager &GetEventManager();
+		ILuaAPI &GetLuaAPI();
+		IModManager &GetModManager();
+		IScriptEngine &GetScriptEngine();
+		IScriptLoader &GetScriptLoader();
+		IScriptProvider &GetScriptProvider();
 
-		inline const IEventManager *GetEventManager() const
+		inline const IEventManager &GetEventManager() const
 		{
 			return const_cast<Context *>(this)->GetEventManager();
 		}
 
-		inline ILuaAPI *GetLuaAPI() const
+		inline ILuaAPI &GetLuaAPI() const
 		{
 			return const_cast<Context *>(this)->GetLuaAPI();
 		}
 
-		inline const IModManager *GetModManager() const
+		inline const IModManager &GetModManager() const
 		{
 			return const_cast<Context *>(this)->GetModManager();
 		}
 
-		inline const IScriptEngine *GetScriptEngine() const
+		inline const IScriptEngine &GetScriptEngine() const
 		{
 			return const_cast<Context *>(this)->GetScriptEngine();
 		}
 
-		inline const IScriptLoader *GetScriptLoader() const
+		inline const IScriptLoader &GetScriptLoader() const
 		{
 			return const_cast<Context *>(this)->GetScriptLoader();
 		}
 
-		inline const IScriptProvider *GetScriptProvider() const
+		inline const IScriptProvider &GetScriptProvider() const
 		{
 			return const_cast<Context *>(this)->GetScriptProvider();
 		}
@@ -130,62 +130,62 @@ namespace tudov
 			return GetContext().GetImageManager();
 		}
 
-		inline IEventManager *GetEventManager() noexcept
+		inline IEventManager &GetEventManager() noexcept
 		{
 			return GetContext().GetEventManager();
 		}
 
-		inline const IEventManager *GetEventManager() const noexcept
+		inline const IEventManager &GetEventManager() const noexcept
 		{
 			return GetContext().GetEventManager();
 		}
 
-		inline ILuaAPI *GetLuaAPI() noexcept
+		inline ILuaAPI &GetLuaAPI() noexcept
 		{
 			return GetContext().GetLuaAPI();
 		}
 
-		inline const ILuaAPI *GetLuaAPI() const noexcept
+		inline const ILuaAPI &GetLuaAPI() const noexcept
 		{
 			return GetContext().GetLuaAPI();
 		}
 
-		inline IModManager *GetModManager() noexcept
+		inline IModManager &GetModManager() noexcept
 		{
 			return GetContext().GetModManager();
 		}
 
-		inline const IModManager *GetModManager() const noexcept
+		inline const IModManager &GetModManager() const noexcept
 		{
 			return GetContext().GetModManager();
 		}
 
-		inline IScriptEngine *GetScriptEngine() noexcept
+		inline IScriptEngine &GetScriptEngine() noexcept
 		{
 			return GetContext().GetScriptEngine();
 		}
 
-		inline const IScriptEngine *GetScriptEngine() const noexcept
+		inline const IScriptEngine &GetScriptEngine() const noexcept
 		{
 			return GetContext().GetScriptEngine();
 		}
 
-		inline IScriptLoader *GetScriptLoader() noexcept
+		inline IScriptLoader &GetScriptLoader() noexcept
 		{
 			return GetContext().GetScriptLoader();
 		}
 
-		inline const IScriptLoader *GetScriptLoader() const noexcept
+		inline const IScriptLoader &GetScriptLoader() const noexcept
 		{
 			return GetContext().GetScriptLoader();
 		}
 
-		inline IScriptProvider *GetScriptProvider() noexcept
+		inline IScriptProvider &GetScriptProvider() noexcept
 		{
 			return GetContext().GetScriptProvider();
 		}
 
-		inline const IScriptProvider *GetScriptProvider() const noexcept
+		inline const IScriptProvider &GetScriptProvider() const noexcept
 		{
 			return GetContext().GetScriptProvider();
 		}

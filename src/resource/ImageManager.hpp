@@ -2,7 +2,7 @@
 
 #include "ResourceManager.hpp"
 #include "graphic/Image.hpp"
-#include "util/Defs.hpp"
+#include "util/Definitions.hpp"
 
 #include <string_view>
 

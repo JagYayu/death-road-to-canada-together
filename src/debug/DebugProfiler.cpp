@@ -69,7 +69,7 @@ void DebugProfiler::UpdateAndRender(IWindow &window) noexcept
 		std::vector<DebugProfilerEntry> entries{};
 
 		auto &&eventManager = window.GetEventManager();
-		for (auto &&it = eventManager->BeginRuntimeEvents(); it != eventManager->EndRuntimeEvents(); ++it)
+		for (auto &&it = eventManager.BeginRuntimeEvents(); it != eventManager.EndRuntimeEvents(); ++it)
 		{
 			auto &&event = *it->second;
 			auto index = entries.size();
@@ -103,7 +103,7 @@ void DebugProfiler::UpdateAndRender(IWindow &window) noexcept
 				entries.emplace_back(DebugProfilerEntry{
 				    .event = &event,
 				    .index = index,
-				    .header = eventManager->GetEventNameByID(event.GetID())->data(),
+				    .header = eventManager.GetEventNameByID(event.GetID())->data(),
 				    .durations = &durations,
 				    .memories = &memories,
 				    .avgDuration = Average(durations),
@@ -117,7 +117,7 @@ void DebugProfiler::UpdateAndRender(IWindow &window) noexcept
 				entries.emplace_back(DebugProfilerEntry{
 				    .event = &event,
 				    .index = index,
-				    .header = eventManager->GetEventNameByID(event.GetID())->data(),
+				    .header = eventManager.GetEventNameByID(event.GetID())->data(),
 				    .durations = &durations,
 				    .memories = &memories,
 				    .avgDuration = FLT_MAX,
