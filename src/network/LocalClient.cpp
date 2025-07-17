@@ -67,3 +67,8 @@ bool LocalClient::Update()
 {
 	return false; // TODO
 }
+
+void LocalClient::Receive(std::string_view data) noexcept
+{
+	_messageQueue.emplace(std::string(data));
+}

@@ -3,6 +3,7 @@
 #include "DebugConsole.hpp"
 #include "DebugProfiler.hpp"
 #include "IDebugElement.hpp"
+#include "util/Scopes.hpp"
 
 #include <memory>
 #include <set>
@@ -11,11 +12,11 @@ namespace tudov
 {
 	struct IWindow;
 
-	template <typename T>
-	concept TypenameIsDebugElement = requires {
-		std::is_base_of_v<IDebugElement, T>;
-		{ T::Name() } -> std::convertible_to<std::string_view>;
-	};
+	// template <typename T>
+	// concept TypenameIsDebugElement = requires {
+	// 	std::is_base_of_v<IDebugElement, T>;
+	// 	{ T::Name() } -> std::convertible_to<std::string_view>;
+	// };
 
 	struct IDebugManager
 	{
@@ -31,14 +32,14 @@ namespace tudov
 			return const_cast<IDebugManager *>(this)->GetElement(elementName);
 		}
 
-		template <TypenameIsDebugElement TDebugElement>
+		template <ScopeIDebugElement TDebugElement>
 		inline TDebugElement *GetElement() noexcept
 		{
 			auto &&element = GetElement(TDebugElement::Name());
 			return element != nullptr ? dynamic_cast<TDebugElement *>(element) : nullptr;
 		}
 
-		template <TypenameIsDebugElement TDebugElement>
+		template <ScopeIDebugElement TDebugElement>
 		inline const TDebugElement *GetElement() const noexcept
 		{
 			return const_cast<IDebugManager *>(this)->GetElement<TDebugElement>();

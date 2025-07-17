@@ -1,4 +1,4 @@
-local times = 100000 -- 10000000
+local times = 6000000 -- 10000000
 local t = {}
 for i = 1, times do
 	t[#t + 1] = t

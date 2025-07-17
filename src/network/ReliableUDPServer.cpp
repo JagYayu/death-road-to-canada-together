@@ -1,8 +1,6 @@
 #include "ReliableUDPServer.hpp"
 
 #include "SocketType.hpp"
-#include "debug/DebugConsole.hpp"
-#include "debug/DebugManager.hpp"
 #include "event/CoreEvents.hpp"
 #include "event/EventManager.hpp"
 
@@ -11,7 +9,8 @@
 using namespace tudov;
 
 ReliableUDPServer::ReliableUDPServer(INetwork &network) noexcept
-    : _network(network)
+    : _network(network),
+      _nextClientID(0)
 {
 }
 
@@ -37,7 +36,7 @@ INetwork &ReliableUDPServer::GetNetwork() noexcept
 
 ESocketType ReliableUDPServer::GetSocketType() const noexcept
 {
-	return ESocketType::ReliableUDP;
+	return ESocketType::RUDP;
 }
 
 void ReliableUDPServer::Host(const HostArgs &args)
@@ -63,9 +62,16 @@ std::optional<std::string_view> ReliableUDPServer::GetPassword() noexcept
 	return std::nullopt;
 }
 
-std::optional<std::int32_t> ReliableUDPServer::GetMaxClients() noexcept
+std::optional<std::size_t> ReliableUDPServer::GetMaxClients() noexcept
 {
 	return std::nullopt;
+}
+
+ReliableUDPServer::ClientID ReliableUDPServer::NewClientID() noexcept
+{
+	auto clientID = _nextClientID;
+	++_nextClientID;
+	return clientID;
 }
 
 bool ReliableUDPServer::Update() noexcept
@@ -77,13 +83,14 @@ bool ReliableUDPServer::Update() noexcept
 	{
 		update = true;
 
-		auto &&coreEvents = GetEventManager().GetCoreEvents();
+		IScriptEngine &scriptEngine = GetScriptEngine();
+		ICoreEvents &coreEvents = GetEventManager().GetCoreEvents();
 
 		switch (event.type)
 		{
 		case ENET_EVENT_TYPE_CONNECT:
 		{
-			// coreEvents.ClientMessage();
+			coreEvents.ClientConnect().Invoke(scriptEngine, nullptr, ESocketType::RUDP);
 
 			// printf("A new client connected from %x:%u.\n",
 			//        event.peer->address.host,
@@ -131,7 +138,63 @@ bool ReliableUDPServer::Update() noexcept
 	return update;
 }
 
-void ReliableUDPServer::ProvideDebug(IDebugManager &debugManager) noexcept
+_ENetPeer *ReliableUDPServer::GetPeerByClientID(std::uint64_t clientID) noexcept
 {
-	auto &&debugConsole = debugManager.GetElement<DebugConsole>();
+	return _clientPeerBimap.AtKey(clientID);
 }
+
+ReliableUDPServer::ClientID ReliableUDPServer::GetClientIDByPeer(_ENetPeer *peer) noexcept
+{
+	return _clientPeerBimap.AtValue(peer);
+}
+
+void ReliableUDPServer::Send(std::uint64_t clientID, std::string_view data, bool reliable)
+{
+	if (auto peer = GetPeerByClientID(clientID); peer != nullptr)
+	{
+		ENetPacket *packet = enet_packet_create(data.data(), data.size(), reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
+		if (packet == nullptr || enet_peer_send(peer, 0, packet) != 0)
+		{
+			enet_packet_destroy(packet);
+		}
+	}
+}
+
+void ReliableUDPServer::SendReliable(std::uint64_t clientID, std::string_view data)
+{
+	Send(clientID, data, true);
+}
+
+void ReliableUDPServer::SendUnreliable(std::uint64_t clientID, std::string_view data)
+{
+	Send(clientID, data, false);
+}
+
+void ReliableUDPServer::Broadcast(std::string_view data, bool reliable)
+{
+	if (!_clientPeerBimap.Empty())
+	{
+		ENetPacket *packet = enet_packet_create(data.data(), data.size(), reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
+		if (packet == nullptr)
+		{
+			enet_packet_destroy(packet);
+		}
+
+		enet_host_broadcast(_eNetHost, 0, packet);
+	}
+}
+
+void ReliableUDPServer::BroadcastReliable(std::string_view data)
+{
+	Broadcast(data, true);
+}
+
+void ReliableUDPServer::BroadcastUnreliable(std::string_view data)
+{
+	Broadcast(data, false);
+}
+
+// void ReliableUDPServer::ProvideDebug(IDebugManager &debugManager) noexcept
+// {
+// 	auto &&debugConsole = debugManager.GetElement<DebugConsole>();
+// }

@@ -1,9 +1,12 @@
 #pragma once
 
 #include "Log.hpp"
+#include "Scopes.hpp"
 
-#include <sol/sol.hpp>
-#include <sol/types.hpp>
+#include "sol/table.hpp"
+#include "sol/types.hpp"
+
+#include <format>
 
 namespace tudov
 {
@@ -42,6 +45,21 @@ namespace tudov
 			sum += data[i];
 		}
 		return sum / N;
+	}
+
+	template <ScopeEnum TEnum>
+	std::string EnumToPrettyString(TEnum value)
+	{
+		auto v = static_cast<std::underlying_type_t<TEnum>>(value);
+		try
+		{
+			nlohmann::json j = v;
+			return std::format("<{}>\"{}\"", v, j.get<std::string_view>());
+		}
+		catch (const nlohmann::json::exception &)
+		{
+			return std::format("<{}>", v);
+		}
 	}
 
 	template <typename T>
@@ -108,19 +126,19 @@ namespace tudov
 		}
 	}
 
-	template <typename T>
-	concept TypenameMapLike = requires {
-		typename T::key_type;
-		typename T::mapped_type;
-	} && (std::is_same_v<T, std::map<typename T::key_type, typename T::mapped_type, typename T::key_compare, typename T::allocator_type>> || std::is_same_v<T, std::unordered_map<typename T::key_type, typename T::mapped_type, typename T::hasher, typename T::key_equal, typename T::allocator_type>>);
+	// template <typename T>
+	// concept TypenameMapLike = requires {
+	// 	typename T::key_type;
+	// 	typename T::mapped_type;
+	// } && (std::is_same_v<T, std::map<typename T::key_type, typename T::mapped_type, typename T::key_compare, typename T::allocator_type>> || std::is_same_v<T, std::unordered_map<typename T::key_type, typename T::mapped_type, typename T::hasher, typename T::key_equal, typename T::allocator_type>>);
 
-	template <TypenameMapLike TMap, typename TPred>
+	template <ScopeMapOrUnorderedMap TMap, typename TPred>
 	void MapEraseIf(TMap &map, const TPred &pred)
 	{
 		MapEraseIf(map, pred, [](const auto &, const auto &) {});
 	}
 
-	template <TypenameMapLike TMap, typename TPred, typename TCallback>
+	template <ScopeMapOrUnorderedMap TMap, typename TPred, typename TCallback>
 	[[deprecated("nah")]]
 	void MapEraseIf(TMap &map, const TPred &pred, const TCallback &callback)
 	{

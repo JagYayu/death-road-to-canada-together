@@ -2,7 +2,6 @@
 
 #include "NetworkComponent.hpp"
 #include "data/Constants.hpp"
-#include "util/Definitions.hpp"
 
 #include <optional>
 
@@ -10,6 +9,8 @@ namespace tudov
 {
 	struct IServer : public INetworkComponent
 	{
+		using ClientID = std::uint64_t;
+
 		struct HostArgs
 		{
 			virtual ~HostArgs() noexcept = default;
@@ -19,14 +20,18 @@ namespace tudov
 			std::uint32_t maximumClients = NetworkServerMaximumClients;
 		};
 
-		virtual ~IServer() noexcept override = default;
+		~IServer() noexcept override = default;
 
 		virtual void Host(const HostArgs &args) = 0;
 		virtual void Shutdown() = 0;
 		virtual bool IsHosting() noexcept = 0;
 		virtual std::optional<std::string_view> GetTitle() noexcept = 0;
 		virtual std::optional<std::string_view> GetPassword() noexcept = 0;
-		virtual std::optional<std::int32_t> GetMaxClients() noexcept = 0;
+		virtual std::optional<std::size_t> GetMaxClients() noexcept = 0;
+		virtual void SendReliable(ClientID clientID, std::string_view data) = 0;
+		virtual void SendUnreliable(ClientID clientID, std::string_view data) = 0;
+		virtual void BroadcastReliable(std::string_view data) = 0;
+		virtual void BroadcastUnreliable(std::string_view data) = 0;
 
 		inline bool IsShutdown() noexcept
 		{

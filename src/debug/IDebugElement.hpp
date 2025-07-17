@@ -2,8 +2,6 @@
 
 #include "program/Window.hpp"
 
-#include <memory>
-
 namespace tudov
 {
 	struct IDebugElement

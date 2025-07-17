@@ -1,7 +1,10 @@
 #pragma once
 
+#include "util/Scopes.hpp"
+
 #include <cmath>
 #include <string>
+#include <type_traits>
 #include <variant>
 
 namespace tudov
@@ -47,5 +50,38 @@ namespace tudov
 		{
 			return IsAny() || value == key.value;
 		}
+
+		inline EventHandleKey() noexcept
+		    : value(nullptr)
+		{
+		}
+
+		inline EventHandleKey(std::double_t number) noexcept
+		    : value(number)
+		{
+		}
+
+		inline explicit EventHandleKey(const std::string &string) noexcept
+		    : value(string)
+		{
+		}
+
+		inline explicit EventHandleKey(std::string_view stringView) noexcept
+		    : value(std::string(stringView))
+		{
+		}
+
+		inline EventHandleKey(const char *str) noexcept
+		    : value(std::string(str))
+		{
+		}
+
+		template <ScopeEnum TEnum>
+		inline EventHandleKey(TEnum value) noexcept
+		    : value(std::double_t(std::underlying_type_t<TEnum>(value)))
+		{
+		}
+
+		~EventHandleKey() noexcept = default;
 	};
 } // namespace tudov

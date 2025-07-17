@@ -3,6 +3,8 @@
 #include "Client.hpp"
 
 #include <memory>
+#include <queue>
+#include <string>
 
 namespace tudov
 {
@@ -17,9 +19,10 @@ namespace tudov
 			LocalServer *server;
 		};
 
-	  private:
+	  protected:
 		INetwork &_network;
 		bool _connected;
+		std::queue<std::string> _messageQueue;
 
 	  public:
 		explicit LocalClient(INetwork &network) noexcept;
@@ -37,6 +40,8 @@ namespace tudov
 		void SendUnreliable(std::string_view data) override;
 
 		bool Update() override;
+
+		void Receive(std::string_view data) noexcept;
 
 		inline void Connect(const ConnectArgs &args)
 		{

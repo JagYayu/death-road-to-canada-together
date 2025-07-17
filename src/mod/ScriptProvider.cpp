@@ -22,13 +22,6 @@ ScriptProvider::ScriptProvider(Context &context) noexcept
       _log(Log::Get("ScriptProvider")),
       _latestScriptID(0)
 {
-	for (const auto &entry : std::filesystem::recursive_directory_iterator("lua"))
-	{
-		auto &&path = entry.path().string();
-		auto &&scriptName = StaticScriptNamespace(path);
-
-		AddScriptImpl(scriptName, ReadFileToString(path));
-	}
 }
 
 ScriptProvider::~ScriptProvider()
@@ -38,6 +31,27 @@ ScriptProvider::~ScriptProvider()
 Context &ScriptProvider::GetContext() noexcept
 {
 	return _context;
+}
+
+void ScriptProvider::Initialize() noexcept
+{
+	// AppStorage
+	// 如果有tudov目录，则读取tudov/lua/里面的脚本
+	// 如果有tudov.dat文件，则用zip打开并读取lua/里面的脚本
+	// 否则报错 TODO
+
+	for (const auto &entry : std::filesystem::recursive_directory_iterator("lua"))
+	{
+		auto &&path = entry.path().string();
+		auto &&scriptName = StaticScriptNamespace(path);
+
+		AddScriptImpl(scriptName, ReadFileToString(path));
+	}
+}
+
+void ScriptProvider::Deinitialize() noexcept
+{
+	//
 }
 
 ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_)

@@ -71,8 +71,8 @@ namespace tudov
 	  private:
 		std::string _module;
 
-		bool CanOutput(std::string_view verb) const;
-		void Output(std::string_view verb, std::string_view str) const;
+		bool CanOutput(std::string_view verb) const noexcept;
+		void Output(std::string_view verb, std::string_view str) const noexcept;
 
 	  public:
 		explicit Log(const std::string &module) noexcept;
@@ -80,63 +80,63 @@ namespace tudov
 
 		const std::string &GetModule() const;
 
-		TE_FORCEINLINE EVerbosity GetVerbosity() const
+		TE_FORCEINLINE EVerbosity GetVerbosity() const noexcept
 		{
 			return GetVerbosity(_module);
 		}
 
-		TE_FORCEINLINE bool CanTrace() const
+		TE_FORCEINLINE bool CanTrace() const noexcept
 		{
 			return CanOutput(VerbTrace);
 		}
-		TE_FORCEINLINE bool CanInfo() const
+		TE_FORCEINLINE bool CanInfo() const noexcept
 		{
 			return CanOutput(VerbInfo);
 		}
-		TE_FORCEINLINE bool CanDebug() const
+		TE_FORCEINLINE bool CanDebug() const noexcept
 		{
 			return CanOutput(VerbDebug);
 		}
-		TE_FORCEINLINE bool CanWarn() const
+		TE_FORCEINLINE bool CanWarn() const noexcept
 		{
 			return CanOutput(VerbWarn);
 		}
-		TE_FORCEINLINE bool CanError() const
+		TE_FORCEINLINE bool CanError() const noexcept
 		{
 			return CanOutput(VerbError);
 		}
-		TE_FORCEINLINE bool CanFatal() const
+		TE_FORCEINLINE bool CanFatal() const noexcept
 		{
 			return CanOutput(VerbFatal);
 		}
 
 		template <typename... Args>
-		TE_FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args) noexcept
 		{
 			Output(VerbTrace, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args) noexcept
 		{
 			Output(VerbDebug, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args) noexcept
 		{
 			Output(VerbInfo, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args) noexcept
 		{
 			Output(VerbWarn, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args) noexcept
 		{
 			Output(VerbError, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) noexcept
 		{
 			Output(VerbFatal, std::format(fmt, std::forward<Args>(args)...));
 		}

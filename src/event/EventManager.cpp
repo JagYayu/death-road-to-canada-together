@@ -115,7 +115,6 @@ void EventManager::OnScriptsLoaded()
 	}
 }
 
-
 // ILuaAPI::TInstallation EventManager::rendererLuaAPIInstallation = [](sol::state &lua)
 // {
 // };
@@ -415,14 +414,21 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 		{
 			keys_ = {};
 			auto &&tbl = keys.as<sol::table>();
-			for (size_t i = 0; i < tbl.size(); ++i)
+			for (std::size_t i = 0; i < tbl.size(); ++i)
 			{
-				if (!tbl[i].is<std::double_t>() && !tbl[i].is<sol::string_view>())
+				if (tbl[i].is<std::double_t>())
+				{
+					keys_.emplace_back(tbl[i].get<std::double_t>());
+				}
+				else if (tbl[i].is<sol::string_view>())
+				{
+					keys_.emplace_back(tbl[i].get<std::string_view>());
+				}
+				else
 				{
 					scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#2 'keys' type, table must be a number/string array, contains {}", GetLuaTypeStringView(tbl[i].get_type())));
 					return false;
 				}
-				keys_.emplace_back(EventHandleKey{tbl[i]});
 			}
 		}
 		else if (keys.is<sol::nil_t>())
@@ -500,7 +506,7 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 			// return sol::error("Bad argument #1 to 'event': expected EventID or string");
 		}
 
-		EventHandleKey k{nullptr};
+		EventHandleKey k;
 		if (key.is<double>())
 		{
 			k.value = key.as<double>();

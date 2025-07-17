@@ -2,10 +2,12 @@
 
 #include "LocalClient.hpp"
 #include "LocalServer.hpp"
+#include "ReliableUDPClient.hpp"
+#include "ReliableUDPServer.hpp"
 #include "SocketType.hpp"
 #include "debug/DebugManager.hpp"
+#include "exception/BadEnumException.hpp"
 
-#include <cstdlib>
 #include <format>
 #include <memory>
 #include <string>
@@ -20,9 +22,6 @@ std::int32_t INetwork::GetLimitsPerUpdate() noexcept
 
 bool INetwork::Update() noexcept
 {
-	auto &&client = GetClient();
-	auto &&server = GetServer();
-
 	std::int32_t limit = GetLimitsPerUpdate();
 	if (limit <= 0)
 	{
@@ -64,7 +63,9 @@ Network::Network(Context &context) noexcept
     : _log(Log::Get("Network")),
       _context(context),
       _initialized(false),
-      _socketType(ESocketType::Local)
+      _socketType(ESocketType::Local),
+      _debugClientUID(0),
+      _debugServerUID(0)
 {
 }
 
@@ -73,58 +74,173 @@ Log &Network::GetLog() noexcept
 	return *_log;
 }
 
+std::vector<DebugConsoleResult> Network::DebugClientConnect(std::string_view arg) noexcept
+{
+	std::vector<DebugConsole::Result> results{};
+
+	auto &&client = GetClient(_debugClientUID);
+	if (client == nullptr)
+	{
+		results.emplace_back(std::format("Client with uid {} does not exist", _debugClientUID), DebugConsole::Code::Failure);
+		return results;
+	}
+
+	std::string_view address;
+	{
+		auto spacePos = arg.find(' ');
+		if (spacePos == std::string_view::npos)
+		{
+			results.emplace_back("Bad command", DebugConsole::Code::Failure);
+			return results;
+		}
+
+		auto socket = arg.substr(0, spacePos);
+		auto &&socketType = StringToSocketType(socket);
+		if (!socketType.has_value())
+		{
+			results.emplace_back("Socket not provided or invalid", DebugConsole::Code::Failure);
+			return results;
+		}
+
+		try
+		{
+			SetClient(socketType.value(), _debugClientUID);
+		}
+		catch (const Exception &e)
+		{
+			results.emplace_back(e.what(), DebugConsole::Code::Failure);
+			return results;
+		}
+
+		address = arg.substr(spacePos + 1);
+		address.remove_prefix(std::min(address.find_first_not_of(" "), address.size()));
+	}
+
+	if (auto &&localClient = dynamic_cast<LocalClient *>(client); localClient != nullptr)
+	{
+		LocalServer *server = nullptr;
+		try
+		{
+			server = dynamic_cast<LocalServer *>(GetServer(std::stoi(address.data())));
+		}
+		catch (std::exception &)
+		{
+		}
+
+		LocalClient::ConnectArgs args;
+		args.user = _debugClientUID;
+		args.server = server;
+		localClient->Connect(args);
+
+		results.emplace_back("Connecting to local server", DebugConsole::Code::Success);
+	}
+	else if (auto &&reliableUDPClient = dynamic_cast<ReliableUDPClient *>(client); reliableUDPClient != nullptr)
+	{
+		std::istringstream iss{std::string(address)};
+		std::string host;
+		std::string port;
+		iss >> host >> port;
+
+		ReliableUDPClient::ConnectArgs args;
+		args.host = host;
+		args.port = std::stoi(port);
+		reliableUDPClient->Connect(args);
+
+		results.emplace_back(std::format("Connecting to reliable udp server {} {}", host, port), DebugConsole::Code::Success);
+	}
+	else
+	{
+		results.emplace_back("Unhandled client connecting logic", DebugConsole::Code::Failure);
+	}
+
+	return results;
+}
+
+std::vector<DebugConsoleResult> Network::DebugServerHost(std::string_view arg) noexcept
+{
+	std::vector<DebugConsole::Result> results{};
+
+	std::string_view address;
+	{
+		auto spacePos = arg.find(' ');
+		if (spacePos == std::string_view::npos)
+		{
+			results.emplace_back("Bad command", DebugConsole::Code::Failure);
+			return results;
+		}
+
+		auto socket = arg.substr(0, spacePos);
+		auto &&socketType = StringToSocketType(socket);
+		if (!socketType.has_value())
+		{
+			results.emplace_back("Socket not provided or invalid", DebugConsole::Code::Failure);
+			return results;
+		}
+
+		try
+		{
+			SetServer(socketType.value(), _debugServerUID);
+		}
+		catch (const Exception &e)
+		{
+			results.emplace_back(e.what(), DebugConsole::Code::Failure);
+			return results;
+		}
+
+		address = arg.substr(spacePos + 1);
+		address.remove_prefix(std::min(address.find_first_not_of(" "), address.size()));
+	}
+
+	IServer *server = GetServer(_debugServerUID);
+	if (server == nullptr) [[unlikely]]
+	{
+		results.emplace_back(std::format("Server with uid {} does not exist", _debugClientUID), DebugConsole::Code::Failure);
+		return results;
+	}
+
+	if (auto &&localServer = dynamic_cast<LocalServer *>(server); localServer != nullptr)
+	{
+		LocalServer *server = nullptr;
+		try
+		{
+			server = dynamic_cast<LocalServer *>(GetServer(std::stoi(address.data())));
+		}
+		catch (std::exception &)
+		{
+		}
+
+		LocalServer::HostArgs args;
+		localServer->Host(args);
+
+		results.emplace_back("Hosting local server", DebugConsole::Code::Success);
+	}
+	else if (auto &&reliableUDPServer = dynamic_cast<ReliableUDPServer *>(server); reliableUDPServer != nullptr)
+	{
+		std::istringstream iss{std::string(address)};
+		std::string host;
+		std::string port;
+		iss >> host >> port;
+
+		ReliableUDPServer::HostArgs args;
+		reliableUDPServer->Host(args);
+
+		results.emplace_back(std::format("Connecting to reliable udp server {} {}", host, port), DebugConsole::Code::Success);
+	}
+	else
+	{
+		results.emplace_back("Unhandled server hosting logic", DebugConsole::Code::Failure);
+	}
+
+	return results;
+}
+
 void Network::ProvideDebug(IDebugManager &debugManager) noexcept
 {
-	if (auto &&console = debugManager.GetElement<DebugConsole>(); console != nullptr)
+	if (DebugConsole *console = debugManager.GetElement<DebugConsole>(); console != nullptr)
 	{
 		auto &&clientConnect = [this](std::string_view arg)
 		{
-			std::vector<DebugConsole::Result> results{};
-
-			auto &&client = GetClient(_debugClientUID);
-			if (client == nullptr)
-			{
-				results.emplace_back(std::format("Client with uid {} does not exist", _debugClientUID), DebugConsole::Code::Failure);
-				return results;
-			}
-
-			auto spacePos = arg.find(' ');
-			if (spacePos == std::string_view::npos)
-			{
-				results.emplace_back("Bad command", DebugConsole::Code::Failure);
-				return results;
-			}
-
-			auto socket = arg.substr(0, spacePos);
-			auto &&socketType = StringToSocketType(socket);
-			if (!socketType.has_value())
-			{
-				results.emplace_back("Socket not provided", DebugConsole::Code::Failure);
-				return results;
-			}
-			SetClient(socketType.value(), _debugClientUID);
-
-			auto address = arg.substr(spacePos + 1);
-			address.remove_prefix(std::min(address.find_first_not_of(" "), address.size()));
-
-			if (auto &&localClient = dynamic_cast<LocalClient *>(client); localClient != nullptr)
-			{
-				LocalServer *server = nullptr;
-				try
-				{
-					server = dynamic_cast<LocalServer *>(GetServer(std::stoi(address.data())));
-				}
-				catch (std::exception &)
-				{
-				}
-
-				LocalClient::ConnectArgs args;
-				args.user = _debugClientUID;
-				args.server = server;
-				localClient->Connect(args);
-			}
-
-			return results;
+			return DebugClientConnect(arg);
 		};
 
 		console->SetCommand(DebugConsole::Command{
@@ -167,15 +283,25 @@ void Network::ProvideDebug(IDebugManager &debugManager) noexcept
 
 		auto &&serverHost = [this](std::string_view arg)
 		{
-			std::vector<DebugConsole::Result> results{};
-
-			return results;
+			return DebugServerHost(arg);
 		};
 
 		console->SetCommand(DebugConsole::Command{
 		    .name = "serverHost",
 		    .help = "serverHost <socket> <address>: Host server.",
 		    .func = serverHost,
+		});
+
+		auto &&serverInfo = [this](std::string_view arg)
+		{
+			std::vector<DebugConsole::Result> results{};
+			return results;
+		};
+
+		console->SetCommand(DebugConsole::Command{
+		    .name = "serverInfo",
+		    .help = "serverInfo [uid]: Check server's hosting info.",
+		    .func = serverInfo,
 		});
 	}
 }
@@ -195,8 +321,8 @@ void Network::Initialize() noexcept
 	auto &&client = std::make_shared<LocalClient>(*this);
 	auto &&server = std::make_shared<LocalServer>(*this);
 
-	_clients.try_emplace(0, client);
-	_servers.try_emplace(0, server);
+	_clients[0] = client;
+	_servers[0] = server;
 
 	LocalServer::HostArgs hostArgs;
 	hostArgs.title = "Local Server";
@@ -257,12 +383,64 @@ std::vector<std::weak_ptr<IServer>> Network::GetServers() noexcept
 	return std::move(servers);
 }
 
-void Network::SetClient(ESocketType socketType, std::int32_t uid)
+bool Network::SetClient(std::int32_t uid)
 {
+	return _clients.erase(uid);
 }
 
-void Network::SetServer(ESocketType socketType, std::int32_t uid)
+bool Network::SetClient(ESocketType socketType, std::int32_t uid)
 {
+	if (auto &&it = _clients.find(uid); it != _clients.end() && it->second->GetSocketType() == socketType)
+	{
+		return false;
+	}
+
+	switch (socketType)
+	{
+	case ESocketType::Local:
+		_clients[uid] = std::make_shared<LocalClient>(*this);
+		break;
+	case ESocketType::RUDP:
+		_clients[uid] = std::make_shared<ReliableUDPClient>(*this);
+		break;
+	case ESocketType::Steam:
+		// _clients[uid] = std::make_shared<SteamClient>(*this);
+		// break;
+	[[unlikely]] default:
+		throw BadEnumException<ESocketType>(_context, socketType);
+	}
+
+	return true;
+}
+
+bool Network::SetServer(std::int32_t uid)
+{
+	return _servers.erase(uid);
+}
+
+bool Network::SetServer(ESocketType socketType, std::int32_t uid)
+{
+	if (auto &&it = _servers.find(uid); it != _servers.end() && it->second->GetSocketType() == socketType)
+	{
+		return false;
+	}
+
+	switch (socketType)
+	{
+	case ESocketType::Local:
+		_servers[uid] = std::make_shared<LocalServer>(*this);
+		break;
+	case ESocketType::RUDP:
+		_servers[uid] = std::make_shared<ReliableUDPServer>(*this);
+		break;
+	case ESocketType::Steam:
+		// _servers[uid] = std::make_shared<SteamServer>(*this);
+		// break;
+	[[unlikely]] default:
+		throw BadEnumException<ESocketType>(_context, socketType);
+	}
+
+	return true;
 }
 
 bool Network::Update() noexcept

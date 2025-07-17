@@ -12,10 +12,9 @@
 
 namespace tudov
 {
-	class Config
+	class Config : public ILogProvider
 	{
 	  private:
-		std::shared_ptr<Log> _log;
 		nlohmann::json _config;
 		filewatch::FileWatch<std::string> *_fileWatcher;
 		std::optional<std::uint32_t> _propertiesID;
@@ -28,6 +27,8 @@ namespace tudov
 		std::uint32_t GetPropertiesID() noexcept;
 
 	  public:
+		Log &GetLog() noexcept override;
+
 		void Save() noexcept;
 		void Load() noexcept;
 

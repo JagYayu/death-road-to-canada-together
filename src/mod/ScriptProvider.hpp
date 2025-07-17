@@ -97,6 +97,9 @@ namespace tudov
 	  public:
 		Context &GetContext() noexcept override;
 
+		void Initialize() noexcept override;
+		void Deinitialize() noexcept override;
+
 		size_t GetCount() const noexcept override;
 		ScriptID GetScriptIDByName(std::string_view scriptName) const noexcept override;
 		std::optional<std::string_view> GetScriptNameByID(ScriptID scriptID) const noexcept override;

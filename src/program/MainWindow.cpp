@@ -76,7 +76,7 @@ void MainWindow::SetDebugManager(const std::shared_ptr<IDebugManager> &debugMana
 
 EventHandleKey MainWindow::GetKey() const noexcept
 {
-	return {"Main"};
+	return "Main";
 }
 
 bool MainWindow::HandleEvent(SDL_Event &event) noexcept

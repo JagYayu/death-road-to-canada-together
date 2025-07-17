@@ -1,20 +1,18 @@
 #include "RuntimeEvent.hpp"
 
 #include "AbstractEvent.hpp"
+#include "CoreEventsData.hpp"
 #include "EventHandler.hpp"
 #include "EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
-#include "mod/ModManager.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "util/Definitions.hpp"
-
-#include "sol/types.hpp"
+#include "util/EnumFlag.hpp"
 
 #include <cassert>
 #include <cstddef>
 #include <memory>
 #include <utility>
-#include <variant>
 
 using namespace tudov;
 
@@ -22,7 +20,8 @@ RuntimeEvent::RuntimeEvent(IEventManager &eventManager, EventID eventID, const s
     : AbstractEvent(eventManager, eventID, scriptID),
       _log(Log::Get("RuntimeEvent")),
       _orders(orders),
-      _keys(keys)
+      _keys(keys),
+      _invocationTrackID(0)
 {
 	if (_orders.empty())
 	{
@@ -154,121 +153,148 @@ TE_FORCEINLINE void PCallHandler(std::shared_ptr<Log> &log, EventHandler &handle
 	}
 }
 
-void RuntimeEvent::Invoke(const sol::object &args, const EventHandleKey &key)
+void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvocation options)
 {
-	InvocationCache *cache;
-	bool anyKey = key.IsAny();
-
-	if (anyKey)
+	Profile *profile;
+	if (_profile != nullptr && !EnumFlagCheck(options, EInvocation::NoProfiler))
 	{
-		if (!_invocationCache.has_value()) [[unlikely]]
-		{
-			_invocationCache = InvocationCache();
-
-			for (auto &&handler : GetSortedHandlers())
-			{
-				_invocationCache->emplace_back(&handler);
-			}
-		}
-
-		cache = &_invocationCache.value();
-	}
-	else if (auto &&it = _invocationCaches.find(key); it != _invocationCaches.end()) [[likely]]
-	{
-		cache = &it->second;
-	}
-	else [[unlikely]]
-	{
-		cache = &_invocationCaches.try_emplace(key, InvocationCache()).first->second;
-		for (auto &&handler : GetSortedHandlers())
-		{
-			if (handler.key.Match(key))
-			{
-				cache->emplace_back(&handler);
-			}
-		}
-	}
-
-	if (_profile)
-	{
-		_profile->eventProfiler.BeginEvent(eventManager.GetScriptEngine());
-	}
-
-	if (anyKey)
-	{
-		for (auto &&handler : *cache)
-		{
-			PCallHandler(_log, *handler, args);
-		}
+		profile = _profile.get();
 	}
 	else
 	{
-		for (auto &&handler : *cache)
+		profile = nullptr;
+	}
+
+	TInvocationTrackID trackID;
+	if (EnumFlagCheck(options, EInvocation::TrackProgression))
+	{
+		trackID = _invocationTrackID;
+		++_invocationTrackID;
+	}
+
+	bool anyKey = key.IsAny();
+
+	if (profile)
+	{
+		profile->eventProfiler.BeginEvent(eventManager.GetScriptEngine());
+	}
+
+	if (EnumFlagCheck(options, EInvocation::CacheHandlers))
+	{
+		TInvocationCache *cache;
+
+		if (anyKey)
 		{
-			PCallHandler(_log, *handler, args, key);
+			if (!_invocationCache.has_value()) [[unlikely]]
+			{
+				_invocationCache = TInvocationCache();
+
+				for (auto &&handler : GetSortedHandlers())
+				{
+					_invocationCache->emplace_back(&handler);
+				}
+			}
+
+			cache = &_invocationCache.value();
+		}
+		else if (auto &&it = _invocationCaches.find(key); it != _invocationCaches.end()) [[likely]]
+		{
+			cache = &it->second;
+		}
+		else [[unlikely]]
+		{
+			cache = &_invocationCaches.try_emplace(key, TInvocationCache()).first->second;
+			for (auto &&handler : GetSortedHandlers())
+			{
+				if (handler.key.Match(key))
+				{
+					cache->emplace_back(&handler);
+				}
+			}
+		}
+
+		if (anyKey)
+		{
+			for (auto &&handler : *cache)
+			{
+				PCallHandler(_log, *handler, e);
+			}
+		}
+		else
+		{
+			for (auto &&handler : *cache)
+			{
+				PCallHandler(_log, *handler, e, key);
+			}
+		}
+	}
+	else // !EnumFlagCheck(options, EInvocation::CacheHandlers)
+	{
+		if (anyKey)
+		{
+			if (_profile && _profile->traceHandlers)
+			{
+				for (auto &&handler : _handlers)
+				{
+					PCallHandler(_log, handler, e);
+					_profile->eventProfiler.TraceHandler(eventManager.GetScriptEngine(), handler.name);
+				}
+			}
+			else
+			{
+				for (auto &&handler : _handlers)
+				{
+					PCallHandler(_log, handler, e, key);
+				}
+			}
+		}
+		else
+		{
+			if (_profile && _profile->traceHandlers)
+			{
+				for (auto &&handler : _handlers)
+				{
+					if (handler.key.Match(key))
+					{
+						PCallHandler(_log, handler, e);
+						_profile->eventProfiler.TraceHandler(eventManager.GetScriptEngine(), handler.name);
+					}
+				}
+			}
+			else
+			{
+				for (auto &&handler : _handlers)
+				{
+					if (handler.key.Match(key))
+					{
+						PCallHandler(_log, handler, e, key);
+					}
+				}
+			}
 		}
 	}
 
-	if (_profile)
+	if (profile)
 	{
-		_profile->eventProfiler.EndEvent(eventManager.GetScriptEngine());
+		profile->eventProfiler.EndEvent(eventManager.GetScriptEngine());
 	}
+}
+
+void RuntimeEvent::Invoke(IScriptEngine &scriptEngine, CoreEventData *data, const EventHandleKey &key, EInvocation options)
+{
+	if (data == nullptr) [[unlikely]]
+	{
+		abort();
+	}
+
+	sol::table &&args = scriptEngine.CreateTable(0, 1);
+	args["data"] = data;
+	Invoke(args, key, options);
 }
 
 void RuntimeEvent::InvokeUncached(const sol::object &args, const EventHandleKey &key)
 {
-	if (_profile)
-	{
-		_profile->eventProfiler.BeginEvent(eventManager.GetScriptEngine());
-	}
-
-	if (std::holds_alternative<std::nullptr_t>(key.value))
-	{
-		if (_profile && _profile->traceHandlers)
-		{
-			for (auto &&handler : _handlers)
-			{
-				PCallHandler(_log, handler, args);
-				_profile->eventProfiler.TraceHandler(eventManager.GetScriptEngine(), handler.name);
-			}
-		}
-		else
-		{
-			for (auto &&handler : _handlers)
-			{
-				PCallHandler(_log, handler, args, key);
-			}
-		}
-	}
-	else // !anyKey
-	{
-		if (_profile && _profile->traceHandlers)
-		{
-			for (auto &&handler : _handlers)
-			{
-				if (handler.key.Match(key))
-				{
-					PCallHandler(_log, handler, args);
-					_profile->eventProfiler.TraceHandler(eventManager.GetScriptEngine(), handler.name);
-				}
-			}
-		}
-		else
-		{
-			for (auto &&handler : _handlers)
-			{
-				if (handler.key.Match(key))
-				{
-					PCallHandler(_log, handler, args, key);
-				}
-			}
-		}
-	}
-
-	if (_profile)
-	{
-		_profile->eventProfiler.EndEvent(eventManager.GetScriptEngine());
-	}
+	Invoke(args, key);
 }
 
 void RuntimeEvent::ClearCaches()

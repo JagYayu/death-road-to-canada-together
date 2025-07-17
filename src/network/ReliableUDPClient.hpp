@@ -9,6 +9,8 @@ struct _ENetPeer;
 
 namespace tudov
 {
+	struct INetwork;
+
 	class ReliableUDPClient : public IClient
 	{
 	  public:
@@ -19,13 +21,13 @@ namespace tudov
 		};
 
 	  protected:
-		Context &_context;
+		INetwork &_network;
 		_ENetHost *_eNetHost;
 		_ENetPeer *_eNetPeer;
 		bool _isConnecting;
 
 	  public:
-		explicit ReliableUDPClient(Context &context) noexcept;
+		explicit ReliableUDPClient(INetwork &network) noexcept;
 		~ReliableUDPClient() noexcept;
 
 	  private:
@@ -34,6 +36,7 @@ namespace tudov
 	  public:
 		ESocketType GetSocketType() const noexcept override;
 		Context &GetContext() noexcept override;
+		INetwork &GetNetwork() noexcept override;
 		bool Update() override;
 
 		bool IsConnecting() noexcept override;

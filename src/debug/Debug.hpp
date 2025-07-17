@@ -1,8 +1,23 @@
 #pragma once
 
+#include <string>
 namespace tudov
 {
 	struct IDebugManager;
+
+	enum class DebugConsoleCode
+	{
+		None,
+		Failure,
+		Success,
+		Warn,
+	};
+
+	struct DebugConsoleResult
+	{
+		std::string message;
+		DebugConsoleCode code = DebugConsoleCode::None;
+	};
 
 	struct IDebugProvider
 	{

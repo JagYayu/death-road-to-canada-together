@@ -6,19 +6,37 @@
 #include "util/Definitions.hpp"
 #include "util/Log.hpp"
 
+#include "sol/forward.hpp"
+#include "sol/types.hpp"
+
 #include <optional>
-#include <sol/forward.hpp>
-#include <sol/types.hpp>
 #include <unordered_set>
 
 namespace tudov
 {
-	class IEventProfiler;
-	class IScriptProvider;
+	struct CoreEventData;
+	struct IEventProfiler;
+	struct IScriptEngine;
+	struct IScriptProvider;
 
 	class RuntimeEvent : public AbstractEvent
 	{
-		using InvocationCache = std::vector<EventHandler *>;
+		using TInvocationCache = std::vector<EventHandler *>;
+		using TInvocationTrackID = std::uint32_t;
+
+	  public:
+		enum class EInvocation
+		{
+			Default = 0,
+			CacheHandlers = 1 << 0,
+			NoProfiler = 1 << 1,
+			TrackProgression = 1 << 2,
+		};
+
+	  private:
+		struct InvocationTrack
+		{
+		};
 
 		struct Profile
 		{
@@ -37,11 +55,12 @@ namespace tudov
 		std::shared_ptr<Log> _log;
 		std::shared_ptr<Profile> _profile;
 		bool _handlersSortedCache;
-		std::optional<InvocationCache> _invocationCache;
-		std::unordered_map<EventHandleKey, InvocationCache, EventHandleKey::Hash, EventHandleKey::Equal> _invocationCaches;
+		std::optional<TInvocationCache> _invocationCache;
+		std::unordered_map<EventHandleKey, TInvocationCache, EventHandleKey::Hash, EventHandleKey::Equal> _invocationCaches;
 		std::vector<std::string> _orders;
 		std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> _keys;
 		std::vector<EventHandler> _handlers;
+		TInvocationTrackID _invocationTrackID;
 
 	  public:
 		explicit RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = {""}, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys = {}, ScriptID scriptID = false);
@@ -66,8 +85,12 @@ namespace tudov
 
 		void Add(const AddHandlerArgs &args) override;
 
-		void Invoke(const sol::object &args = sol::lua_nil, const EventHandleKey &key = {});
-		void InvokeUncached(const sol::object &args = sol::lua_nil, const EventHandleKey &key = {});
+		void Invoke(const sol::object &e = sol::lua_nil, const EventHandleKey &key = {}, EInvocation options = EInvocation::Default);
+		[[deprecated]] void InvokeUncached(const sol::object &e = sol::lua_nil, const EventHandleKey &key = {});
+
+		void Invoke(IScriptEngine &scriptEngine, CoreEventData *data, const EventHandleKey &key = {}, EInvocation options = EInvocation::Default);
+
+		TInvocationTrackID GetNextInvocationID() noexcept;
 
 		void ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider);
 		void ClearSpecificScriptHandlers(const IScriptProvider &scriptProvider, ScriptID scriptID);

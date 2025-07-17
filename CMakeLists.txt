@@ -12,11 +12,12 @@ endif()
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
 )
 add_executable(dr2c ${SRC_FILES})
 
-set_target_properties(dr2c PROPERTIES MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Debug>:MultiThreadedDebugDLL>$<$<CONFIG:Release>:MultiThreadedDLL>")
+set_target_properties(dr2c PROPERTIES
+    MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Debug>:MultiThreadedDebugDLL>$<$<CONFIG:Release>:MultiThreadedDLL>"
+)
 
 target_include_directories(dr2c PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/ext

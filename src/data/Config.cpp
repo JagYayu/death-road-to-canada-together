@@ -39,6 +39,11 @@ static const auto valueMountFiles = std::unordered_map<std::string, ResourceType
     {".ogg", ResourceType::Audio},
 };
 
+Log &Config::GetLog() noexcept
+{
+	return *Log::Get("Config");
+}
+
 nlohmann::json &GetLog(nlohmann::json &config) noexcept
 {
 	auto &&log = config[keyLog];
@@ -79,7 +84,6 @@ nlohmann::json &GetWindow(nlohmann::json &config) noexcept
 }
 
 Config::Config() noexcept
-    : _log(Log::Get("EngineConfig"))
 {
 	Config::Load();
 
@@ -105,16 +109,16 @@ void Config::Save() noexcept
 		{
 			out << _config.dump(1, '\t');
 			out.close();
-			_log->Trace("Config file saved: \"{}\"", f);
+			Trace("Config file saved: \"{}\"", f);
 		}
 		else
 		{
-			_log->Error("Failed to open config file for writing: \"{}\"", f);
+			Error("Failed to open config file for writing: \"{}\"", f);
 		}
 	}
 	catch (const std::exception &e)
 	{
-		_log->Error("Exception occurred while saving config file: {}", e.what());
+		Error("Exception occurred while saving config file: {}", e.what());
 	}
 }
 
@@ -135,11 +139,11 @@ void Config::Load() noexcept
 			out << _config.dump(4);
 			out.close();
 		}
-		Log::UpdateVerbosities(GetLog(_config));
+		Log::UpdateVerbosities(::GetLog(_config));
 	}
 	catch (const std::exception &e)
 	{
-		_log->Error("Exception occurred while loading config file: {}", e.what());
+		Error("Exception occurred while loading config file: {}", e.what());
 	}
 }
 

@@ -4,21 +4,21 @@
 
 namespace tudov
 {
-	struct IReadonlyStorage : public IStorage
+	struct IApplicationStorage : public IStorage
 	{
-		virtual ~IReadonlyStorage() noexcept = default;
+		virtual ~IApplicationStorage() noexcept = default;
 	};
 
 	class StorageManager;
 
-	class ReadonlyStorage : public IReadonlyStorage
+	class ApplicationStorage : public IApplicationStorage
 	{
 	  protected:
 		StorageManager &_storageManager;
 
 	  public:
-		explicit ReadonlyStorage(StorageManager &storageManager) noexcept;
-		~ReadonlyStorage() noexcept override = default;
+		explicit ApplicationStorage(StorageManager &storageManager) noexcept;
+		~ApplicationStorage() noexcept override = default;
 
 		IStorageManager &GetStorageManager() noexcept override;
 

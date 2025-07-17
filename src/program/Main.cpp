@@ -1,4 +1,5 @@
 #include "MainArgs.hpp"
+
 #include "program/Engine.hpp"
 #include "util/Log.hpp"
 
@@ -13,7 +14,12 @@
 
 using namespace tudov;
 
-void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority, const char *message)
+void RedirectLibraryPath(std::string_view path) noexcept
+{
+	// do nothing
+}
+
+void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority, const char *message) noexcept
 {
 	const char *cate = "";
 	switch (category)
@@ -80,7 +86,6 @@ static std::unique_ptr<Application> app;
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 {
 	SDL_SetLogOutputFunction(SDLLogOutputCallback, nullptr);
-
 	if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS | SDL_INIT_SENSOR | SDL_INIT_CAMERA))
 	{
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error initializing SDL3", nullptr);

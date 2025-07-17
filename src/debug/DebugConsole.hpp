@@ -1,11 +1,11 @@
 #pragma once
 
+#include "Debug.hpp"
 #include "IDebugElement.hpp"
 #include "util/Log.hpp"
 
 #include <functional>
 #include <map>
-#include <unordered_map>
 
 struct ImGuiTextBuffer;
 struct ImGuiTextFilter;
@@ -15,19 +15,8 @@ namespace tudov
 	class DebugConsole : public IDebugElement
 	{
 	  public:
-		enum class Code
-		{
-			None,
-			Failure,
-			Success,
-			Warn,
-		};
-
-		struct Result
-		{
-			std::string message;
-			Code code = Code::None;
-		};
+		using Code = DebugConsoleCode;
+		using Result = DebugConsoleResult;
 
 		struct Command
 		{
@@ -39,8 +28,8 @@ namespace tudov
 	  private:
 		struct TextBufferSegment
 		{
-			const char* begin;
-			const char* end;
+			const char *begin;
+			const char *end;
 		};
 
 	  private:

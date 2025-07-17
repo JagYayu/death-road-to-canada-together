@@ -5,10 +5,15 @@
 
 namespace tudov
 {
+	/**
+	 * @brief Socket types
+	 */
 	enum class ESocketType
 	{
 		Local = 0,
-		ReliableUDP,
+		RUDP,
+		TCP,
+		UDP,
 		Steam,
 	};
 
@@ -18,5 +23,5 @@ namespace tudov
 	};
 
 	std::optional<ESocketType> StringToSocketType(std::string_view str) noexcept;
-
+	// SocketTypeToString
 } // namespace tudov

@@ -6,7 +6,6 @@
 #include <format>
 #include <fstream>
 #include <memory>
-#include <stdexcept>
 
 using namespace tudov;
 
@@ -27,7 +26,7 @@ std::shared_ptr<Log> Log::Get(std::string_view module) noexcept
 {
 	auto &&str = std::string(module);
 	auto &&it = _logInstances.find(str);
-	if (it != _logInstances.end())
+	if (it != _logInstances.end()) [[likely]]
 	{
 		return it->second;
 	}
@@ -189,12 +188,12 @@ void Log::Process()
 	}
 }
 
-bool Log::CanOutput(std::string_view verb) const
+bool Log::CanOutput(std::string_view verb) const noexcept
 {
 	return true;
 }
 
-void Log::Output(std::string_view verb, std::string_view str) const
+void Log::Output(std::string_view verb, std::string_view str) const noexcept
 {
 	Output(_module, verb, str);
 }

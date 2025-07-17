@@ -91,6 +91,7 @@ void DebugManager::UpdateAndRender(IWindow &window) noexcept
 
 			ImGui::EndChild();
 		}
+
 		ImGui::EndMainMenuBar();
 	}
 

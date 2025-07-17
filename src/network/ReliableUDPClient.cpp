@@ -1,5 +1,6 @@
 #include "ReliableUDPClient.hpp"
 
+#include "Network.hpp"
 #include "data/Constants.hpp"
 #include "event/EventManager.hpp"
 
@@ -11,8 +12,8 @@ using namespace tudov;
 
 static std::uint32_t enetRefCount = 0;
 
-ReliableUDPClient::ReliableUDPClient(Context &context) noexcept
-    : _context(context)
+ReliableUDPClient::ReliableUDPClient(INetwork &network) noexcept
+    : _network(network)
 {
 	if (enetRefCount == 0)
 	{
@@ -32,12 +33,17 @@ ReliableUDPClient::~ReliableUDPClient() noexcept
 
 Context &ReliableUDPClient::GetContext() noexcept
 {
-	return _context;
+	return _network.GetContext();
+}
+
+INetwork &ReliableUDPClient::GetNetwork() noexcept
+{
+	return _network;
 }
 
 ESocketType ReliableUDPClient::GetSocketType() const noexcept
 {
-	return ESocketType::ReliableUDP;
+	return ESocketType::RUDP;
 }
 
 bool ReliableUDPClient::IsConnecting() noexcept
