@@ -40,12 +40,13 @@ void ScriptProvider::Initialize() noexcept
 	// 如果有tudov.dat文件，则用zip打开并读取lua/里面的脚本
 	// 否则报错 TODO
 
-	for (const auto &entry : std::filesystem::recursive_directory_iterator("lua"))
+	for (const auto &entry : std::filesystem::recursive_directory_iterator("tudov/lua"))
 	{
-		auto &&path = entry.path().string();
-		auto &&scriptName = StaticScriptNamespace(path);
+		auto &&fullPath = entry.path().string();
+		auto &&relativePath = std::filesystem::relative(fullPath, "tudov").string();
+		auto &&scriptName = StaticScriptNamespace(relativePath);
 
-		AddScriptImpl(scriptName, ReadFileToString(path));
+		AddScriptImpl(scriptName, ReadFileToString(fullPath));
 	}
 }
 

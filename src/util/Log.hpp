@@ -44,9 +44,9 @@ namespace tudov
 		static constexpr decltype(auto) VerbFatal = "Fatal";
 
 	  private:
-		static EVerbosity _globalVerbosity;
-		static std::unordered_map<std::string, EVerbosity> _moduleVerbs;
-		static std::unordered_map<std::string, EVerbosity> _moduleVerbOverrides;
+		static EVerbosity _globalVerbosities;
+		static std::unordered_map<std::string, EVerbosity> _verbosities;
+		static std::unordered_map<std::string, EVerbosity> _verbositiesOverrides;
 		static std::unordered_map<std::string, std::shared_ptr<Log>> _logInstances;
 		static std::queue<Entry> _queue;
 		static std::mutex _mutex;
@@ -62,11 +62,22 @@ namespace tudov
 		static Log &GetInstance() noexcept;
 		static void CleanupExpired() noexcept;
 		static void Quit() noexcept;
-		static EVerbosity GetVerbosity(const std::string &module);
-		static std::optional<EVerbosity> GetVerbosityOverride(const std::string &module);
-		static void SetVerbosityOverride(const std::string &module, EVerbosity verb);
+		static std::optional<EVerbosity> GetVerbosity(const std::string &module) noexcept;
+		static bool SetVerbosity(const std::string &module, EVerbosity verb) noexcept;
 		static void UpdateVerbosities(const nlohmann::json &config);
+		static std::optional<EVerbosity> GetVerbosityOverride(const std::string &module)noexcept;
+		static void SetVerbosityOverride(const std::string &module, EVerbosity verb)noexcept;
 		static void Exit() noexcept;
+
+		static std::size_t CountLogs() noexcept;
+		static std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator BeginLogs() noexcept;
+		static std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator EndLogs() noexcept;
+		static std::size_t CountVerbosities() noexcept;
+		static std::unordered_map<std::string, EVerbosity>::const_iterator BeginVerbosities() noexcept;
+		static std::unordered_map<std::string, EVerbosity>::const_iterator EndVerbosities() noexcept;
+		static std::size_t CountVerbositiesOverrides() noexcept;
+		static std::unordered_map<std::string, EVerbosity>::const_iterator BeginVerbositiesOverrides() noexcept;
+		static std::unordered_map<std::string, EVerbosity>::const_iterator EndVerbositiesOverrides() noexcept;
 
 	  private:
 		std::string _module;
@@ -82,7 +93,8 @@ namespace tudov
 
 		TE_FORCEINLINE EVerbosity GetVerbosity() const noexcept
 		{
-			return GetVerbosity(_module);
+			auto &&verb = GetVerbosity(_module);
+			return verb.has_value() ? verb.value() : Log::EVerbosity::None;
 		}
 
 		TE_FORCEINLINE bool CanTrace() const noexcept

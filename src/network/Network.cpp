@@ -5,8 +5,10 @@
 #include "ReliableUDPClient.hpp"
 #include "ReliableUDPServer.hpp"
 #include "SocketType.hpp"
+#include "debug/DebugConsole.hpp"
 #include "debug/DebugManager.hpp"
 #include "exception/BadEnumException.hpp"
+#include "exception/Exception.hpp"
 
 #include <format>
 #include <memory>

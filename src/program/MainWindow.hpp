@@ -2,6 +2,7 @@
 
 #include "Window.hpp"
 
+struct ImFont;
 union SDL_Event;
 
 namespace tudov
@@ -12,15 +13,21 @@ namespace tudov
 
 	class MainWindow : public Window
 	{
-	  private:
+	  protected:
 		std::weak_ptr<IDebugManager> _debugManager;
-		RenderTarget *_debugRenderTarget;
+		std::shared_ptr<RenderTarget> _renderTarget;
+		std::string _guiFontMemory;
+		ImFont *_guiFontSmall;
+		ImFont *_guiFontMedium;
+		ImFont *_guiFontLarge;
+		std::float_t _guiScale;
 
 	  public:
 		explicit MainWindow(Context &context) noexcept;
 		~MainWindow() noexcept override;
 
-	  private:
+	  protected:
+		void UpdateGuiStyle() noexcept;
 		void RenderLoadingGUI(Engine &engine) noexcept;
 
 	  public:
@@ -29,6 +36,15 @@ namespace tudov
 		virtual bool HandleEvent(SDL_Event &event) noexcept override;
 		virtual void Render() noexcept override;
 
+		ImFont *GetGUIFontSmall() noexcept;
+		ImFont *GetGUIFontMedium() noexcept;
+		ImFont *GetGUIFontLarge() noexcept;
+
 		void SetDebugManager(const std::shared_ptr<IDebugManager> &debugManager) noexcept;
+
+		bool GetShowDebugElements() noexcept;
+		void SetShowDebugElements(bool value) noexcept;
+		bool GetShowLoadingFrame() noexcept;
+		void SetShowLoadingFrame(bool value) noexcept;
 	};
 } // namespace tudov

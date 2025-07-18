@@ -6,6 +6,7 @@
 #include <format>
 #include <fstream>
 #include <memory>
+#include <type_traits>
 
 using namespace tudov;
 
@@ -13,9 +14,9 @@ static constexpr decltype(auto) defaultModule = "Log";
 static uint32_t logCount = 0;
 static std::unique_ptr<std::thread> logWorker;
 
-Log::EVerbosity _globalVerbosity = tudov::Log::EVerbosity::All;
-std::unordered_map<std::string, Log::EVerbosity> Log::_moduleVerbs{};
-std::unordered_map<std::string, Log::EVerbosity> Log::_moduleVerbOverrides{};
+Log::EVerbosity Log::_globalVerbosities = tudov::Log::EVerbosity::All;
+std::unordered_map<std::string, Log::EVerbosity> Log::_verbosities{};
+std::unordered_map<std::string, Log::EVerbosity> Log::_verbositiesOverrides{};
 std::unordered_map<std::string, std::shared_ptr<Log>> Log::_logInstances{};
 std::queue<Log::Entry> Log::_queue;
 std::mutex Log::_mutex;
@@ -75,31 +76,23 @@ void Log::Quit() noexcept
 	Exit();
 }
 
-Log::EVerbosity Log::GetVerbosity(const std::string &module)
+std::optional<Log::EVerbosity> Log::GetVerbosity(const std::string &module) noexcept
 {
-	{
-		auto &&it = _moduleVerbOverrides.find("key");
-		if (it != _moduleVerbOverrides.end())
-		{
-			return it->second;
-		}
-	}
-	return Log::EVerbosity::None;
-}
-
-std::optional<Log::EVerbosity> Log::GetVerbosityOverride(const std::string &module)
-{
-	auto &&it = _moduleVerbOverrides.find("key");
-	if (it != _moduleVerbOverrides.end())
+	if (auto &&it = _verbositiesOverrides.find(module); it != _verbositiesOverrides.end())
 	{
 		return it->second;
 	}
 	return std::nullopt;
 }
 
-void Log::SetVerbosityOverride(const std::string &module, EVerbosity verb)
+bool Log::SetVerbosity(const std::string &module, EVerbosity verb) noexcept
 {
-	_moduleVerbOverrides[module] = verb;
+	if (auto &&it = _verbositiesOverrides.find(module); it != _verbositiesOverrides.end())
+	{
+		it->second = verb;
+		return true;
+	}
+	return false;
 }
 
 void Log::UpdateVerbosities(const nlohmann::json &config)
@@ -110,7 +103,36 @@ void Log::UpdateVerbosities(const nlohmann::json &config)
 		return;
 	}
 
-	// TODO
+	if (auto &&global = config["global"]; global.is_number_integer())
+	{
+		_globalVerbosities = EVerbosity(global.get<std::underlying_type<EVerbosity>::type>());
+	}
+
+	if (auto &&module = config["module"]; module.is_object())
+	{
+		for (auto &&[key, value] : module.items())
+		{
+			if (value.is_number_integer())
+			{
+				_verbosities[key] = EVerbosity(value.get<std::underlying_type<EVerbosity>::type>());
+			}
+		}
+	}
+}
+
+std::optional<Log::EVerbosity> Log::GetVerbosityOverride(const std::string &module) noexcept
+{
+	auto &&it = _verbositiesOverrides.find("key");
+	if (it != _verbositiesOverrides.end())
+	{
+		return it->second;
+	}
+	return std::nullopt;
+}
+
+void Log::SetVerbosityOverride(const std::string &module, EVerbosity verb) noexcept
+{
+	_verbositiesOverrides[module] = verb;
 }
 
 void Log::Exit() noexcept
@@ -131,6 +153,51 @@ void Log::Exit() noexcept
 		logWorker->join();
 		logWorker = nullptr;
 	}
+}
+
+std::size_t Log::CountLogs() noexcept
+{
+	return _logInstances.size();
+}
+
+std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator Log::BeginLogs() noexcept
+{
+	return _logInstances.cbegin();
+}
+
+std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator Log::EndLogs() noexcept
+{
+	return _logInstances.cend();
+}
+
+std::size_t Log::CountVerbosities() noexcept
+{
+	return _verbosities.size();
+}
+
+std::unordered_map<std::string, Log::EVerbosity>::const_iterator Log::BeginVerbosities() noexcept
+{
+	return _verbosities.cbegin();
+}
+
+std::unordered_map<std::string, Log::EVerbosity>::const_iterator Log::EndVerbosities() noexcept
+{
+	return _verbosities.cend();
+}
+
+std::size_t Log::CountVerbositiesOverrides() noexcept
+{
+	return _verbositiesOverrides.size();
+}
+
+std::unordered_map<std::string, Log::EVerbosity>::const_iterator Log::BeginVerbositiesOverrides() noexcept
+{
+	return _verbositiesOverrides.cbegin();
+}
+
+std::unordered_map<std::string, Log::EVerbosity>::const_iterator Log::EndVerbositiesOverrides() noexcept
+{
+	return _verbositiesOverrides.cbegin();
 }
 
 Log::Log(const std::string &module) noexcept

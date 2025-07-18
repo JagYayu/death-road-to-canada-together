@@ -6,6 +6,7 @@
 #include "Window.hpp"
 #include "data/Config.hpp"
 #include "debug/Debug.hpp"
+#include "debug/DebugConsole.hpp"
 #include "debug/DebugManager.hpp"
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
@@ -61,6 +62,10 @@ Engine::Engine(const MainArgs &args) noexcept
 	_loadingState = ELoadingState::Done;
 	_loadingThread = std::thread([this]()
 	{
+		Engine::LoadingInfoArgs args{
+		    .progressTotal = 1.0f,
+		};
+
 		while (!DebugSingleThread && !ShouldQuit())
 		{
 			if (!_loadingMutex.try_lock())
@@ -71,22 +76,18 @@ Engine::Engine(const MainArgs &args) noexcept
 
 			if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::InProgress))
 			{
-				SetLoadingInfo(Engine::LoadingInfoArgs{
-				    .title = "Loading",
-				    .description = "Please wait.",
-				    .progressValue = 0.0f,
-				    .progressTotal = 1.0f,
-				});
+				args.title = "Background Loading";
+				args.description = "Please wait.";
+				args.progressValue = 0.0f;
+				SetLoadingInfo(args);
 
 				_modManager->Update();
 				_eventManager->GetCoreEvents().TickLoad().Invoke();
 
-				SetLoadingInfo(Engine::LoadingInfoArgs{
-				    .title = "Loaded",
-				    .description = "Waiting to be ended.",
-				    .progressValue = 1.0f,
-				    .progressTotal = 1.0f,
-				});
+				args.title = "Background Loaded";
+				args.description = "Waiting to be ended.";
+				args.progressValue = 1.0f;
+				SetLoadingInfo(args);
 
 				_loadingState.store(ELoadingState::Done, std::memory_order_release);
 			}
@@ -506,7 +507,7 @@ Engine::ELoadingState Engine::GetLoadingState() noexcept
 
 bool Engine::IsLoadingLagged() noexcept
 {
-	return (SDL_GetTicksNS() - _loadingBeginNS) > (1'000'000'000ull / uint64_t(_config->GetWindowFramelimit() / 10));
+	return (SDL_GetTicksNS() - _loadingBeginNS) > 300'000'000ull;
 }
 
 std::uint64_t Engine::GetLoadingBeginTick() const noexcept
@@ -520,7 +521,7 @@ Engine::LoadingInfo Engine::GetLoadingInfo() noexcept
 	return _loadingInfo;
 }
 
-void Engine::SetLoadingInfo(LoadingInfoArgs loadingInfo) noexcept
+void Engine::SetLoadingInfo(const LoadingInfoArgs &loadingInfo) noexcept
 {
 	if (_loadingState.load() == ELoadingState::InProgress)
 	{

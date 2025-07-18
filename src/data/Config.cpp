@@ -10,24 +10,23 @@
 
 using namespace tudov;
 
-constexpr const char *keyBitmaps = "bitmaps";
-constexpr const char *keyDirectories = "directories";
-constexpr const char *keyFiles = "files";
-constexpr const char *keyFramelimit = "framelimit";
-constexpr const char *keyFullscreen = "fullscreen";
-constexpr const char *keyHeight = "height";
-constexpr const char *keyLog = "log";
-constexpr const char *keyMount = "mount";
-constexpr const char *keyRenderBackend = "renderBackend";
-constexpr const char *keyTitle = "title";
-constexpr const char *keyWidth = "width";
-constexpr const char *keyWindow = "window";
+static constexpr const char *keyBitmaps = "bitmaps";
+static constexpr const char *keyDirectories = "directories";
+static constexpr const char *keyFiles = "files";
+static constexpr const char *keyFramelimit = "framelimit";
+static constexpr const char *keyFullscreen = "fullscreen";
+static constexpr const char *keyHeight = "height";
+static constexpr const char *keyLog = "log";
+static constexpr const char *keyMount = "mount";
+static constexpr const char *keyRenderBackend = "renderBackend";
+static constexpr const char *keyTitle = "title";
+static constexpr const char *keyWidth = "width";
+static constexpr const char *keyWindow = "window";
 
-static const auto valueWindowFramelimit = 100;
-static const auto valueWindowFullscreen = false;
-static const auto valueWindowHeight = 720;
-static const auto valueWindowTitle = "DR2C Together";
-static const auto valueWindowWidth = 1280;
+static const auto valueLog = nlohmann::json::object({
+    {"global", -1},
+    {"module", nlohmann::json::object()},
+});
 static const auto valueMountBitmaps = std::vector<std::string>{
     R"(fonts/.*\.png)",
 };
@@ -38,6 +37,11 @@ static const auto valueMountFiles = std::unordered_map<std::string, ResourceType
     {".png", ResourceType::Image},
     {".ogg", ResourceType::Audio},
 };
+static const auto valueWindowFramelimit = 60;
+static const auto valueWindowFullscreen = false;
+static const auto valueWindowHeight = 720;
+static const auto valueWindowTitle = "DR2C Together";
+static const auto valueWindowWidth = 1280;
 
 Log &Config::GetLog() noexcept
 {
@@ -49,7 +53,7 @@ nlohmann::json &GetLog(nlohmann::json &config) noexcept
 	auto &&log = config[keyLog];
 	if (!log.is_object())
 	{
-		config[keyLog] = nlohmann::json::object();
+		config[keyLog] = valueLog;
 	}
 	return log;
 }

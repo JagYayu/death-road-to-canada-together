@@ -162,7 +162,7 @@ namespace tudov
 		ELoadingState GetLoadingState() noexcept;
 		std::uint64_t GetLoadingBeginTick() const noexcept;
 		LoadingInfo GetLoadingInfo() noexcept;
-		void SetLoadingInfo(LoadingInfoArgs loadingInfo) noexcept;
+		void SetLoadingInfo(const LoadingInfoArgs &loadingInfo) noexcept;
 
 		// Inline implementations.
 

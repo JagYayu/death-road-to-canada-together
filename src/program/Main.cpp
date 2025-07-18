@@ -1,5 +1,6 @@
 #include "MainArgs.hpp"
 
+#include "graphic/GUI.hpp"
 #include "program/Engine.hpp"
 #include "util/Log.hpp"
 
@@ -116,6 +117,8 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 		app->Deinitialize();
 		app = nullptr;
 	}
+
+	GUI::Quit();
 
 	Log::GetInstance().Info("Application quit, result code: {}", std::int32_t(result));
 	Log::Quit();

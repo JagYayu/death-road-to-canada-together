@@ -20,7 +20,10 @@ namespace tudov
 		CircularBuffer<std::float_t, FramerateBufferSize> _framerateBuffer;
 
 	  public:
-		static std::string_view Name() noexcept;
+		inline static constexpr std::string_view Name() noexcept
+		{
+			return "Profiler";
+		}
 
 	  public:
 		std::weak_ptr<IWindow> window;

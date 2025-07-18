@@ -41,11 +41,14 @@ namespace tudov
 		std::vector<std::tuple<std::string, Code>> _lines;
 
 	  public:
-		static std::string_view Name() noexcept;
+		inline static constexpr std::string_view Name() noexcept
+		{
+			return "Console";
+		}
 
 	  public:
 		explicit DebugConsole() noexcept;
-		~DebugConsole() noexcept;
+		~DebugConsole() noexcept override;
 
 	  public:
 		std::string_view GetName() noexcept override;
@@ -62,10 +65,10 @@ namespace tudov
 			return const_cast<DebugConsole *>(this)->GetCommand(commandName);
 		}
 
-		template <typename... Args>
-		inline void Output(std::format_string<Args...> fmt, Code code = Code::None, Args &&...args)
+		template <typename... TArgs>
+		inline void Output(std::format_string<TArgs...> fmt, Code code = Code::None, TArgs &&...args)
 		{
-			Output(std::format(fmt, std::forward<Args>(args)...), code);
+			Output(std::format(fmt, std::forward<TArgs>(args)...), code);
 		}
 	};
 } // namespace tudov

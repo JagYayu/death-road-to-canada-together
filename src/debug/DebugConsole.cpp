@@ -60,11 +60,6 @@ DebugConsole::~DebugConsole() noexcept
 	delete _textFilter;
 }
 
-std::string_view DebugConsole::Name() noexcept
-{
-	return "Console";
-}
-
 std::string_view DebugConsole::GetName() noexcept
 {
 	return Name();

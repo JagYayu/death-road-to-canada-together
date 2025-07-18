@@ -1,6 +1,7 @@
 #include "DebugManager.hpp"
 
 #include "DebugConsole.hpp"
+#include "DebugLog.hpp"
 #include "DebugProfiler.hpp"
 #include "program/Window.hpp"
 
@@ -11,12 +12,14 @@ using namespace tudov;
 
 DebugManager::DebugManager() noexcept
     : console(std::make_shared<DebugConsole>()),
+      log(std::make_shared<DebugLog>()),
       profiler(std::make_shared<DebugProfiler>()),
       _elements(),
       _shownElements()
 {
 	_elements = {
 	    console,
+	    log,
 	    profiler,
 	};
 }
@@ -64,9 +67,9 @@ void DebugManager::UpdateAndRender(IWindow &window) noexcept
 {
 	if (ImGui::BeginMainMenuBar())
 	{
-		// ImGui::SetWindowFontScale(window.GetDisplayScale());
+		std::float_t scale = window.GetDisplayScale();
 
-		if (ImGui::BeginChild("##DebugManager", ImVec2(0, 48), false, ImGuiWindowFlags_HorizontalScrollbar))
+		if (ImGui::BeginChild("##DebugManager", ImVec2(0, 48 * scale), false, ImGuiWindowFlags_HorizontalScrollbar))
 		{
 			for (size_t i = 0; i < _elements.size(); ++i)
 			{

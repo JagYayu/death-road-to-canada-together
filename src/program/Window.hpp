@@ -23,7 +23,9 @@ namespace tudov
 		virtual std::int32_t GetWidth() const noexcept = 0;
 		virtual std::int32_t GetHeight() const noexcept = 0;
 		virtual std::float_t GetDisplayScale() const noexcept = 0;
+		virtual std::float_t GetGUIScale() const noexcept = 0;
 		virtual std::tuple<std::int32_t, std::int32_t> GetSize() const noexcept = 0;
+		virtual bool IsMinimized() const noexcept = 0;
 		virtual void Close() noexcept = 0;
 		virtual bool ShouldClose() noexcept = 0;
 		virtual void HandleEvents() noexcept = 0;
@@ -33,9 +35,9 @@ namespace tudov
 
 	class Window : public IWindow
 	{
-		protected:
+	  protected:
 		static ILuaAPI::TInstallation windowLuaAPIInstallation;
-		
+
 	  protected:
 		Context &_context;
 		std::shared_ptr<Log> _log;
@@ -50,7 +52,7 @@ namespace tudov
 		~Window() noexcept override;
 
 	  protected:
-		void RenderPreImpl() noexcept;
+		bool RenderPreImpl() noexcept;
 
 	  public:
 		// void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
@@ -61,6 +63,8 @@ namespace tudov
 		std::int32_t GetHeight() const noexcept override;
 		std::tuple<std::int32_t, std::int32_t> GetSize() const noexcept override;
 		std::float_t GetDisplayScale() const noexcept override;
+		std::float_t GetGUIScale() const noexcept override;
+		bool IsMinimized() const noexcept override;
 		void Close() noexcept override;
 		bool ShouldClose() noexcept override;
 		void HandleEvents() noexcept override;

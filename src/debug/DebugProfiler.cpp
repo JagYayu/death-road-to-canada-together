@@ -18,11 +18,6 @@ std::string_view DebugProfiler::GetName() noexcept
 	return Name();
 }
 
-std::string_view DebugProfiler::Name() noexcept
-{
-	return "Profiler";
-}
-
 struct DebugProfilerEntry
 {
 	RuntimeEvent *event;

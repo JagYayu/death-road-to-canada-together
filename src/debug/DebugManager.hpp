@@ -1,7 +1,5 @@
 #pragma once
 
-#include "DebugConsole.hpp"
-#include "DebugProfiler.hpp"
 #include "IDebugElement.hpp"
 #include "util/Scopes.hpp"
 
@@ -10,14 +8,6 @@
 
 namespace tudov
 {
-	struct IWindow;
-
-	// template <typename T>
-	// concept TypenameIsDebugElement = requires {
-	// 	std::is_base_of_v<IDebugElement, T>;
-	// 	{ T::Name() } -> std::convertible_to<std::string_view>;
-	// };
-
 	struct IDebugManager
 	{
 		virtual ~IDebugManager() noexcept = default;
@@ -46,14 +36,20 @@ namespace tudov
 		}
 	};
 
+	struct IWindow;
+	class DebugConsole;
+	class DebugLog;
+	class DebugProfiler;
+
 	class DebugManager : public IDebugManager
 	{
-	  private:
+	  protected:
 		std::vector<std::shared_ptr<IDebugElement>> _elements;
 		std::set<std::string_view> _shownElements;
 
 	  public:
 		std::shared_ptr<DebugConsole> console;
+		std::shared_ptr<DebugLog> log;
 		std::shared_ptr<DebugProfiler> profiler;
 
 	  public:

@@ -68,6 +68,11 @@ void Window::Initialize(std::int32_t width, std::int32_t height, std::string_vie
 	renderer->Initialize();
 }
 
+bool Window::IsMinimized() const noexcept
+{
+	return (SDL_GetWindowFlags(_sdlWindow) & SDL_WINDOW_MINIMIZED) != 0;
+}
+
 void Window::Close() noexcept
 {
 	_shouldClose = true;
@@ -113,18 +118,27 @@ bool Window::HandleEvent(SDL_Event &event) noexcept
 
 void Window::Render() noexcept
 {
-	RenderPreImpl();
-	renderer->Render();
+	if (RenderPreImpl())
+	{
+		renderer->Render();
+	}
 }
 
-void Window::RenderPreImpl() noexcept
+bool Window::RenderPreImpl() noexcept
 {
+	if (IsMinimized())
+	{
+		return false;
+	}
+
 	auto &&args = GetScriptEngine().CreateTable(0, 1);
 	auto &&key = GetKey();
 	args["isMain"] = GetEngine().GetMainWindow().get() == this;
 	args["key"] = &key;
 	args["window"] = this;
 	GetEventManager().GetCoreEvents().TickRender().Invoke(args, key);
+
+	return true;
 }
 
 SDL_Window *Window::GetSDLWindowHandle() noexcept
@@ -156,4 +170,11 @@ std::tuple<std::int32_t, std::int32_t> Window::GetSize() const noexcept
 std::float_t Window::GetDisplayScale() const noexcept
 {
 	return SDL_GetDisplayContentScale(SDL_GetDisplayForWindow(_sdlWindow));
+}
+
+std::float_t Window::GetGUIScale() const noexcept
+{
+	std::int32_t w, h;
+	SDL_GetWindowSize(_sdlWindow, &w, &h);
+	return std::min(w, h) / 720.0f;
 }
