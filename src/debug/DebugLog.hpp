@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IDebugElement.hpp"
+#include "DebugElement.hpp"
 
 namespace tudov
 {

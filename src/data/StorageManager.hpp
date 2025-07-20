@@ -1,9 +1,6 @@
 #pragma once
 
-#include "ApplicationStorage.hpp"
-#include "ReadonlyStorage.hpp"
-#include "Storage.hpp"
-#include "UserStorage.hpp"
+#include "Constants.hpp"
 #include "program/EngineComponent.hpp"
 
 #include <memory>
@@ -15,22 +12,24 @@ namespace tudov
 	struct IApplicationStorage;
 	struct IReadonlyStorage;
 	struct IUserStorage;
-	class ApplicationStorage;
-	class ReadonlyStorage;
-	class UserStorage;
 
-	struct IStorageManager : public IStorage, public IEngineComponent
+	struct IStorageManager : public IEngineComponent
 	{
-		static constexpr decltype(auto) UnknownUser = "";
+		static constexpr decltype(auto) RootUser = "";
+		static constexpr decltype(auto) UserDirectoryPrefix = Constants::AppUserDirectoryPrefix;
 
 		virtual ~IStorageManager() noexcept override = default;
 
 		virtual IApplicationStorage &GetAppStorage() noexcept = 0;
 		virtual IReadonlyStorage &GetReadonlyStorage() noexcept = 0;
-		virtual IUserStorage &GetUserStorage(std::string_view username = UnknownUser) noexcept = 0;
-		virtual bool HasUser(std::string_view username = UnknownUser) noexcept = 0;
-		virtual bool DeleteUser(std::string_view username = UnknownUser) noexcept = 0;
+		virtual IUserStorage &GetUserStorage(std::string_view username = RootUser) noexcept = 0;
+		virtual bool HasUser(std::string_view username = RootUser) noexcept = 0;
+		virtual bool DeleteUser(std::string_view username = RootUser) noexcept = 0;
 	};
+
+	class ApplicationStorage;
+	class ReadonlyStorage;
+	class UserStorage;
 
 	class StorageManager : public IStorageManager
 	{
@@ -48,8 +47,8 @@ namespace tudov
 
 		IApplicationStorage &GetAppStorage() noexcept override;
 		IReadonlyStorage &GetReadonlyStorage() noexcept override;
-		IUserStorage &GetUserStorage(std::string_view user = "") noexcept override;
-		bool HasUser(std::string_view user = "") noexcept override;
-		bool DeleteUser(std::string_view user = "") noexcept override;
+		IUserStorage &GetUserStorage(std::string_view user = RootUser) noexcept override;
+		bool HasUser(std::string_view user = RootUser) noexcept override;
+		bool DeleteUser(std::string_view user = RootUser) noexcept override;
 	};
 } // namespace tudov

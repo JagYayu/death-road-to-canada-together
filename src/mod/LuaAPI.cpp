@@ -26,7 +26,7 @@ bool LuaAPI::RegisterInstallation(std::string_view name, const TInstallation &in
 	return true;
 }
 
-decltype(auto) GetMainWindow(Context &context)
+decltype(auto) GetMainWindowFromContext(Context &context)
 {
 	return sol::readonly_property([&]()
 	{
@@ -41,18 +41,32 @@ decltype(auto) GetMainWindow(Context &context)
 	});
 }
 
+#define TE_ENGINE_CONTEXT_GETTER(what)                 \
+	decltype(auto) what##FromContext(Context &context) \
+	{                                                  \
+		return sol::readonly_property([&]()            \
+		{                                              \
+			return &context.what();                    \
+		});                                            \
+	}
+
 #define TE_USERTYPE(Class, ...) lua.new_usertype<Class>("tudov_" #Class, __VA_ARGS__)
 
 void LuaAPI::Install(sol::state &lua, Context &context)
 {
 	TE_USERTYPE(Engine,
-	            "mainWindow", GetMainWindow(context),
+	            "mainWindow", GetMainWindowFromContext(context),
+	            // "modManager", GetModManagerFromContext(context),
 	            "quit", &Engine::Quit);
 
 	TE_USERTYPE(EventManager,
 	            "add", &EventManager::LuaAdd,
 	            "new", &EventManager::LuaNew,
 	            "invoke", &EventManager::LuaInvoke);
+
+	TE_USERTYPE(ImageManager,
+	            "getID", &ImageManager::LuaGetID,
+	            "getPath", &ImageManager::LuaGetPath);
 
 	TE_USERTYPE(Window,
 	            "renderer", &Window::renderer,
@@ -63,15 +77,12 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "getSize", &Window::GetSize);
 
 	TE_USERTYPE(Renderer,
+	            "beginTarget", &Renderer::LuaBeginTarget,
+	            "endTarget", &Renderer::LuaEndTarget,
 	            "clear", &Renderer::LuaClear,
-	            "render", &Renderer::Render,
-	            "drawRect", &Renderer::LuaDrawTexture,
+	            "draw", &Renderer::LuaDraw,
 	            "newRenderTarget", &Renderer::LuaNewRenderTarget,
-	            "renderTexture", &Renderer::DrawTexture);
-
-	TE_USERTYPE(RenderTarget,
-	            "beginTarget", &RenderTarget::LuaBeginTarget,
-	            "endTarget", &RenderTarget::LuaEndTarget);
+	            "render", &Renderer::Render);
 
 	lua["engine"] = &context.GetEngine();
 	lua["fonts"] = &context.GetFontManager();

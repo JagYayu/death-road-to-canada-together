@@ -5,6 +5,7 @@
 #include "MainWindow.hpp"
 #include "Window.hpp"
 #include "data/Config.hpp"
+#include "data/StorageManager.hpp"
 #include "debug/Debug.hpp"
 #include "debug/DebugConsole.hpp"
 #include "debug/DebugManager.hpp"
@@ -26,7 +27,6 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
-#include <exception>
 #include <memory>
 #include <mutex>
 #include <regex>
@@ -51,6 +51,7 @@ Engine::Engine(const MainArgs &args) noexcept
 {
 	context = Context(this);
 
+	_storageManager = std::make_shared<StorageManager>(context);
 	_network = std::make_shared<Network>(context);
 	_modManager = std::make_shared<ModManager>(context);
 	_scriptProvider = std::make_shared<ScriptProvider>(context);
@@ -365,7 +366,7 @@ void Engine::InitializeResources() noexcept
 
 			auto &&filePath = path.generic_string();
 			auto imageID = _imageManager->Load(filePath);
-			if (!imageID)
+			if (!imageID) [[unlikely]]
 			{
 				_log->Error("Image ID of \"{}\" is 0!", filePath);
 				continue;
@@ -426,53 +427,6 @@ void Engine::ProvideDebug(IDebugManager &debugManager) noexcept
 	}
 }
 
-// void Engine::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
-// {
-// 	_luaAPI->RegisterInstallation("tudov_Engine", [this](sol::state &lua)
-// 	{
-// 		auto GetMainWindow = [this]()
-// 		{
-// 			return _mainWindow.lock().get();
-// 		};
-
-// 		lua.new_usertype<Engine>("tudov_Engine",
-// 		                         "mainWindow", sol::readonly_property(GetMainWindow),
-// 		                         "quit", &Engine::Quit);
-// 		lua["engine"] = this;
-// 	});
-
-// 	for (auto &&component : _components)
-// 	{
-// 		if (auto &&luaAPIProvider = std::dynamic_pointer_cast<ILuaAPIProvider>(component); luaAPIProvider != nullptr)
-// 		{
-// 			luaAPIProvider->ProvideLuaAPI(*_luaAPI);
-// 		}
-// 	}
-
-// 	if (!_mainWindow.expired())
-// 	{
-// 		if (auto &&luaAPIProvider = std::dynamic_pointer_cast<ILuaAPIProvider>(_mainWindow.lock()); luaAPIProvider != nullptr)
-// 		{
-// 			luaAPIProvider->ProvideLuaAPI(luaAPI);
-// 		}
-// 	}
-// }
-
-template <typename T>
-void Engine_ChangeEngineComponent(std::shared_ptr<Log> &log, std::string_view component, std::shared_ptr<T> &oldComponent, const std::shared_ptr<T> &newComponent) noexcept
-{
-	try
-	{
-		oldComponent->Deinitialize();
-		newComponent->Initialize();
-		oldComponent = newComponent;
-	}
-	catch (std::exception &e)
-	{
-		log->Error("Failed to change component `{}`: {}", component.data(), e.what());
-	}
-}
-
 std::float_t Engine::GetFramerate() const noexcept
 {
 	return _framerate;
@@ -507,7 +461,7 @@ Engine::ELoadingState Engine::GetLoadingState() noexcept
 
 bool Engine::IsLoadingLagged() noexcept
 {
-	return (SDL_GetTicksNS() - _loadingBeginNS) > 300'000'000ull;
+	return (SDL_GetTicksNS() - _loadingBeginNS) > 200'000'000ull;
 }
 
 std::uint64_t Engine::GetLoadingBeginTick() const noexcept

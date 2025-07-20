@@ -4,6 +4,7 @@
 #include "debug/DebugManager.hpp"
 #include "event/EventHandleKey.hpp"
 #include "graphic/RenderTarget.hpp"
+#include "graphic/Renderer.hpp"
 #include "imgui.h"
 #include "program/Engine.hpp"
 #include "util/StringUtils.hpp"
@@ -15,6 +16,7 @@
 #include "imgui_impl_sdlrenderer3.h"
 
 #include <algorithm>
+#include <memory>
 #include <numbers>
 
 using namespace tudov;
@@ -182,7 +184,7 @@ void MainWindow::Initialize(std::int32_t width, std::int32_t height, std::string
 		bSDLImGUI = true;
 	}
 
-	_renderTarget = std::make_shared<RenderTarget>(*renderer, width, height);
+	// _renderTarget = std::make_shared<RenderTarget>(*renderer, width, height);
 	SetShowDebugElements(true);
 }
 
@@ -247,9 +249,9 @@ void MainWindow::Render() noexcept
 		return;
 	}
 
-	UpdateGuiStyle();
+	renderer->Begin();
 
-	renderer->Clear(SDL_Color{0, 0, 0, 255});
+	UpdateGuiStyle();
 
 	ImGui_ImplSDL3_NewFrame();
 	ImGui_ImplSDLRenderer3_NewFrame();
@@ -281,17 +283,20 @@ void MainWindow::Render() noexcept
 		}
 	}
 
-	{
-		auto [width, height] = GetSize();
-		SDL_FRect rect{0, 0, std::float_t(width), std::float_t(height)};
-		_renderTarget->Draw(rect);
-	}
+	// {
+	// 	auto [width, height] = GetSize();
+	// 	SDL_FRect rect{0, 0, std::float_t(width), std::float_t(height)};
+	// 	_renderTarget->Draw(rect);
+	// }
 
 	renderer->Render();
+	renderer->End();
 }
 
 void MainWindow::RenderLoadingGUI(Engine &engine) noexcept
 {
+	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(0, 0), ImGui::GetIO().DisplaySize, IM_COL32(0, 0, 0, 128), 0.0f);
+
 	{
 		ImGuiViewport *viewport = ImGui::GetMainViewport();
 		ImVec2 viewSize = viewport->Size;
@@ -336,7 +341,7 @@ void MainWindow::RenderLoadingGUI(Engine &engine) noexcept
 				float a = min + (i / std::float_t(segments)) * (max - min);
 				drawList->PathLineTo(ImVec2(center.x + cosf(a + ImGui::GetTime() * 8) * radius, center.y + sinf(a + ImGui::GetTime() * 8) * radius));
 			}
-			drawList->PathStroke(-1, false, 3.0f * scale);
+			drawList->PathStroke(IM_COL32(255, 255, 255, 192), false, 3.0f * scale);
 		}
 		ImGui::SameLine();
 

@@ -1,10 +1,12 @@
 #pragma once
 
 #include "Mod.hpp"
-#include "ModEntry.hpp"
+#include "ModListedEntry.hpp"
+#include "ModRequirement.hpp"
 #include "ScriptEngine.hpp"
 #include "ScriptProvider.hpp"
 #include "UnpackagedMod.hpp"
+#include "debug/Debug.hpp"
 #include "event/EventManager.hpp"
 #include "program/EngineComponent.hpp"
 #include "util/Log.hpp"
@@ -29,17 +31,19 @@ namespace tudov
 		virtual void LoadModsDeferred() = 0;
 		virtual void UnloadMods() = 0;
 
-		virtual std::weak_ptr<Mod> GetLoadedMod(std::string_view namespace_) noexcept = 0;
+		virtual std::vector<ModListedEntry> ListAvailableMods() noexcept = 0;
 
-		virtual std::vector<ModEntry> &GetRequiredMods() noexcept = 0;
-		virtual const std::vector<ModEntry> &GetRequiredMods() const noexcept = 0;
+		virtual std::weak_ptr<Mod> FindLoadedMod(std::string_view uid) noexcept = 0;
+
+		virtual std::vector<ModRequirement> &GetRequiredMods() noexcept = 0;
+		virtual const std::vector<ModRequirement> &GetRequiredMods() const noexcept = 0;
 
 		virtual void HotReloadScriptPending(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptNamespace) = 0;
 
 		virtual void Update() = 0;
 	};
 
-	class ModManager : public IModManager
+	class ModManager : public IModManager, public IDebugProvider
 	{
 	  public:
 		enum class ELoadState
@@ -52,7 +56,7 @@ namespace tudov
 		};
 
 	  protected:
-		using THotReloadScriptsMap = std::unordered_map<std::string, std::tuple<std::string, std::string>>;
+		using HotReloadScriptsMap = std::unordered_map<std::string, std::tuple<std::string, std::string>>;
 
 	  private:
 		std::shared_ptr<Log> _log;
@@ -62,17 +66,24 @@ namespace tudov
 
 		std::vector<std::filesystem::path> _directories;
 		std::vector<std::shared_ptr<Mod>> _loadedMods;
-		std::vector<ModEntry> _requiredMods;
+		std::vector<ModRequirement> _requiredMods;
 
-		std::unique_ptr<THotReloadScriptsMap> _hotReloadScriptsPending;
+		std::unique_ptr<HotReloadScriptsMap> _hotReloadScriptsPending;
 
 	  public:
+		//
+
+		// wtf is this mod do?
 		void AddMod(const std::filesystem::path &modRoot);
 
 	  public:
 		explicit ModManager(Context &context) noexcept;
 		~ModManager() noexcept override;
 
+	  private:
+		std::vector<DebugConsoleResult> DebugAdd(std::string_view arg);
+
+	  public:
 		Context &GetContext() noexcept override;
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
@@ -84,15 +95,17 @@ namespace tudov
 		void LoadModsDeferred() override;
 		void UnloadMods() override;
 
-		std::weak_ptr<Mod> GetLoadedMod(std::string_view namespace_) noexcept override;
+		std::vector<ModListedEntry> ListAvailableMods() noexcept override;
 
-		std::vector<ModEntry> &GetRequiredMods() noexcept override;
-		const std::vector<ModEntry> &GetRequiredMods() const noexcept override;
+		std::weak_ptr<Mod> FindLoadedMod(std::string_view namespace_) noexcept override;
+
+		std::vector<ModRequirement> &GetRequiredMods() noexcept override;
+		const std::vector<ModRequirement> &GetRequiredMods() const noexcept override;
 
 		void HotReloadScriptPending(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptNamespace) override;
 
 		void Update() override;
-	};
 
-	TE_ENUM_FLAG_OPERATORS(ModManager::ELoadState);
+		void ProvideDebug(IDebugManager &debugManager) noexcept override;
+	};
 } // namespace tudov

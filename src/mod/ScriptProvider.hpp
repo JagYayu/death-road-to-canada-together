@@ -20,7 +20,7 @@ namespace tudov
 		{
 			std::string name;
 			std::string code;
-			std::string_view namespace_;
+			std::string_view modUID;
 		};
 
 	  public:
@@ -35,14 +35,14 @@ namespace tudov
 		virtual bool IsValidScript(ScriptID scriptID) const noexcept = 0;
 		virtual bool IsStaticScript(std::string_view scriptName) const noexcept = 0;
 
-		virtual ScriptID AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_) noexcept = 0;
+		virtual ScriptID AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view uid) noexcept = 0;
 		virtual bool RemoveScript(ScriptID scriptID) noexcept = 0;
 		virtual std::size_t RemoveScriptBy(std::string_view namespace_) noexcept = 0;
 		virtual const std::string &GetScriptCode(ScriptID scriptID) const noexcept = 0;
 		/*
 		 * Return an empty string if script id not exists.
 		 */
-		virtual std::string_view GetScriptNamespace(ScriptID scriptID) noexcept = 0;
+		virtual std::string_view GetScriptModUID(ScriptID scriptID) noexcept = 0;
 
 		virtual TScriptID2Entry::const_iterator begin() const = 0;
 		virtual TScriptID2Entry::const_iterator end() const = 0;
@@ -67,9 +67,9 @@ namespace tudov
 			return GetScriptCode(GetScriptIDByName(scriptName));
 		}
 
-		inline std::string_view GetScriptNamespace(std::string_view scriptName) noexcept
+		inline std::string_view GetScriptModUID(std::string_view scriptName) noexcept
 		{
-			return GetScriptNamespace(GetScriptIDByName(scriptName));
+			return GetScriptModUID(GetScriptIDByName(scriptName));
 		}
 	};
 
@@ -110,7 +110,7 @@ namespace tudov
 		bool RemoveScript(ScriptID scriptID) noexcept override;
 		std::size_t RemoveScriptBy(std::string_view namespace_) noexcept override;
 		const std::string &GetScriptCode(ScriptID scriptID) const noexcept override;
-		std::string_view GetScriptNamespace(ScriptID scriptID) noexcept override;
+		std::string_view GetScriptModUID(ScriptID scriptID) noexcept override;
 
 		std::unordered_map<ScriptID, Entry>::const_iterator begin() const override;
 		std::unordered_map<ScriptID, Entry>::const_iterator end() const override;

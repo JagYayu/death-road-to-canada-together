@@ -31,10 +31,10 @@ namespace tudov
 		void RenderLoadingGUI(Engine &engine) noexcept;
 
 	  public:
-		virtual void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;
-		virtual EventHandleKey GetKey() const noexcept override;
-		virtual bool HandleEvent(SDL_Event &event) noexcept override;
-		virtual void Render() noexcept override;
+		void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;
+		EventHandleKey GetKey() const noexcept override;
+		bool HandleEvent(SDL_Event &event) noexcept override;
+		void Render() noexcept override;
 
 		ImFont *GetGUIFontSmall() noexcept;
 		ImFont *GetGUIFontMedium() noexcept;

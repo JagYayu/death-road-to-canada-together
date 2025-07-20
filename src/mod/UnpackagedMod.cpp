@@ -124,7 +124,7 @@ void UnpackagedMod::Load()
 				oss << ins.rdbuf();
 				ins.close();
 
-				_modManager.HotReloadScriptPending(scriptName, oss.str(), GetNamespace());
+				_modManager.HotReloadScriptPending(scriptName, oss.str(), _config.uid);
 
 				break;
 			}
@@ -148,6 +148,7 @@ void UnpackagedMod::Load()
 
 	UpdateFilePatterns();
 
+	auto &&scriptProvider = _modManager.GetScriptProvider();
 	for (const auto &entry : std::filesystem::recursive_directory_iterator(_directory))
 	{
 		if (!entry.is_regular_file())
@@ -166,7 +167,7 @@ void UnpackagedMod::Load()
 
 			auto &&relative = std::filesystem::relative(std::filesystem::relative(filePath, _directory), GetScriptsDirectory());
 			auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", namespace_, relative.string()));
-			_modManager.GetScriptProvider().AddScript(scriptName, oss.str(), namespace_);
+			scriptProvider.AddScript(scriptName, oss.str(), _config.uid);
 			_scripts.emplace_back(scriptName);
 		}
 		// else if (IsFont(filePath))

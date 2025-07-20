@@ -228,7 +228,7 @@ sol::table &ScriptEngine::GetSandboxedGlobals(std::string_view sandboxKey) noexc
 
 void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string_view scriptName, sol::protected_function &func, std::string_view sandboxKey) noexcept
 {
-	auto &&namespace_ = GetLuaNamespace(scriptName);
+	// auto &&namespace_ = GetLuaNamespace(scriptName);
 
 	sol::environment env{_lua, sol::create, sandboxKey.empty() ? _lua.globals().as<sol::table>() : GetSandboxedGlobals(sandboxKey)};
 
@@ -301,12 +301,18 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 	{
 		try
 		{
-			auto &&name = GetScriptProvider().GetScriptNamespace(scriptID);
-			if (name == "") [[unlikely]]
-			{
-				IScriptEngine::ThrowError("Script module <{}> not found", scriptID);
+			auto &&mod = GetModManager().FindLoadedMod(GetScriptProvider().GetScriptModUID(scriptID));
+			if (mod.expired()) [[unlikely]]
+		{
 				return std::string(str);
 			}
+
+			auto &&name = mod.lock()->GetNamespace();
+			if (name.empty()) [[unlikely]]
+			{
+				return std::string(str);
+			}
+
 			std::string result{};
 			result.reserve(name.size() + 1 + str.size());
 			result.append(name);

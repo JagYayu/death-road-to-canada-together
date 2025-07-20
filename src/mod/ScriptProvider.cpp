@@ -35,6 +35,7 @@ Context &ScriptProvider::GetContext() noexcept
 
 void ScriptProvider::Initialize() noexcept
 {
+	GetStorageManager();
 	// AppStorage
 	// 如果有tudov目录，则读取tudov/lua/里面的脚本
 	// 如果有tudov.dat文件，则用zip打开并读取lua/里面的脚本
@@ -55,7 +56,7 @@ void ScriptProvider::Deinitialize() noexcept
 	//
 }
 
-ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_)
+ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_view scriptCode, std::string_view uid)
 {
 	{
 		auto &&it = _scriptName2ID.find(scriptName);
@@ -68,7 +69,7 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_
 
 	++_latestScriptID;
 	auto &&id = _latestScriptID;
-	auto &&name = _scriptID2Entry.try_emplace(id, std::string(scriptName), std::string(scriptCode), namespace_).first->second.name;
+	auto &&name = _scriptID2Entry.try_emplace(id, std::string(scriptName), std::string(scriptCode), uid).first->second.name;
 	_log->Trace("Add script <{}>\"{}\"", id, name);
 	_scriptName2ID.emplace(name, id);
 	return id;
@@ -118,7 +119,7 @@ std::optional<std::string_view> ScriptProvider::GetScriptNameByID(ScriptID scrip
 	return std::nullopt;
 }
 
-ScriptID ScriptProvider::AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_) noexcept
+ScriptID ScriptProvider::AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptModUID) noexcept
 {
 	if (scriptName.starts_with(scriptNamespace))
 	{
@@ -131,7 +132,7 @@ ScriptID ScriptProvider::AddScript(std::string_view scriptName, std::string_view
 		_log->Info("Script has already been added: {}", scriptName);
 	}
 
-	return AddScriptImpl(scriptName, scriptCode, namespace_);
+	return AddScriptImpl(scriptName, scriptCode, scriptModUID);
 }
 
 bool ScriptProvider::RemoveScript(ScriptID scriptID) noexcept
@@ -156,11 +157,11 @@ bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 	return true;
 }
 
-std::size_t ScriptProvider::RemoveScriptBy(std::string_view namespace_) noexcept
+std::size_t ScriptProvider::RemoveScriptBy(std::string_view uid) noexcept
 {
 	return std::erase_if(_scriptID2Entry, [&](const std::pair<const ScriptID, Entry> &pair)
 	{
-		if (pair.second.namespace_ == namespace_)
+		if (pair.second.modUID == uid)
 		{
 			_scriptName2ID.erase(pair.second.name);
 			return true;
@@ -179,14 +180,14 @@ const std::string &ScriptProvider::GetScriptCode(ScriptID scriptID) const noexce
 	return it->second.code;
 }
 
-std::string_view ScriptProvider::GetScriptNamespace(ScriptID scriptID) noexcept
+std::string_view ScriptProvider::GetScriptModUID(ScriptID scriptID) noexcept
 {
 	auto &&it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())
 	{
 		return emptyString;
 	}
-	return it->second.namespace_;
+	return it->second.modUID;
 }
 
 ScriptProvider::TScriptID2Entry::const_iterator ScriptProvider::begin() const

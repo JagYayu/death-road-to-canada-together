@@ -79,5 +79,5 @@ RuntimeEvent LoadtimeEvent::ToRuntime() noexcept
 		}
 	}
 
-	return std::move(event);
+	return event;
 }

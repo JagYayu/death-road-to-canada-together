@@ -12,6 +12,7 @@ namespace tudov
 	struct IScriptEngine;
 	struct IScriptLoader;
 	struct IScriptProvider;
+	struct IStorageManager;
 
 	class Context
 	{
@@ -40,44 +41,49 @@ namespace tudov
 		IScriptEngine &GetScriptEngine();
 		IScriptLoader &GetScriptLoader();
 		IScriptProvider &GetScriptProvider();
+		IStorageManager &GetStorageManager();
 
 		inline const IEventManager &GetEventManager() const
 		{
-			return const_cast<Context *>(this)->GetEventManager();
+			return This()->GetEventManager();
 		}
 
 		inline ILuaAPI &GetLuaAPI() const
 		{
-			return const_cast<Context *>(this)->GetLuaAPI();
+			return This()->GetLuaAPI();
 		}
 
 		inline const IModManager &GetModManager() const
 		{
-			return const_cast<Context *>(this)->GetModManager();
+			return This()->GetModManager();
 		}
 
 		inline const IScriptEngine &GetScriptEngine() const
 		{
-			return const_cast<Context *>(this)->GetScriptEngine();
+			return This()->GetScriptEngine();
 		}
 
 		inline const IScriptLoader &GetScriptLoader() const
 		{
-			return const_cast<Context *>(this)->GetScriptLoader();
+			return This()->GetScriptLoader();
 		}
 
 		inline const IScriptProvider &GetScriptProvider() const
 		{
-			return const_cast<Context *>(this)->GetScriptProvider();
+			return This()->GetScriptProvider();
+		}
+
+		inline const IStorageManager &GetStorageManager() const
+		{
+			return This()->GetStorageManager();
+		}
+
+	  private:
+		inline Context *This() const noexcept
+		{
+			return const_cast<Context *>(this);
 		}
 	};
-
-	class Engine;
-	struct IEventManager;
-	struct IModManager;
-	struct IScriptEngine;
-	struct IScriptLoader;
-	struct IScriptProvider;
 
 	struct IContextProvider
 	{
@@ -188,6 +194,16 @@ namespace tudov
 		inline const IScriptProvider &GetScriptProvider() const noexcept
 		{
 			return GetContext().GetScriptProvider();
+		}
+
+		inline IStorageManager &GetStorageManager() noexcept
+		{
+			return GetContext().GetStorageManager();
+		}
+
+		inline const IStorageManager &GetStorageManager() const noexcept
+		{
+			return GetContext().GetStorageManager();
 		}
 	};
 } // namespace tudov

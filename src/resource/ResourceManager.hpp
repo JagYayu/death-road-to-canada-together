@@ -42,7 +42,7 @@ namespace tudov
 		inline std::string_view GetResourcePath(ResourceID id) const noexcept
 		{
 			auto &&it = _id2Entry.find(id);
-			return it != _id2Entry.end() ? it->second.path : "";
+			return it != _id2Entry.end() ? std::string_view(it->second.path) : "";
 		}
 
 		inline ResourceID GetResourceID(std::string_view path) const noexcept
@@ -56,7 +56,12 @@ namespace tudov
 		{
 			static_assert(std::is_base_of_v<T, TDerived>, "TDerived must inherit from T");
 
-			_latestID++;
+			if (auto &&it = _path2ID.find(path); it != _path2ID.end()) [[unlikely]]
+			{
+				throw std::runtime_error("Resource already been loaded");
+			}
+
+			++_latestID;
 			auto id = _latestID;
 
 			std::shared_ptr<T> resource;
@@ -89,6 +94,8 @@ namespace tudov
 				_log->Warn("Attempt to unload invalid resource <{}>", id);
 				return;
 			}
+
+			_log->Trace("Unloaded resource <{}>\"{}\"", id, it->second.path);
 
 			_path2ID.erase(std::string_view(it->second.path));
 			_id2Entry.erase(it);

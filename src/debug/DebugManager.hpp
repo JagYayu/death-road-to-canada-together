@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IDebugElement.hpp"
+#include "DebugElement.hpp"
 #include "util/Scopes.hpp"
 
 #include <memory>

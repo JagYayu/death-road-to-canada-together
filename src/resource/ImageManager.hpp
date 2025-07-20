@@ -14,14 +14,20 @@ namespace tudov
 	{
 	}
 
+	class LuaAPI;
 	class ScriptEngine;
 
 	class ImageManager : public ResourceManager<Image>
 	{
+		friend LuaAPI;
+
 	  public:
-		ImageManager() noexcept;
+		explicit ImageManager() noexcept;
 
 		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 		void UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
+
+		ImageID LuaGetID(const sol::string_view &image) noexcept;
+		sol::string_view LuaGetPath(ImageID id) noexcept;
 	};
 } // namespace tudov

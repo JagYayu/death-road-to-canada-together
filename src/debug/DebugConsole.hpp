@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Debug.hpp"
-#include "IDebugElement.hpp"
+#include "DebugElement.hpp"
 #include "util/Log.hpp"
 
 #include <functional>

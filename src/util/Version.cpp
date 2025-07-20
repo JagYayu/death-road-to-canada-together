@@ -15,9 +15,9 @@ Version::Version(int32_t major, int32_t minor, int32_t patch)
 {
 }
 
-Version::Version(const std::string &str)
+Version::Version(std::string_view str)
 {
-	std::stringstream ss(str);
+	std::stringstream ss{str.data()};
 	std::string token;
 	while (std::getline(ss, token, '.'))
 	{
@@ -30,17 +30,17 @@ Version::Version(const std::string &str)
 	_parts.shrink_to_fit();
 }
 
-int32_t Version::major() const
+int32_t Version::Major() const
 {
 	return _parts[0];
 }
 
-int32_t Version::minor() const
+int32_t Version::Minor() const
 {
 	return _parts[1];
 }
 
-int32_t Version::patch() const
+int32_t Version::Patch() const
 {
 	return _parts[2];
 }
@@ -50,7 +50,7 @@ int32_t Version::operator[](size_t i) const
 	return _parts[i];
 }
 
-size_t Version::size() const
+size_t Version::Size() const
 {
 	return _parts.size();
 }
@@ -83,7 +83,7 @@ bool Version::operator==(const Version &other) const = default;
 
 std::ostream &tudov::operator<<(std::ostream &os, const Version &v)
 {
-	os << v.major() << "." << v.minor() << "." << v.patch();
+	os << v.Major() << "." << v.Minor() << "." << v.Patch();
 	return os;
 }
 

@@ -23,12 +23,14 @@ namespace tudov
 			std::vector<std::string> privates{};
 		};
 
+		std::string uid;
 		std::string namespace_;
 		Version version;
 		std::string name;
 		std::string author;
 		std::string description;
 		std::unordered_map<std::string, Version> dependencies;
+		bool client;
 
 		Data audios;
 		Scripts scripts;
@@ -53,12 +55,14 @@ namespace tudov
 
 	inline void from_json(const nlohmann::json &j, ModConfig &m)
 	{
+		m.uid = j.value("uid", std::string());
 		m.namespace_ = j.value("namespace", std::string());
 		m.version = j.value("version", Version());
 		m.name = j.value("name", std::string());
 		m.author = j.value("author", std::string());
 		m.description = j.value("description", std::string());
 		m.dependencies = j.value("dependencies", std::unordered_map<std::string, Version>());
+		m.client = j.value("client", false);
 		m.audios = j.value("audios", ModConfig::Data());
 		m.scripts = j.value("scripts", ModConfig::Scripts());
 		m.fonts = j.value("fonts", ModConfig::Data());

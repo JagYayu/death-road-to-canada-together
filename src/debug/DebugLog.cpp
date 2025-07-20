@@ -74,10 +74,10 @@ void DebugLog::UpdateAndRender(IWindow &window) noexcept
 				}
 				else
 				{
-					bool enabled = EnumFlagCheck(verbosities, verb);
+					bool enabled = EnumFlag::HasAny(verbosities, verb);
 					if (ImGui::Checkbox("", &enabled))
 					{
-						Log::SetVerbosity(module, EnumFlagBitNot(verb));
+						Log::SetVerbosity(module, EnumFlag::BitNot(verb));
 					}
 				}
 

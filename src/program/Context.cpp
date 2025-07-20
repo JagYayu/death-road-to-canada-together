@@ -11,7 +11,7 @@ Context::Context(Engine *engine) noexcept
 {
 }
 
-static constexpr const char *errorMessage = "engine pointer is nullptr";
+static constexpr const char *errorMessage = "Engine pointer is nullptr";
 
 Engine &Context::GetEngine()
 {
@@ -65,4 +65,9 @@ IScriptLoader &Context::GetScriptLoader()
 IScriptProvider &Context::GetScriptProvider()
 {
 	return *GetEngine()._scriptProvider.get();
+}
+
+IStorageManager &Context::GetStorageManager()
+{
+	return *GetEngine()._storageManager.get();
 }

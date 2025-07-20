@@ -385,7 +385,7 @@ void ScriptLoader::LoadAll()
 	auto &&count = scriptProvider.GetCount();
 	for (auto &&[scriptID, entry] : scriptProvider)
 	{
-		LoadImpl(scriptID, entry.name, entry.code, entry.namespace_);
+		LoadImpl(scriptID, entry.name, entry.code, entry.modUID);
 	}
 
 	ProcessFullLoads();
@@ -423,11 +423,11 @@ std::shared_ptr<IScriptLoader::IModule> ScriptLoader::Load(ScriptID scriptID)
 	}
 
 	auto &&scriptCode = scriptProvider.GetScriptCode(scriptID);
-	auto &&scriptNamespace = scriptProvider.GetScriptNamespace(scriptID);
-	return LoadImpl(scriptID, scriptName.value(), scriptCode, scriptNamespace);
+	auto &&modUID = scriptProvider.GetScriptModUID(scriptID);
+	return LoadImpl(scriptID, scriptName.value(), scriptCode, modUID);
 }
 
-std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_)
+std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view scriptCode, std::string_view modUID)
 {
 	{
 		auto &&it = _scriptModules.find(scriptID);
@@ -463,12 +463,12 @@ std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, 
 	else
 	{
 		std::string_view sandboxKey = emptyString;
-		if (namespace_ != emptyString)
+		if (modUID != emptyString)
 		{
-			auto &&mod = GetModManager().GetLoadedMod(namespace_);
+			auto &&mod = GetModManager().FindLoadedMod(modUID);
 			if (!mod.expired() && mod.lock()->GetConfig().scripts.sandbox)
 			{
-				sandboxKey = namespace_;
+				sandboxKey = modUID;
 			}
 		}
 		GetScriptEngine().InitializeScriptFunction(scriptID, scriptName, function, sandboxKey);
@@ -500,7 +500,7 @@ std::vector<ScriptID> ScriptLoader::Unload(ScriptID scriptID)
 	return std::move(unloadedScripts);
 }
 
-std::vector<ScriptID> ScriptLoader::UnloadBy(std::string_view namespace_)
+std::vector<ScriptID> ScriptLoader::UnloadBy(std::string_view modUID)
 {
 	std::vector<ScriptID> unloadedScripts{};
 
@@ -508,7 +508,7 @@ std::vector<ScriptID> ScriptLoader::UnloadBy(std::string_view namespace_)
 	auto &&scriptProvider = GetScriptProvider();
 	for (auto &&[scriptID, _] : _scriptModules)
 	{
-		if (scriptProvider.GetScriptNamespace(scriptID) == namespace_)
+		if (scriptProvider.GetScriptModUID(scriptID) == modUID)
 		{
 			unloadingScripts.emplace_back(scriptID);
 		}

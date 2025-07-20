@@ -32,6 +32,7 @@ namespace tudov
 	struct IGameScripts;
 	struct ILuaAPI;
 	struct INetwork;
+	struct IStorageManager;
 	struct IWindow;
 
 	class Engine : public Application, public IDebugProvider
@@ -107,6 +108,7 @@ namespace tudov
 		std::shared_ptr<FontManager> _fontManager;
 
 		std::shared_ptr<ILuaAPI> _luaAPI;
+		std::shared_ptr<IStorageManager> _storageManager;
 		std::shared_ptr<INetwork> _network;
 		std::shared_ptr<IModManager> _modManager;
 		std::shared_ptr<IEventManager> _eventManager;

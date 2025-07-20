@@ -23,8 +23,8 @@ namespace tudov
 		explicit Texture(Renderer &renderer) noexcept;
 		~Texture() noexcept;
 
-		void Initialize(std::int32_t width, std::int32_t height, SDL_PixelFormat format, SDL_TextureAccess access = SDL_TEXTUREACCESS_TARGET) noexcept;
-		void Initialize(Image &image) noexcept;
+		void Initialize(std::int32_t width, std::int32_t height, SDL_PixelFormat format, SDL_TextureAccess access = SDL_TEXTUREACCESS_TARGET);
+		void Initialize(Image &image);
 
 		std::float_t GetWidth() const;
 		std::float_t GetHeight() const;

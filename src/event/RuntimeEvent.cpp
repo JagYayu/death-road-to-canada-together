@@ -156,7 +156,7 @@ TE_FORCEINLINE void PCallHandler(std::shared_ptr<Log> &log, EventHandler &handle
 void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvocation options)
 {
 	Profile *profile;
-	if (_profile != nullptr && !EnumFlagCheck(options, EInvocation::NoProfiler))
+	if (_profile != nullptr && !EnumFlag::HasAny(options, EInvocation::NoProfiler))
 	{
 		profile = _profile.get();
 	}
@@ -166,7 +166,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 	}
 
 	TInvocationTrackID trackID;
-	if (EnumFlagCheck(options, EInvocation::TrackProgression))
+	if (EnumFlag::HasAny(options, EInvocation::TrackProgression))
 	{
 		trackID = _invocationTrackID;
 		++_invocationTrackID;
@@ -179,7 +179,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 		profile->eventProfiler.BeginEvent(eventManager.GetScriptEngine());
 	}
 
-	if (EnumFlagCheck(options, EInvocation::CacheHandlers))
+	if (EnumFlag::HasAny(options, EInvocation::CacheHandlers))
 	{
 		TInvocationCache *cache;
 
@@ -228,7 +228,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 			}
 		}
 	}
-	else // !EnumFlagCheck(options, EInvocation::CacheHandlers)
+	else // !EnumFlag::HasAny(options, EInvocation::CacheHandlers)
 	{
 		if (anyKey)
 		{

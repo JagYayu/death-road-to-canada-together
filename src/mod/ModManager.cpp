@@ -1,14 +1,20 @@
 #include "ModManager.hpp"
 
+#include "Debug/DebugManager.hpp"
 #include "ScriptEngine.hpp"
 #include "ScriptProvider.hpp"
 #include "UnpackagedMod.hpp"
-#include "mod/ModEntry.hpp"
+#include "debug/DebugConsole.hpp"
+#include "debug/DebugUtils.hpp"
+#include "mod/ModRequirement.hpp"
 #include "program/Context.hpp"
 #include "program/Engine.hpp"
 #include "util/Definitions.hpp"
+#include "util/EnumFlag.hpp"
+#include "util/Version.hpp"
 
 #include <memory>
+#include <optional>
 #include <vector>
 
 using namespace tudov;
@@ -38,7 +44,7 @@ void ModManager::Initialize() noexcept
 	    "downloadedMods",
 	};
 	_requiredMods = {
-	    ModEntry("dr2c", Version(1, 0, 0), 0),
+	    ModRequirement("dr2c_e0c8375e09d74bb9aa704d4a3c4afa79", Version(1, 0, 0), 0),
 	};
 	_hotReloadScriptsPending = nullptr;
 }
@@ -60,11 +66,11 @@ bool ModManager::IsNoModMatch() const
 
 bool ModManager::IsModMatched(const Mod &mod) const
 {
-	auto &&namespace_ = mod.GetNamespace();
+	auto &&uid = mod.IMod::GetConfig().uid;
 
 	for (auto &&modEntry : _requiredMods)
 	{
-		if (namespace_ == modEntry.namespace_)
+		if (uid == modEntry.uid)
 		{
 			return true;
 		}
@@ -74,11 +80,11 @@ bool ModManager::IsModMatched(const Mod &mod) const
 
 void ModManager::LoadMods()
 {
-	if ((_loadState & ELoadState::Loading) != ELoadState::None)
+	if (EnumFlag::HasAll(_loadState, ELoadState::Loading))
 	{
 		return;
 	}
-	_loadState |= ELoadState::Loading;
+	EnumFlag::Mask(_loadState, ELoadState::Loading);
 
 	_log->Debug("Loading all required mods ...");
 
@@ -131,24 +137,21 @@ void ModManager::LoadMods()
 
 	_log->Debug("Loaded all required mods");
 
-	_loadState &= ~ELoadState::Loading;
+	EnumFlag::Unmask(_loadState, ELoadState::Loading);
 }
 
 void ModManager::LoadModsDeferred()
 {
-	if ((_loadState & ELoadState::Loading) == ELoadState::None)
-	{
-		_loadState |= ELoadState::LoadPending;
-	}
+	EnumFlag::Mask(_loadState, ELoadState::LoadPending);
 }
 
 void ModManager::UnloadMods()
 {
-	if ((_loadState & ELoadState::Unloading) != ELoadState::None)
+	if (EnumFlag::HasAny(_loadState, ELoadState::Unloading))
 	{
 		return;
 	}
-	_loadState |= ELoadState::Unloading;
+	EnumFlag::Mask(_loadState, ELoadState::Unloading);
 
 	_log->Debug("Unloading all loaded mods ...");
 
@@ -162,14 +165,21 @@ void ModManager::UnloadMods()
 
 	_log->Debug("Unloaded all loaded mods");
 
-	_loadState &= ~ELoadState::Unloading;
+	EnumFlag::Unmask(_loadState, ELoadState::Unloading);
 }
 
-std::weak_ptr<Mod> ModManager::GetLoadedMod(std::string_view namespace_) noexcept
+std::vector<ModListedEntry> ModManager::ListAvailableMods() noexcept
+{
+	std::vector<ModListedEntry> entries;
+	//
+	return entries;
+}
+
+std::weak_ptr<Mod> ModManager::FindLoadedMod(std::string_view uid) noexcept
 {
 	for (auto &&mod : _loadedMods)
 	{
-		if (mod->GetNamespace() == namespace_)
+		if (mod->GetConfig().uid == uid)
 		{
 			return mod;
 		}
@@ -177,34 +187,34 @@ std::weak_ptr<Mod> ModManager::GetLoadedMod(std::string_view namespace_) noexcep
 	return std::weak_ptr<Mod>();
 }
 
-std::vector<ModEntry> &ModManager::GetRequiredMods() noexcept
+std::vector<ModRequirement> &ModManager::GetRequiredMods() noexcept
 {
 	return _requiredMods;
 }
 
-const std::vector<ModEntry> &ModManager::GetRequiredMods() const noexcept
+const std::vector<ModRequirement> &ModManager::GetRequiredMods() const noexcept
 {
 	return _requiredMods;
 }
 
-void ModManager::HotReloadScriptPending(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptNamespace)
+void ModManager::HotReloadScriptPending(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptModUID)
 {
 	if (!_hotReloadScriptsPending)
 	{
-		_hotReloadScriptsPending = std::make_unique<THotReloadScriptsMap>();
+		_hotReloadScriptsPending = std::make_unique<HotReloadScriptsMap>();
 	}
-	_hotReloadScriptsPending->try_emplace(std::string(scriptName), std::string(scriptCode), std::string(scriptNamespace));
+	_hotReloadScriptsPending->try_emplace(std::string(scriptName), std::string(scriptCode), std::string(scriptModUID));
 }
 
 void ModManager::Update()
 {
-	if ((_loadState & ELoadState::LoadPending) == ELoadState::LoadPending)
+	if (EnumFlag::HasAny(_loadState, ELoadState::LoadPending)) [[unlikely]]
 	{
 		LoadMods();
-		_loadState &= ~ELoadState::LoadPending;
+		EnumFlag::Unmask(_loadState, ELoadState::LoadPending);
 		_hotReloadScriptsPending = nullptr;
 	}
-	else if (_hotReloadScriptsPending)
+	else if (_hotReloadScriptsPending) [[unlikely]]
 	{
 		std::vector<ScriptID> scriptIDs{};
 
@@ -213,7 +223,7 @@ void ModManager::Update()
 
 		for (auto &&[scriptName, entry] : *_hotReloadScriptsPending)
 		{
-			auto &&[scriptCode, scriptNamespace] = entry;
+			auto &&[scriptCode, scriptModUID] = entry;
 
 			auto scriptID = scriptProvider.GetScriptIDByName(scriptName);
 			if (scriptID)
@@ -227,7 +237,7 @@ void ModManager::Update()
 				}
 			}
 
-			scriptID = scriptProvider.AddScript(scriptName, scriptCode, scriptNamespace);
+			scriptID = scriptProvider.AddScript(scriptName, scriptCode, scriptModUID);
 			scriptIDs.emplace_back(scriptID);
 		}
 
@@ -239,4 +249,37 @@ void ModManager::Update()
 
 		_hotReloadScriptsPending = nullptr;
 	}
+}
+
+std::vector<DebugConsoleResult> ModManager::DebugAdd(std::string_view arg)
+{
+	std::vector<DebugConsoleResult> results;
+
+	auto &&[modUID, version] = DebugUtils::Split<2>(arg);
+
+	if (modUID.empty())
+	{
+		results.emplace_back("Missing ModUID");
+		return results;
+	}
+
+	std::optional<Version> modVersion = version.empty() ? std::nullopt : std::make_optional<Version>(version);
+
+	return results;
+}
+
+void ModManager::ProvideDebug(IDebugManager &debugManager) noexcept
+{
+	auto &&debugConsole = debugManager.GetElement<DebugConsole>();
+
+	auto &&modAdd = [this](std::string_view arg)
+	{
+		return DebugAdd(arg);
+	};
+
+	debugConsole->SetCommand(DebugConsole::Command{
+	    .name = "modAdd",
+	    .help = "modAdd <ModUID> [Version]",
+	    .func = modAdd,
+	});
 }

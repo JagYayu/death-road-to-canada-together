@@ -26,23 +26,47 @@ using namespace tudov;
 RenderTarget::RenderTarget(Renderer &renderer, std::int32_t width, std::int32_t height) noexcept
     : _renderer(renderer)
 {
-	_texture = _renderer.CreateTexture(width, height, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET);
+	_texture = std::make_shared<Texture>(_renderer);
+	_texture->Initialize(width, height, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET);
 }
 
 RenderTarget::~RenderTarget() noexcept
 {
-	if (!_texture.expired())
-	{
-		_renderer.DestroyTexture(_texture.lock());
-	}
 }
 
-SDL_Rect &RenderTarget::GetRect() noexcept
+SDL_FRect RenderTarget::GetSource() noexcept
 {
-	return _rect;
+	if (_source.has_value())
+	{
+		return _source.value();
+	}
+
+	auto [width, height] = _texture->GetSize();
+	return SDL_FRect(0, 0, width, height);
 }
 
-TE_FORCEINLINE void AssertTextureExpired(std::weak_ptr<Texture> &texture)
+void RenderTarget::SetSource(const std::optional<SDL_FRect> &value) noexcept
+{
+	_source = value;
+}
+
+SDL_FRect RenderTarget::GetDestination() noexcept
+{
+	if (_destination.has_value())
+	{
+		return _destination.value();
+	}
+
+	auto [width, height] = _renderer.GetWindow().GetSize();
+	return SDL_FRect(0, 0, width, height);
+}
+
+void RenderTarget::SetDestination(const std::optional<SDL_FRect> &value) noexcept
+{
+	_destination = value;
+}
+
+TE_FORCEINLINE void AssertTextureExpired(const std::weak_ptr<Texture> &texture)
 {
 	if (texture.expired()) [[unlikely]]
 	{
@@ -50,66 +74,20 @@ TE_FORCEINLINE void AssertTextureExpired(std::weak_ptr<Texture> &texture)
 	}
 }
 
-void RenderTarget::BeginTarget()
-{
-	AssertTextureExpired(_texture);
-
-	_renderer.SetRenderTexture(_texture.lock());
-}
-
-void RenderTarget::LuaBeginTarget() noexcept
-{
-	try
-	{
-		BeginTarget();
-	}
-	catch (std::exception &e)
-	{
-		Log::Get("RenderTarget")->Error("C++ exception in `RenderTarget::BeginTarget`: {}", e.what());
-	}
-}
-
-void RenderTarget::EndTarget()
-{
-	AssertTextureExpired(_texture);
-
-	if (_renderer.GetRenderTexture().get() != _texture.lock().get()) [[unlikely]]
-	{
-		throw std::runtime_error("Current render target was not bounded to renderer");
-	}
-
-	_renderer.Render();
-	_renderer.SetRenderTexture(nullptr);
-}
-
-void RenderTarget::LuaEndTarget() noexcept
-{
-	try
-	{
-		EndTarget();
-	}
-	catch (std::exception &e)
-	{
-		Log::Get("RenderTarget")->Error("C++ exception in `RenderTarget::EndTarget`: {}", e.what());
-	}
-}
-
 bool RenderTarget::Resize(std::int32_t width, std::int32_t height)
 {
-	AssertTextureExpired(_texture);
+	// AssertTextureExpired(_texture);
 
 	{
-		auto &&texture = _texture.lock();
-		auto [prevWidth, prevHeight] = texture->GetSize();
+		auto [prevWidth, prevHeight] = _texture->GetSize();
 		if (prevWidth == width && prevHeight == height)
 		{
 			return false;
 		}
-
-		_renderer.DestroyTexture(texture);
 	}
 
-	_texture = _renderer.CreateTexture(width, height, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET);
+	_texture = std::make_shared<Texture>(_renderer);
+	_texture->Initialize(width, height, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET);
 	return true;
 }
 
@@ -121,16 +99,15 @@ bool RenderTarget::ResizeToFit()
 
 void RenderTarget::Draw(const SDL_FRect &dst, std::float_t z)
 {
-	AssertTextureExpired(_texture);
+	// AssertTextureExpired(_texture);
 
-	auto &&texture = _texture.lock();
-	auto [width, height] = texture->GetSize();
-	_renderer.DrawTexture(texture, dst, SDL_FRect{0, 0, width, height}, z);
+	auto [width, height] = _texture->GetSize();
+	_renderer.DrawTexture(_texture, dst, SDL_FRect{0, 0, width, height}, z);
 }
 
 void RenderTarget::Draw(const SDL_FRect &dst, const SDL_FRect &src, std::float_t z)
 {
-	AssertTextureExpired(_texture);
+	// AssertTextureExpired(_texture);
 
-	_renderer.DrawTexture(_texture.lock(), dst, src, z);
+	_renderer.DrawTexture(_texture, dst, src, z);
 }

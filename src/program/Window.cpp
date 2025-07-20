@@ -1,5 +1,6 @@
 #include "Window.hpp"
 
+#include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_video.h"
 #include "event/EventManager.hpp"
 #include "graphic/Renderer.hpp"
@@ -118,9 +119,11 @@ bool Window::HandleEvent(SDL_Event &event) noexcept
 
 void Window::Render() noexcept
 {
+	renderer->Begin();
 	if (RenderPreImpl())
 	{
 		renderer->Render();
+		renderer->End();
 	}
 }
 

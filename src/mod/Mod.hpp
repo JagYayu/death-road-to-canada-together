@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ModConfig.hpp"
-#include "ScriptProvider.hpp"
 #include "util/Definitions.hpp"
 
 #include <string>

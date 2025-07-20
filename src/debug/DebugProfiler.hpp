@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CircularBuffer.hpp"
-#include "IDebugElement.hpp"
+#include "DebugElement.hpp"
 
 #include <cmath>
 #include <memory>

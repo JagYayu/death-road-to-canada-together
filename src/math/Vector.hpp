@@ -78,7 +78,7 @@ namespace tudov::impl
 		{
 			VectorImpl clone = *this;
 			clone += vec;
-			return std::move(clone);
+			return clone;
 		}
 
 		inline constexpr VectorImpl &operator-=(const VectorImpl &vec) noexcept
@@ -94,7 +94,7 @@ namespace tudov::impl
 		{
 			VectorImpl clone = *this;
 			clone -= vec;
-			return std::move(clone);
+			return clone;
 		}
 
 		inline constexpr VectorImpl &operator*=(const VectorImpl &vec) noexcept
@@ -119,14 +119,14 @@ namespace tudov::impl
 		{
 			VectorImpl clone = *this;
 			clone *= vec;
-			return std::move(clone);
+			return clone;
 		}
 
 		inline constexpr VectorImpl operator*(T value) const noexcept
 		{
 			VectorImpl clone = *this;
 			clone *= value;
-			return std::move(clone);
+			return clone;
 		}
 
 		inline constexpr VectorImpl &operator/=(const VectorImpl &vec) noexcept
@@ -151,14 +151,14 @@ namespace tudov::impl
 		{
 			VectorImpl clone = *this;
 			clone /= other;
-			return std::move(clone);
+			return clone;
 		}
 
 		inline constexpr VectorImpl operator/(T value) const noexcept
 		{
 			VectorImpl clone = *this;
 			clone /= value;
-			return std::move(clone);
+			return clone;
 		}
 
 		template <typename U>
@@ -229,7 +229,7 @@ namespace tudov::impl
 		{
 			VectorImpl clone{*this};
 			clone.Normalize();
-			return std::move(clone);
+			return clone;
 		}
 
 		inline constexpr T SquareMagnitude() noexcept

@@ -31,7 +31,8 @@ static const auto valueMountBitmaps = std::vector<std::string>{
     R"(fonts/.*\.png)",
 };
 static const auto valueMountDirectories = std::vector<std::string>{
-    "assets",
+	"data",
+    "gfx",
 };
 static const auto valueMountFiles = std::unordered_map<std::string, ResourceType>{
     {".png", ResourceType::Image},
