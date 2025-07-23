@@ -1,12 +1,13 @@
-#include "Texture.hpp"
-
-#include "Image.hpp"
-#include "Renderer.hpp"
+#include "graphic/Texture.hpp"
+#include "SDL3/SDL_gpu.h"
+#include "graphic/Image.hpp"
+#include "graphic/Renderer.hpp"
 #include "util/Micros.hpp"
 
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_render.h"
-#include "SDL3_image/SDL_image.h"
+#include "SDL3/SDL_surface.h"
+
 #include <stdexcept>
 
 using namespace tudov;
@@ -37,7 +38,7 @@ TE_FORCEINLINE void AssertInitialized(SDL_Texture *sdlTexture)
 {
 	if (sdlTexture == nullptr) [[unlikely]]
 	{
-		throw std::runtime_error("Texture was not initialized");
+		throw std::runtime_error("Texture_depreciated was not initialized");
 	}
 }
 
@@ -46,6 +47,8 @@ void Texture::Initialize(std::int32_t width, std::int32_t height, SDL_PixelForma
 	AssertUninitialized(_sdlTexture);
 
 	_sdlTexture = SDL_CreateTexture(renderer.GetSDLRendererHandle(), format, access, width, height);
+
+	SDL_SetTextureScaleMode(_sdlTexture, SDL_SCALEMODE_NEAREST);
 }
 
 void Texture::Initialize(Image &image)
@@ -53,6 +56,8 @@ void Texture::Initialize(Image &image)
 	AssertUninitialized(_sdlTexture);
 
 	_sdlTexture = SDL_CreateTextureFromSurface(renderer.GetSDLRendererHandle(), image.GetSDLSurfaceHandle());
+
+	SDL_SetTextureScaleMode(_sdlTexture, SDL_SCALEMODE_NEAREST);
 }
 
 std::float_t Texture::GetWidth() const

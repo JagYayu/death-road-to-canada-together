@@ -1,21 +1,21 @@
-#include "LocalClient.hpp"
+#include "network/LocalClient.hpp"
 
-#include "LocalServer.hpp"
-#include "Network.hpp"
-#include "SocketType.hpp"
+#include "network/LocalServer.hpp"
+#include "network/NetworkManager.hpp"
+#include "network/SocketType.hpp"
 
 #include <memory>
 
 using namespace tudov;
 
-LocalClient::LocalClient(INetwork &network) noexcept
-    : _network(network)
+LocalClient::LocalClient(INetworkManager &network) noexcept
+    : _networkManager(network)
 {
 }
 
-INetwork &LocalClient::GetNetwork() noexcept
+INetworkManager &LocalClient::GetNetworkManager() noexcept
 {
-	return _network;
+	return _networkManager;
 }
 
 ESocketType LocalClient::GetSocketType() const noexcept
@@ -40,7 +40,7 @@ void LocalClient::Connect(const IClient::ConnectArgs &baseArgs)
 	LocalServer *localServer = args.server;
 	if (localServer == nullptr)
 	{
-		if (auto &&server = GetNetwork().GetServer(); server != nullptr)
+		if (auto &&server = GetNetworkManager().GetServer(); server != nullptr)
 		{
 			localServer = dynamic_cast<LocalServer *>(server);
 		}

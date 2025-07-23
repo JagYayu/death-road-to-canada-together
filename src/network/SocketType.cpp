@@ -1,4 +1,4 @@
-#include "SocketType.hpp"
+#include "network/SocketType.hpp"
 
 using namespace tudov;
 

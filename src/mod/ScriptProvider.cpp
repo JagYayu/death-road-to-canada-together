@@ -1,5 +1,4 @@
-#include "ScriptProvider.hpp"
-
+#include "mod/ScriptProvider.hpp"
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 
@@ -33,6 +32,11 @@ Context &ScriptProvider::GetContext() noexcept
 	return _context;
 }
 
+Log &ScriptProvider::GetLog() noexcept
+{
+	return *_log;
+}
+
 void ScriptProvider::Initialize() noexcept
 {
 	GetStorageManager();
@@ -62,7 +66,7 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_
 		auto &&it = _scriptName2ID.find(scriptName);
 		if (it != _scriptName2ID.end())
 		{
-			_log->Warn("Attempt to alloc script id for existed script name: {}", scriptName);
+			Warn("Attempt to alloc script id for existed script name: {}", scriptName);
 			return it->second;
 		}
 	}
@@ -70,7 +74,7 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_
 	++_latestScriptID;
 	auto &&id = _latestScriptID;
 	auto &&name = _scriptID2Entry.try_emplace(id, std::string(scriptName), std::string(scriptCode), uid).first->second.name;
-	_log->Trace("Add script <{}>\"{}\"", id, name);
+	Trace("Add script <{}>\"{}\"", id, name);
 	_scriptName2ID.emplace(name, id);
 	return id;
 }
@@ -123,13 +127,13 @@ ScriptID ScriptProvider::AddScript(std::string_view scriptName, std::string_view
 {
 	if (scriptName.starts_with(scriptNamespace))
 	{
-		_log->Info("Attempt to add static script");
+		Info("Attempt to add static script");
 		return false;
 	}
 
 	if (_scriptName2ID.contains(scriptName))
 	{
-		_log->Info("Script has already been added: {}", scriptName);
+		Info("Script has already been added: {}", scriptName);
 	}
 
 	return AddScriptImpl(scriptName, scriptCode, scriptModUID);
@@ -151,7 +155,7 @@ bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 	{
 		return false;
 	}
-	_log->Trace("Remove script <{}>\"{}\"", scriptID, it->second.name);
+	Trace("Remove script <{}>\"{}\"", scriptID, it->second.name);
 	_scriptName2ID.erase(it->second.name);
 	_scriptID2Entry.erase(it);
 	return true;

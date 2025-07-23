@@ -1,6 +1,5 @@
-#include "CoreEvents.hpp"
-
-#include "EventManager.hpp"
+#include "event/CoreEvents.hpp"
+#include "event/EventManager.hpp"
 #include "util/MicrosImpl.hpp"
 
 #include <memory>

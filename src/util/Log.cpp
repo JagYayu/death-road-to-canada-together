@@ -1,5 +1,5 @@
-#include "Log.hpp"
-#include "Utils.hpp"
+#include "util/Log.hpp"
+#include "util/Utils.hpp"
 
 #include <cassert>
 #include <chrono>

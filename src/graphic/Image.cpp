@@ -1,4 +1,4 @@
-#include "Image.hpp"
+#include "graphic/Image.hpp"
 
 #include "SDL3/SDL_Surface.h"
 #include "SDL3/SDL_error.h"

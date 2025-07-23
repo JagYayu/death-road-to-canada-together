@@ -1,5 +1,4 @@
-#include "EventProfiler.hpp"
-
+#include "debug/EventProfiler.hpp"
 #include "mod/ScriptEngine.hpp"
 
 #include "util/Definitions.hpp"

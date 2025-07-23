@@ -1,8 +1,10 @@
-#include "LuaAPI.hpp"
+#include "mod/LuaAPI.hpp"
 
 #include "event/EventManager.hpp"
+#include "graphic/Camera2D.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "mod/ModManager.hpp"
+#include "mod/ScriptLoader.hpp"
 #include "program/Engine.hpp"
 #include "resource/FontManager.hpp"
 #include "resource/ImageManager.hpp"
@@ -54,9 +56,27 @@ decltype(auto) GetMainWindowFromContext(Context &context)
 
 void LuaAPI::Install(sol::state &lua, Context &context)
 {
+	TE_USERTYPE(Camera2D,
+	            "getPosition", &Camera2D::GetPosition,
+	            "getPositionLerpFactor", &Camera2D::GetPositionLerpFactor,
+	            "getScale", &Camera2D::GetScale,
+	            "getScaleLerpFactor", &Camera2D::GetScaleLerpFactor,
+	            "getTargetScale", &Camera2D::GetTargetScale,
+	            "getTargetScale", &Camera2D::GetTargetScale,
+	            "getTargetViewSize", &Camera2D::GetTargetViewSize,
+	            "getViewLerpFactor", &Camera2D::GetViewLerpFactor,
+	            "getViewScaleMode", &Camera2D::GetViewScaleMode,
+	            "getViewSize", &Camera2D::GetViewSize,
+	            "setPositionLerpFactor", &Camera2D::SetPositionLerpFactor,
+	            "setScaleLerpFactor", &Camera2D::SetScaleLerpFactor,
+	            "setTargetPosition", &Camera2D::SetTargetPosition,
+	            "setTargetScale", &Camera2D::SetTargetScale,
+	            "setTargetViewSize", &Camera2D::SetTargetViewSize,
+	            "setViewLerpFactor", &Camera2D::SetViewLerpFactor,
+	            "setViewScaleMode", &Camera2D::SetViewScaleMode);
+
 	TE_USERTYPE(Engine,
 	            "mainWindow", GetMainWindowFromContext(context),
-	            // "modManager", GetModManagerFromContext(context),
 	            "quit", &Engine::Quit);
 
 	TE_USERTYPE(EventManager,
@@ -78,11 +98,37 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 
 	TE_USERTYPE(Renderer,
 	            "beginTarget", &Renderer::LuaBeginTarget,
-	            "endTarget", &Renderer::LuaEndTarget,
 	            "clear", &Renderer::LuaClear,
 	            "draw", &Renderer::LuaDraw,
+	            "endTarget", &Renderer::LuaEndTarget,
+	            "getTargetSize", &Renderer::LuaGetTargetSize,
 	            "newRenderTarget", &Renderer::LuaNewRenderTarget,
 	            "render", &Renderer::Render);
+
+	TE_USERTYPE(RenderTarget,
+	            "getPosition", &RenderTarget::GetPosition,
+	            "getHeight", &RenderTarget::GetHeight,
+	            "getPositionLerpFactor", &RenderTarget::GetPositionLerpFactor,
+	            "getScale", &RenderTarget::GetScale,
+	            "getScaleLerpFactor", &RenderTarget::GetScaleLerpFactor,
+	            "getSize", &RenderTarget::GetSize,
+	            "getTargetScale", &RenderTarget::GetTargetScale,
+	            "getTargetScale", &RenderTarget::GetTargetScale,
+	            "getTargetViewSize", &RenderTarget::GetTargetViewSize,
+	            "getViewLerpFactor", &RenderTarget::GetViewLerpFactor,
+	            "getViewScaleMode", &RenderTarget::GetViewScaleMode,
+	            "getViewSize", &RenderTarget::GetViewSize,
+	            "getWidth", &RenderTarget::GetWidth,
+	            "resize", &RenderTarget::Resize,
+	            "resizeToFit", &RenderTarget::ResizeToFit,
+	            "setPositionLerpFactor", &RenderTarget::SetPositionLerpFactor,
+	            "setScaleLerpFactor", &RenderTarget::SetScaleLerpFactor,
+	            "setTargetPosition", &RenderTarget::SetTargetPosition,
+	            "setTargetScale", &RenderTarget::SetTargetScale,
+	            "setTargetViewSize", &RenderTarget::SetTargetViewSize,
+	            "setViewLerpFactor", &RenderTarget::SetViewLerpFactor,
+	            "setViewScaleMode", &RenderTarget::SetViewScaleMode,
+	            "update", &RenderTarget::Update);
 
 	lua["engine"] = &context.GetEngine();
 	lua["fonts"] = &context.GetFontManager();

@@ -1,7 +1,6 @@
-#include "Localization.hpp"
-
-#include "Language.hpp"
-#include "Translation.hpp"
+#include "i18n/Localization.hpp"
+#include "i18n/Language.hpp"
+#include "i18n/Translation.hpp"
 #include "util/Utils.hpp"
 
 #include <cassert>

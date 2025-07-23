@@ -1,8 +1,7 @@
-#include "LoadtimeEvent.hpp"
-
-#include "AbstractEvent.hpp"
-#include "OverrideHandlerArgs.hpp"
-#include "RuntimeEvent.hpp"
+#include "event/LoadtimeEvent.hpp"
+#include "event/AbstractEvent.hpp"
+#include "event/OverrideHandlerArgs.hpp"
+#include "event/RuntimeEvent.hpp"
 #include "util/Definitions.hpp"
 
 #include <variant>

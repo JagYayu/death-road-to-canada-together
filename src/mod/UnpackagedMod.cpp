@@ -1,8 +1,8 @@
-#include "UnpackagedMod.hpp"
-
-#include "Mod.hpp"
-#include "ModConfig.hpp"
-#include "ModManager.hpp"
+#include "mod/UnpackagedMod.hpp"
+#include "mod/Mod.hpp"
+#include "mod/ModConfig.hpp"
+#include "mod/ModManager.hpp"
+#include "mod/ScriptLoader.hpp"
 #include "resource/FontManager.hpp"
 #include "util/StringUtils.hpp"
 

@@ -1,8 +1,7 @@
-#include "ScriptLoader.hpp"
-
-#include "ModManager.hpp"
-#include "ScriptEngine.hpp"
-#include "ScriptProvider.hpp"
+#include "mod/ScriptLoader.hpp"
+#include "mod/ModManager.hpp"
+#include "mod/ScriptEngine.hpp"
+#include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
@@ -86,7 +85,7 @@ const sol::table &ScriptLoader::Module::RawLoad(IScriptLoader &scriptLoader)
 	}
 
 	_fullyLoaded = true;
-	engine.ChangeLoadingProgress(1);
+	engine.AddLoadingProgress(1);
 
 	return _table;
 }
@@ -203,7 +202,7 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 
 	parent._loadingScript = previousScriptID;
 	_fullyLoaded = true;
-	engine.ChangeLoadingProgress(1);
+	engine.AddLoadingProgress(1);
 
 	return _table;
 }

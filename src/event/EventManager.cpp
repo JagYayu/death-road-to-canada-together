@@ -1,8 +1,7 @@
-#include "EventManager.hpp"
-
-#include "AbstractEvent.hpp"
-#include "CoreEvents.hpp"
-#include "RuntimeEvent.hpp"
+#include "event/EventManager.hpp"
+#include "event/AbstractEvent.hpp"
+#include "event/CoreEvents.hpp"
+#include "event/RuntimeEvent.hpp"
 #include "event/LoadtimeEvent.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"

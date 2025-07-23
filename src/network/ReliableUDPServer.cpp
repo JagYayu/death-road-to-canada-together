@@ -1,15 +1,15 @@
-#include "ReliableUDPServer.hpp"
-
-#include "SocketType.hpp"
+#include "network/ReliableUDPServer.hpp"
 #include "event/CoreEvents.hpp"
 #include "event/EventManager.hpp"
+#include "network/SocketType.hpp"
+
 
 #include "enet/enet.h"
 
 using namespace tudov;
 
-ReliableUDPServer::ReliableUDPServer(INetwork &network) noexcept
-    : _network(network),
+ReliableUDPServer::ReliableUDPServer(INetworkManager &network) noexcept
+    : _networkManager(network),
       _nextClientID(0)
 {
 }
@@ -29,9 +29,9 @@ ReliableUDPServer::~ReliableUDPServer() noexcept
 	}
 }
 
-INetwork &ReliableUDPServer::GetNetwork() noexcept
+INetworkManager &ReliableUDPServer::GetNetworkManager() noexcept
 {
-	return _network;
+	return _networkManager;
 }
 
 ESocketType ReliableUDPServer::GetSocketType() const noexcept

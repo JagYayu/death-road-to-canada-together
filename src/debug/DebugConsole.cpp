@@ -1,4 +1,4 @@
-#include "DebugConsole.hpp"
+#include "debug/DebugConsole.hpp"
 
 #include <algorithm>
 #include <imgui.h>

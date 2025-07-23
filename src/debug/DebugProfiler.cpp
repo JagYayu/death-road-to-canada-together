@@ -1,6 +1,5 @@
-#include "DebugProfiler.hpp"
-
-#include "EventProfiler.hpp"
+#include "debug/DebugProfiler.hpp"
+#include "debug/EventProfiler.hpp"
 #include "event/EventManager.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"

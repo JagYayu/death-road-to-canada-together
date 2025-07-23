@@ -1,5 +1,4 @@
-#include "DebugLog.hpp"
-
+#include "debug/DebugLog.hpp"
 #include "util/EnumFlag.hpp"
 
 #include "imgui.h"

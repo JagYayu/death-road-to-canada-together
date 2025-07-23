@@ -1,13 +1,12 @@
-#include "Window.hpp"
+#include "program/Window.hpp"
 
-#include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_video.h"
 #include "event/EventManager.hpp"
 #include "graphic/Renderer.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "program/Engine.hpp"
 
 #include "SDL3/SDL_events.h"
+#include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_video.h"
 
 #include <cmath>
@@ -31,27 +30,6 @@ Window::~Window() noexcept
 		SDL_DestroyWindow(_sdlWindow);
 	}
 }
-
-// ILuaAPI::TInstallation Window::windowLuaAPIInstallation = [](sol::state &lua)
-// {
-// 	lua.new_usertype<Window>("tudov_Window",
-// 	                         "renderer", &Window::renderer,
-// 	                         "close", &Window::Close,
-// 	                         "shouldClose", &Window::ShouldClose,
-// 	                         "getWidth", &Window::GetWidth,
-// 	                         "getHeight", &Window::GetHeight,
-// 	                         "getSize", &Window::GetSize);
-// };
-
-// void Window::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
-// {
-// 	if (auto &&luaAPIProvider = std::dynamic_pointer_cast<Renderer>(renderer); luaAPIProvider != nullptr)
-// 	{
-// 		luaAPIProvider->ProvideLuaAPI(luaAPI);
-// 	}
-
-// 	luaAPI.RegisterInstallation("tudov_Window", windowLuaAPIInstallation);
-// }
 
 Context &Window::GetContext() noexcept
 {

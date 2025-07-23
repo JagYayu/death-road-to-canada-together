@@ -1,8 +1,8 @@
-#include "StorageManager.hpp"
+#include "data/StorageManager.hpp"
 
-#include "ApplicationStorage.hpp"
-#include "ReadonlyStorage.hpp"
-#include "UserStorage.hpp"
+#include "data/ApplicationStorage.hpp"
+#include "data/ReadonlyStorage.hpp"
+#include "data/UserStorage.hpp"
 
 #include <memory>
 

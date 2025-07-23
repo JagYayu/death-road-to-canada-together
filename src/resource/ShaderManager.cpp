@@ -1,15 +1,15 @@
-#include "ShaderManager.hpp"
+// #include "resource/ShaderManager.hpp"
 
-using namespace tudov;
+// using namespace tudov;
 
-ShaderManager::ShaderManager() noexcept
-{
-}
+// ShaderManager::ShaderManager() noexcept
+// {
+// }
 
-void ShaderManager::InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
-{
-}
+// void ShaderManager::InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
+// {
+// }
 
-void ShaderManager::UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
-{
-}
+// void ShaderManager::UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
+// {
+// }

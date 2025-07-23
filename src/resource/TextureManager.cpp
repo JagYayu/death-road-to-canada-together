@@ -1,4 +1,4 @@
-#include "TextureManager.hpp"
+#include "resource/TextureManager.hpp"
 
 using namespace tudov;
 

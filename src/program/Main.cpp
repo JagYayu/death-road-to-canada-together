@@ -1,8 +1,9 @@
-#include "MainArgs.hpp"
-
 #include "graphic/GUI.hpp"
 #include "program/Engine.hpp"
+#include "program/MainArgs.hpp"
 #include "util/Log.hpp"
+
+#include "SDL3/SDL_gpu.h"
 
 #include <memory>
 
@@ -91,6 +92,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 	{
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error initializing SDL3", nullptr);
 		return SDL_APP_FAILURE;
+	}
+
+	for (auto index = 0; index < SDL_GetNumGPUDrivers(); ++index)
+	{
+		Log::Get("Main")->Info("GPU Driver {}:", index, SDL_GetGPUDriver(index));
 	}
 
 	app = std::make_unique<Engine>(MainArgs(argc, argv));

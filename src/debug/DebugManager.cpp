@@ -1,8 +1,7 @@
-#include "DebugManager.hpp"
-
-#include "DebugConsole.hpp"
-#include "DebugLog.hpp"
-#include "DebugProfiler.hpp"
+#include "debug/DebugManager.hpp"
+#include "debug/DebugConsole.hpp"
+#include "debug/DebugLog.hpp"
+#include "debug/DebugProfiler.hpp"
 #include "program/Window.hpp"
 
 #include "imgui.h"

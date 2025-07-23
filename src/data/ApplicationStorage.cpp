@@ -1,6 +1,6 @@
-#include "ApplicationStorage.hpp"
+#include "data/ApplicationStorage.hpp"
 
-#include "StorageManager.hpp"
+#include "data/StorageManager.hpp"
 
 using namespace tudov;
 

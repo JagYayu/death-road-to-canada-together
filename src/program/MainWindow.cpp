@@ -1,12 +1,12 @@
-#include "MainWindow.hpp"
+#include "program/MainWindow.hpp"
 
-#include "Window.hpp"
 #include "debug/DebugManager.hpp"
 #include "event/EventHandleKey.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/Renderer.hpp"
 #include "imgui.h"
 #include "program/Engine.hpp"
+#include "program/Window.hpp"
 #include "util/StringUtils.hpp"
 
 #include "SDL3/SDL_rect.h"
@@ -184,7 +184,7 @@ void MainWindow::Initialize(std::int32_t width, std::int32_t height, std::string
 		bSDLImGUI = true;
 	}
 
-	// _renderTarget = std::make_shared<RenderTarget>(*renderer, width, height);
+	_renderTarget = std::make_shared<RenderTarget>(*renderer, width, height);
 	SetShowDebugElements(true);
 }
 
@@ -275,19 +275,16 @@ void MainWindow::Render() noexcept
 	ImGui::EndFrame();
 	ImGui::Render();
 
+	// Process ImGui render target.
+	_renderTarget->Update();
+	_renderTarget->ResizeToFit();
+	renderer->BeginTarget(_renderTarget);
+	renderer->Clear();
+	if (auto data = ImGui::GetDrawData(); data)
 	{
-		auto sdlRenderer = renderer->GetSDLRendererHandle();
-		if (auto data = ImGui::GetDrawData(); data)
-		{
-			ImGui_ImplSDLRenderer3_RenderDrawData(data, sdlRenderer);
-		}
+		ImGui_ImplSDLRenderer3_RenderDrawData(data, renderer->GetSDLRendererHandle());
 	}
-
-	// {
-	// 	auto [width, height] = GetSize();
-	// 	SDL_FRect rect{0, 0, std::float_t(width), std::float_t(height)};
-	// 	_renderTarget->Draw(rect);
-	// }
+	renderer->EndTarget();
 
 	renderer->Render();
 	renderer->End();

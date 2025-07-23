@@ -13,34 +13,34 @@ local imageID = images:getID("gfx/cars/cars_unique_110x96.png")
 local i = 0
 
 events:add(N_("RenderGame"), function(e)
-	local renderer = e.window.renderer
-	renderTarget = renderTarget or renderer:newRenderTarget(1280, 720)
+	-- local renderer = e.window.renderer
+	-- renderTarget = renderTarget or renderer:newRenderTarget(1280, 720)
 
-	renderer:beginTarget(renderTarget)
+	-- renderer:beginTarget(renderTarget)
 
-	-- renderer:clear()
+	-- -- renderer:clear()
 
-	renderer:draw({
-		image = imageID,
-		destination = {
-			i,
-			0,
-			1000,
-			1000,
-		},
-	})
+	-- renderer:draw({
+	-- 	image = imageID,
+	-- 	destination = {
+	-- 		i,
+	-- 		0,
+	-- 		1000,
+	-- 		1000,
+	-- 	},
+	-- })
 
-	renderer:endTarget({
-		0,
-		0,
-		1280,
-		720,
-	}, {
-		0,
-		0,
-		1280,
-		720,
-	})
+	-- renderer:endTarget({
+	-- 	0,
+	-- 	0,
+	-- 	1280,
+	-- 	720,
+	-- }, {
+	-- 	0,
+	-- 	0,
+	-- 	1280,
+	-- 	720,
+	-- })
 end, N_("renderSprites"))
 
 -- return SpriteRenderer

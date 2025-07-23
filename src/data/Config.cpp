@@ -1,4 +1,4 @@
-#include "Config.hpp"
+#include "data/Config.hpp"
 
 #include "data/Constants.hpp"
 #include "util/Log.hpp"

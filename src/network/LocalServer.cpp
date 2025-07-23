@@ -1,7 +1,8 @@
-#include "LocalServer.hpp"
+#include "network/LocalServer.hpp"
 
-#include "LocalClient.hpp"
-#include "SocketType.hpp"
+#include "network/LocalClient.hpp"
+#include "network/NetworkManager.hpp"
+#include "network/SocketType.hpp"
 
 #include <optional>
 
@@ -20,14 +21,14 @@ LocalServer::Message::Message(bool reliable, ClientID clientID, std::string data
 	this->data = data;
 }
 
-LocalServer::LocalServer(INetwork &network) noexcept
-    : _network(network)
+LocalServer::LocalServer(INetworkManager &network) noexcept
+    : _networkManager(network)
 {
 }
 
-INetwork &LocalServer::GetNetwork() noexcept
+INetworkManager &LocalServer::GetNetworkManager() noexcept
 {
-	return _network;
+	return _networkManager;
 }
 
 ESocketType LocalServer::GetSocketType() const noexcept

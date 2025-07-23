@@ -1,9 +1,5 @@
-#include "Engine.hpp"
+#include "program/Engine.hpp"
 
-#include "Context.hpp"
-#include "EngineComponent.hpp"
-#include "MainWindow.hpp"
-#include "Window.hpp"
 #include "data/Config.hpp"
 #include "data/StorageManager.hpp"
 #include "debug/Debug.hpp"
@@ -11,7 +7,12 @@
 #include "debug/DebugManager.hpp"
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
-#include "network/Network.hpp"
+#include "mod/ScriptLoader.hpp"
+#include "network/NetworkManager.hpp"
+#include "program/Context.hpp"
+#include "program/EngineComponent.hpp"
+#include "program/MainWindow.hpp"
+#include "program/Window.hpp"
 #include "resource/FontManager.hpp"
 #include "resource/ImageManager.hpp"
 #include "resource/ResourceType.hpp"
@@ -52,7 +53,7 @@ Engine::Engine(const MainArgs &args) noexcept
 	context = Context(this);
 
 	_storageManager = std::make_shared<StorageManager>(context);
-	_network = std::make_shared<Network>(context);
+	_networkManager = std::make_shared<NetworkManager>(context);
 	_modManager = std::make_shared<ModManager>(context);
 	_scriptProvider = std::make_shared<ScriptProvider>(context);
 	_scriptLoader = std::make_shared<ScriptLoader>(context);
@@ -117,6 +118,11 @@ Engine::~Engine() noexcept
 	Application::~Application();
 }
 
+Log &Engine::GetLog() noexcept
+{
+	return *_log;
+}
+
 bool Engine::ShouldQuit() noexcept
 {
 	switch (_state)
@@ -136,7 +142,7 @@ void Engine::Initialize() noexcept
 {
 	_components = {
 	    _modManager,
-	    _network,
+	    _networkManager,
 	    _eventManager,
 	    _gameScripts,
 	    _scriptProvider,

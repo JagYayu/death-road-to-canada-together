@@ -1,9 +1,9 @@
-#include "ScriptEngine.hpp"
+#include "mod/ScriptEngine.hpp"
 
-#include "LuaAPI.hpp"
-#include "ModManager.hpp"
-#include "ScriptLoader.hpp"
-#include "ScriptProvider.hpp"
+#include "mod/LuaAPI.hpp"
+#include "mod/ModManager.hpp"
+#include "mod/ScriptLoader.hpp"
+#include "mod/ScriptProvider.hpp"
 #include "sol/error.hpp"
 #include "sol/table.hpp"
 #include "util/Definitions.hpp"
@@ -303,7 +303,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 		{
 			auto &&mod = GetModManager().FindLoadedMod(GetScriptProvider().GetScriptModUID(scriptID));
 			if (mod.expired()) [[unlikely]]
-		{
+			{
 				return std::string(str);
 			}
 
