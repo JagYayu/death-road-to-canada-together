@@ -4,24 +4,19 @@
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptProvider.hpp"
-#include "sol/error.hpp"
-#include "sol/table.hpp"
 #include "util/Definitions.hpp"
-#include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
+
+#include "sol/environment.hpp"
+#include "sol/forward.hpp"
+#include "sol/load_result.hpp"
+#include "sol/string_view.hpp"
+#include "sol/table.hpp"
+#include "sol/types.hpp"
+#include "sol/variadic_args.hpp"
 
 #include <cassert>
 #include <corecrt_terminate.h>
-#include <sol/environment.hpp>
-#include <sol/error.hpp>
-#include <sol/forward.hpp>
-#include <sol/load_result.hpp>
-#include <sol/sol.hpp>
-#include <sol/string_view.hpp>
-#include <sol/types.hpp>
-#include <sol/variadic_args.hpp>
-
-#include <tuple>
 #include <unordered_map>
 
 using namespace tudov;
@@ -60,6 +55,7 @@ void ScriptEngine::Initialize() noexcept
 	_lua.open_libraries(sol::lib::io);
 	_lua.open_libraries(sol::lib::jit);
 	_lua.open_libraries(sol::lib::math);
+	_lua.open_libraries(sol::lib::package);
 	_lua.open_libraries(sol::lib::string);
 	_lua.open_libraries(sol::lib::table);
 	_lua.open_libraries(sol::lib::utf8);
@@ -71,7 +67,8 @@ void ScriptEngine::Initialize() noexcept
 	auto &&scriptEngineModule = scriptLoader.Load("#lua.ScriptEngine")->GetTable();
 	scriptEngineModule.raw_get<sol::function>("initialize")();
 	_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
-	_luaPostProcessSandboxing = scriptEngineModule.raw_get<sol::function>("postProcessSandboxing");
+	_luaPostProcessModGlobals = scriptEngineModule.raw_get<sol::function>("postProcessModGlobals");
+	_luaPostProcessScriptGlobals = scriptEngineModule.raw_get<sol::function>("postProcessScriptGlobals");
 
 	GetLuaAPI().Install(_lua, _context);
 
@@ -127,7 +124,7 @@ int ScriptEngine::ThrowError(std::string_view message) noexcept
 	return lua_error(_lua);
 }
 
-sol::object MakeReadonlyGlobalImpl(sol::state &lua, const sol::object &obj, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited, const sol::function &newindex, const sol::function mark)
+sol::object MakeReadonlyGlobalImpl(sol::state &lua, sol::object obj, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited, const sol::function &newindex, const sol::function mark)
 {
 	if (obj.get_type() != sol::type::table)
 	{
@@ -165,25 +162,22 @@ sol::object MakeReadonlyGlobalImpl(sol::state &lua, const sol::object &obj, std:
 	return proxy;
 }
 
-sol::object ScriptEngine::MakeReadonlyGlobal(const sol::object &obj)
+sol::object ScriptEngine::MakeReadonlyGlobal(sol::object obj)
 {
 	Initialize();
 	std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> visited{};
 	return MakeReadonlyGlobalImpl(_lua, obj, visited, _luaThrowModifyReadonlyGlobalError, _luaMarkAsLocked);
 }
 
-sol::table &ScriptEngine::GetSandboxedGlobals(std::string_view sandboxKey) noexcept
+sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed) noexcept
 {
+	if (auto &&it = _modGlobals.find(modUID); it != _modGlobals.end())
 	{
-		auto &&it = _sandboxedGlobals.find(sandboxKey);
-		if (it != _sandboxedGlobals.end())
-		{
-			return it->second;
-		}
+		return it->second;
 	}
 
-	auto &&globals = _lua.globals();
-	auto &&sandbox = CreateTable();
+	auto &&luaGlobals = _lua.globals();
+	auto &&modGlobals = CreateTable();
 
 	static constexpr const char *keys[] = {
 	    // lua51
@@ -193,6 +187,8 @@ sol::table &ScriptEngine::GetSandboxedGlobals(std::string_view sandboxKey) noexc
 	    "coroutine",
 	    "error",
 	    "ipairs",
+	    "load",
+	    "loadstring",
 	    "math",
 	    "next",
 	    "pairs",
@@ -211,34 +207,45 @@ sol::table &ScriptEngine::GetSandboxedGlobals(std::string_view sandboxKey) noexc
 	    // C++
 	    "engine",
 	    "events",
-	    "log",
+	    "images",
 	};
 
 	for (auto &&key : keys)
 	{
-		sandbox[key] = globals[key];
+		modGlobals[key] = luaGlobals[key];
 	}
 
-	sandbox["_G"] = sandbox;
+	modGlobals["_G"] = modGlobals;
 
-	_luaPostProcessSandboxing(sandbox, globals);
+	_luaPostProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals);
 
-	return _sandboxedGlobals.try_emplace(sandboxKey, sandbox).first->second;
+	return _modGlobals.try_emplace(modUID, modGlobals).first->second;
 }
 
-void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string_view scriptName, sol::protected_function &func, std::string_view sandboxKey) noexcept
+void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptName, std::string_view modUID, bool sandboxed, sol::protected_function &func) noexcept
 {
-	// auto &&namespace_ = GetLuaNamespace(scriptName);
+	sol::environment scriptGlobals{_lua, sol::create, GetModGlobals(modUID, sandboxed)};
 
-	sol::environment env{_lua, sol::create, sandboxKey.empty() ? _lua.globals().as<sol::table>() : GetSandboxedGlobals(sandboxKey)};
-
-	if (!env.valid()) [[unlikely]]
+	if (!scriptGlobals.valid()) [[unlikely]]
 	{
 		_log->Error("Failed to create Lua environment!");
 		return;
 	}
 
-	env["print"] = [this, scriptName](const sol::variadic_args &args)
+	scriptGlobals["log"] = Log::Get(scriptName);
+
+	scriptGlobals.set_function("persist", [this, scriptName](sol::string_view key, sol::object defaultValue, const sol::function &getter)
+	{
+		if (defaultValue == sol::nil) [[unlikely]]
+		{
+			ThrowError("Default value could not be nil");
+			return sol::object(sol::nil);
+		}
+
+		return RegisterPersistVariable(scriptName, key, defaultValue, getter);
+	});
+
+	scriptGlobals.set_function("print", [this, scriptName](const sol::variadic_args &args)
 	{
 		try
 		{
@@ -251,15 +258,15 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 				}
 				string.append(_luaInspect(arg));
 			}
-			Log::Get(std::string(scriptName))->Debug("{}", string.c_str());
+			Log::Get(scriptName)->Debug("{}", string.c_str());
 		}
 		catch (const std::exception &e)
 		{
 			UnhandledCppException(_log, e);
 		}
-	};
+	});
 
-	env.set_function("require", [&, env, scriptID](const sol::string_view &targetScriptName) -> sol::object
+	scriptGlobals.set_function("require", [&, scriptGlobals, scriptID](const sol::string_view &targetScriptName) -> sol::object
 	{
 		try
 		{
@@ -280,7 +287,7 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 				}
 			}
 
-			auto &&virtualModule = env[targetScriptName];
+			auto &&virtualModule = scriptGlobals[targetScriptName];
 			if (virtualModule.valid())
 			{
 				return virtualModule;
@@ -297,51 +304,53 @@ void ScriptEngine::InitializeScriptFunction(ScriptID scriptID, const std::string
 		return sol::nil;
 	});
 
-	env.set_function("N_", [&, scriptID](const sol::string_view &str)
-	{
-		try
-		{
-			auto &&mod = GetModManager().FindLoadedMod(GetScriptProvider().GetScriptModUID(scriptID));
-			if (mod.expired()) [[unlikely]]
-			{
-				return std::string(str);
-			}
+	_luaPostProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed, func, scriptGlobals, _lua.globals());
 
-			auto &&name = mod.lock()->GetNamespace();
-			if (name.empty()) [[unlikely]]
-			{
-				return std::string(str);
-			}
-
-			std::string result{};
-			result.reserve(name.size() + 1 + str.size());
-			result.append(name);
-			result.push_back('_');
-			result.append(str);
-			return result;
-		}
-		catch (const std::exception &e)
-		{
-			UnhandledCppException(_log, e);
-		}
-
-		return std::string();
-	});
-
-	sol::set_environment(env, func);
+	sol::set_environment(scriptGlobals, func);
 }
 
-sol::object ScriptEngine::GetPersistVariable(std::string_view key)
+void ScriptEngine::DeinitializeScript(ScriptID scriptID, std::string_view scriptName)
 {
-	auto &&it = _persistVariables.find(key);
-	if (it == _persistVariables.end())
+	if (auto &&it = _persistVariables.find(scriptName.data()); it != _persistVariables.end())
 	{
-		return sol::nil;
+		for (auto &&[_, variable] : it->second)
+		{
+			auto result = variable.getter();
+			if (result.valid())
+			{
+				if (auto &&value = result.get<sol::object>(); value != sol::nil)
+				{
+					variable.value = value;
+					variable.getter = sol::nil;
+				}
+			}
+		}
 	}
-	return it->second;
 }
 
-void ScriptEngine::SetPersistVariable(std::string_view key, const sol::object &value)
+sol::object ScriptEngine::RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter)
 {
-	_persistVariables[key] = value;
+	if (defaultValue == sol::nil)
+	{
+		// TODO log cant be nil
+	}
+
+	if (!_persistVariables.contains(scriptName.data()))
+	{
+		_persistVariables[scriptName.data()] = {};
+	}
+
+	auto &&variable = _persistVariables[scriptName.data()][key.data()];
+	if (!variable.value.valid())
+	{
+		variable.value = defaultValue;
+	}
+	variable.getter = getter;
+
+	return variable.value;
+}
+
+void ScriptEngine::ClearPersistVariables()
+{
+	_persistVariables.clear();
 }

@@ -3,7 +3,9 @@ local Table = {}
 
 local _ScriptEngine = require "#lua.ScriptEngine"
 
+--- Lock a table's metatable, which can no longer be accessed by `getmetatable` functions in sandboxed scripts.
 --- @param tbl table
+--- @return metatable? metatable @nil if metatable not exists or valid.
 function Table.lockMetatable(tbl)
 	if type(tbl) == "table" then
 		local mt = getmetatable(tbl)
@@ -38,8 +40,17 @@ local function tableToReadonly(tbl, seen)
 	return proxy
 end
 
+--- Create a readonly proxy table, which is readonly to original table.
+--- @param tbl table
+--- @return table
 function Table.readonly(tbl)
 	return tableToReadonly(tbl, {})
+end
+
+--- @param l table
+--- @param r table
+function Table.deepEquals(l, r)
+
 end
 
 return Table

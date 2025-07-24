@@ -7,8 +7,12 @@
 
 namespace tudov
 {
+	class LuaAPI;
+
 	class Version
 	{
+		friend LuaAPI;
+
 	  private:
 		std::vector<int32_t> _parts;
 
@@ -17,8 +21,9 @@ namespace tudov
 
 	  public:
 		Version();
-		explicit Version(int32_t major, int32_t minor = 0, int32_t patch = 0);
-		explicit Version(std::string_view str);
+		Version(int32_t major, int32_t minor = 0, int32_t patch = 0);
+		Version(std::string_view str);
+		~Version() noexcept = default;
 
 	  public:
 		int32_t Major() const;

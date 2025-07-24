@@ -11,8 +11,12 @@
 
 namespace tudov
 {
+	class LuaAPI;
+
 	class Log
 	{
+		friend LuaAPI;
+
 	  private:
 		struct Entry
 		{
@@ -23,16 +27,16 @@ namespace tudov
 		};
 
 	  public:
-		enum class EVerbosity
+		enum class EVerbosity : std::int8_t
 		{
 			All = -1,
 			None = 0,
-			Error = 1 << 0,
-			Warn = 1 << 1,
-			Info = 1 << 2,
-			Debug = 1 << 3,
-			Trace = 1 << 4,
-			Fatal = 1 << 5,
+			Fatal = 1 << 0,
+			Error = 1 << 1,
+			Warn = 1 << 2,
+			Info = 1 << 3,
+			Debug = 1 << 4,
+			Trace = 1 << 5,
 		};
 
 	  private:
@@ -55,7 +59,7 @@ namespace tudov
 
 	  private:
 		static void Process();
-		static void Output(std::string_view module, std::string_view verb, std::string_view str);
+		static void OutputImpl(std::string_view module, std::string_view verb, std::string_view str);
 
 	  public:
 		static std::shared_ptr<Log> Get(std::string_view module) noexcept;
@@ -65,8 +69,8 @@ namespace tudov
 		static std::optional<EVerbosity> GetVerbosity(const std::string &module) noexcept;
 		static bool SetVerbosity(const std::string &module, EVerbosity verb) noexcept;
 		static void UpdateVerbosities(const nlohmann::json &config);
-		static std::optional<EVerbosity> GetVerbosityOverride(const std::string &module)noexcept;
-		static void SetVerbosityOverride(const std::string &module, EVerbosity verb)noexcept;
+		static std::optional<EVerbosity> GetVerbosityOverride(const std::string &module) noexcept;
+		static void SetVerbosityOverride(const std::string &module, EVerbosity verb) noexcept;
 		static void Exit() noexcept;
 
 		static std::size_t CountLogs() noexcept;
@@ -82,7 +86,7 @@ namespace tudov
 	  private:
 		std::string _module;
 
-		bool CanOutput(std::string_view verb) const noexcept;
+		bool CanOutput(EVerbosity verb) const noexcept;
 		void Output(std::string_view verb, std::string_view str) const noexcept;
 
 	  public:
@@ -99,27 +103,27 @@ namespace tudov
 
 		TE_FORCEINLINE bool CanTrace() const noexcept
 		{
-			return CanOutput(VerbTrace);
+			return CanOutput(EVerbosity::Trace);
 		}
 		TE_FORCEINLINE bool CanInfo() const noexcept
 		{
-			return CanOutput(VerbInfo);
+			return CanOutput(EVerbosity::Info);
 		}
 		TE_FORCEINLINE bool CanDebug() const noexcept
 		{
-			return CanOutput(VerbDebug);
+			return CanOutput(EVerbosity::Debug);
 		}
 		TE_FORCEINLINE bool CanWarn() const noexcept
 		{
-			return CanOutput(VerbWarn);
+			return CanOutput(EVerbosity::Warn);
 		}
 		TE_FORCEINLINE bool CanError() const noexcept
 		{
-			return CanOutput(VerbError);
+			return CanOutput(EVerbosity::Error);
 		}
 		TE_FORCEINLINE bool CanFatal() const noexcept
 		{
-			return CanOutput(VerbFatal);
+			return CanOutput(EVerbosity::Fatal);
 		}
 
 		template <typename... Args>

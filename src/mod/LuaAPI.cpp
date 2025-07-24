@@ -43,19 +43,23 @@ decltype(auto) GetMainWindowFromContext(Context &context)
 	});
 }
 
-#define TE_ENGINE_CONTEXT_GETTER(what)                 \
-	decltype(auto) what##FromContext(Context &context) \
-	{                                                  \
-		return sol::readonly_property([&]()            \
-		{                                              \
-			return &context.what();                    \
-		});                                            \
-	}
-
+#define TE_ENUM(Class, ...)     lua.new_enum<Class>("tudov_" #Class, __VA_ARGS__)
 #define TE_USERTYPE(Class, ...) lua.new_usertype<Class>("tudov_" #Class, __VA_ARGS__)
 
 void LuaAPI::Install(sol::state &lua, Context &context)
 {
+	TE_ENUM(Log::EVerbosity,
+	        {
+	            {"All", Log::EVerbosity::All},
+	            {"None", Log::EVerbosity::None},
+	            {"Error", Log::EVerbosity::Error},
+	            {"Warn", Log::EVerbosity::Warn},
+	            {"Info", Log::EVerbosity::Info},
+	            {"Debug", Log::EVerbosity::Debug},
+	            {"Trace", Log::EVerbosity::Trace},
+	            {"Fatal", Log::EVerbosity::Fatal},
+	        });
+
 	TE_USERTYPE(Camera2D,
 	            "getPosition", &Camera2D::GetPosition,
 	            "getPositionLerpFactor", &Camera2D::GetPositionLerpFactor,
@@ -87,6 +91,27 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	TE_USERTYPE(ImageManager,
 	            "getID", &ImageManager::LuaGetID,
 	            "getPath", &ImageManager::LuaGetPath);
+
+	TE_USERTYPE(Log,
+	            // "Verbosity_All", Log::EVerbosity::All,
+	            // "Verbosity_None", Log::EVerbosity::None,
+	            // "Verbosity_Error", Log::EVerbosity::Error,
+	            // "Verbosity_Warn", Log::EVerbosity::Warn,
+	            // "Verbosity_Info", Log::EVerbosity::Info,
+	            // "Verbosity_Debug", Log::EVerbosity::Debug,
+	            // "Verbosity_Trace", Log::EVerbosity::Trace,
+	            // "Verbosity_Fatal", Log::EVerbosity::Fatal,
+	            "canOutput", &Log::CanOutput,
+	            "output", &Log::Output);
+
+	TE_USERTYPE(ModConfig,
+	            "author", &ModConfig::author,
+	            "client", &ModConfig::client,
+	            // "dependencies", &ModConfig::dependencies,
+	            "description", &ModConfig::description,
+	            "name", &ModConfig::name,
+	            "namespace", &ModConfig::namespace_,
+	            "uid", &ModConfig::uid);
 
 	TE_USERTYPE(Window,
 	            "renderer", &Window::renderer,
@@ -130,6 +155,12 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "setViewScaleMode", &RenderTarget::SetViewScaleMode,
 	            "update", &RenderTarget::Update);
 
+	// TE_USERTYPE(Version,
+	//             "major", &Version::Major,
+	//             "minor", &Version::Minor,
+	//             "parts", &Version::_parts,
+	//             "patch", &Version::Patch);
+
 	lua["engine"] = &context.GetEngine();
 	lua["fonts"] = &context.GetFontManager();
 	lua["images"] = &context.GetImageManager();
@@ -139,4 +170,10 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	lua["scriptEngine"] = &dynamic_cast<ScriptEngine &>(context.GetScriptEngine());
 	lua["scriptLoader"] = &dynamic_cast<ScriptLoader &>(context.GetScriptLoader());
 	lua["scriptProvider"] = &dynamic_cast<ScriptProvider &>(context.GetScriptProvider());
+
+	lua.set_function("getModConfig", [&](sol::string_view modUID) -> ModConfig *
+	{
+		std::weak_ptr<Mod> &&mod = context.GetModManager().FindLoadedMod(modUID);
+		return mod.expired() ? nullptr : &mod.lock()->GetConfig();
+	});
 }

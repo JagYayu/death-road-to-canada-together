@@ -37,14 +37,14 @@ namespace tudov
 		Data fonts;
 	};
 
-	inline void from_json(const nlohmann::json &j, ModConfig::Data &d)
+	inline void from_json(const nlohmann::json &j, ModConfig::Data &d) noexcept
 	{
 		d.autoload = j.value("autoload", false);
 		d.directory = j.value("directory", std::string());
 		d.files = j.value("files", std::vector<std::string>());
 	}
 
-	inline void from_json(const nlohmann::json &j, ModConfig::Scripts &s)
+	inline void from_json(const nlohmann::json &j, ModConfig::Scripts &s) noexcept
 	{
 		from_json(j, static_cast<ModConfig::Data &>(s));
 		s.closedSource = j.value("closedSource", false);
@@ -53,7 +53,7 @@ namespace tudov
 		s.privates = j.value("privates", std::vector<std::string>());
 	}
 
-	inline void from_json(const nlohmann::json &j, ModConfig &m)
+	inline void from_json(const nlohmann::json &j, ModConfig &m) noexcept
 	{
 		m.uid = j.value("uid", std::string());
 		m.namespace_ = j.value("namespace", std::string());

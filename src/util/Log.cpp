@@ -60,16 +60,16 @@ void Log::CleanupExpired() noexcept
 
 void Log::Quit() noexcept
 {
-	Output(defaultModule, VerbDebug, "Logging system quitting");
+	OutputImpl(defaultModule, VerbDebug, "Logging system quitting");
 
 	CleanupExpired();
 
 	if (!_logInstances.empty())
 	{
-		Output(defaultModule, VerbWarn, "Unresolved log pointers detected on application quit. Maybe memory leaked?");
+		OutputImpl(defaultModule, VerbWarn, "Unresolved log pointers detected on application quit. Maybe memory leaked?");
 		for (auto &&[name, log] : _logInstances)
 		{
-			Output(defaultModule, VerbWarn, std::format("Log name \"{}\", ref count {}", name.data(), log.use_count()));
+			OutputImpl(defaultModule, VerbWarn, std::format("Log name \"{}\", ref count {}", name.data(), log.use_count()));
 		}
 	}
 
@@ -208,7 +208,7 @@ Log::Log(const std::string &module) noexcept
 		assert(logWorker == nullptr);
 		logWorker = std::make_unique<std::thread>(Log::Process);
 
-		Output(defaultModule, VerbDebug, "Logging system initialized");
+		OutputImpl(defaultModule, VerbDebug, "Logging system initialized");
 	}
 	++logCount;
 }
@@ -255,17 +255,18 @@ void Log::Process()
 	}
 }
 
-bool Log::CanOutput(std::string_view verb) const noexcept
+bool Log::CanOutput(Log::EVerbosity verb) const noexcept
 {
+	
 	return true;
 }
 
 void Log::Output(std::string_view verb, std::string_view str) const noexcept
 {
-	Output(_module, verb, str);
+	OutputImpl(_module, verb, str);
 }
 
-void Log::Output(std::string_view module, std::string_view verb, std::string_view str)
+void Log::OutputImpl(std::string_view module, std::string_view verb, std::string_view str)
 {
 	{
 		std::lock_guard<std::mutex> lock{_mutex};

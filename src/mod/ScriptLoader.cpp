@@ -7,6 +7,7 @@
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
 
+#include <corecrt_terminate.h>
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
@@ -69,6 +70,13 @@ const sol::table &ScriptLoader::Module::RawLoad(IScriptLoader &scriptLoader)
 	auto previousLoadingScript = parent._loadingScript;
 	parent._loadingScript = _scriptID;
 	auto &&result = _func();
+	if (!result.valid()) [[unlikely]]
+	{
+		sol::error err = result;
+		parent._log->Fatal("'{}': {}", scriptLoader.GetLoadingScriptName().value(), err.what());
+		abort();
+	}
+
 	if (result.get<sol::object>(1))
 	{
 		parent._log->Warn("'{}': Does not support receiving multiple return values", scriptLoader.GetLoadingScriptName().value());
@@ -461,16 +469,16 @@ std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, 
 	}
 	else
 	{
-		std::string_view sandboxKey = emptyString;
+		bool sandboxed = false;
 		if (modUID != emptyString)
 		{
 			auto &&mod = GetModManager().FindLoadedMod(modUID);
 			if (!mod.expired() && mod.lock()->GetConfig().scripts.sandbox)
 			{
-				sandboxKey = modUID;
+				sandboxed = true;
 			}
 		}
-		GetScriptEngine().InitializeScriptFunction(scriptID, scriptName, function, sandboxKey);
+		GetScriptEngine().InitializeScript(scriptID, scriptName, modUID, sandboxed, function);
 		_log->Trace("Lazy loaded script <{}>\"{}\"", scriptID, scriptName);
 	}
 
@@ -546,6 +554,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 		return;
 	}
 
+	GetScriptEngine().DeinitializeScript(scriptID, scriptName.value());
 	_onUnloadScript(scriptID);
 
 	for (auto &&dependency : GetDependencies(scriptID))

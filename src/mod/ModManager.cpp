@@ -56,10 +56,6 @@ void ModManager::Deinitialize() noexcept
 	// eventManager.UninstallFromScriptEngine(scriptEngine);
 }
 
-void ModManager::AddMod(const std::filesystem::path &modRoot)
-{
-}
-
 bool ModManager::IsNoModMatch() const
 {
 	return _requiredMods.empty();

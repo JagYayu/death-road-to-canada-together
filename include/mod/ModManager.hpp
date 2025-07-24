@@ -75,12 +75,6 @@ namespace tudov
 		std::unique_ptr<HotReloadScriptsMap> _hotReloadScriptsPending;
 
 	  public:
-		//
-
-		// wtf is this mod do?
-		void AddMod(const std::filesystem::path &modRoot);
-
-	  public:
 		explicit ModManager(Context &context) noexcept;
 		~ModManager() noexcept override;
 
