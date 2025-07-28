@@ -19,7 +19,7 @@ namespace tudov
 		struct Entry
 		{
 			std::string name;
-			std::string code;
+			std::string_view code;
 			std::string_view modUID;
 		};
 
@@ -37,8 +37,8 @@ namespace tudov
 
 		virtual ScriptID AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view uid) noexcept = 0;
 		virtual bool RemoveScript(ScriptID scriptID) noexcept = 0;
-		virtual std::size_t RemoveScriptBy(std::string_view namespace_) noexcept = 0;
-		virtual const std::string &GetScriptCode(ScriptID scriptID) const noexcept = 0;
+		virtual std::size_t RemoveScriptBy(std::string_view modUID) noexcept = 0;
+		virtual std::string_view GetScriptCode(ScriptID scriptID) const noexcept = 0;
 		/*
 		 * Return an empty string if script id not exists.
 		 */
@@ -62,7 +62,7 @@ namespace tudov
 			return RemoveScript(GetScriptIDByName(scriptName));
 		}
 
-		inline const std::string &GetScriptCode(std::string_view scriptName) const noexcept
+		inline std::string_view GetScriptCode(std::string_view scriptName) const noexcept
 		{
 			return GetScriptCode(GetScriptIDByName(scriptName));
 		}
@@ -98,7 +98,7 @@ namespace tudov
 
 	  public:
 		Context &GetContext() noexcept override;
-		Log & GetLog() noexcept override;
+		Log &GetLog() noexcept override;
 
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
@@ -111,8 +111,8 @@ namespace tudov
 
 		ScriptID AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_) noexcept override;
 		bool RemoveScript(ScriptID scriptID) noexcept override;
-		std::size_t RemoveScriptBy(std::string_view namespace_) noexcept override;
-		const std::string &GetScriptCode(ScriptID scriptID) const noexcept override;
+		std::size_t RemoveScriptBy(std::string_view modUID) noexcept override;
+		std::string_view GetScriptCode(ScriptID scriptID) const noexcept override;
 		std::string_view GetScriptModUID(ScriptID scriptID) noexcept override;
 
 		std::unordered_map<ScriptID, Entry>::const_iterator begin() const override;

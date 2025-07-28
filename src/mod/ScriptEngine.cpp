@@ -29,9 +29,9 @@ ScriptEngine::ScriptEngine(Context &context) noexcept
 {
 }
 
-ScriptEngine::~ScriptEngine() noexcept
+Log &ScriptEngine::GetLog() noexcept
 {
-	IScriptEngine::~IScriptEngine();
+	return *_log;
 }
 
 Context &ScriptEngine::GetContext() noexcept
@@ -63,12 +63,21 @@ void ScriptEngine::Initialize() noexcept
 	auto &&scriptLoader = GetScriptLoader();
 
 	_luaThrowModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::function>();
-	_luaInspect = scriptLoader.Load("#lua.inspect")->GetTable().raw_get<sol::function>("inspect");
-	auto &&scriptEngineModule = scriptLoader.Load("#lua.ScriptEngine")->GetTable();
-	scriptEngineModule.raw_get<sol::function>("initialize")();
-	_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
-	_luaPostProcessModGlobals = scriptEngineModule.raw_get<sol::function>("postProcessModGlobals");
-	_luaPostProcessScriptGlobals = scriptEngineModule.raw_get<sol::function>("postProcessScriptGlobals");
+
+	{
+		auto &&inspectModule = scriptLoader.Load("#lua.inspect");
+		_luaInspect = inspectModule->GetTable().raw_get<sol::function>("inspect");
+	}
+
+	{
+		auto &&engineModule = scriptLoader.Load("#lua.ScriptEngine");
+		auto &&scriptEngineModule = engineModule->GetTable();
+
+		scriptEngineModule.raw_get<sol::function>("initialize")();
+		_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
+		_luaPostProcessModGlobals = scriptEngineModule.raw_get<sol::function>("postProcessModGlobals");
+		_luaPostProcessScriptGlobals = scriptEngineModule.raw_get<sol::function>("postProcessScriptGlobals");
+	}
 
 	GetLuaAPI().Install(_lua, _context);
 
@@ -266,7 +275,7 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 		}
 	});
 
-	scriptGlobals.set_function("require", [&, scriptGlobals, scriptID](const sol::string_view &targetScriptName) -> sol::object
+	scriptGlobals.set_function("require", [this, scriptGlobals, scriptID](const sol::string_view &targetScriptName) -> sol::object
 	{
 		try
 		{
@@ -294,7 +303,6 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 			}
 
 			IScriptEngine::ThrowError("Script module '{}' not found", targetScriptName.data());
-			// return sol::error(std::format("Script module '{}' not found", targetScriptName.data()));
 		}
 		catch (const std::exception &e)
 		{
@@ -311,14 +319,16 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 
 void ScriptEngine::DeinitializeScript(ScriptID scriptID, std::string_view scriptName)
 {
-	if (auto &&it = _persistVariables.find(scriptName.data()); it != _persistVariables.end())
+	auto &&it = _persistVariables.find(scriptName.data());
+	if (it != _persistVariables.end())
 	{
 		for (auto &&[_, variable] : it->second)
 		{
 			auto result = variable.getter();
 			if (result.valid())
 			{
-				if (auto &&value = result.get<sol::object>(); value != sol::nil)
+				auto &&value = result.get<sol::object>();
+				if (value != sol::nil)
 				{
 					variable.value = value;
 					variable.getter = sol::nil;
@@ -330,9 +340,9 @@ void ScriptEngine::DeinitializeScript(ScriptID scriptID, std::string_view script
 
 sol::object ScriptEngine::RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter)
 {
-	if (defaultValue == sol::nil)
+	if (defaultValue == sol::nil) [[unlikely]]
 	{
-		// TODO log cant be nil
+		Warn("\"{}\" attempt to provide nil value to default persist variable '{}'", scriptName, key);
 	}
 
 	if (!_persistVariables.contains(scriptName.data()))

@@ -5,6 +5,7 @@
 
 #include "sol/load_result.hpp"
 #include "sol/state.hpp"
+#include "util/Log.hpp"
 
 #include <format>
 #include <memory>
@@ -41,7 +42,7 @@ namespace tudov
 
 	class Log;
 
-	class ScriptEngine : public IScriptEngine
+	class ScriptEngine : public IScriptEngine, public ILogProvider
 	{
 	  private:
 		struct PersistVariable
@@ -67,9 +68,11 @@ namespace tudov
 
 	  public:
 		explicit ScriptEngine(Context &context) noexcept;
-		~ScriptEngine() noexcept override;
+		~ScriptEngine() noexcept = default;
 
 	  public:
+		Log &GetLog() noexcept override;
+
 		Context &GetContext() noexcept override;
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;

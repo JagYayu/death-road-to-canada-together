@@ -118,7 +118,7 @@ std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 
 	if (!orderSequenceMap.empty())
 	{
-		std::sort(_handlers.begin(), _handlers.end(), [&](const EventHandler &lhs, const EventHandler &rhs)
+		std::sort(_handlers.begin(), _handlers.end(), [this, &orderSequenceMap](const EventHandler &lhs, const EventHandler &rhs)
 		{
 			auto &&lhsOrder = orderSequenceMap.count(lhs.order) ? orderSequenceMap[lhs.order] : SIZE_MAX;
 			auto &&rhsOrder = orderSequenceMap.count(rhs.order) ? orderSequenceMap[rhs.order] : SIZE_MAX;
@@ -318,7 +318,7 @@ void RuntimeEvent::ClearScriptHandlersImpl(std::function<bool(const EventHandler
 
 void RuntimeEvent::ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider)
 {
-	ClearScriptHandlersImpl([&](const EventHandler &handler)
+	ClearScriptHandlersImpl([this, &scriptProvider](const EventHandler &handler)
 	{
 		return !scriptProvider.IsValidScript(handler.scriptID);
 	});

@@ -50,18 +50,16 @@ local test = 2
 events:add(N_("RenderGame"), function(e)
 	local renderer = e.window.renderer
 
-	if renderTarget then
-		-- renderTarget:resizeToFit()
-	else
+	if not renderTarget then
 		renderTarget = renderer:newRenderTarget(renderTargetWidth, renderTargetHeight)
 	end
 
 	do
-		local width, height = e.window:getSize()
-		local scale = math.min(width / renderTargetWidth, height / renderTargetHeight)
-		test = test
-		scale = test
-		renderTarget:setTargetScale(scale, scale)
+		-- local width, height = e.window:getSize()
+		-- local scale = math.min(width / renderTargetWidth, height / renderTargetHeight)
+		-- test = test
+		-- scale = test
+		renderTarget:setTargetScale(1, 1)
 	end
 	renderTarget:setTargetPosition(0, 0)
 	renderTarget:update()

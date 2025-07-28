@@ -34,9 +34,9 @@ static const auto valueMountDirectories = std::vector<std::string>{
 	"data",
     "gfx",
 };
-static const auto valueMountFiles = std::unordered_map<std::string, ResourceType>{
-    {".png", ResourceType::Image},
-    {".ogg", ResourceType::Audio},
+static const auto valueMountFiles = std::unordered_map<std::string, EResourceType>{
+    {".png", EResourceType::Image},
+    {".ogg", EResourceType::Audio},
 };
 static const auto valueWindowFramelimit = 60;
 static const auto valueWindowFullscreen = false;
@@ -92,7 +92,7 @@ Config::Config() noexcept
 {
 	Config::Load();
 
-	_fileWatcher = new filewatch::FileWatch<std::string>(std::string(AppConfigFile), [&](std::string_view path, const filewatch::Event changeType)
+	_fileWatcher = new filewatch::FileWatch<std::string>(std::string(AppConfigFile), [this](std::string_view path, const filewatch::Event changeType)
 	{
 		Config::Load();
 	});
@@ -176,7 +176,7 @@ std::vector<std::string> Config::GetMountDirectories() noexcept
 	return directories;
 }
 
-std::unordered_map<std::string, ResourceType> Config::GetMountFiles() noexcept
+std::unordered_map<std::string, EResourceType> Config::GetMountFiles() noexcept
 {
 	auto &&mount = GetMount(_config);
 	auto &&files = mount[keyFiles];

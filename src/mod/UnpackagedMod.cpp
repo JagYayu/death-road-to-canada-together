@@ -4,6 +4,8 @@
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "resource/FontManager.hpp"
+#include "resource/Text.hpp"
+#include "resource/TextManager.hpp"
 #include "util/StringUtils.hpp"
 
 #include <filesystem>
@@ -23,6 +25,11 @@ UnpackagedMod::UnpackagedMod(ModManager &modManager, const std::filesystem::path
       _loaded(false),
       _directory(directory)
 {
+}
+
+Context &UnpackagedMod::GetContext() noexcept
+{
+	return _modManager.GetContext();
 }
 
 void UnpackagedMod::UpdateFilePatterns()
@@ -100,7 +107,7 @@ void UnpackagedMod::Load()
 		return;
 	}
 
-	_fileWatcher = std::make_unique<filewatch::FileWatch<std::string>>(_directory.string(), [&](const std::string &filePath, const filewatch::Event changeType)
+	_fileWatcher = std::make_unique<filewatch::FileWatch<std::string>>(_directory.string(), [this](const std::string &filePath, const filewatch::Event changeType)
 	{
 		auto &&scriptProvider = _modManager.GetScriptProvider();
 
@@ -124,7 +131,7 @@ void UnpackagedMod::Load()
 				oss << ins.rdbuf();
 				ins.close();
 
-				_modManager.HotReloadScriptPending(scriptName, oss.str(), _config.uid);
+				_modManager.HotReloadScriptPending(scriptName, oss.str(), _config.uniqueID);
 
 				break;
 			}
@@ -148,6 +155,8 @@ void UnpackagedMod::Load()
 
 	UpdateFilePatterns();
 
+	ModConfig &config = Mod::GetConfig();
+
 	auto &&scriptProvider = _modManager.GetScriptProvider();
 	for (const auto &entry : std::filesystem::recursive_directory_iterator(_directory))
 	{
@@ -157,18 +166,30 @@ void UnpackagedMod::Load()
 		}
 
 		auto &&filePath = entry.path().generic_string();
-		// auto &&fileName = filePath.filename().generic_string();
 		if (IsScript(filePath))
 		{
-			std::ifstream ins{filePath};
-			std::ostringstream oss;
-			oss << ins.rdbuf();
-			ins.close();
+			auto &scripts = config.scripts;
 
-			auto &&relative = std::filesystem::relative(std::filesystem::relative(filePath, _directory), GetScriptsDirectory());
-			auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", namespace_, relative.string()));
-			scriptProvider.AddScript(scriptName, oss.str(), _config.uid);
-			_scripts.emplace_back(scriptName);
+			auto &&relativePath = std::filesystem::relative(std::filesystem::relative(filePath, _directory), scripts.directory).string();
+			auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", namespace_, relativePath));
+			std::string scriptCode;
+			{
+				std::ifstream ins{filePath};
+				std::ostringstream oss;
+				oss << ins.rdbuf();
+				ins.close();
+				scriptCode = oss.str();
+			}
+
+			auto &textManager = GetTextManager();
+			auto textID = textManager.Load<Text>(filePath, scriptCode);
+			assert(textID);
+
+			if (ShouldScriptLoad(relativePath))
+			{
+				scriptProvider.AddScript(scriptName, textManager.GetResource(textID)->View(), _config.uniqueID);
+			}
+			// _scripts.emplace_back(scriptName);
 		}
 		// else if (IsFont(filePath))
 		// {
@@ -194,9 +215,12 @@ void UnpackagedMod::Unload()
 
 	_log->Debug("Unloading unpackaged mod from \"{}\"", dir);
 
-	_modManager.GetScriptLoader().UnloadBy(GetNamespace());
-	_modManager.GetScriptProvider().RemoveScriptBy(GetNamespace());
-	_scripts.clear();
+	{
+		auto &modUID = Mod::GetConfig().uniqueID;
+		_modManager.GetScriptLoader().UnloadScriptsBy(modUID);
+		_modManager.GetScriptProvider().RemoveScriptBy(modUID);
+		// _scripts.clear();
+	}
 
 	for (auto &&fontID : _fonts)
 	{

@@ -45,6 +45,9 @@ namespace tudov
 
 	class LuaAPI;
 
+	/**
+	 * @brief Wack! ModManager is not inherited from ResourceManager :O
+	 */
 	class ModManager : public IModManager, public IDebugProvider
 	{
 		friend LuaAPI;

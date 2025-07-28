@@ -112,7 +112,7 @@ void DebugConsole::Execute(std::string_view command) noexcept
 		}
 	}
 
-	auto &&it = std::find_if(_commands.begin(), _commands.end(), [&](const std::pair<std::string, Command> &pair)
+	auto &&it = std::find_if(_commands.begin(), _commands.end(), [this, &commandName](const std::pair<std::string, Command> &pair)
 	{
 		return pair.second.name == commandName;
 	});

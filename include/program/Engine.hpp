@@ -40,6 +40,7 @@ namespace tudov
 	class Context;
 	class Log;
 	class ShaderManager;
+	class TextManager;
 
 	/**
 	 * @brief Tudov game engine
@@ -97,7 +98,6 @@ namespace tudov
 		};
 
 	  private:
-		std::shared_ptr<Log> _log;
 		EState _state;
 		std::float_t _previousTime;
 		std::float_t _framerate;
@@ -110,7 +110,9 @@ namespace tudov
 		LoadingInfo _loadingInfo;
 		std::mutex _loadingInfoMutex;
 
+		std::shared_ptr<MainArgs> _mainArgs;
 		std::shared_ptr<Config> _config;
+		std::shared_ptr<Log> _log;
 
 		std::shared_ptr<ILuaAPI> _luaAPI;
 		std::shared_ptr<IStorageManager> _storageManager;
@@ -124,6 +126,7 @@ namespace tudov
 
 		std::shared_ptr<FontManager> _fontManager;
 		std::shared_ptr<ImageManager> _imageManager;
+		std::shared_ptr<TextManager> _textManager;
 		std::shared_ptr<ShaderManager> _shaderManager;
 
 		std::weak_ptr<IWindow> _mainWindow;
@@ -131,7 +134,6 @@ namespace tudov
 		std::shared_ptr<IDebugManager> _debugManager;
 
 	  public:
-		MainArgs mainArgs;
 		Context context;
 
 	  public:

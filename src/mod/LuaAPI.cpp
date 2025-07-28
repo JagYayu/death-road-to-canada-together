@@ -30,7 +30,7 @@ bool LuaAPI::RegisterInstallation(std::string_view name, const TInstallation &in
 
 decltype(auto) GetMainWindowFromContext(Context &context)
 {
-	return sol::readonly_property([&]()
+	return sol::readonly_property([&context]()
 	{
 		try
 		{
@@ -106,12 +106,11 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 
 	TE_USERTYPE(ModConfig,
 	            "author", &ModConfig::author,
-	            "client", &ModConfig::client,
-	            // "dependencies", &ModConfig::dependencies,
 	            "description", &ModConfig::description,
+	            "distribution", &ModConfig::distribution,
 	            "name", &ModConfig::name,
 	            "namespace", &ModConfig::namespace_,
-	            "uid", &ModConfig::uid);
+	            "uid", &ModConfig::uniqueID);
 
 	TE_USERTYPE(Window,
 	            "renderer", &Window::renderer,
@@ -171,7 +170,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	lua["scriptLoader"] = &dynamic_cast<ScriptLoader &>(context.GetScriptLoader());
 	lua["scriptProvider"] = &dynamic_cast<ScriptProvider &>(context.GetScriptProvider());
 
-	lua.set_function("getModConfig", [&](sol::string_view modUID) -> ModConfig *
+	lua.set_function("getModConfig", [this, &context](sol::string_view modUID) -> ModConfig *
 	{
 		std::weak_ptr<Mod> &&mod = context.GetModManager().FindLoadedMod(modUID);
 		return mod.expired() ? nullptr : &mod.lock()->GetConfig();

@@ -114,7 +114,7 @@ const sol::table &ScriptLoader::Module::LazyLoad(IScriptLoader &iScriptLoader)
 
 	_table[sol::metatable_key] = metatable;
 
-	metatable["__index"] = [&](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	metatable["__index"] = [this, &iScriptLoader](const sol::this_state &ts, const sol::object &, const sol::object &key)
 	{
 		return FullLoad(iScriptLoader)[key];
 	};
@@ -269,18 +269,18 @@ DelegateEvent<ScriptID> &ScriptLoader::GetOnUnloadScript() noexcept
 	return _onUnloadScript;
 }
 
-bool ScriptLoader::Exists(ScriptID scriptID) noexcept
+bool ScriptLoader::IsScriptExists(ScriptID scriptID) noexcept
 {
 	return _scriptModules.contains(scriptID);
 }
 
-bool ScriptLoader::IsLazyLoaded(ScriptID scriptID) noexcept
+bool ScriptLoader::IsScriptLazyLoaded(ScriptID scriptID) noexcept
 {
 	auto &&it = _scriptModules.find(scriptID);
 	return it == _scriptModules.end() ? false : it->second->IsLazyLoaded();
 }
 
-bool ScriptLoader::IsFullyLoaded(ScriptID scriptID) noexcept
+bool ScriptLoader::IsScriptFullyLoaded(ScriptID scriptID) noexcept
 {
 	auto &&it = _scriptModules.find(scriptID);
 	return it == _scriptModules.end() ? false : it->second->IsFullyLoaded();
@@ -296,7 +296,7 @@ std::optional<std::string_view> ScriptLoader::GetLoadingScriptName() const noexc
 	return GetScriptProvider().GetScriptNameByID(_loadingScript);
 }
 
-void GetScriptDependencies(const std::unordered_map<ScriptID, std::unordered_set<ScriptID>> &scriptDependencies, ScriptID scriptID, std::vector<ScriptID> &sources, std::unordered_set<ScriptID> &visited)
+void GetScriptDependenciesImpl(const std::unordered_map<ScriptID, std::unordered_set<ScriptID>> &scriptDependencies, ScriptID scriptID, std::vector<ScriptID> &sources, std::unordered_set<ScriptID> &visited)
 {
 	if (visited.contains(scriptID))
 	{
@@ -310,16 +310,16 @@ void GetScriptDependencies(const std::unordered_map<ScriptID, std::unordered_set
 		for (auto &&source : it->second)
 		{
 			sources.emplace_back(source);
-			GetScriptDependencies(scriptDependencies, source, sources, visited);
+			GetScriptDependenciesImpl(scriptDependencies, source, sources, visited);
 		}
 	}
 }
 
-std::vector<ScriptID> ScriptLoader::GetDependencies(ScriptID scriptID) const
+std::vector<ScriptID> ScriptLoader::GetScriptDependencies(ScriptID scriptID) const
 {
 	auto &&sources = std::vector<ScriptID>();
 	auto &&visited = std::unordered_set<ScriptID>();
-	GetScriptDependencies(_scriptReverseDependencies, scriptID, sources, visited);
+	GetScriptDependenciesImpl(_scriptReverseDependencies, scriptID, sources, visited);
 	return std::move(sources);
 	// auto &&links = _scriptDependencyGraph.GetBackwardTraversal(scriptID);
 	// return links.has_value() ? links.value() : std::vector<ScriptID>();
@@ -366,7 +366,7 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 	}
 }
 
-void ScriptLoader::LoadAll()
+void ScriptLoader::LoadAllScripts()
 {
 	_log->Debug("Loading provided scripts ...");
 
@@ -383,7 +383,7 @@ void ScriptLoader::LoadAll()
 
 	if (!_scriptModules.empty())
 	{
-		UnloadAll();
+		UnloadAllScripts();
 	}
 
 	_scriptModules.clear();
@@ -487,7 +487,7 @@ std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, 
 	return it->second;
 }
 
-void ScriptLoader::UnloadAll()
+void ScriptLoader::UnloadAllScripts()
 {
 	auto &&scriptProvider = GetScriptProvider();
 
@@ -495,19 +495,19 @@ void ScriptLoader::UnloadAll()
 	{
 		if (!scriptProvider.GetScriptNameByID(it.first))
 		{
-			Unload(it.first);
+			UnloadScript(it.first);
 		}
 	}
 }
 
-std::vector<ScriptID> ScriptLoader::Unload(ScriptID scriptID)
+std::vector<ScriptID> ScriptLoader::UnloadScript(ScriptID scriptID)
 {
 	std::vector<ScriptID> unloadedScripts{};
 	UnloadImpl(scriptID, unloadedScripts);
 	return std::move(unloadedScripts);
 }
 
-std::vector<ScriptID> ScriptLoader::UnloadBy(std::string_view modUID)
+std::vector<ScriptID> ScriptLoader::UnloadScriptsBy(std::string_view modUID)
 {
 	std::vector<ScriptID> unloadedScripts{};
 
@@ -528,7 +528,7 @@ std::vector<ScriptID> ScriptLoader::UnloadBy(std::string_view modUID)
 	return std::move(unloadedScripts);
 }
 
-std::vector<ScriptID> ScriptLoader::UnloadInvalids()
+std::vector<ScriptID> ScriptLoader::UnloadInvalidScripts()
 {
 	// TODO
 	throw std::runtime_error("NOT IMPLEMENT YET");
@@ -557,9 +557,9 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 	GetScriptEngine().DeinitializeScript(scriptID, scriptName.value());
 	_onUnloadScript(scriptID);
 
-	for (auto &&dependency : GetDependencies(scriptID))
+	for (auto &&dependency : GetScriptDependencies(scriptID))
 	{
-		Unload(dependency);
+		UnloadScript(dependency);
 		unloadedScripts.emplace_back(dependency);
 	}
 
@@ -576,7 +576,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 	_log->Trace("Unloaded");
 }
 
-void ScriptLoader::HotReload(const std::vector<ScriptID> &scriptIDs)
+void ScriptLoader::HotReloadScripts(const std::vector<ScriptID> &scriptIDs)
 {
 	_log->Debug("Hot reloading scripts ...");
 

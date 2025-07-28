@@ -33,7 +33,7 @@ namespace tudov
 
 		void operator-=(HandlerID id)
 		{
-			auto it = std::find_if(_handlers.begin(), _handlers.end(), [&](const auto &pair)
+			auto it = std::find_if(_handlers.begin(), _handlers.end(), [this, id](const auto &pair)
 			{
 				return pair.first == id;
 			});

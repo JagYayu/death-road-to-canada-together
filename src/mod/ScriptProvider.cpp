@@ -44,6 +44,7 @@ void ScriptProvider::Initialize() noexcept
 	// 如果有tudov目录，则读取tudov/lua/里面的脚本
 	// 如果有tudov.dat文件，则用zip打开并读取lua/里面的脚本
 	// 否则报错 TODO
+	// 对了其实内容应该从TextManager里读取更正规（反正目前还是DEBUG阶段）
 
 	for (const auto &entry : std::filesystem::recursive_directory_iterator("tudov/lua"))
 	{
@@ -163,7 +164,7 @@ bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 
 std::size_t ScriptProvider::RemoveScriptBy(std::string_view uid) noexcept
 {
-	return std::erase_if(_scriptID2Entry, [&](const std::pair<const ScriptID, Entry> &pair)
+	return std::erase_if(_scriptID2Entry, [this, &uid](const std::pair<const ScriptID, Entry> &pair)
 	{
 		if (pair.second.modUID == uid)
 		{
@@ -174,7 +175,7 @@ std::size_t ScriptProvider::RemoveScriptBy(std::string_view uid) noexcept
 	});
 }
 
-const std::string &ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
+std::string_view ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
 {
 	auto &&it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())

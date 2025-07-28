@@ -11,11 +11,13 @@
 #include "network/NetworkManager.hpp"
 #include "program/Context.hpp"
 #include "program/EngineComponent.hpp"
+#include "program/MainArgs.hpp"
 #include "program/MainWindow.hpp"
 #include "program/Window.hpp"
 #include "resource/FontManager.hpp"
 #include "resource/ImageManager.hpp"
 #include "resource/ResourceType.hpp"
+#include "resource/TextManager.hpp"
 #include "scripts/GameScripts.hpp"
 #include "util/Log.hpp"
 #include "util/MicrosImpl.hpp"
@@ -39,16 +41,19 @@ static constexpr bool DebugSingleThread = false;
 using namespace tudov;
 
 Engine::Engine(const MainArgs &args) noexcept
-    : _log(Log::Get("Engine")),
-      _state(EState::None),
+    : _mainArgs(std::make_shared<MainArgs>(args)),
       _config(std::make_shared<Config>()),
-      _imageManager(std::make_shared<ImageManager>()),
-      _fontManager(std::make_shared<FontManager>()),
+      _log(Log::Get("Engine")),
+      _state(EState::None),
       _luaAPI(std::make_shared<LuaAPI>()),
+      _fontManager(std::make_shared<FontManager>()),
+      _imageManager(std::make_shared<ImageManager>()),
+      _textManager(std::make_shared<TextManager>()),
+      _shaderManager(nullptr), // TODO
+      //_shaderManager(std::make_shared<ShaderManager>()),
       _mainWindow(),
       _windows(),
-      _debugManager(std::make_shared<DebugManager>()),
-      mainArgs(args)
+      _debugManager(std::make_shared<DebugManager>())
 {
 	context = Context(this);
 
@@ -62,45 +67,49 @@ Engine::Engine(const MainArgs &args) noexcept
 	_gameScripts = std::make_shared<GameScripts>(context);
 
 	_loadingState = ELoadingState::Done;
-	_loadingThread = std::thread([this]()
+	_loadingThread = std::thread(std::bind(&Engine::BackgroundLoadingThread, this));
+}
+
+void Engine::BackgroundLoadingThread() noexcept
+{
+	LoadingInfoArgs args{
+	    .progressTotal = 1.0f,
+	};
+
+	while (!DebugSingleThread && !ShouldQuit())
 	{
-		Engine::LoadingInfoArgs args{
-		    .progressTotal = 1.0f,
-		};
-
-		while (!DebugSingleThread && !ShouldQuit())
+		if (!_loadingMutex.try_lock())
 		{
-			if (!_loadingMutex.try_lock())
-			{
-				continue;
-			}
-			_loadingMutex.unlock();
-
-			if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::InProgress))
-			{
-				args.title = "Background Loading";
-				args.description = "Please wait.";
-				args.progressValue = 0.0f;
-				SetLoadingInfo(args);
-
-				_modManager->Update();
-				_eventManager->GetCoreEvents().TickLoad().Invoke();
-
-				args.title = "Background Loaded";
-				args.description = "Waiting to be ended.";
-				args.progressValue = 1.0f;
-				SetLoadingInfo(args);
-
-				_loadingState.store(ELoadingState::Done, std::memory_order_release);
-			}
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			continue;
 		}
-	});
+		_loadingMutex.unlock();
+
+		if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::InProgress))
+		{
+			args.title = "Background Loading";
+			args.description = "Please wait.";
+			args.progressValue = 0.0f;
+			SetLoadingInfo(args);
+
+			_modManager->Update();
+			_eventManager->GetCoreEvents().TickLoad().Invoke();
+
+			args.title = "Background Loaded";
+			args.description = "Waiting to be ended.";
+			args.progressValue = 1.0f;
+			SetLoadingInfo(args);
+
+			_loadingState.store(ELoadingState::Done, std::memory_order_release);
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
 }
 
 Engine::~Engine() noexcept
 {
+	_state = EState::Quit;
+	// Waiting for background thread quit.
 	if (_loadingThread.joinable())
 	{
 		_loadingThread.join();
@@ -114,13 +123,6 @@ Engine::~Engine() noexcept
 	default:
 		break;
 	}
-
-	Application::~Application();
-}
-
-Log &Engine::GetLog() noexcept
-{
-	return *_log;
 }
 
 bool Engine::ShouldQuit() noexcept
@@ -150,27 +152,35 @@ void Engine::Initialize() noexcept
 	    _scriptEngine,
 	};
 
-	_log->Debug("Initializing engine ...");
+	Debug("Initializing engine ...");
 	{
 		_config->Load();
 		InitializeMainWindow();
 		InitializeResources();
-
-		// ProvideLuaAPI(*_luaAPI);
 
 		for (auto &&it = _components.begin(); it != _components.end(); ++it)
 		{
 			it->get()->Initialize();
 		}
 
-		ProvideDebug(*_debugManager);
-
-		_modManager->LoadModsDeferred();
-		_previousTime = SDL_GetTicksNS();
-		_framerate = 0;
-		_state = EState::Initialized;
+		PostInitialization();
 	}
-	_log->Debug("Initialized engine");
+	Debug("Initialized engine");
+}
+
+void Engine::PostInitialization() noexcept
+{
+	// if (!_mainWindow.expired())
+	// {
+	// 	_graphicManager->BindToWindow(_mainWindow.lock());
+	// }
+
+	ProvideDebug(*_debugManager);
+
+	_modManager->LoadModsDeferred();
+	_previousTime = SDL_GetTicksNS();
+	_framerate = 0;
+	_state = EState::Initialized;
 }
 
 bool IsWindowShouldClose(const std::shared_ptr<IWindow> &window) noexcept
@@ -283,7 +293,7 @@ void Engine::Deinitialize() noexcept
 		return;
 	}
 
-	_log->Debug("Deinitializing engine ...");
+	Debug("Deinitializing engine ...");
 	{
 		_modManager->UnloadMods();
 
@@ -294,14 +304,14 @@ void Engine::Deinitialize() noexcept
 
 		_state = EState::Deinitialized;
 	}
-	_log->Debug("Deinitialized engine");
+	Debug("Deinitialized engine");
 }
 
 void Engine::Quit()
 {
 	if (_state == EState::Initialized)
 	{
-		_log->Debug("Engine is pending quit!");
+		Debug("Engine is pending quit!");
 
 		_state = EState::Quit;
 		for (auto &&window : _windows)
@@ -315,7 +325,7 @@ void Engine::InitializeMainWindow() noexcept
 {
 	if (!_mainWindow.expired())
 	{
-		_log->Error("Engine main window has already been initialized!");
+		Error("Engine main window has already been initialized!");
 	}
 
 	auto &&mainWindow = std::make_shared<MainWindow>(context);
@@ -329,7 +339,7 @@ void Engine::InitializeMainWindow() noexcept
 
 void Engine::InitializeResources() noexcept
 {
-	_log->Debug("Mounting resource files");
+	Debug("Mounting resource files");
 
 	auto &&renderBackend = _config->GetRenderBackend();
 
@@ -339,7 +349,7 @@ void Engine::InitializeResources() noexcept
 	// 	}
 	// };
 
-	std::unordered_map<ResourceType, std::uint32_t> fileCounts{};
+	std::unordered_map<EResourceType, std::uint32_t> fileCounts{};
 
 	std::vector<std::regex> mountBitmapPatterns{};
 	for (auto &&pattern : _config->GetMountBitmaps())
@@ -352,7 +362,7 @@ void Engine::InitializeResources() noexcept
 	{
 		if (!std::filesystem::exists(mountDirectory.data()) || !std::filesystem::is_directory(mountDirectory.data()))
 		{
-			_log->Warn("Invalid directory for mounting resources: {}", mountDirectory.data());
+			Warn("Invalid directory for mounting resources: {}", mountDirectory.data());
 			continue;
 		}
 
@@ -374,7 +384,7 @@ void Engine::InitializeResources() noexcept
 			auto imageID = _imageManager->Load(filePath);
 			if (!imageID) [[unlikely]]
 			{
-				_log->Error("Image ID of \"{}\" is 0!", filePath);
+				Error("Image ID of \"{}\" is 0!", filePath);
 				continue;
 			}
 
@@ -399,11 +409,16 @@ void Engine::InitializeResources() noexcept
 		}
 	}
 
-	_log->Debug("Mounted all resource files");
+	Debug("Mounted all resource files");
 	for (auto [fileType, count] : fileCounts)
 	{
-		_log->Info("{}: {}", ResourceTypeToStringView(fileType).data(), count);
+		Info("{}: {}", ResourceTypeToStringView(fileType).data(), count);
 	}
+}
+
+Log &Engine::GetLog() noexcept
+{
+	return *_log;
 }
 
 void Engine::ProvideDebug(IDebugManager &debugManager) noexcept

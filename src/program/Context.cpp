@@ -28,14 +28,9 @@ Config &Context::GetConfig()
 	return *GetEngine()._config;
 }
 
-ImageManager &Context::GetImageManager()
+MainArgs &Context::GetMainArgs()
 {
-	return *GetEngine()._imageManager;
-}
-
-FontManager &Context::GetFontManager()
-{
-	return *GetEngine()._fontManager;
+	return *GetEngine()._mainArgs;
 }
 
 IEventManager &Context::GetEventManager()
@@ -71,4 +66,19 @@ IScriptProvider &Context::GetScriptProvider()
 IStorageManager &Context::GetStorageManager()
 {
 	return *GetEngine()._storageManager.get();
+}
+
+ImageManager &Context::GetImageManager()
+{
+	return *GetEngine()._imageManager;
+}
+
+FontManager &Context::GetFontManager()
+{
+	return *GetEngine()._fontManager;
+}
+
+TextManager &Context::GetTextManager()
+{
+	return *GetEngine()._textManager.get();
 }

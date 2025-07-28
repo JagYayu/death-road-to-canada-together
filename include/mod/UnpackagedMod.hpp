@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mod.hpp"
+#include "program/Context.hpp"
 #include "util/Definitions.hpp"
 #include "util/Log.hpp"
 
@@ -15,7 +16,7 @@ namespace tudov
 	{
 	};
 
-	class UnpackagedMod : public Mod, public IUnpackagedMod
+	class UnpackagedMod : public Mod, public IUnpackagedMod, public IContextProvider
 	{
 	  private:
 		std::shared_ptr<Log> _log;
@@ -35,6 +36,8 @@ namespace tudov
 		void UpdateFilePatterns();
 
 	  public:
+		Context &GetContext() noexcept override;
+
 		bool IsScript(std::string_view file) const;
 		bool IsFont(std::string_view file) const;
 

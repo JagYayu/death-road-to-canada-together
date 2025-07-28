@@ -34,7 +34,7 @@ namespace tudov
 
 		std::vector<std::string> GetMountBitmaps() noexcept;
 		std::vector<std::string> GetMountDirectories() noexcept;
-		std::unordered_map<std::string, ResourceType> GetMountFiles() noexcept;
+		std::unordered_map<std::string, EResourceType> GetMountFiles() noexcept;
 		void GetDebugProfiling() noexcept;
 		bool GetRenderBackend() noexcept;
 		std::uint32_t GetWindowFramelimit() noexcept;

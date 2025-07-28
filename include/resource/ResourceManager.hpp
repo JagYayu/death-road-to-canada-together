@@ -25,7 +25,7 @@ namespace tudov
 
 	  public:
 		explicit ResourceManager() noexcept;
-		~ResourceManager() noexcept = default;
+		virtual ~ResourceManager() noexcept = default;
 
 	  protected:
 		inline virtual void OnUnloadResource(ResourceID id) noexcept
@@ -99,6 +99,11 @@ namespace tudov
 
 			_path2ID.erase(std::string_view(it->second.path));
 			_id2Entry.erase(it);
+		}
+
+		inline void UnloadAllFromDirectory(std::string_view directory)
+		{
+			//
 		}
 
 		inline void Clear() noexcept

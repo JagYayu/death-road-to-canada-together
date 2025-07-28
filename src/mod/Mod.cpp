@@ -22,3 +22,12 @@ ModConfig &Mod::GetConfig() noexcept
 {
 	return _config;
 }
+
+bool Mod::ShouldScriptLoad(std::string_view relativePath) noexcept
+{
+	// auto &scripts = GetConfig().scripts;
+	// scripts.directoryClient;
+
+	// TODO
+	return true;
+}

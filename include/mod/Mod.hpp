@@ -12,7 +12,7 @@ namespace tudov
 	struct IMod
 	{
 		virtual ~IMod() noexcept = default;
-		
+
 		virtual void Load() = 0;
 		virtual void Unload() = 0;
 
@@ -27,14 +27,16 @@ namespace tudov
 
 		inline const ModConfig &GetConfig() const noexcept
 		{
-			return const_cast<IMod*>(this)->GetConfig();
+			return const_cast<IMod *>(this)->GetConfig();
 		}
 
+		[[deprecated("use `GetConfig().namespace_` instead")]]
 		inline std::string_view GetNamespace() const noexcept
 		{
 			return GetConfig().namespace_;
 		}
 
+		[[deprecated("use `GetConfig().scripts.directory` instead")]]
 		inline std::string_view GetScriptsDirectory() const noexcept
 		{
 			return GetConfig().scripts.directory;
@@ -56,5 +58,7 @@ namespace tudov
 
 		ModManager &GetModManager() noexcept override;
 		ModConfig &GetConfig() noexcept override;
+
+		bool ShouldScriptLoad(std::string_view relativePath) noexcept;
 	};
 } // namespace tudov

@@ -1,32 +1,33 @@
 #pragma once
 
-#include "util/Definitions.hpp"
-
 #include <json.hpp>
 
 namespace tudov
 {
-	enum class ResourceType
+	enum class EResourceType
 	{
+		Script,
 		Image,
 		Audio,
 	};
 
-	inline std::string_view ResourceTypeToStringView(ResourceType resourceType)
+	inline std::string_view ResourceTypeToStringView(EResourceType resourceType)
 	{
 		switch (resourceType)
 		{
-		case ResourceType::Image:
+		case EResourceType::Script:
+			return "Script";
+		case EResourceType::Image:
 			return "Image";
-		case ResourceType::Audio:
+		case EResourceType::Audio:
 			return "Audio";
 		default:
 			return "";
 		}
 	}
 
-	NLOHMANN_JSON_SERIALIZE_ENUM(ResourceType, {
-	                                               {ResourceType::Image, "Texture"},
-	                                               {ResourceType::Audio, "Audio"},
-	                                           });
+	NLOHMANN_JSON_SERIALIZE_ENUM(EResourceType, {
+	                                                {EResourceType::Image, "Texture"},
+	                                                {EResourceType::Audio, "Audio"},
+	                                            });
 } // namespace tudov

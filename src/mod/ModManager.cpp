@@ -63,7 +63,7 @@ bool ModManager::IsNoModMatch() const
 
 bool ModManager::IsModMatched(const Mod &mod) const
 {
-	auto &&uid = mod.IMod::GetConfig().uid;
+	auto &&uid = mod.IMod::GetConfig().uniqueID;
 
 	for (auto &&modEntry : _requiredMods)
 	{
@@ -130,7 +130,7 @@ void ModManager::LoadMods()
 		mod->Load();
 	}
 
-	GetScriptLoader().LoadAll();
+	GetScriptLoader().LoadAllScripts();
 
 	_log->Debug("Loaded all required mods");
 
@@ -152,7 +152,7 @@ void ModManager::UnloadMods()
 
 	_log->Debug("Unloading all loaded mods ...");
 
-	GetScriptLoader().UnloadAll();
+	GetScriptLoader().UnloadAllScripts();
 
 	for (auto &&mod : _loadedMods)
 	{
@@ -176,7 +176,7 @@ std::weak_ptr<Mod> ModManager::FindLoadedMod(std::string_view uid) noexcept
 {
 	for (auto &&mod : _loadedMods)
 	{
-		if (mod->GetConfig().uid == uid)
+		if (mod->GetConfig().uniqueID == uid)
 		{
 			return mod;
 		}
@@ -225,7 +225,7 @@ void ModManager::Update()
 			auto scriptID = scriptProvider.GetScriptIDByName(scriptName);
 			if (scriptID)
 			{
-				auto &&pendingScripts = GetScriptLoader().Unload(scriptID);
+				auto &&pendingScripts = GetScriptLoader().UnloadScript(scriptID);
 				scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
 
 				if (!scriptProvider.RemoveScript(scriptID)) [[unlikely]]
@@ -241,7 +241,7 @@ void ModManager::Update()
 		std::sort(scriptIDs.begin(), scriptIDs.end());
 		scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
 
-		scriptLoader.HotReload(scriptIDs);
+		scriptLoader.HotReloadScripts(scriptIDs);
 		GetScriptEngine().CollectGarbage();
 
 		_hotReloadScriptsPending = nullptr;
