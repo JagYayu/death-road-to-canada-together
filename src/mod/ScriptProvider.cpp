@@ -44,16 +44,18 @@ void ScriptProvider::Initialize() noexcept
 	// 如果有tudov目录，则读取tudov/lua/里面的脚本
 	// 如果有tudov.dat文件，则用zip打开并读取lua/里面的脚本
 	// 否则报错 TODO
-	// 对了其实内容应该从TextManager里读取更正规（反正目前还是DEBUG阶段）
+	// 对了其实内容应该从TextResources里读取更正规（反正目前还是DEBUG阶段）
 
-	for (const auto &entry : std::filesystem::recursive_directory_iterator("tudov/lua"))
-	{
-		auto &&fullPath = entry.path().string();
-		auto &&relativePath = std::filesystem::relative(fullPath, "tudov").string();
-		auto &&scriptName = StaticScriptNamespace(relativePath);
+	
 
-		AddScriptImpl(scriptName, ReadFileToString(fullPath));
-	}
+	// for (const auto &entry : std::filesystem::recursive_directory_iterator("tudov/lua"))
+	// {
+	// 	auto &&fullPath = entry.path().string();
+	// 	auto &&relativePath = std::filesystem::relative(fullPath, "tudov").string();
+	// 	auto &&scriptName = StaticScriptNamespace(relativePath);
+
+	// 	AddScriptImpl(scriptName, ReadFileToString(fullPath));
+	// }
 }
 
 void ScriptProvider::Deinitialize() noexcept
@@ -61,7 +63,7 @@ void ScriptProvider::Deinitialize() noexcept
 	//
 }
 
-ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_view scriptCode, std::string_view uid)
+ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, const std::shared_ptr<StringResource>& scriptCode, std::string_view modUID)
 {
 	{
 		auto &&it = _scriptName2ID.find(scriptName);
@@ -74,7 +76,7 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, std::string_
 
 	++_latestScriptID;
 	auto &&id = _latestScriptID;
-	auto &&name = _scriptID2Entry.try_emplace(id, std::string(scriptName), std::string(scriptCode), uid).first->second.name;
+	auto &&name = _scriptID2Entry.try_emplace(id, std::string(scriptName), scriptCode, modUID).first->second.name;
 	Trace("Add script <{}>\"{}\"", id, name);
 	_scriptName2ID.emplace(name, id);
 	return id;
@@ -124,7 +126,7 @@ std::optional<std::string_view> ScriptProvider::GetScriptNameByID(ScriptID scrip
 	return std::nullopt;
 }
 
-ScriptID ScriptProvider::AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptModUID) noexcept
+ScriptID ScriptProvider::AddScript(std::string_view scriptName, const std::shared_ptr<StringResource>& scriptCode, std::string_view scriptModUID) noexcept
 {
 	if (scriptName.starts_with(scriptNamespace))
 	{
@@ -175,12 +177,12 @@ std::size_t ScriptProvider::RemoveScriptBy(std::string_view uid) noexcept
 	});
 }
 
-std::string_view ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
+std::shared_ptr<StringResource> ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
 {
 	auto &&it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())
 	{
-		return emptyString;
+		return nullptr;
 	}
 	return it->second.code;
 }

@@ -1,17 +1,17 @@
-#include "resource/FontManager.hpp"
+#include "resource/FontResources.hpp"
 
 using namespace tudov;
 
-FontManager::FontManager() noexcept
+FontResources::FontResources() noexcept
 {
 }
 
-// void FontManager::OnUnloadResource(ResourceID id) noexcept
+// void FontResources::OnUnloadResource(ResourceID id) noexcept
 // {
 // 	_bitmapFonts.erase(id);
 // }
 
-// std::optional<std::reference_wrapper<BitmapFont>> FontManager::GetBitmapFont(TextureID textureID) noexcept
+// std::optional<std::reference_wrapper<BitmapFont>> FontResources::GetBitmapFont(TextureID textureID) noexcept
 // {
 // 	auto &&itInfo = _bitmapFonts.find(textureID);
 // 	if (itInfo != _bitmapFonts.end())
@@ -21,15 +21,15 @@ FontManager::FontManager() noexcept
 // 	return std::nullopt;
 // }
 
-// void FontManager::AddBitmapFont(const std::shared_ptr<BitmapFont> &bitmapFont) noexcept
+// void FontResources::AddBitmapFont(const std::shared_ptr<BitmapFont> &bitmapFont) noexcept
 // {
 // 	_bitmapFonts[bitmapFont->GetTextureID()] = bitmapFont;
 // }
 
-void FontManager::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
+void FontResources::InstallToScriptEngine(ScriptEngine &scriptEngine) noexcept
 {
 }
 
-void FontManager::UninstallFromScriptEngine(ScriptEngine &scriptEngine) noexcept
+void FontResources::UninstallFromScriptEngine(ScriptEngine &scriptEngine) noexcept
 {
 }

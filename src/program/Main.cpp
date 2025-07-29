@@ -1,6 +1,7 @@
 #include "graphic/GUI.hpp"
 #include "program/Engine.hpp"
 #include "program/MainArgs.hpp"
+#include "program/Tudov.hpp"
 #include "util/Log.hpp"
 
 #include "SDL3/SDL_gpu.h"
@@ -83,8 +84,6 @@ void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority
 	}
 }
 
-static std::unique_ptr<Application> app;
-
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 {
 	SDL_SetLogOutputFunction(SDLLogOutputCallback, nullptr);
@@ -99,25 +98,45 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 		Log::Get("Main")->Info("GPU Driver {}:", index, SDL_GetGPUDriver(index));
 	}
 
-	app = std::make_unique<Engine>(MainArgs(argc, argv));
-	app->Initialize();
+	std::weak_ptr<Application> &&app = GetApplication();
+	if (!app.expired())
+	{
+		app.lock()->Initialize();
+	}
 
 	return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
+	auto &&app = GetApplication().lock();
+	if (app == nullptr)
+	{
+		return SDL_APP_FAILURE;
+	}
 	return app->Tick() ? SDL_APP_CONTINUE : SDL_APP_SUCCESS;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
+	auto &&app = GetApplication().lock();
+	if (app == nullptr)
+	{
+		return SDL_APP_FAILURE;
+	}
+
 	app->Event(*event);
 	return SDL_APP_CONTINUE;
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
+	auto &&app = GetApplication().lock();
+	if (app == nullptr)
+	{
+		return;
+	}
+
 	if (result != SDL_APP_FAILURE)
 	{
 		app->Deinitialize();

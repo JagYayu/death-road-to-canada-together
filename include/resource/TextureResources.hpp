@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ResourceManager.hpp"
+#include "Resources.hpp"
 #include "graphic/Texture.hpp"
 
 #include <string_view>
@@ -8,17 +8,17 @@
 namespace tudov
 {
 	template <>
-	inline ResourceManager<Texture>::ResourceManager() noexcept
-	    : _log(Log::Get("TextureManager"))
+	inline Resources<Texture>::Resources() noexcept
+	    : _log(Log::Get("TextureResources"))
 	{
 	}
 
 	class ScriptEngine;
 
-	class TextureManager : public ResourceManager<Texture>
+	class TextureResources : public Resources<Texture>
 	{
 	  public:
-		explicit TextureManager() noexcept;
+		explicit TextureResources() noexcept;
 
 		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 		void UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;

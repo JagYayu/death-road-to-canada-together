@@ -62,3 +62,7 @@ target_link_libraries(tudov PRIVATE winmm)
 # imgui - from vcpkg
 find_package(imgui CONFIG REQUIRED)
 target_link_libraries(tudov PRIVATE imgui::imgui)
+
+# minizip - from vcpkg
+find_package(unofficial-minizip CONFIG REQUIRED)
+target_link_libraries(tudov PRIVATE unofficial::minizip::minizip)

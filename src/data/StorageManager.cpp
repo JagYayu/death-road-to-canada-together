@@ -18,7 +18,7 @@ Context &StorageManager::GetContext() noexcept
 	return _context;
 }
 
-IApplicationStorage &StorageManager::GetAppStorage() noexcept
+IApplicationStorage &StorageManager::GetApplicationStorage() noexcept
 {
 	if (!_appStorage) [[unlikely]]
 	{

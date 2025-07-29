@@ -1,3 +1,3 @@
-#include "resource/TextManager.hpp"
+#include "resource/StringResources.hpp"
 
 using namespace tudov;

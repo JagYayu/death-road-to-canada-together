@@ -1,20 +1,20 @@
 #pragma once
 
-#include "ResourceManager.hpp"
+#include "Resources.hpp"
 
 #include <string_view>
 
 namespace tudov
 {
 	// template <>
-	// inline ResourceManager<Shader>::ResourceManager() noexcept
+	// inline Resources<Shader>::Resources() noexcept
 	//     : _log(Log::Get("ShaderManager"))
 	// {
 	// }
 
 	// class ScriptEngine;
 
-	// class ShaderManager : public ResourceManager<Shader>
+	// class ShaderManager : public Resources<Shader>
 	// {
 	//   public:
 	// 	ShaderManager() noexcept;

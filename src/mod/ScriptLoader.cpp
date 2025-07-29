@@ -3,6 +3,7 @@
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
+#include "resource/StringResource.hpp"
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
@@ -392,7 +393,7 @@ void ScriptLoader::LoadAllScripts()
 	auto &&count = scriptProvider.GetCount();
 	for (auto &&[scriptID, entry] : scriptProvider)
 	{
-		LoadImpl(scriptID, entry.name, entry.code, entry.modUID);
+		LoadImpl(scriptID, entry.name, entry.code->View(), entry.modUID);
 	}
 
 	ProcessFullLoads();
@@ -431,7 +432,7 @@ std::shared_ptr<IScriptLoader::IModule> ScriptLoader::Load(ScriptID scriptID)
 
 	auto &&scriptCode = scriptProvider.GetScriptCode(scriptID);
 	auto &&modUID = scriptProvider.GetScriptModUID(scriptID);
-	return LoadImpl(scriptID, scriptName.value(), scriptCode, modUID);
+	return LoadImpl(scriptID, scriptName.value(), scriptCode->View(), modUID);
 }
 
 std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view scriptCode, std::string_view modUID)

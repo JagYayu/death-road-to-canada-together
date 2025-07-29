@@ -8,29 +8,29 @@
 
 namespace tudov
 {
-	class Text : public IResource
+	class StringResource : public IResource
 	{
 	  private:
-		std::string str;
+		std::string _str;
 
 	  public:
-		explicit Text() noexcept = default;
-		~Text() noexcept override = default;
+		explicit StringResource() noexcept = default;
+		~StringResource() noexcept override = default;
 
 		template <typename... TArgs>
-		inline explicit Text(TArgs &&...args) noexcept
-		    : str(std::forward<TArgs>(args)...)
+		inline explicit StringResource(TArgs &&...args) noexcept
+		    : _str(std::forward<TArgs>(args)...)
 		{
 		}
 
 		operator std::string_view() noexcept
 		{
-			return str;
+			return _str;
 		}
 
 		inline std::string_view View() noexcept
 		{
-			return str;
+			return _str;
 		}
 	};
 } // namespace tudov

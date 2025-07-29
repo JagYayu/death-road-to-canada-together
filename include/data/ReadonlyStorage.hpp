@@ -4,14 +4,14 @@
 
 namespace tudov
 {
-	struct IReadonlyStorage : public IStorage
+	struct IReadonlyStorage : public virtual IStorage
 	{
 		virtual ~IReadonlyStorage() noexcept = default;
 	};
 
 	class StorageManager;
 
-	class ReadonlyStorage : public IReadonlyStorage
+	class ReadonlyStorage : public Storage, public IReadonlyStorage
 	{
 	  protected:
 		StorageManager &_storageManager;
@@ -21,6 +21,7 @@ namespace tudov
 		~ReadonlyStorage() noexcept override = default;
 
 		IStorageManager &GetStorageManager() noexcept override;
+		Log &GetLog() noexcept override;
 
 		bool CanRead() noexcept override;
 		bool CanWrite() noexcept override;

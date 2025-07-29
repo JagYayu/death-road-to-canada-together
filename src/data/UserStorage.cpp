@@ -20,6 +20,11 @@ IStorageManager &UserStorage::GetStorageManager() noexcept
 	return _storageManager;
 }
 
+Log &UserStorage::GetLog() noexcept
+{
+	return *Log::Get(TE_NAMEOF(UserStorage));
+}
+
 bool UserStorage::CanRead() noexcept
 {
 	return true;

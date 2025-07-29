@@ -11,13 +11,12 @@
 #include "network/NetworkManager.hpp"
 #include "program/Context.hpp"
 #include "program/EngineComponent.hpp"
-#include "program/MainArgs.hpp"
 #include "program/MainWindow.hpp"
 #include "program/Window.hpp"
-#include "resource/FontManager.hpp"
-#include "resource/ImageManager.hpp"
+#include "resource/FontResources.hpp"
+#include "resource/ImageResources.hpp"
 #include "resource/ResourceType.hpp"
-#include "resource/TextManager.hpp"
+#include "resource/StringResources.hpp"
 #include "scripts/GameScripts.hpp"
 #include "util/Log.hpp"
 #include "util/MicrosImpl.hpp"
@@ -40,17 +39,19 @@ static constexpr bool DebugSingleThread = false;
 
 using namespace tudov;
 
-Engine::Engine(const MainArgs &args) noexcept
-    : _mainArgs(std::make_shared<MainArgs>(args)),
-      _config(std::make_shared<Config>()),
+Engine::Engine() noexcept
+    : _config(std::make_shared<Config>()),
       _log(Log::Get("Engine")),
       _state(EState::None),
+      _beginTick(0),
+      _previousTick(0),
+      _framerate(0),
       _luaAPI(std::make_shared<LuaAPI>()),
-      _fontManager(std::make_shared<FontManager>()),
-      _imageManager(std::make_shared<ImageManager>()),
-      _textManager(std::make_shared<TextManager>()),
-      _shaderManager(nullptr), // TODO
-      //_shaderManager(std::make_shared<ShaderManager>()),
+      _fontResources(std::make_shared<FontResources>()),
+      _imageResources(std::make_shared<ImageResources>()),
+      _textResources(std::make_shared<TextResources>()),
+      shaderResources(nullptr), // TODO
+      // shaderResources(std::make_shared<ShaderManager>()),
       _mainWindow(),
       _windows(),
       _debugManager(std::make_shared<DebugManager>())
@@ -178,7 +179,8 @@ void Engine::PostInitialization() noexcept
 	ProvideDebug(*_debugManager);
 
 	_modManager->LoadModsDeferred();
-	_previousTime = SDL_GetTicksNS();
+	_previousTick = SDL_GetTicksNS();
+	_beginTick = SDL_GetTicksNS();
 	_framerate = 0;
 	_state = EState::Initialized;
 }
@@ -196,8 +198,8 @@ bool Engine::Tick() noexcept
 	}
 
 	std::uint64_t beginNS = SDL_GetTicksNS();
-	_framerate = 1'000'000'000.0 / (beginNS - _previousTime);
-	_previousTime = beginNS;
+	_framerate = 1'000'000'000.0 / (beginNS - _previousTick);
+	_previousTick = beginNS;
 
 	if (ELoadingState expected = ELoadingState::Done; _loadingState.compare_exchange_strong(expected, ELoadingState::Pending))
 	{
@@ -381,14 +383,14 @@ void Engine::InitializeResources() noexcept
 			}
 
 			auto &&filePath = path.generic_string();
-			auto imageID = _imageManager->Load(filePath);
+			auto imageID = _imageResources->Load(filePath);
 			if (!imageID) [[unlikely]]
 			{
 				Error("Image ID of \"{}\" is 0!", filePath);
 				continue;
 			}
 
-			auto &&image = _imageManager->GetResource(imageID);
+			auto &&image = _imageResources->GetResource(imageID);
 			auto &&fileMemory = ReadFileToString(filePath, true);
 			image->Initialize(fileMemory);
 			if (image->IsValid())
@@ -402,7 +404,7 @@ void Engine::InitializeResources() noexcept
 			// {
 			// 	if (std::regex_match(relative, pattern))
 			// 	{
-			// 		fontManager.AddBitmapFont(std::make_shared<BitmapFont>(textureID, std::string_view(data)));
+			// 		fontResources.AddBitmapFont(std::make_shared<BitmapFont>(textureID, std::string_view(data)));
 			// 		break;
 			// 	}
 			// }
@@ -456,6 +458,11 @@ std::float_t Engine::GetFramerate() const noexcept
 std::float_t Engine::GetDeltaTime() const noexcept
 {
 	return 1 / _framerate;
+}
+
+std::uint64_t Engine::GetBeginTick() const noexcept
+{
+	return SDL_GetTicksNS();
 }
 
 std::uint64_t Engine::GetTick() const noexcept

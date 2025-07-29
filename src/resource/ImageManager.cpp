@@ -1,25 +1,25 @@
-#include "resource/ImageManager.hpp"
+#include "resource/ImageResources.hpp"
 
 using namespace tudov;
 
-ImageManager::ImageManager() noexcept
+ImageResources::ImageResources() noexcept
 {
 }
 
-void ImageManager::InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
+void ImageResources::InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
 {
 }
 
-void ImageManager::UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
+void ImageResources::UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
 {
 }
 
-ImageID ImageManager::LuaGetID(const sol::string_view &image) noexcept
+ImageID ImageResources::LuaGetID(const sol::string_view &image) noexcept
 {
 	return GetResourceID(std::string_view(image));
 }
 
-sol::string_view ImageManager::LuaGetPath(ImageID id) noexcept
+sol::string_view ImageResources::LuaGetPath(ImageID id) noexcept
 {
 	return GetResourcePath(id);
 }

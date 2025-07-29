@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Context.hpp"
-#include "MainArgs.hpp"
 #include "debug/Debug.hpp"
 #include "program/EngineComponent.hpp"
 #include "util/Log.hpp"
@@ -31,6 +30,7 @@ namespace tudov
 		virtual void Deinitialize() noexcept = 0;
 	};
 
+	struct IAssetBundles;
 	struct IGameScripts;
 	struct ILuaAPI;
 	struct INetworkManager;
@@ -39,8 +39,10 @@ namespace tudov
 	struct IWindow;
 	class Context;
 	class Log;
+	class FontResources;
+	class ImageResources;
 	class ShaderManager;
-	class TextManager;
+	class TextResources;
 
 	/**
 	 * @brief Tudov game engine
@@ -99,7 +101,8 @@ namespace tudov
 
 	  private:
 		EState _state;
-		std::float_t _previousTime;
+		std::uint64_t _beginTick;
+		std::float_t _previousTick;
 		std::float_t _framerate;
 		std::vector<std::shared_ptr<IEngineComponent>> _components;
 		std::vector<SDL_Event *> _sdlEvents;
@@ -110,12 +113,12 @@ namespace tudov
 		LoadingInfo _loadingInfo;
 		std::mutex _loadingInfoMutex;
 
-		std::shared_ptr<MainArgs> _mainArgs;
 		std::shared_ptr<Config> _config;
 		std::shared_ptr<Log> _log;
 
 		std::shared_ptr<ILuaAPI> _luaAPI;
 		std::shared_ptr<IStorageManager> _storageManager;
+		std::shared_ptr<IAssetBundles> _assetBundles;
 		std::shared_ptr<INetworkManager> _networkManager;
 		std::shared_ptr<IModManager> _modManager;
 		std::shared_ptr<IEventManager> _eventManager;
@@ -124,10 +127,10 @@ namespace tudov
 		std::shared_ptr<IScriptLoader> _scriptLoader;
 		std::shared_ptr<IScriptProvider> _scriptProvider;
 
-		std::shared_ptr<FontManager> _fontManager;
-		std::shared_ptr<ImageManager> _imageManager;
-		std::shared_ptr<TextManager> _textManager;
-		std::shared_ptr<ShaderManager> _shaderManager;
+		std::shared_ptr<FontResources> _fontResources;
+		std::shared_ptr<ImageResources> _imageResources;
+		std::shared_ptr<TextResources> _textResources;
+		std::shared_ptr<ShaderManager> shaderResources;
 
 		std::weak_ptr<IWindow> _mainWindow;
 		std::vector<std::shared_ptr<IWindow>> _windows;
@@ -137,7 +140,7 @@ namespace tudov
 		Context context;
 
 	  public:
-		explicit Engine(const MainArgs &args = MainArgs()) noexcept;
+		explicit Engine() noexcept;
 		~Engine() noexcept override;
 
 	  private:
@@ -161,6 +164,7 @@ namespace tudov
 
 		std::float_t GetFramerate() const noexcept;
 		std::float_t GetDeltaTime() const noexcept;
+		std::uint64_t GetBeginTick() const noexcept;
 		std::uint64_t GetTick() const noexcept;
 		void Quit();
 

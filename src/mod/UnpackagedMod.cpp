@@ -3,11 +3,12 @@
 #include "mod/ModConfig.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
-#include "resource/FontManager.hpp"
-#include "resource/Text.hpp"
-#include "resource/TextManager.hpp"
+#include "resource/FontResources.hpp"
+#include "resource/StringResource.hpp"
+#include "resource/StringResources.hpp"
 #include "util/StringUtils.hpp"
 
+#include <cassert>
 #include <filesystem>
 #include <format>
 #include <memory>
@@ -123,7 +124,7 @@ void UnpackagedMod::Load()
 			{
 				_log->Trace("Script modified: \"{}\"", filePath);
 
-				auto &&relative = std::filesystem::relative(filePath, GetScriptsDirectory());
+				auto &&relative = std::filesystem::relative(filePath, IUnpackagedMod::GetScriptsDirectory());
 				auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relative.string()));
 
 				std::ifstream ins{_directory / filePath};
@@ -131,7 +132,13 @@ void UnpackagedMod::Load()
 				oss << ins.rdbuf();
 				ins.close();
 
-				_modManager.HotReloadScriptPending(scriptName, oss.str(), _config.uniqueID);
+				auto &textResources = GetTextResources();
+				textResources.Unload(filePath);
+
+				auto resourceID = textResources.Load<StringResource>(filePath, oss.str());
+				assert(resourceID);
+
+				_modManager.HotReloadScriptPending(scriptName, textResources.GetResource(resourceID), _config.uniqueID);
 
 				break;
 			}
@@ -142,7 +149,7 @@ void UnpackagedMod::Load()
 		}
 	});
 
-	auto &&namespace_ = GetNamespace();
+	auto &&namespace_ = IUnpackagedMod::GetNamespace();
 	if (namespace_.empty())
 	{
 		_log->Debug("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.string(), std::string_view(namespace_));
@@ -181,19 +188,21 @@ void UnpackagedMod::Load()
 				scriptCode = oss.str();
 			}
 
-			auto &textManager = GetTextManager();
-			auto textID = textManager.Load<Text>(filePath, scriptCode);
-			assert(textID);
+			auto &textResources = GetTextResources();
+			auto textID = textResources.Load<StringResource>(filePath, scriptCode);
+			assert(textID != 0);
 
 			if (ShouldScriptLoad(relativePath))
 			{
-				scriptProvider.AddScript(scriptName, textManager.GetResource(textID)->View(), _config.uniqueID);
+				auto scriptCode = textResources.GetResource(textID);
+				assert(scriptCode != nullptr);
+				scriptProvider.AddScript(scriptName, scriptCode, _config.uniqueID);
 			}
 			// _scripts.emplace_back(scriptName);
 		}
 		// else if (IsFont(filePath))
 		// {
-		// 	auto fontID = modManager.engine.fontManager.Load<SDLTrueTypeFont>(filePath, ReadFileToString(filePath, true));
+		// 	auto fontID = modManager.engine.fontResources.Load<SDLTrueTypeFont>(filePath, ReadFileToString(filePath, true));
 		// 	_fonts.emplace_back(fontID);
 		// }
 	}
@@ -224,7 +233,7 @@ void UnpackagedMod::Unload()
 
 	for (auto &&fontID : _fonts)
 	{
-		_modManager.GetFontManager().Unload(fontID);
+		_modManager.GetFontResources().Unload(fontID);
 	}
 	_fonts.clear();
 

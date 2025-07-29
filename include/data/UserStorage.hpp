@@ -7,7 +7,7 @@
 
 namespace tudov
 {
-	struct IUserStorage : public IStorage
+	struct IUserStorage : public virtual IStorage
 	{
 		virtual ~IUserStorage() noexcept override = default;
 
@@ -16,7 +16,7 @@ namespace tudov
 
 	struct StorageManager;
 
-	class UserStorage : public IUserStorage
+	class UserStorage : public Storage, public IUserStorage
 	{
 	  protected:
 		std::string _username;
@@ -28,6 +28,7 @@ namespace tudov
 
 		std::string_view GetUsername() noexcept override;
 		IStorageManager &GetStorageManager() noexcept override;
+		Log &GetLog() noexcept override;
 
 		bool CanRead() noexcept override;
 		bool CanWrite() noexcept override;

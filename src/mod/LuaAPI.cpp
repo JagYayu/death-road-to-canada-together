@@ -6,8 +6,8 @@
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "program/Engine.hpp"
-#include "resource/FontManager.hpp"
-#include "resource/ImageManager.hpp"
+#include "resource/FontResources.hpp"
+#include "resource/ImageResources.hpp"
 
 #include "program/Window.hpp"
 #include "sol/property.hpp"
@@ -88,9 +88,9 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "new", &EventManager::LuaNew,
 	            "invoke", &EventManager::LuaInvoke);
 
-	TE_USERTYPE(ImageManager,
-	            "getID", &ImageManager::LuaGetID,
-	            "getPath", &ImageManager::LuaGetPath);
+	TE_USERTYPE(ImageResources,
+	            "getID", &ImageResources::LuaGetID,
+	            "getPath", &ImageResources::LuaGetPath);
 
 	TE_USERTYPE(Log,
 	            // "Verbosity_All", Log::EVerbosity::All,
@@ -161,8 +161,8 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	//             "patch", &Version::Patch);
 
 	lua["engine"] = &context.GetEngine();
-	lua["fonts"] = &context.GetFontManager();
-	lua["images"] = &context.GetImageManager();
+	lua["fonts"] = &context.GetFontResources();
+	lua["images"] = &context.GetImageResources();
 
 	lua["mods"] = &dynamic_cast<ModManager &>(context.GetModManager());
 	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());

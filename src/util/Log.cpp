@@ -257,7 +257,6 @@ void Log::Process()
 
 bool Log::CanOutput(Log::EVerbosity verb) const noexcept
 {
-	
 	return true;
 }
 

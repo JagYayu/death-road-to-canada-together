@@ -14,6 +14,12 @@
 
 #endif
 
+/*
+ * Parameter should typically be a class name, used to enable code navigation.
+ * Note that some language services might not support this feature.
+ */
+#define TE_NAMEOF(name) ("" #name "")
+
 #define TE_ENUM_FLAG_OPERATORS(E) static_assert(false, "Depreciated, use functions in `EnumFlag.hpp` to operate bits instead.")
 // inline E operator|(E a, E b)                                      \
 // {                                                                 \

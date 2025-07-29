@@ -3,7 +3,7 @@
 #include "graphic/VSyncMode.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
-#include "resource/ImageManager.hpp"
+#include "resource/ImageResources.hpp"
 
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_rect.h"
@@ -69,14 +69,14 @@ std::shared_ptr<Texture> Renderer::GetOrCreateImageTexture(ImageID imageID)
 	}
 	else [[unlikely]]
 	{
-		auto &&imageManager = _window.GetImageManager();
-		auto &&image = imageManager.GetResource(imageID);
+		auto &&imageResources = _window.GetImageResources();
+		auto &&image = imageResources.GetResource(imageID);
 		if (!image)
 		{
 			return nullptr;
 		}
 
-		std::string_view path = imageManager.GetResourcePath(imageID);
+		std::string_view path = imageResources.GetResourcePath(imageID);
 		textureID = _textureManager.Load(path, *this);
 		assert(textureID);
 		_imageTextureMap[imageID] = textureID;

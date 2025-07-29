@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Micros.hpp"
+#include "program/Tudov.hpp"
 
 #include <json.hpp>
 #include <queue>
@@ -154,7 +155,9 @@ namespace tudov
 		template <typename... Args>
 		TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) noexcept
 		{
-			Output(VerbFatal, std::format(fmt, std::forward<Args>(args)...));
+			auto &&str = std::format(fmt, std::forward<Args>(args)...);
+			Output(VerbFatal, str);
+			FatalError(str);
 		}
 	};
 

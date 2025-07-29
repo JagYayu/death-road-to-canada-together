@@ -2,7 +2,6 @@
 
 #include "Mod.hpp"
 #include "program/Context.hpp"
-#include "util/Definitions.hpp"
 #include "util/Log.hpp"
 
 #include "FileWatch.hpp"
@@ -12,7 +11,7 @@
 
 namespace tudov
 {
-	struct IUnpackagedMod : virtual public IMod
+	struct IUnpackagedMod : public virtual IMod
 	{
 	};
 

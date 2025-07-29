@@ -1,15 +1,15 @@
-#include "resource/TextureManager.hpp"
+#include "resource/TextureResources.hpp"
 
 using namespace tudov;
 
-TextureManager::TextureManager() noexcept
+TextureResources::TextureResources() noexcept
 {
 }
 
-void TextureManager::InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
+void TextureResources::InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
 {
 }
 
-void TextureManager::UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
+void TextureResources::UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept
 {
 }

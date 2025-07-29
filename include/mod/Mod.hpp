@@ -43,7 +43,7 @@ namespace tudov
 		}
 	};
 
-	class Mod : virtual public IMod
+	class Mod : public virtual IMod
 	{
 	  protected:
 		ModManager &_modManager;

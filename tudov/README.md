@@ -1,1 +1,0 @@
-Zip the directory and name to "tudov.dat" for the engine to parse.

@@ -12,9 +12,9 @@ namespace tudov
 	class Config;
 	class Engine;
 	class MainArgs;
-	class ImageManager;
-	class FontManager;
-	class TextManager;
+	class ImageResources;
+	class FontResources;
+	class TextResources;
 
 	class Context
 	{
@@ -30,7 +30,6 @@ namespace tudov
 	  public:
 		Engine &GetEngine();
 		Config &GetConfig();
-		MainArgs &GetMainArgs();
 		IEventManager &GetEventManager();
 		ILuaAPI &GetLuaAPI();
 		IModManager &GetModManager();
@@ -38,9 +37,9 @@ namespace tudov
 		IScriptLoader &GetScriptLoader();
 		IScriptProvider &GetScriptProvider();
 		IStorageManager &GetStorageManager();
-		ImageManager &GetImageManager();
-		FontManager &GetFontManager();
-		TextManager &GetTextManager();
+		ImageResources &GetImageResources();
+		FontResources &GetFontResources();
+		TextResources &GetTextResources();
 
 		inline const Engine &GetEngine() const
 		{
@@ -50,11 +49,6 @@ namespace tudov
 		inline const Config &GetConfig() const
 		{
 			return const_cast<Context *>(this)->GetConfig();
-		}
-
-		inline const MainArgs &GetMainArgs() const
-		{
-			return const_cast<Context *>(this)->GetMainArgs();
 		}
 
 		inline const IEventManager &GetEventManager() const
@@ -92,19 +86,19 @@ namespace tudov
 			return This()->GetStorageManager();
 		}
 
-		inline const ImageManager &GetImageManager() const
+		inline const ImageResources &GetImageResources() const
 		{
-			return const_cast<Context *>(this)->GetImageManager();
+			return const_cast<Context *>(this)->GetImageResources();
 		}
 
-		inline const FontManager &GetFontManager() const
+		inline const FontResources &GetFontResources() const
 		{
-			return const_cast<Context *>(this)->GetFontManager();
+			return const_cast<Context *>(this)->GetFontResources();
 		}
 
-		inline const TextManager &GetTextManager() const
+		inline const TextResources &GetTextResources() const
 		{
-			return const_cast<Context *>(this)->GetTextManager();
+			return const_cast<Context *>(this)->GetTextResources();
 		}
 
 	  private:
@@ -143,16 +137,6 @@ namespace tudov
 		inline const Config &GetConfig() const noexcept
 		{
 			return GetContext().GetConfig();
-		}
-
-		inline MainArgs &GetMainArgs() noexcept
-		{
-			return GetContext().GetMainArgs();
-		}
-
-		inline const MainArgs &GetMainArgs() const noexcept
-		{
-			return GetContext().GetMainArgs();
 		}
 
 		inline IEventManager &GetEventManager() noexcept
@@ -225,34 +209,34 @@ namespace tudov
 			return GetContext().GetStorageManager();
 		}
 
-		inline FontManager &GetFontManager() noexcept
+		inline FontResources &GetFontResources() noexcept
 		{
-			return GetContext().GetFontManager();
+			return GetContext().GetFontResources();
 		}
 
-		inline const FontManager &GetFontManager() const noexcept
+		inline const FontResources &GetFontResources() const noexcept
 		{
-			return GetContext().GetFontManager();
+			return GetContext().GetFontResources();
 		}
 
-		inline ImageManager &GetImageManager() noexcept
+		inline ImageResources &GetImageResources() noexcept
 		{
-			return GetContext().GetImageManager();
+			return GetContext().GetImageResources();
 		}
 
-		inline const ImageManager &GetImageManager() const noexcept
+		inline const ImageResources &GetImageResources() const noexcept
 		{
-			return GetContext().GetImageManager();
+			return GetContext().GetImageResources();
 		}
 
-		inline TextManager &GetTextManager() noexcept
+		inline TextResources &GetTextResources() noexcept
 		{
-			return GetContext().GetTextManager();
+			return GetContext().GetTextResources();
 		}
 
-		inline const TextManager &GetTextManager() const noexcept
+		inline const TextResources &GetTextResources() const noexcept
 		{
-			return GetContext().GetTextManager();
+			return GetContext().GetTextResources();
 		}
 	};
 } // namespace tudov

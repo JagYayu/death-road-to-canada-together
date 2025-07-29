@@ -8,7 +8,7 @@
 namespace tudov
 {
 	template <typename T>
-	class ResourceManager
+	class Resources
 	{
 	  private:
 		struct Entry
@@ -24,8 +24,8 @@ namespace tudov
 		std::unordered_map<ResourceID, Entry> _id2Entry;
 
 	  public:
-		explicit ResourceManager() noexcept;
-		virtual ~ResourceManager() noexcept = default;
+		explicit Resources() noexcept;
+		virtual ~Resources() noexcept = default;
 
 	  protected:
 		inline virtual void OnUnloadResource(ResourceID id) noexcept
@@ -99,6 +99,11 @@ namespace tudov
 
 			_path2ID.erase(std::string_view(it->second.path));
 			_id2Entry.erase(it);
+		}
+
+		inline void Unload(std::string_view path) noexcept
+		{
+			Unload(GetResourceID(path));
 		}
 
 		inline void UnloadAllFromDirectory(std::string_view directory)

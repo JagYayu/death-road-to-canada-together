@@ -1,23 +1,21 @@
 #pragma once
 
-#include "ResourceManager.hpp"
+#include "Resources.hpp"
 #include "graphic/Font.hpp"
 
 #include <string_view>
 
 namespace tudov
 {
-	using FontManagerBase = ResourceManager<Font>;
-
 	template <>
-	inline FontManagerBase::ResourceManager() noexcept
-	    : _log(Log::Get("FontManager"))
+	inline Resources<Font>::Resources() noexcept
+	    : _log(Log::Get("FontResources"))
 	{
 	}
 
 	class ScriptEngine;
 
-	class FontManager : public FontManagerBase
+	class FontResources : public Resources<Font>
 	{
 		//   public:
 		// 	struct BitmapFontInfo
@@ -32,7 +30,7 @@ namespace tudov
 		// 	std::unordered_map<TextureID, std::shared_ptr<BitmapFont>> _bitmapFonts;
 
 	  public:
-		FontManager() noexcept;
+		FontResources() noexcept;
 
 	  protected:
 		// void OnUnloadResource(ResourceID id) noexcept override;

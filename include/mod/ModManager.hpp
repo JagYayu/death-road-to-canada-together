@@ -5,13 +5,14 @@
 #include "ModRequirement.hpp"
 #include "ScriptEngine.hpp"
 #include "ScriptProvider.hpp"
-#include "UnpackagedMod.hpp"
+#include "data/StorageContainer.hpp"
 #include "debug/Debug.hpp"
 #include "event/EventManager.hpp"
 #include "program/EngineComponent.hpp"
 #include "util/Log.hpp"
 
 #include <filesystem>
+#include <memory>
 
 namespace tudov
 {
@@ -38,19 +39,24 @@ namespace tudov
 		virtual std::vector<ModRequirement> &GetRequiredMods() noexcept = 0;
 		virtual const std::vector<ModRequirement> &GetRequiredMods() const noexcept = 0;
 
-		virtual void HotReloadScriptPending(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptNamespace) = 0;
+		virtual void HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<StringResource> &scriptCode, std::string_view scriptNamespace) = 0;
 
 		virtual void Update() = 0;
 	};
 
 	class LuaAPI;
+	class UnpackagedMod;
 
-	/**
-	 * @brief Wack! ModManager is not inherited from ResourceManager :O
-	 */
 	class ModManager : public IModManager, public IDebugProvider
 	{
 		friend LuaAPI;
+
+	  private:
+		struct ModDirectory
+		{
+			EStorageContainer container;
+			std::filesystem::path path;
+		};
 
 	  public:
 		enum class ELoadState
@@ -63,15 +69,16 @@ namespace tudov
 		};
 
 	  protected:
-		using HotReloadScriptsMap = std::unordered_map<std::string, std::tuple<std::string, std::string>>;
+		using HotReloadScriptsMap = std::unordered_map<std::string, std::tuple<std::shared_ptr<StringResource>, std::string>>;
 
 	  private:
 		std::shared_ptr<Log> _log;
 		Context &_context;
 		ELoadState _loadState;
-		UnpackagedMod _virtualUnpackagedMod;
+		std::unique_ptr<UnpackagedMod> _virtualUnpackagedMod;
 
 		std::vector<std::filesystem::path> _directories;
+		std::vector<ModDirectory> _modDirectories;
 		std::vector<std::shared_ptr<Mod>> _loadedMods;
 		std::vector<ModRequirement> _requiredMods;
 
@@ -103,7 +110,7 @@ namespace tudov
 		std::vector<ModRequirement> &GetRequiredMods() noexcept override;
 		const std::vector<ModRequirement> &GetRequiredMods() const noexcept override;
 
-		void HotReloadScriptPending(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptNamespace) override;
+		void HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<StringResource> &scriptCode, std::string_view scriptNamespace) override;
 
 		void Update() override;
 

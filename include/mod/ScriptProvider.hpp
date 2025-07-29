@@ -12,6 +12,7 @@
 namespace tudov
 {
 	class Mod;
+	class StringResource;
 
 	struct IScriptProvider : public IEngineComponent
 	{
@@ -19,7 +20,7 @@ namespace tudov
 		struct Entry
 		{
 			std::string name;
-			std::string_view code;
+			std::shared_ptr<StringResource> code;
 			std::string_view modUID;
 		};
 
@@ -35,10 +36,10 @@ namespace tudov
 		virtual bool IsValidScript(ScriptID scriptID) const noexcept = 0;
 		virtual bool IsStaticScript(std::string_view scriptName) const noexcept = 0;
 
-		virtual ScriptID AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view uid) noexcept = 0;
+		virtual ScriptID AddScript(std::string_view scriptName, const std::shared_ptr<StringResource> &scriptCode, std::string_view modUID) noexcept = 0;
 		virtual bool RemoveScript(ScriptID scriptID) noexcept = 0;
 		virtual std::size_t RemoveScriptBy(std::string_view modUID) noexcept = 0;
-		virtual std::string_view GetScriptCode(ScriptID scriptID) const noexcept = 0;
+		virtual std::shared_ptr<StringResource> GetScriptCode(ScriptID scriptID) const noexcept = 0;
 		/*
 		 * Return an empty string if script id not exists.
 		 */
@@ -62,7 +63,7 @@ namespace tudov
 			return RemoveScript(GetScriptIDByName(scriptName));
 		}
 
-		inline std::string_view GetScriptCode(std::string_view scriptName) const noexcept
+		inline std::shared_ptr<StringResource> GetScriptCode(std::string_view scriptName) const noexcept
 		{
 			return GetScriptCode(GetScriptIDByName(scriptName));
 		}
@@ -93,7 +94,7 @@ namespace tudov
 		~ScriptProvider() override;
 
 	  private:
-		ScriptID AddScriptImpl(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_ = emptyString);
+		ScriptID AddScriptImpl(std::string_view scriptName, const std::shared_ptr<StringResource> &scriptCode, std::string_view modUID = emptyString);
 		bool RemoveScriptImpl(ScriptID scriptID) noexcept;
 
 	  public:
@@ -109,10 +110,10 @@ namespace tudov
 		bool IsValidScript(ScriptID scriptID) const noexcept override;
 		bool IsStaticScript(std::string_view scriptName) const noexcept override;
 
-		ScriptID AddScript(std::string_view scriptName, std::string_view scriptCode, std::string_view namespace_) noexcept override;
+		ScriptID AddScript(std::string_view scriptName, const std::shared_ptr<StringResource> &scriptCode, std::string_view modUID) noexcept override;
 		bool RemoveScript(ScriptID scriptID) noexcept override;
 		std::size_t RemoveScriptBy(std::string_view modUID) noexcept override;
-		std::string_view GetScriptCode(ScriptID scriptID) const noexcept override;
+		std::shared_ptr<StringResource> GetScriptCode(ScriptID scriptID) const noexcept override;
 		std::string_view GetScriptModUID(ScriptID scriptID) noexcept override;
 
 		std::unordered_map<ScriptID, Entry>::const_iterator begin() const override;

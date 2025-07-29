@@ -28,11 +28,6 @@ Config &Context::GetConfig()
 	return *GetEngine()._config;
 }
 
-MainArgs &Context::GetMainArgs()
-{
-	return *GetEngine()._mainArgs;
-}
-
 IEventManager &Context::GetEventManager()
 {
 	return *GetEngine()._eventManager;
@@ -68,17 +63,17 @@ IStorageManager &Context::GetStorageManager()
 	return *GetEngine()._storageManager.get();
 }
 
-ImageManager &Context::GetImageManager()
+ImageResources &Context::GetImageResources()
 {
-	return *GetEngine()._imageManager;
+	return *GetEngine()._imageResources;
 }
 
-FontManager &Context::GetFontManager()
+FontResources &Context::GetFontResources()
 {
-	return *GetEngine()._fontManager;
+	return *GetEngine()._fontResources;
 }
 
-TextManager &Context::GetTextManager()
+TextResources &Context::GetTextResources()
 {
-	return *GetEngine()._textManager.get();
+	return *GetEngine()._textResources.get();
 }

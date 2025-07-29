@@ -20,7 +20,7 @@ namespace tudov
 
 		virtual ~IStorageManager() noexcept override = default;
 
-		virtual IApplicationStorage &GetAppStorage() noexcept = 0;
+		virtual IApplicationStorage &GetApplicationStorage() noexcept = 0;
 		virtual IReadonlyStorage &GetReadonlyStorage() noexcept = 0;
 		virtual IUserStorage &GetUserStorage(std::string_view username = RootUser) noexcept = 0;
 		virtual bool HasUser(std::string_view username = RootUser) noexcept = 0;
@@ -45,7 +45,7 @@ namespace tudov
 
 		Context &GetContext() noexcept override;
 
-		IApplicationStorage &GetAppStorage() noexcept override;
+		IApplicationStorage &GetApplicationStorage() noexcept override;
 		IReadonlyStorage &GetReadonlyStorage() noexcept override;
 		IUserStorage &GetUserStorage(std::string_view user = RootUser) noexcept override;
 		bool HasUser(std::string_view user = RootUser) noexcept override;

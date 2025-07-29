@@ -23,9 +23,9 @@ using namespace tudov;
 ModManager::ModManager(Context &context) noexcept
     : _log(Log::Get("ModManager")),
       _context(context),
-      _loadState(ELoadState::None),
-      _virtualUnpackagedMod(*this, "")
+      _loadState(ELoadState::None)
 {
+	_virtualUnpackagedMod = std::make_unique<UnpackagedMod>(*this, "");
 }
 
 ModManager::~ModManager() noexcept
@@ -40,9 +40,13 @@ Context &ModManager::GetContext() noexcept
 
 void ModManager::Initialize() noexcept
 {
-	_directories = {
-	    "mods",
-	    "downloadedMods",
+	// _directories = {
+	//     "mods",
+	//     "downloadedMods",
+	// };
+	_modDirectories = {
+	    {EStorageContainer::Application, "mods"},
+	    {EStorageContainer::User, "mods"},
 	};
 	_requiredMods = {
 	    ModRequirement("dr2c_e0c8375e09d74bb9aa704d4a3c4afa79", Version(1, 0, 0), 0),
@@ -97,7 +101,7 @@ void ModManager::LoadMods()
 	}
 
 	std::error_code errorCode;
-	std::filesystem::recursive_directory_iterator it("mods", std::filesystem::directory_options::skip_permission_denied, errorCode), end;
+	std::filesystem::recursive_directory_iterator it{"mods", std::filesystem::directory_options::skip_permission_denied, errorCode}, end;
 
 	while (it != end)
 	{
@@ -111,7 +115,7 @@ void ModManager::LoadMods()
 		if (entry.is_directory())
 		{
 			auto &&dir = entry.path();
-			if (_virtualUnpackagedMod.IsValidDirectory(dir))
+			if (_virtualUnpackagedMod->IsValidDirectory(dir))
 			{
 				auto &&mod = std::make_shared<UnpackagedMod>(*this, dir);
 				if (IsModMatched(*mod))
@@ -194,13 +198,13 @@ const std::vector<ModRequirement> &ModManager::GetRequiredMods() const noexcept
 	return _requiredMods;
 }
 
-void ModManager::HotReloadScriptPending(std::string_view scriptName, std::string_view scriptCode, std::string_view scriptModUID)
+void ModManager::HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<StringResource> &scriptCode, std::string_view scriptModUID)
 {
 	if (!_hotReloadScriptsPending)
 	{
 		_hotReloadScriptsPending = std::make_unique<HotReloadScriptsMap>();
 	}
-	_hotReloadScriptsPending->try_emplace(std::string(scriptName), std::string(scriptCode), std::string(scriptModUID));
+	_hotReloadScriptsPending->try_emplace(std::string(scriptName), scriptCode, std::string(scriptModUID));
 }
 
 void ModManager::Update()

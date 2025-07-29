@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ResourceManager.hpp"
+#include "Resources.hpp"
 #include "graphic/Image.hpp"
 #include "util/Definitions.hpp"
 
@@ -9,20 +9,20 @@
 namespace tudov
 {
 	template <>
-	inline ResourceManager<Image>::ResourceManager() noexcept
-	    : _log(Log::Get("TextureManager"))
+	inline Resources<Image>::Resources() noexcept
+	    : _log(Log::Get("TextureResources"))
 	{
 	}
 
 	class LuaAPI;
 	class ScriptEngine;
 
-	class ImageManager : public ResourceManager<Image>
+	class ImageResources : public Resources<Image>
 	{
 		friend LuaAPI;
 
 	  public:
-		explicit ImageManager() noexcept;
+		explicit ImageResources() noexcept;
 
 		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 		void UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
