@@ -8,22 +8,23 @@ namespace tudov
 	struct Application;
 	struct MainArgs;
 
-	void FatalError(std::string_view errorMessage) noexcept;
-
-	std::weak_ptr<Application> GetApplication() noexcept;
-
-	const MainArgs &GetMainArgs() noexcept;
-
-	void InitMainArgs(const MainArgs &args);
-
-	template <typename T>
-	std::weak_ptr<T> GetApplication() noexcept
+	struct Tudov
 	{
-		auto &&app = GetApplication();
-		if (app.expired())
+		explicit Tudov() noexcept = delete;
+		~Tudov() noexcept = delete;
+
+		static void FatalError(std::string_view errorMessage) noexcept;
+
+		static std::shared_ptr<Application> GetApplication() noexcept;
+
+		static const MainArgs &GetMainArgs() noexcept;
+
+		static void InitMainArgs(const MainArgs &args);
+
+		template <typename T>
+		static std::shared_ptr<T> GetApplication() noexcept
 		{
-			return nullptr;
+			return std::dynamic_pointer_cast<T>(GetApplication());
 		}
-		return std::dynamic_pointer_cast<T>(app);
-	}
+	};
 } // namespace tudov

@@ -276,16 +276,22 @@ void Engine::HandleEvent(SDL_Event &event) noexcept
 	}
 }
 
-void Engine::Event(SDL_Event &event) noexcept
+void Engine::Event(void *event) noexcept
 {
-	switch (event.type)
+	auto sdlEvent = static_cast<SDL_Event *>(event);
+	if (sdlEvent == nullptr) [[unlikely]]
+	{
+		return;
+	}
+
+	switch (sdlEvent->type)
 	{
 	case SDL_EVENT_QUIT:
 		Quit();
 		return;
 	}
 
-	_sdlEvents.emplace_back(new SDL_Event(event));
+	_sdlEvents.emplace_back(new SDL_Event(*sdlEvent));
 }
 
 void Engine::Deinitialize() noexcept

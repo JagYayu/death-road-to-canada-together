@@ -9,6 +9,7 @@ project(tudov
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
+set(BUILD_SHARED_LIBS OFF)
 
 if(MSVC)
     add_compile_options(/FS /Zc:preprocessor)

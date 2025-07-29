@@ -27,6 +27,5 @@ namespace tudov
 
 		bool CanRead() noexcept override;
 		bool CanWrite() noexcept override;
-		bool IsReady() noexcept override;
 	};
 } // namespace tudov

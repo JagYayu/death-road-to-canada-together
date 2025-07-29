@@ -157,7 +157,7 @@ namespace tudov
 		{
 			auto &&str = std::format(fmt, std::forward<Args>(args)...);
 			Output(VerbFatal, str);
-			FatalError(str);
+			Tudov::FatalError(str);
 		}
 	};
 

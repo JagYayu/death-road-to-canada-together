@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Application.hpp"
 #include "Context.hpp"
 #include "debug/Debug.hpp"
 #include "program/EngineComponent.hpp"
@@ -17,19 +18,6 @@ union SDL_Event;
 
 namespace tudov
 {
-	/**
-	 * @brief Tudov engine base class
-	 */
-	struct Application
-	{
-		virtual ~Application() noexcept = default;
-
-		virtual void Initialize() noexcept = 0;
-		virtual bool Tick() noexcept = 0;
-		virtual void Event(SDL_Event &event) noexcept = 0;
-		virtual void Deinitialize() noexcept = 0;
-	};
-
 	struct IAssetBundles;
 	struct IGameScripts;
 	struct ILuaAPI;
@@ -154,7 +142,7 @@ namespace tudov
 	  public:
 		void Initialize() noexcept override;
 		bool Tick() noexcept override;
-		void Event(SDL_Event &event) noexcept override;
+		void Event(void *event) noexcept override;
 		void Deinitialize() noexcept override;
 
 		Log &GetLog() noexcept override;

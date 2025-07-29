@@ -1,13 +1,19 @@
 #include "program/Tudov.hpp"
 
+#include "program/Application.hpp"
 #include "program/Engine.hpp"
 #include "program/MainArgs.hpp"
 #include "util/Log.hpp"
 
 #include "SDL3/SDL_messagebox.h"
 
+#include <Windows.h>
+#include <codecvt>
 #include <cstdlib>
+#include <libloaderapi.h>
 #include <stdexcept>
+#include <string>
+#include <winbase.h>
 
 using namespace tudov;
 
@@ -41,7 +47,7 @@ bool FatalError_MessageBox(std::string_view errorMessage) noexcept
 	return id == 0;
 }
 
-void FatalError(std::string_view errorMessage) noexcept
+void Tudov::FatalError(std::string_view errorMessage) noexcept
 {
 	if (FatalError_MessageBox(errorMessage))
 	{
@@ -51,7 +57,7 @@ void FatalError(std::string_view errorMessage) noexcept
 	}
 }
 
-std::shared_ptr<Application> GetApplication() noexcept
+std::shared_ptr<Application> Tudov::GetApplication() noexcept
 {
 	if (_engine == nullptr) [[unlikely]]
 	{
@@ -70,12 +76,12 @@ std::shared_ptr<Application> GetApplication() noexcept
 static MainArgs _mainArgs = MainArgs();
 static bool _mainArgsInitialized = false;
 
-MainArgs &GetMainArgs()
+const MainArgs &Tudov::GetMainArgs() noexcept
 {
 	return _mainArgs;
 }
 
-void InitMainArgs(const MainArgs &mainArgs)
+void Tudov::InitMainArgs(const MainArgs &mainArgs)
 {
 	if (_mainArgsInitialized) [[unlikely]]
 	{
@@ -85,3 +91,31 @@ void InitMainArgs(const MainArgs &mainArgs)
 	_mainArgs = mainArgs;
 	_mainArgsInitialized = true;
 }
+
+// static std::wstring dllDirectory;
+
+// bool Tudov::Windows_AddDllDirectory() noexcept
+// {
+// 	WCHAR exePath[MAX_PATH];
+// 	GetModuleFileNameW(NULL, exePath, MAX_PATH);
+
+// 	WCHAR *lastBackslash = wcsrchr(exePath, L'\\');
+// 	if (lastBackslash)
+// 	{
+// 		*lastBackslash = L'\0';
+
+// 		WCHAR crtPath[MAX_PATH];
+// 		swprintf_s(crtPath, MAX_PATH, L"%s\\crt", exePath);
+
+// 		if (AddDllDirectory(crtPath) == 0)
+// 		{
+// 			DWORD error = GetLastError();
+// 			wprintf(L"Failed to add DLL directory: %s, error: %d\n", crtPath, error);
+// 		}
+// 		else
+// 		{
+// 			wprintf(L"Successfully added DLL directory: %s\n", crtPath);
+// 		}
+// 	}
+// 	return true;
+// }
