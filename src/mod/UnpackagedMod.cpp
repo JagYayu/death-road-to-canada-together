@@ -4,8 +4,8 @@
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "resource/FontResources.hpp"
-#include "resource/StringResource.hpp"
-#include "resource/StringResources.hpp"
+#include "resource/TextResource.hpp"
+#include "resource/TextResources.hpp"
 #include "util/StringUtils.hpp"
 
 #include <cassert>
@@ -135,7 +135,7 @@ void UnpackagedMod::Load()
 				auto &textResources = GetTextResources();
 				textResources.Unload(filePath);
 
-				auto resourceID = textResources.Load<StringResource>(filePath, oss.str());
+				auto resourceID = textResources.Load<TextResource>(filePath, oss.str());
 				assert(resourceID);
 
 				_modManager.HotReloadScriptPending(scriptName, textResources.GetResource(resourceID), _config.uniqueID);
@@ -189,7 +189,7 @@ void UnpackagedMod::Load()
 			}
 
 			auto &textResources = GetTextResources();
-			auto textID = textResources.Load<StringResource>(filePath, scriptCode);
+			auto textID = textResources.Load<TextResource>(filePath, scriptCode);
 			assert(textID != 0);
 
 			if (ShouldScriptLoad(relativePath))

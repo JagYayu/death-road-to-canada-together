@@ -5,7 +5,7 @@
 #include "ModRequirement.hpp"
 #include "ScriptEngine.hpp"
 #include "ScriptProvider.hpp"
-#include "data/StorageContainer.hpp"
+#include "data/GlobalStorageLocation.hpp"
 #include "debug/Debug.hpp"
 #include "event/EventManager.hpp"
 #include "program/EngineComponent.hpp"
@@ -39,7 +39,7 @@ namespace tudov
 		virtual std::vector<ModRequirement> &GetRequiredMods() noexcept = 0;
 		virtual const std::vector<ModRequirement> &GetRequiredMods() const noexcept = 0;
 
-		virtual void HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<StringResource> &scriptCode, std::string_view scriptNamespace) = 0;
+		virtual void HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptNamespace) = 0;
 
 		virtual void Update() = 0;
 	};
@@ -54,7 +54,7 @@ namespace tudov
 	  private:
 		struct ModDirectory
 		{
-			EStorageContainer container;
+			EGlobalStorageLocation location;
 			std::filesystem::path path;
 		};
 
@@ -69,7 +69,7 @@ namespace tudov
 		};
 
 	  protected:
-		using HotReloadScriptsMap = std::unordered_map<std::string, std::tuple<std::shared_ptr<StringResource>, std::string>>;
+		using HotReloadScriptsMap = std::unordered_map<std::string, std::tuple<std::shared_ptr<TextResource>, std::string>>;
 
 	  private:
 		std::shared_ptr<Log> _log;
@@ -110,7 +110,7 @@ namespace tudov
 		std::vector<ModRequirement> &GetRequiredMods() noexcept override;
 		const std::vector<ModRequirement> &GetRequiredMods() const noexcept override;
 
-		void HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<StringResource> &scriptCode, std::string_view scriptNamespace) override;
+		void HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptNamespace) override;
 
 		void Update() override;
 

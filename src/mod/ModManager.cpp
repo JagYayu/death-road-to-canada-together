@@ -45,8 +45,8 @@ void ModManager::Initialize() noexcept
 	//     "downloadedMods",
 	// };
 	_modDirectories = {
-	    {EStorageContainer::Application, "mods"},
-	    {EStorageContainer::User, "mods"},
+	    {EGlobalStorageLocation::Application, "mods"},
+	    {EGlobalStorageLocation::User, "mods"},
 	};
 	_requiredMods = {
 	    ModRequirement("dr2c_e0c8375e09d74bb9aa704d4a3c4afa79", Version(1, 0, 0), 0),
@@ -198,7 +198,7 @@ const std::vector<ModRequirement> &ModManager::GetRequiredMods() const noexcept
 	return _requiredMods;
 }
 
-void ModManager::HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<StringResource> &scriptCode, std::string_view scriptModUID)
+void ModManager::HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptModUID)
 {
 	if (!_hotReloadScriptsPending)
 	{

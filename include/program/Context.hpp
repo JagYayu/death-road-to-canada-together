@@ -3,12 +3,12 @@
 namespace tudov
 {
 	struct IEventManager;
+	struct IGlobalStorageManager;
 	struct ILuaAPI;
 	struct IModManager;
 	struct IScriptEngine;
 	struct IScriptLoader;
 	struct IScriptProvider;
-	struct IStorageManager;
 	class Config;
 	class Engine;
 	class MainArgs;
@@ -16,6 +16,9 @@ namespace tudov
 	class FontResources;
 	class TextResources;
 
+	/**
+	 * Context of tudov engine.
+	 */
 	class Context
 	{
 		friend Engine;
@@ -36,7 +39,7 @@ namespace tudov
 		IScriptEngine &GetScriptEngine();
 		IScriptLoader &GetScriptLoader();
 		IScriptProvider &GetScriptProvider();
-		IStorageManager &GetStorageManager();
+		IGlobalStorageManager &GetGlobalStorageManager();
 		ImageResources &GetImageResources();
 		FontResources &GetFontResources();
 		TextResources &GetTextResources();
@@ -81,9 +84,9 @@ namespace tudov
 			return This()->GetScriptProvider();
 		}
 
-		inline const IStorageManager &GetStorageManager() const
+		inline const IGlobalStorageManager &GetGlobalStorageManager() const
 		{
-			return This()->GetStorageManager();
+			return This()->GetGlobalStorageManager();
 		}
 
 		inline const ImageResources &GetImageResources() const
@@ -108,6 +111,9 @@ namespace tudov
 		}
 	};
 
+	/**
+	 * Can be inherited by other class, will provide engine component getter functions for child class.
+	 */
 	struct IContextProvider
 	{
 		virtual ~IContextProvider() noexcept = default;
@@ -199,14 +205,14 @@ namespace tudov
 			return GetContext().GetScriptProvider();
 		}
 
-		inline IStorageManager &GetStorageManager() noexcept
+		inline IGlobalStorageManager &GetGlobalStorageManager() noexcept
 		{
-			return GetContext().GetStorageManager();
+			return GetContext().GetGlobalStorageManager();
 		}
 
-		inline const IStorageManager &GetStorageManager() const noexcept
+		inline const IGlobalStorageManager &GetGlobalStorageManager() const noexcept
 		{
-			return GetContext().GetStorageManager();
+			return GetContext().GetGlobalStorageManager();
 		}
 
 		inline FontResources &GetFontResources() noexcept

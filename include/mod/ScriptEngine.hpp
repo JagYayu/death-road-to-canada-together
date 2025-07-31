@@ -2,37 +2,56 @@
 
 #include "program/EngineComponent.hpp"
 #include "util/Definitions.hpp"
+#include "util/Log.hpp"
 
 #include "sol/load_result.hpp"
 #include "sol/state.hpp"
-#include "util/Log.hpp"
 
 #include <format>
 #include <memory>
 #include <string_view>
-#include <tuple>
 #include <unordered_map>
 
 namespace tudov
 {
 	class Context;
 
-	struct IScriptEngine : IEngineComponent
+	/**
+	 * Script Engine.
+	 * Basically a wrapper of luaVM.
+	 * Also will provide some utilities functions and extensions for *Unique Modding API*.
+	 * Mainly used by ModManager.
+	 */
+	struct IScriptEngine : public IEngineComponent
 	{
 		virtual ~IScriptEngine() noexcept = default;
 
+		/**
+		 * Get total memory bytes in luaVM.
+		 * @return bytes.
+		 */
 		virtual size_t GetMemory() const noexcept = 0;
+
 		virtual sol::table CreateTable(std::uint32_t arr = 0, std::uint32_t hash = 0) noexcept = 0;
+
 		virtual void CollectGarbage() = 0;
+
 		virtual sol::object MakeReadonlyGlobal(sol::object obj) = 0;
+
 		virtual sol::load_result LoadFunction(const std::string &name, std::string_view code) = 0;
+
 		virtual void InitializeScript(ScriptID scriptID, std::string_view scriptName, std::string_view modUID, bool sandboxed, sol::protected_function &func) = 0;
+
 		virtual void DeinitializeScript(ScriptID scriptID, std::string_view scriptName) = 0;
+
 		/*
-		 * Dangerous function!
+		 * @warning This is a dangerous function.
 		 */
 		virtual std::int32_t ThrowError(std::string_view message) noexcept = 0;
 
+		/*
+		 * @warning This is a dangerous function.
+		 */
 		template <typename... Args>
 		inline std::int32_t ThrowError(std::format_string<Args...> fmt, Args &&...args) noexcept
 		{
@@ -94,5 +113,8 @@ namespace tudov
 
 		sol::object RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter);
 		void ClearPersistVariables();
+
+	  private:
+		void AssertLuaValue(sol::object value, std::string_view name) noexcept;
 	};
 } // namespace tudov

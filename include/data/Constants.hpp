@@ -10,6 +10,7 @@ namespace tudov
 		TE_CONSTANT AppOrganization = "Tudov";
 		TE_CONSTANT AppConfigFile = "config.json";
 		TE_CONSTANT AppUserDirectoryPrefix = "user_";
+		TE_CONSTANT AppDeveloperAssetsDirectory = "dev";
 		TE_CONSTANT NetworkChannelsLimit = 8ui8;
 		TE_CONSTANT NetworkServerMaximumClients = 4ui32;
 		TE_CONSTANT NetworkServerPassword = "";

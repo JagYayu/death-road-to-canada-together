@@ -22,20 +22,20 @@ static bool _engineInitialized = false;
 
 bool FatalError_MessageBox(std::string_view errorMessage) noexcept
 {
-	constexpr int buttonYes = 0;
-	constexpr int buttonNo = 1;
+	constexpr int buttonNo = 0;
+	constexpr int buttonYes = 1;
 
 	SDL_MessageBoxButtonData buttons[] = {
-	    {0, buttonYes, "Yes"},
 	    {0, buttonNo, "No"},
+	    {0, buttonYes, "Yes"},
 	};
 
-	std::string message = std::format("发生致命错误:\n{}\n是否终止程序?", errorMessage);
+	std::string message = std::format("Fatal error has occurred:\n{}\nDo you want to terminate the program?", errorMessage);
 
 	SDL_MessageBoxData messageboxdata = {
 	    SDL_MESSAGEBOX_ERROR,
 	    NULL,
-	    "错误",
+	    "Tudov Engine",
 	    message.data(),
 	    SDL_arraysize(buttons),
 	    buttons,
@@ -51,7 +51,6 @@ void Tudov::FatalError(std::string_view errorMessage) noexcept
 {
 	if (FatalError_MessageBox(errorMessage))
 	{
-		_engine = nullptr;
 		Log::Exit();
 		abort();
 	}

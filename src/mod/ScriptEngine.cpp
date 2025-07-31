@@ -24,7 +24,7 @@ using namespace tudov;
 ScriptEngine::ScriptEngine(Context &context) noexcept
     : _context(context),
       _log(Log::Get("ScriptEngine")),
-      _lua(),
+      _lua({}),
       _luaInit()
 {
 }
@@ -66,22 +66,50 @@ void ScriptEngine::Initialize() noexcept
 
 	{
 		auto &&inspectModule = scriptLoader.Load("#lua.inspect");
-		_luaInspect = inspectModule->GetTable().raw_get<sol::function>("inspect");
+		if (inspectModule != nullptr)
+		{
+			_luaInspect = inspectModule->GetTable().raw_get<sol::function>("inspect");
+
+			AssertLuaValue(_luaInspect, "#lua.inspect.inspect");
+		}
+		else
+		{
+			Fatal("Could not find core lua module \"#lua.inspect\"!");
+		}
 	}
 
 	{
-		auto &&engineModule = scriptLoader.Load("#lua.ScriptEngine");
-		auto &&scriptEngineModule = engineModule->GetTable();
+		auto &&engineModule = scriptLoader.Load("Could not find core lua module \"#lua.ScriptEngine\"");
+		if (engineModule != nullptr)
+		{
+			auto &&scriptEngineModule = engineModule->GetTable();
+			scriptEngineModule.raw_get<sol::function>("initialize")();
 
-		scriptEngineModule.raw_get<sol::function>("initialize")();
-		_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
-		_luaPostProcessModGlobals = scriptEngineModule.raw_get<sol::function>("postProcessModGlobals");
-		_luaPostProcessScriptGlobals = scriptEngineModule.raw_get<sol::function>("postProcessScriptGlobals");
+			_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
+			_luaPostProcessModGlobals = scriptEngineModule.raw_get<sol::function>("postProcessModGlobals");
+			_luaPostProcessScriptGlobals = scriptEngineModule.raw_get<sol::function>("postProcessScriptGlobals");
+
+			AssertLuaValue(_luaMarkAsLocked, "#lua.ScriptEngine.markAsLocked");
+			AssertLuaValue(_luaPostProcessModGlobals, "#lua.ScriptEngine.postProcessModGlobals");
+			AssertLuaValue(_luaPostProcessScriptGlobals, "#lua.ScriptEngine.postProcessScriptGlobals");
+		}
+		else
+		{
+			Fatal("Could not find core lua module \"#lua.ScriptEngine\"!");
+		}
 	}
 
 	GetLuaAPI().Install(_lua, _context);
 
 	MakeReadonlyGlobal(_lua.globals());
+}
+
+void ScriptEngine::AssertLuaValue(sol::object value, std::string_view name) noexcept
+{
+	if (!value.valid()) [[unlikely]]
+	{
+		Fatal("Could not find valid core lua module value \"{}\"", name);
+	}
 }
 
 void ScriptEngine::Deinitialize() noexcept

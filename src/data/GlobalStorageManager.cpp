@@ -1,0 +1,59 @@
+#include "data/GlobalStorageManager.hpp"
+
+#include "data/ApplicationGlobalStorage.hpp"
+#include "data/ReadonlyGlobalStorage.hpp"
+#include "data/UserGlobalStorage.hpp"
+
+#include <memory>
+
+using namespace tudov;
+
+GlobalStorageManager::GlobalStorageManager(Context &context) noexcept
+    : _context(context)
+{
+}
+
+Context &GlobalStorageManager::GetContext() noexcept
+{
+	return _context;
+}
+
+GlobalStorage &GlobalStorageManager::GetApplicationStorage() noexcept
+{
+	if (!_application) [[unlikely]]
+	{
+		_application = std::make_shared<ApplicationGlobalStorage>(*this);
+	}
+	return *_application;
+}
+
+GlobalStorage &GlobalStorageManager::GetReadonlyStorage() noexcept
+{
+	if (!_readonly) [[unlikely]]
+	{
+		_readonly = std::make_shared<ReadonlyGlobalStorage>(*this);
+	}
+	return *_readonly;
+}
+
+GlobalStorage &GlobalStorageManager::GetUserStorage(std::string_view username) noexcept
+{
+	auto &&it = _users.find(username);
+	if (it == _users.end()) [[unlikely]]
+	{
+		auto &&userGlobalStorage = std::make_shared<UserGlobalStorage>(*this, username);
+		it = _users.try_emplace(userGlobalStorage->GetUsername(), userGlobalStorage).first;
+	}
+	return *it->second;
+}
+
+bool GlobalStorageManager::HasUser(std::string_view username) noexcept
+{
+	// TODO
+	return true;
+}
+
+bool GlobalStorageManager::DeleteUser(std::string_view username) noexcept
+{
+	return _users.erase(username);
+}

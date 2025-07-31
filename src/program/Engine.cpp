@@ -1,7 +1,8 @@
 #include "program/Engine.hpp"
 
+#include "data/AssetsManager.hpp"
 #include "data/Config.hpp"
-#include "data/StorageManager.hpp"
+#include "data/GlobalStorageManager.hpp"
 #include "debug/Debug.hpp"
 #include "debug/DebugConsole.hpp"
 #include "debug/DebugManager.hpp"
@@ -16,11 +17,12 @@
 #include "resource/FontResources.hpp"
 #include "resource/ImageResources.hpp"
 #include "resource/ResourceType.hpp"
-#include "resource/StringResources.hpp"
+#include "resource/TextResources.hpp"
 #include "scripts/GameScripts.hpp"
 #include "util/Log.hpp"
 #include "util/MicrosImpl.hpp"
 #include "util/StringUtils.hpp"
+
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_timer.h"
@@ -58,7 +60,8 @@ Engine::Engine() noexcept
 {
 	context = Context(this);
 
-	_storageManager = std::make_shared<StorageManager>(context);
+	_globalStorageManager = std::make_shared<GlobalStorageManager>(context);
+	_assetsManager = std::make_shared<AssetsManager>(context);
 	_networkManager = std::make_shared<NetworkManager>(context);
 	_modManager = std::make_shared<ModManager>(context);
 	_scriptProvider = std::make_shared<ScriptProvider>(context);
@@ -144,6 +147,8 @@ bool Engine::ShouldQuit() noexcept
 void Engine::Initialize() noexcept
 {
 	_components = {
+	    _globalStorageManager,
+	    _assetsManager,
 	    _modManager,
 	    _networkManager,
 	    _eventManager,

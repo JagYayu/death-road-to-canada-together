@@ -50,17 +50,17 @@ IScriptEngine &Context::GetScriptEngine()
 
 IScriptLoader &Context::GetScriptLoader()
 {
-	return *GetEngine()._scriptLoader.get();
+	return *GetEngine()._scriptLoader;
 }
 
 IScriptProvider &Context::GetScriptProvider()
 {
-	return *GetEngine()._scriptProvider.get();
+	return *GetEngine()._scriptProvider;
 }
 
-IStorageManager &Context::GetStorageManager()
+IGlobalStorageManager &Context::GetGlobalStorageManager()
 {
-	return *GetEngine()._storageManager.get();
+	return *GetEngine()._globalStorageManager;
 }
 
 ImageResources &Context::GetImageResources()
@@ -75,5 +75,5 @@ FontResources &Context::GetFontResources()
 
 TextResources &Context::GetTextResources()
 {
-	return *GetEngine()._textResources.get();
+	return *GetEngine()._textResources;
 }

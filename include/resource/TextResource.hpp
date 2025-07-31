@@ -8,17 +8,17 @@
 
 namespace tudov
 {
-	class StringResource : public IResource
+	class TextResource : public IResource
 	{
 	  private:
 		std::string _str;
 
 	  public:
-		explicit StringResource() noexcept = default;
-		~StringResource() noexcept override = default;
+		explicit TextResource() noexcept = default;
+		~TextResource() noexcept override = default;
 
 		template <typename... TArgs>
-		inline explicit StringResource(TArgs &&...args) noexcept
+		inline explicit TextResource(TArgs &&...args) noexcept
 		    : _str(std::forward<TArgs>(args)...)
 		{
 		}

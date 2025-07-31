@@ -3,7 +3,7 @@
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
-#include "resource/StringResource.hpp"
+#include "resource/TextResource.hpp"
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
@@ -645,7 +645,7 @@ std::vector<std::string> ScriptLoader::GetLoadErrors() noexcept
 			temp.emplace_back(std::get<0>(entry), std::get<1>(entry));
 		}
 
-		std::ranges::sort(temp, [](const auto &a, const auto &b)
+		std::ranges::sort(temp, [](const auto &a, const auto &b) constexpr
 		{
 			return a.first < b.first;
 		});

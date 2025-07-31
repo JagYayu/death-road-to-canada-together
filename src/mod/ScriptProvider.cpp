@@ -39,7 +39,7 @@ Log &ScriptProvider::GetLog() noexcept
 
 void ScriptProvider::Initialize() noexcept
 {
-	GetStorageManager();
+	GetGlobalStorageManager();
 	// AppStorage
 	// 如果有tudov目录，则读取tudov/lua/里面的脚本
 	// 如果有tudov.dat文件，则用zip打开并读取lua/里面的脚本
@@ -63,7 +63,7 @@ void ScriptProvider::Deinitialize() noexcept
 	//
 }
 
-ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, const std::shared_ptr<StringResource>& scriptCode, std::string_view modUID)
+ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, const std::shared_ptr<TextResource>& scriptCode, std::string_view modUID)
 {
 	{
 		auto &&it = _scriptName2ID.find(scriptName);
@@ -126,7 +126,7 @@ std::optional<std::string_view> ScriptProvider::GetScriptNameByID(ScriptID scrip
 	return std::nullopt;
 }
 
-ScriptID ScriptProvider::AddScript(std::string_view scriptName, const std::shared_ptr<StringResource>& scriptCode, std::string_view scriptModUID) noexcept
+ScriptID ScriptProvider::AddScript(std::string_view scriptName, const std::shared_ptr<TextResource>& scriptCode, std::string_view scriptModUID) noexcept
 {
 	if (scriptName.starts_with(scriptNamespace))
 	{
@@ -177,7 +177,7 @@ std::size_t ScriptProvider::RemoveScriptBy(std::string_view uid) noexcept
 	});
 }
 
-std::shared_ptr<StringResource> ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
+std::shared_ptr<TextResource> ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
 {
 	auto &&it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())

@@ -13,7 +13,6 @@ namespace tudov
 		Local = 0,
 		RUDP,
 		TCP,
-		UDP,
 		Steam,
 	};
 

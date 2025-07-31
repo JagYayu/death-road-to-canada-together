@@ -18,12 +18,12 @@ union SDL_Event;
 
 namespace tudov
 {
-	struct IAssetBundles;
 	struct IGameScripts;
 	struct ILuaAPI;
 	struct INetworkManager;
-	struct IStorageManager;
+	struct IGlobalStorageManager;
 	struct IGraphicDevice;
+	struct IAssetsManager;
 	struct IWindow;
 	class Context;
 	class Log;
@@ -105,8 +105,8 @@ namespace tudov
 		std::shared_ptr<Log> _log;
 
 		std::shared_ptr<ILuaAPI> _luaAPI;
-		std::shared_ptr<IStorageManager> _storageManager;
-		std::shared_ptr<IAssetBundles> _assetBundles;
+		std::shared_ptr<IGlobalStorageManager> _globalStorageManager;
+		std::shared_ptr<IAssetsManager> _assetsManager;
 		std::shared_ptr<INetworkManager> _networkManager;
 		std::shared_ptr<IModManager> _modManager;
 		std::shared_ptr<IEventManager> _eventManager;
