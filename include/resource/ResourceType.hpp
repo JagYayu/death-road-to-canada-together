@@ -6,11 +6,8 @@ namespace tudov
 {
 	enum class EResourceType : char
 	{
-		/**
-		 * depreciated
-		 */
-		Script = 128i8,
-		Binary = 0,
+		Unknown = 0,
+		Binary,
 		Text,
 		Image,
 		Audio,
@@ -21,8 +18,6 @@ namespace tudov
 	{
 		switch (resourceType)
 		{
-		case EResourceType::Script:
-			return "Script";
 		case EResourceType::Binary:
 			return "Binary";
 		case EResourceType::Text:
@@ -34,12 +29,11 @@ namespace tudov
 		case EResourceType::Font:
 			return "Font";
 		default:
-			return "";
+			return "Unknown";
 		}
 	}
 
 	NLOHMANN_JSON_SERIALIZE_ENUM(EResourceType, {
-	                                                {EResourceType::Script, "Script"},
 	                                                {EResourceType::Binary, "Binary"},
 	                                                {EResourceType::Text, "Text"},
 	                                                {EResourceType::Image, "Image"},

@@ -107,7 +107,7 @@ namespace tudov
 		void DeinitializeScript(ScriptID scriptID, std::string_view scriptName) override;
 		std::int32_t ThrowError(std::string_view message) noexcept override;
 
-		void SetReadonlyGlobal(const sol::string_view &key, sol::object value);
+		void SetReadonlyGlobal(const std::string_view &key, sol::object value);
 		sol::table &GetModGlobals(std::string_view sandboxKey, bool sandboxed) noexcept;
 		// void ResetSandboxedGlobal() noexcept;
 

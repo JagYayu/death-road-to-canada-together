@@ -14,15 +14,19 @@ namespace tudov
 	struct IGlobalStorageManager : public IEngineComponent
 	{
 		static constexpr decltype(auto) RootUser = "";
-		static constexpr decltype(auto) UserDirectoryPrefix = Constants::AppUserDirectoryPrefix;
+		static constexpr decltype(auto) UserDirectoryPrefix = Constants::DataUserDirectoryPrefix;
 
 		virtual ~IGlobalStorageManager() noexcept override = default;
 
 		virtual GlobalStorage &GetApplicationStorage() noexcept = 0;
+
 		virtual GlobalStorage &GetReadonlyStorage() noexcept = 0;
+
 		virtual GlobalStorage &GetUserStorage(std::string_view username = RootUser) noexcept = 0;
-		virtual bool HasUser(std::string_view username = RootUser) noexcept = 0;
-		virtual bool DeleteUser(std::string_view username = RootUser) noexcept = 0;
+
+		virtual bool HasUserStorage(std::string_view username = RootUser) noexcept = 0;
+
+		virtual bool DeleteUserStorage(std::string_view username = RootUser) noexcept = 0;
 	};
 
 	class GlobalStorageManager : public IGlobalStorageManager
@@ -42,7 +46,7 @@ namespace tudov
 		GlobalStorage &GetApplicationStorage() noexcept override;
 		GlobalStorage &GetReadonlyStorage() noexcept override;
 		GlobalStorage &GetUserStorage(std::string_view user = RootUser) noexcept override;
-		bool HasUser(std::string_view user = RootUser) noexcept override;
-		bool DeleteUser(std::string_view user = RootUser) noexcept override;
+		bool HasUserStorage(std::string_view user = RootUser) noexcept override;
+		bool DeleteUserStorage(std::string_view user = RootUser) noexcept override;
 	};
 } // namespace tudov

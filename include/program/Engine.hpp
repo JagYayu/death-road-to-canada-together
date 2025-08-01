@@ -27,10 +27,7 @@ namespace tudov
 	struct IWindow;
 	class Context;
 	class Log;
-	class FontResources;
-	class ImageResources;
-	class ShaderManager;
-	class TextResources;
+	class ResourcesCollection;
 
 	/**
 	 * @brief Tudov game engine
@@ -103,6 +100,7 @@ namespace tudov
 
 		std::shared_ptr<Config> _config;
 		std::shared_ptr<Log> _log;
+		std::shared_ptr<ResourcesCollection> _resourcesCollection;
 
 		std::shared_ptr<ILuaAPI> _luaAPI;
 		std::shared_ptr<IGlobalStorageManager> _globalStorageManager;
@@ -115,10 +113,10 @@ namespace tudov
 		std::shared_ptr<IScriptLoader> _scriptLoader;
 		std::shared_ptr<IScriptProvider> _scriptProvider;
 
-		std::shared_ptr<FontResources> _fontResources;
-		std::shared_ptr<ImageResources> _imageResources;
-		std::shared_ptr<TextResources> _textResources;
-		std::shared_ptr<ShaderManager> shaderResources;
+		// std::shared_ptr<FontResources> _fontResources;
+		// std::shared_ptr<ImageResources> _imageResources;
+		// std::shared_ptr<TextResources> _textResources;
+		// std::shared_ptr<ShaderManager> shaderResources;
 
 		std::weak_ptr<IWindow> _mainWindow;
 		std::vector<std::shared_ptr<IWindow>> _windows;

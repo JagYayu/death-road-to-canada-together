@@ -244,12 +244,12 @@ void EventManager::LuaAdd(const sol::object &event, const sol::object &func, con
 			return;
 		}
 
-		if (!event.valid() || !event.is<sol::string_view>())
+		if (!event.valid() || !event.is<std::string_view>())
 		{
 			scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#1 `event` type, expected string, got {}", GetLuaTypeStringView(event.get_type())));
 			return;
 		}
-		std::string_view eventName = event.as<sol::string_view>();
+		std::string_view eventName = event.as<std::string_view>();
 
 		if (!func.valid() || !func.is<sol::function>())
 		{
@@ -263,9 +263,9 @@ void EventManager::LuaAdd(const sol::object &event, const sol::object &func, con
 		{
 			name_ = std::nullopt;
 		}
-		else if (name.is<sol::string_view>())
+		else if (name.is<std::string_view>())
 		{
-			name_ = name.as<sol::string_view>();
+			name_ = name.as<std::string_view>();
 		}
 		else
 		{
@@ -278,9 +278,9 @@ void EventManager::LuaAdd(const sol::object &event, const sol::object &func, con
 		{
 			order_ = std::nullopt;
 		}
-		else if (order.is<sol::string_view>())
+		else if (order.is<std::string_view>())
 		{
-			order_ = order.as<sol::string_view>();
+			order_ = order.as<std::string_view>();
 		}
 		else
 		{
@@ -297,9 +297,9 @@ void EventManager::LuaAdd(const sol::object &event, const sol::object &func, con
 		{
 			key_ = AddHandlerArgs::Key(key.as<std::double_t>());
 		}
-		else if (key.is<sol::string_view>())
+		else if (key.is<std::string_view>())
 		{
-			key_ = AddHandlerArgs::Key(std::string(key.as<sol::string_view>()));
+			key_ = AddHandlerArgs::Key(std::string(key.as<std::string_view>()));
 		}
 		else
 		{
@@ -366,8 +366,8 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 		}
 
 		EventID eventID = false;
-		std::string_view eventName = event.as<sol::string_view>();
-		if (event.is<sol::string_view>())
+		std::string_view eventName = event.as<std::string_view>();
+		if (event.is<std::string_view>())
 		{
 			eventID = GetEventIDByName(eventName);
 			if (!eventID)
@@ -394,12 +394,12 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 				{
 					break;
 				}
-				if (!val.is<sol::string_view>())
+				if (!val.is<std::string_view>())
 				{
 					scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#2 'orders' type, table must be a string array, contains {}", GetLuaTypeStringView(tbl[i].get_type())));
 					return false;
 				}
-				orders_.emplace_back(val.as<sol::string_view>());
+				orders_.emplace_back(val.as<std::string_view>());
 			}
 		}
 		else
@@ -419,7 +419,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 				{
 					keys_.emplace_back(tbl[i].get<std::double_t>());
 				}
-				else if (tbl[i].is<sol::string_view>())
+				else if (tbl[i].is<std::string_view>())
 				{
 					keys_.emplace_back(tbl[i].get<std::string_view>());
 				}
@@ -487,7 +487,7 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 			}
 			eventInstance = it->second.get();
 		}
-		else if (event.is<sol::string_view>())
+		else if (event.is<std::string_view>())
 		{
 			auto eventName = event.as<std::string_view>();
 			auto &&it = _runtimeEvents.find(_eventName2ID[eventName]);
@@ -510,7 +510,7 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 		{
 			k.value = key.as<double>();
 		}
-		else if (key.is<sol::string_view>())
+		else if (key.is<std::string_view>())
 		{
 			k.value = key.as<std::string>();
 		}

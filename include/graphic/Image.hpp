@@ -1,24 +1,30 @@
 #pragma once
 
+#include "resource/Resource.hpp"
+#include <cstddef>
 #include <string_view>
+#include <vector>
 
-struct SDL_Surface;
+namespace tudov::impl
+{
+	using SDL_Surface = void;
+}
 
 namespace tudov
 {
-	class Image
+	class Image : public IResource
 	{
 	  private:
-		SDL_Surface *_sdlSurface;
+		impl::SDL_Surface *_sdlSurface;
 
 	  public:
-		explicit Image() noexcept;
+		explicit Image(const std::vector<std::byte> &bytes);
 		~Image() noexcept;
 
 		bool IsValid() noexcept;
 		void Initialize(std::string_view memory) noexcept;
 
-		SDL_Surface *GetSDLSurfaceHandle() noexcept;
-		const SDL_Surface *GetSDLSurfaceHandle()const noexcept;
+		impl::SDL_Surface *GetSDLSurfaceHandle() noexcept;
+		const impl::SDL_Surface *GetSDLSurfaceHandle() const noexcept;
 	};
 } // namespace tudov

@@ -1,11 +1,9 @@
 #pragma once
 
-#include "std::vector.hpp"
-#include "util/Micros.hpp"
-
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <vector>
 
 #define TUDOV_IMPL_MSG_OUT_OF_RANGE "Geometry index out of range"
 
@@ -67,9 +65,9 @@ namespace tudov::impl
 			return result;
 		}
 
-		inline constexpr std::vector<N, T> Origin() const noexcept
+		inline constexpr std::vector<T> Origin() const noexcept
 		{
-			return std::vector<N, T>(this->point);
+			return std::vector<T>(this->point);
 		}
 
 		inline constexpr T Size() const noexcept

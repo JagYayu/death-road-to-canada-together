@@ -3,6 +3,8 @@
 #include "Log.hpp"
 #include "Scopes.hpp"
 
+#include "json.hpp"
+
 #include "sol/table.hpp"
 #include "sol/types.hpp"
 

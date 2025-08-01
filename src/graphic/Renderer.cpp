@@ -4,6 +4,7 @@
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
 #include "resource/ImageResources.hpp"
+#include "resource/ResourcesCollection.hpp"
 
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_rect.h"
@@ -69,7 +70,7 @@ std::shared_ptr<Texture> Renderer::GetOrCreateImageTexture(ImageID imageID)
 	}
 	else [[unlikely]]
 	{
-		auto &&imageResources = _window.GetImageResources();
+		auto &&imageResources = _window.GetResourcesCollection().GetImageResources();
 		auto &&image = imageResources.GetResource(imageID);
 		if (!image)
 		{

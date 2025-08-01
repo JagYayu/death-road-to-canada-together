@@ -1,7 +1,6 @@
 #pragma once
 
-#include "util/CommonIteration.hpp"
-
+#include <filesystem>
 #include <functional>
 #include <string_view>
 #include <vector>
@@ -11,7 +10,7 @@ struct SDL_Storage;
 namespace tudov
 {
 	enum class EPathType;
-	enum class EStorageEnumerationResult;
+	enum class EStorageIterationResult;
 	struct IGlobalStorageManager;
 	struct PathInfo;
 
@@ -21,7 +20,7 @@ namespace tudov
 	struct IStorage
 	{
 		template <typename TCallbackArgs = void *>
-		using EnumerationCallbackFunction = std::function<EStorageEnumerationResult(std::string_view file, std::string_view directory, TCallbackArgs args)>;
+		using EnumerationCallbackFunction = std::function<EStorageIterationResult(const std::filesystem::path &path, const std::filesystem::path &directory, TCallbackArgs args)>;
 
 		virtual ~IStorage() noexcept = default;
 
@@ -31,25 +30,32 @@ namespace tudov
 
 		virtual bool IsReady() noexcept = 0;
 
-		virtual EStorageEnumerationResult EnumerateDirectory(std::string_view directoryPath, const EnumerationCallbackFunction<> &callback, void *callbackArgs = nullptr) noexcept = 0;
+		virtual EStorageIterationResult ForeachDirectory(const std::filesystem::path &directory, const EnumerationCallbackFunction<> &callback, void *callbackArgs = nullptr) noexcept = 0;
 
-		virtual bool Exists(std::string_view path) noexcept = 0;
+		virtual EStorageIterationResult ForeachDirectoryRecursed(const std::filesystem::path &directory, const EnumerationCallbackFunction<> &callback, std::uint32_t maxDepth = -1, void *callbackArgs = nullptr) noexcept;
+
+		virtual bool Exists(const std::filesystem::path &path) noexcept = 0;
 
 		// virtual PathInfo GetPathInfo(std::string_view path) noexcept = 0;
 
-		virtual std::uint64_t GetPathSize(std::string_view filePath) noexcept = 0;
-		virtual EPathType GetPathType(std::string_view path) noexcept = 0;
+		virtual std::uint64_t GetPathSize(const std::filesystem::path &filePath) noexcept = 0;
+		virtual EPathType GetPathType(const std::filesystem::path &path) noexcept = 0;
 
-		virtual std::vector<std::byte> ReadFileToBytes(std::string_view filePath) = 0;
+		virtual std::vector<std::byte> ReadFileToBytes(const std::filesystem::path &filePath) = 0;
 		// virtual std::string ReadFileToString(std::string_view filePath) = 0;
 
 		template <typename TCallbackArgs>
-		inline EStorageEnumerationResult EnumerateDirectory(std::string_view path, const EnumerationCallbackFunction<TCallbackArgs *> &callback, TCallbackArgs *callbackArgs = nullptr) noexcept
+		inline EStorageIterationResult ForeachDirectory(const std::filesystem::path &path, const EnumerationCallbackFunction<TCallbackArgs *> &callback, TCallbackArgs *callbackArgs = nullptr) noexcept
 		{
-			return EnumerateDirectory(path, callback, callbackArgs);
+			return ForeachDirectory(path, callback, callbackArgs);
 		}
 
-		// using Iteration = CommonIteration<EStorageEnumerationResult, std::string_view>;
+		// template <typename TCallbackArgs = void>
+		// inline EStorageIterationResult ForeachDirectoryRecursed(const std::filesystem::path &path, const EnumerationCallbackFunction<> &callback, TCallbackArgs *callbackArgs = nullptr) noexcept
+		// {
+		// }
+
+		// using Iteration = CommonIteration<EStorageIterationResult, std::string_view>;
 		// Iteration iteration;
 	};
 

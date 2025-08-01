@@ -1,7 +1,7 @@
 #include "data/ZipStorage.hpp"
 
 #include "data/PathType.hpp"
-#include "data/StorageEnumerationResult.hpp"
+#include "data/StorageIterationResult.hpp"
 
 #include <filesystem>
 #include <functional>
@@ -128,11 +128,11 @@ bool ZipStorage::IsReady() noexcept
 	return true;
 }
 
-EStorageEnumerationResult ZipStorage::EnumerateDirectory(std::string_view directory, const EnumerationCallbackFunction<> &callback, void *callbackArgs) noexcept
+EStorageIterationResult ZipStorage::ForeachDirectory(const std::filesystem::path& directory, const EnumerationCallbackFunction<> &callback, void *callbackArgs) noexcept
 {
 	if (unzGoToFirstFile(_unzip) != UNZ_OK)
 	{
-		return EStorageEnumerationResult::Failure;
+		return EStorageIterationResult::Failure;
 	}
 
 	do
@@ -154,28 +154,28 @@ EStorageEnumerationResult ZipStorage::EnumerateDirectory(std::string_view direct
 			continue;
 		}
 
-		std::string full_path{fileInZip};
-		if (full_path.find(directory) == 0)
+		std::string fillPath{fileInZip};
+		if (fillPath.find(directory.generic_string()) == 0)
 		{
-			EStorageEnumerationResult result = callback(full_path, directory, callbackArgs);
-			if (result != EStorageEnumerationResult::Continue)
+			EStorageIterationResult result = callback(fillPath, directory, callbackArgs);
+			if (result != EStorageIterationResult::Continue)
 			{
 				return result;
 			}
 		}
 	} while (unzGoToNextFile(_unzip) == UNZ_OK);
 
-	return EStorageEnumerationResult::Continue;
+	return EStorageIterationResult::Continue;
 }
 
-bool ZipStorage::Exists(std::string_view path) noexcept
+bool ZipStorage::Exists(const std::filesystem::path& path) noexcept
 {
-	return unzLocateFile(_unzip, path.data(), true) == UNZ_OK;
+	return unzLocateFile(_unzip, path.generic_string().c_str(), true) == UNZ_OK;
 }
 
-std::uint64_t ZipStorage::GetPathSize(std::string_view filePath) noexcept
+std::uint64_t ZipStorage::GetPathSize(const std::filesystem::path& filePath) noexcept
 {
-	if (unzLocateFile(_unzip, filePath.data(), 1) != UNZ_OK)
+	if (unzLocateFile(_unzip, filePath.generic_string().c_str(), 1) != UNZ_OK)
 	{
 		return 0;
 	}
@@ -189,9 +189,9 @@ std::uint64_t ZipStorage::GetPathSize(std::string_view filePath) noexcept
 	return file_info.uncompressed_size;
 }
 
-EPathType ZipStorage::GetPathType(std::string_view filePath) noexcept
+EPathType ZipStorage::GetPathType(const std::filesystem::path& filePath) noexcept
 {
-	if (unzLocateFile(_unzip, filePath.data(), 1) != UNZ_OK)
+	if (unzLocateFile(_unzip, filePath.generic_string().c_str(), 1) != UNZ_OK)
 	{
 		return EPathType::None;
 	}
@@ -208,9 +208,9 @@ EPathType ZipStorage::GetPathType(std::string_view filePath) noexcept
 	}
 }
 
-std::vector<std::byte> ZipStorage::ReadFileToBytes(std::string_view filePath)
+std::vector<std::byte> ZipStorage::ReadFileToBytes(const std::filesystem::path& filePath)
 {
-	if (unzLocateFile(_unzip, filePath.data(), true) != UNZ_OK)
+	if (unzLocateFile(_unzip, filePath.generic_string().c_str(), true) != UNZ_OK)
 	{
 		throw std::runtime_error("File not found in zip");
 	}

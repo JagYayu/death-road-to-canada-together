@@ -55,7 +55,8 @@ void Texture::Initialize(Image &image)
 {
 	AssertUninitialized(_sdlTexture);
 
-	_sdlTexture = SDL_CreateTextureFromSurface(renderer.GetSDLRendererHandle(), image.GetSDLSurfaceHandle());
+	auto sdlSurface = static_cast<SDL_Surface *>(image.GetSDLSurfaceHandle());
+	_sdlTexture = SDL_CreateTextureFromSurface(renderer.GetSDLRendererHandle(), sdlSurface);
 
 	SDL_SetTextureScaleMode(_sdlTexture, SDL_SCALEMODE_NEAREST);
 }

@@ -12,9 +12,7 @@ namespace tudov
 	class Config;
 	class Engine;
 	class MainArgs;
-	class ImageResources;
-	class FontResources;
-	class TextResources;
+	class ResourcesCollection;
 
 	/**
 	 * Context of tudov engine.
@@ -40,9 +38,7 @@ namespace tudov
 		IScriptLoader &GetScriptLoader();
 		IScriptProvider &GetScriptProvider();
 		IGlobalStorageManager &GetGlobalStorageManager();
-		ImageResources &GetImageResources();
-		FontResources &GetFontResources();
-		TextResources &GetTextResources();
+		ResourcesCollection &GetResourcesCollection();
 
 		inline const Engine &GetEngine() const
 		{
@@ -89,19 +85,9 @@ namespace tudov
 			return This()->GetGlobalStorageManager();
 		}
 
-		inline const ImageResources &GetImageResources() const
+		inline const ResourcesCollection &GetResourcesCollection() const
 		{
-			return const_cast<Context *>(this)->GetImageResources();
-		}
-
-		inline const FontResources &GetFontResources() const
-		{
-			return const_cast<Context *>(this)->GetFontResources();
-		}
-
-		inline const TextResources &GetTextResources() const
-		{
-			return const_cast<Context *>(this)->GetTextResources();
+			return const_cast<Context *>(this)->GetResourcesCollection();
 		}
 
 	  private:
@@ -215,34 +201,14 @@ namespace tudov
 			return GetContext().GetGlobalStorageManager();
 		}
 
-		inline FontResources &GetFontResources() noexcept
+		inline ResourcesCollection &GetResourcesCollection() noexcept
 		{
-			return GetContext().GetFontResources();
+			return GetContext().GetResourcesCollection();
 		}
 
-		inline const FontResources &GetFontResources() const noexcept
+		inline const ResourcesCollection &GetResourcesCollection() const noexcept
 		{
-			return GetContext().GetFontResources();
-		}
-
-		inline ImageResources &GetImageResources() noexcept
-		{
-			return GetContext().GetImageResources();
-		}
-
-		inline const ImageResources &GetImageResources() const noexcept
-		{
-			return GetContext().GetImageResources();
-		}
-
-		inline TextResources &GetTextResources() noexcept
-		{
-			return GetContext().GetTextResources();
-		}
-
-		inline const TextResources &GetTextResources() const noexcept
-		{
-			return GetContext().GetTextResources();
+			return GetContext().GetResourcesCollection();
 		}
 	};
 } // namespace tudov

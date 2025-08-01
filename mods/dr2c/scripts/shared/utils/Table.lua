@@ -1,7 +1,7 @@
 local Function = require "dr2c.shared.utils.Function"
 local Table = {}
 
-local _ScriptEngine = require "#lua.ScriptEngine"
+local _ScriptEngine = require "#ScriptEngine"
 
 --- Lock a table's metatable, which can no longer be accessed by `getmetatable` functions in sandboxed scripts.
 --- @param tbl table

@@ -3,7 +3,7 @@
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
-#include "resource/TextResource.hpp"
+#include "resource/Text.hpp"
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Resources.hpp"
-#include "TextResource.hpp"
+#include "Text.hpp"
 #include "util/Definitions.hpp"
 
 #include <string_view>

@@ -1,6 +1,8 @@
 #include "util/Log.hpp"
 #include "util/Utils.hpp"
 
+#include "json.hpp"
+
 #include <cassert>
 #include <chrono>
 #include <format>
@@ -95,8 +97,9 @@ bool Log::SetVerbosity(const std::string &module, EVerbosity verb) noexcept
 	return false;
 }
 
-void Log::UpdateVerbosities(const nlohmann::json &config)
+void Log::UpdateVerbosities(const void *jsonConfig)
 {
+	auto config = *static_cast<const nlohmann::json *>(jsonConfig);
 	if (!config.is_object())
 	{
 		GetInstance().Warn("Cannot update verbosities by receiving a variable that not a json object");

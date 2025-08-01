@@ -65,21 +65,21 @@ void ScriptEngine::Initialize() noexcept
 	_luaThrowModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::function>();
 
 	{
-		auto &&inspectModule = scriptLoader.Load("#lua.inspect");
+		auto &&inspectModule = scriptLoader.Load("#inspect");
 		if (inspectModule != nullptr)
 		{
 			_luaInspect = inspectModule->GetTable().raw_get<sol::function>("inspect");
 
-			AssertLuaValue(_luaInspect, "#lua.inspect.inspect");
+			AssertLuaValue(_luaInspect, "#inspect.inspect");
 		}
 		else
 		{
-			Fatal("Could not find core lua module \"#lua.inspect\"!");
+			Fatal("Could not find core lua module \"#inspect\"!");
 		}
 	}
 
 	{
-		auto &&engineModule = scriptLoader.Load("Could not find core lua module \"#lua.ScriptEngine\"");
+		auto &&engineModule = scriptLoader.Load("#ScriptEngine");
 		if (engineModule != nullptr)
 		{
 			auto &&scriptEngineModule = engineModule->GetTable();
@@ -89,13 +89,13 @@ void ScriptEngine::Initialize() noexcept
 			_luaPostProcessModGlobals = scriptEngineModule.raw_get<sol::function>("postProcessModGlobals");
 			_luaPostProcessScriptGlobals = scriptEngineModule.raw_get<sol::function>("postProcessScriptGlobals");
 
-			AssertLuaValue(_luaMarkAsLocked, "#lua.ScriptEngine.markAsLocked");
-			AssertLuaValue(_luaPostProcessModGlobals, "#lua.ScriptEngine.postProcessModGlobals");
-			AssertLuaValue(_luaPostProcessScriptGlobals, "#lua.ScriptEngine.postProcessScriptGlobals");
+			AssertLuaValue(_luaMarkAsLocked, "#ScriptEngine.markAsLocked");
+			AssertLuaValue(_luaPostProcessModGlobals, "#ScriptEngine.postProcessModGlobals");
+			AssertLuaValue(_luaPostProcessScriptGlobals, "#ScriptEngine.postProcessScriptGlobals");
 		}
 		else
 		{
-			Fatal("Could not find core lua module \"#lua.ScriptEngine\"!");
+			Fatal("Could not find core lua module \"#ScriptEngine\"!");
 		}
 	}
 
@@ -123,7 +123,7 @@ sol::state_view &ScriptEngine::GetState()
 	return _lua;
 }
 
-void ScriptEngine::SetReadonlyGlobal(const sol::string_view &key, sol::object value)
+void ScriptEngine::SetReadonlyGlobal(const std::string_view &key, sol::object value)
 {
 	if (value.is<sol::table>())
 	{
@@ -271,7 +271,7 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 
 	scriptGlobals["log"] = Log::Get(scriptName);
 
-	scriptGlobals.set_function("persist", [this, scriptName](sol::string_view key, sol::object defaultValue, const sol::function &getter)
+	scriptGlobals.set_function("persist", [this, scriptName](std::string_view key, sol::object defaultValue, const sol::function &getter)
 	{
 		if (defaultValue == sol::nil) [[unlikely]]
 		{
@@ -303,7 +303,7 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 		}
 	});
 
-	scriptGlobals.set_function("require", [this, scriptGlobals, scriptID](const sol::string_view &targetScriptName) -> sol::object
+	scriptGlobals.set_function("require", [this, scriptGlobals, scriptID](const std::string_view &targetScriptName) -> sol::object
 	{
 		try
 		{

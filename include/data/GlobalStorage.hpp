@@ -2,7 +2,6 @@
 
 #include "Storage.hpp"
 #include "util/Log.hpp"
-#include <string_view>
 
 struct SDL_Storage;
 
@@ -28,17 +27,17 @@ namespace tudov
 
 		bool CanRead() noexcept override;
 
-		EStorageEnumerationResult EnumerateDirectory(std::string_view path, const EnumerationCallbackFunction<> &callback, void *callbackArgs = nullptr) noexcept override;
+		EStorageIterationResult ForeachDirectory(const std::filesystem::path &path, const EnumerationCallbackFunction<> &callback, void *callbackArgs = nullptr) noexcept override;
 
-		bool Exists(std::string_view path) noexcept override;
+		bool Exists(const std::filesystem::path &path) noexcept override;
 
-		// PathInfo GetPathInfo(std::string_view path) noexcept override;
+		// PathInfo GetPathInfo(const std::filesystem::path & path) noexcept override;
 
-		std::uint64_t GetPathSize(std::string_view filePath) noexcept override;
-		EPathType GetPathType(std::string_view path) noexcept override;
+		std::uint64_t GetPathSize(const std::filesystem::path &filePath) noexcept override;
+		EPathType GetPathType(const std::filesystem::path &path) noexcept override;
 
-		std::vector<std::byte> ReadFileToBytes(std::string_view filePath) override;
-		// std::string ReadFileToString(std::string_view filePath) override;
+		std::vector<std::byte> ReadFileToBytes(const std::filesystem::path &filePath) override;
+		// std::string ReadFileToString(const std::filesystem::path & filePath) override;
 
 		virtual IGlobalStorageManager &GetGlobalStorageManager() noexcept = 0;
 

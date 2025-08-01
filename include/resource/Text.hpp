@@ -2,9 +2,11 @@
 
 #include "Resource.hpp"
 
+#include <cstddef>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 namespace tudov
 {
@@ -17,9 +19,14 @@ namespace tudov
 		explicit TextResource() noexcept = default;
 		~TextResource() noexcept override = default;
 
-		template <typename... TArgs>
-		inline explicit TextResource(TArgs &&...args) noexcept
-		    : _str(std::forward<TArgs>(args)...)
+		explicit TextResource(std::vector<std::byte> bytes) noexcept
+		{
+			std::string_view view{reinterpret_cast<const char *>(bytes.data()), bytes.size()};
+			_str = std::string(view);
+		}
+
+		explicit TextResource(std::string_view str) noexcept
+		    : _str(str)
 		{
 		}
 

@@ -1,18 +1,24 @@
 #include "data/AssetsManager.hpp"
 
-#include "FileWatch.hpp"
+#include "data/Constants.hpp"
 #include "data/GlobalStorage.hpp"
 #include "data/GlobalStorageLocation.hpp"
 #include "data/GlobalStorageManager.hpp"
-#include "data/StorageEnumerationResult.hpp"
+#include "data/StorageIterationResult.hpp"
 #include "data/ZipStorage.hpp"
 #include "program/Engine.hpp"
+#include "resource/ResourcesCollection.hpp"
 #include "util/FileChangeType.hpp"
+
+#include "FileWatch.hpp"
 
 #include <filesystem>
 #include <memory>
 #include <string_view>
+#include <tuple>
 #include <vector>
+
+#undef UpdateResource
 
 using namespace tudov;
 
@@ -43,6 +49,11 @@ Log &AssetsManager::GetLog() noexcept
 	return *Log::Get("AssetsManager");
 }
 
+DelegateEvent<const std::filesystem::path &, EFileChangeType> &AssetsManager::GetOnDeveloperFilesTrigger() noexcept
+{
+	return _developerFilesTrigger;
+}
+
 void AssetsManager::Initialize() noexcept
 {
 	LoadAssetsFromPackageFiles();
@@ -57,12 +68,12 @@ void AssetsManager::LoadAssetsFromPackageFiles() noexcept
 	{
 		ZipStorage zipStorage{bytes};
 
-		zipStorage.EnumerateDirectory("", [this](std::string_view filePath, std::string_view, void *) -> EStorageEnumerationResult
+		zipStorage.ForeachDirectory("", [this](const std::filesystem::path &filePath, const std::filesystem::path &, void *) -> EStorageIterationResult
 		{
-			Info("Loading contents from package: {}", filePath);
+			Info("Loading contents from package: {}", filePath.generic_string());
 			// TODO
 
-			return EStorageEnumerationResult::Continue;
+			return EStorageIterationResult::Continue;
 		});
 	}
 }
@@ -73,7 +84,7 @@ std::vector<std::vector<std::byte>> AssetsManager::CollectPackageFileBytes() noe
 
 	GlobalStorage &applicationGlobalStorage = GetGlobalStorageManager().GetApplicationStorage();
 
-	applicationGlobalStorage.EnumerateDirectory("", [this, &applicationGlobalStorage, &zipFileBytes](std::string_view filePath, std::string_view directoryPath, void *) -> EStorageEnumerationResult
+	applicationGlobalStorage.ForeachDirectory("", [this, &applicationGlobalStorage, &zipFileBytes](const std::filesystem::path &filePath, const std::filesystem::path &directoryPath, void *) -> EStorageIterationResult
 	{
 		if (std::filesystem::is_regular_file(filePath))
 		{
@@ -83,8 +94,7 @@ std::vector<std::vector<std::byte>> AssetsManager::CollectPackageFileBytes() noe
 			}
 		}
 
-		Info("dir: {}, path: {}", directoryPath, filePath);
-		return EStorageEnumerationResult::Continue;
+		return EStorageIterationResult::Continue;
 	});
 
 	return zipFileBytes;
@@ -92,22 +102,44 @@ std::vector<std::vector<std::byte>> AssetsManager::CollectPackageFileBytes() noe
 
 void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 {
+	Info("Loading assets from developer directory");
+
 	GlobalStorage &applicationGlobalStorage = GetGlobalStorageManager().GetApplicationStorage();
+	if (!applicationGlobalStorage.CanRead())
+	{
+		return;
+	}
+
+	std::vector<std::tuple<std::string, std::vector<std::byte>>> assets{};
+
+	applicationGlobalStorage.ForeachDirectoryRecursed(Constants::DataDeveloperAssetsDirectory, [this, &assets, &applicationGlobalStorage](const std::filesystem::path &path, const std::filesystem::path &directory, void *) -> EStorageIterationResult
+	{
+		if (path.has_extension())
+		{
+			auto fileFillPath = directory / path;
+			auto resourcePath = Constants::DataVirtualStorageRootApp / std::filesystem::relative(fileFillPath, Constants::DataDeveloperAssetsDirectory);
+			auto &&bytes = applicationGlobalStorage.ReadFileToBytes(fileFillPath);
+
+			auto path = resourcePath.generic_string();
+			Trace("\"{}\", {} bytes", path, bytes.size());
+			assets.emplace_back(path, bytes);
+		}
+
+		return EStorageIterationResult::Continue;
+	});
+
+	for (auto &&[path, bytes] : assets)
+	{
+		GetResourcesCollection().LoadResource(path, bytes);
+	}
 
 	try
 	{
-		auto path = GlobalStorageLocation::GetPath(EGlobalStorageLocation::Application) / Constants::AppDeveloperAssetsDirectory;
-		_developerDirectoryWatch = new DeveloperDirectoryWatch(path.string(), [this](std::string_view path, const filewatch::Event changeType)
+		auto absolutePath = GlobalStorageLocation::GetPath(EGlobalStorageLocation::Application) / Constants::DataDeveloperAssetsDirectory;
+		_developerDirectoryWatch = new DeveloperDirectoryWatch(absolutePath.generic_string(), [this](std::string_view path, const filewatch::Event changeType)
 		{
-			DeveloperDirectoryWatchCallback(path, static_cast<EFileChangeType>(changeType));
-		});
-
-		applicationGlobalStorage.EnumerateDirectory("", [this](std::string_view filePath, std::string_view, void *) -> EStorageEnumerationResult
-		{
-			Info("Loading contents from package: {}", filePath);
-			// TODO
-
-			return EStorageEnumerationResult::Continue;
+			auto filePath = Constants::DataDeveloperAssetsDirectory / std::filesystem::path(path);
+			DeveloperDirectoryWatchCallback(filePath, static_cast<EFileChangeType>(changeType));
 		});
 	}
 	catch (std::exception &e)
@@ -116,16 +148,25 @@ void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 	}
 }
 
-void AssetsManager::DeveloperDirectoryWatchCallback(std::string_view filePath, EFileChangeType type)
+void AssetsManager::DeveloperDirectoryWatchCallback(const std::filesystem::path &filePath, EFileChangeType type)
 {
-	std::filesystem::path pFile = filePath;
-	auto fileExtension = pFile.extension();
+	auto fileExtension = filePath.extension();
+
+	std::string file = filePath.generic_string();
+	Debug("File in developer directory changed, file: \"{}\", type: {}", file, static_cast<int>(type));
+
+	_developerFilesTrigger.Invoke(filePath, std::move(type));
+
+	auto &applicationGlobalStorage = GetGlobalStorageManager().GetApplicationStorage();
+	auto &resourcesCollection = GetResourcesCollection();
+	auto bytes = applicationGlobalStorage.ReadFileToBytes(file);
 
 	switch (type)
 	{
 	case EFileChangeType::Added:
 	case EFileChangeType::Removed:
 	case EFileChangeType::Modified:
+		resourcesCollection.UpdateResource(filePath, bytes);
 	case EFileChangeType::RenamedOld:
 	case EFileChangeType::RenamedNew:
 		break;

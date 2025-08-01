@@ -1,12 +1,14 @@
 #include "data/GlobalStorage.hpp"
 
 #include "data/PathInfo.hpp"
-#include "data/StorageEnumerationResult.hpp"
+#include "data/StorageIterationResult.hpp"
 
 #include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_storage.h"
 #include "SDL3/SDL_timer.h"
 
+#include <algorithm>
+#include <filesystem>
 #include <stdexcept>
 #include <string_view>
 
@@ -45,7 +47,7 @@ struct StorageEnumerateDirectoryCallbackUserdata
 {
 	const IStorage::EnumerationCallbackFunction<> &callback;
 	void *callbackArgs;
-	EStorageEnumerationResult result;
+	EStorageIterationResult result;
 };
 
 SDL_EnumerationResult StorageEnumerateDirectoryCallback(void *userdata, const char *dirname, const char *fname)
@@ -57,78 +59,82 @@ SDL_EnumerationResult StorageEnumerateDirectoryCallback(void *userdata, const ch
 	return static_cast<SDL_EnumerationResult>(storageUserdata->result);
 }
 
-EStorageEnumerationResult GlobalStorage::EnumerateDirectory(std::string_view path, const IStorage::EnumerationCallbackFunction<> &callback, void *callbackArgs) noexcept
+EStorageIterationResult ForeachDirectoryImpl(SDL_Storage *_sdlStorage, const std::filesystem::path &path, const IStorage::EnumerationCallbackFunction<> &callback, void *callbackArgs)
 {
-	for (std::size_t i = 0; i < 200; ++i) // TODO
-	{
-		if (IsReady())
-		{
-			break;
-		}
-		SDL_Delay(1);
-	}
-
 	StorageEnumerateDirectoryCallbackUserdata userdata{
 	    .callback = callback,
 	    .callbackArgs = callbackArgs,
-	    .result = EStorageEnumerationResult::Continue,
+	    .result = EStorageIterationResult::Continue,
 	};
-	SDL_EnumerateStorageDirectory(_sdlStorage, path.data(), StorageEnumerateDirectoryCallback, &userdata);
+	SDL_EnumerateStorageDirectory(_sdlStorage, path.generic_string().c_str(), StorageEnumerateDirectoryCallback, &userdata);
 	return userdata.result;
 }
 
-bool GlobalStorage::Exists(std::string_view path) noexcept
+EStorageIterationResult GlobalStorage::ForeachDirectory(const std::filesystem::path &path, const IStorage::EnumerationCallbackFunction<> &callback, void *callbackArgs) noexcept
+{
+	if (IsReady()) [[unlikely]]
+	{
+		return ForeachDirectoryImpl(_sdlStorage, path, callback, callbackArgs);
+	}
+
+	return EStorageIterationResult::Failure;
+}
+
+bool GlobalStorage::Exists(const std::filesystem::path &path) noexcept
 {
 	SDL_PathInfo info;
-	SDL_GetStoragePathInfo(_sdlStorage, path.data(), &info);
+	SDL_GetStoragePathInfo(_sdlStorage, path.generic_string().c_str(), &info);
 	return info.type != SDL_PATHTYPE_NONE;
 }
 
-// PathInfo GlobalStorage::GetPathInfo(std::string_view path) noexcept
+// PathInfo GlobalStorage::GetPathInfo(const std::filesystem::path &path) noexcept
 // {
 // 	SDL_PathInfo info;
 // 	SDL_GetStoragePathInfo(_storage, path.data(), &info);
 // 	return std::bit_cast<PathInfo>(info);
 // }
 
-std::uint64_t GlobalStorage::GetPathSize(std::string_view filePath) noexcept
+std::uint64_t GlobalStorage::GetPathSize(const std::filesystem::path &filePath) noexcept
 {
-	// TODO query directory path size?
 	std::uint64_t size = 0;
-	SDL_GetStorageFileSize(_sdlStorage, filePath.data(), &size);
+	SDL_GetStorageFileSize(_sdlStorage, filePath.generic_string().c_str(), &size);
 	return size;
 }
 
-EPathType GlobalStorage::GetPathType(std::string_view path) noexcept
+EPathType GlobalStorage::GetPathType(const std::filesystem::path &path) noexcept
 {
 	SDL_PathInfo info;
-	SDL_GetStoragePathInfo(_sdlStorage, path.data(), &info);
+	SDL_GetStoragePathInfo(_sdlStorage, path.generic_string().c_str(), &info);
 	return static_cast<EPathType>(info.type);
 }
 
-std::vector<std::byte> GlobalStorage::ReadFileToBytes(std::string_view filePath)
+std::vector<std::byte> GlobalStorage::ReadFileToBytes(const std::filesystem::path &filePath)
 {
-	if (CanRead())
+	if (!CanRead()) [[unlikely]]
 	{
 		throw std::runtime_error("can't read");
 	}
 
-	auto size = GetPathSize(filePath);
-	void *dst = SDL_malloc(size);
-	bool success = SDL_ReadStorageFile(_sdlStorage, "save0.sav", dst, size);
-	SDL_free(dst);
-
-	if (success)
+	std::size_t size = GetPathSize(filePath);
+	if (size == 0) [[unlikely]]
 	{
-		auto bytePtr = static_cast<const std::byte *>(dst);
-		return std::vector<std::byte>(bytePtr, bytePtr + size / sizeof(std::string::value_type));
-		// return (str, size / sizeof(std::string::value_type));
+		return {};
 	}
-	else
+
+	void *dst = SDL_malloc(size);
+	bool success = SDL_ReadStorageFile(_sdlStorage, filePath.generic_string().data(), dst, size);
+
+	if (!success)
 	{
+		SDL_free(dst);
 		auto err = SDL_GetError();
 		throw std::runtime_error(err);
 	}
+
+	auto bytePtr = static_cast<const std::byte *>(dst);
+	auto bytes = std::vector<std::byte>(bytePtr, bytePtr + size);
+	SDL_free(dst);
+	return bytes;
 }
 
 // std::string GlobalStorage::ReadFileToString(std::string_view filePath)

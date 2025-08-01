@@ -3,12 +3,10 @@
 #include "Micros.hpp"
 #include "program/Tudov.hpp"
 
-#include <json.hpp>
-#include <queue>
-#include <sol/lua_value.hpp>
-
 #include <atomic>
+#include <chrono>
 #include <mutex>
+#include <queue>
 
 namespace tudov
 {
@@ -69,7 +67,7 @@ namespace tudov
 		static void Quit() noexcept;
 		static std::optional<EVerbosity> GetVerbosity(const std::string &module) noexcept;
 		static bool SetVerbosity(const std::string &module, EVerbosity verb) noexcept;
-		static void UpdateVerbosities(const nlohmann::json &config);
+		static void UpdateVerbosities(const void *jsonConfig);
 		static std::optional<EVerbosity> GetVerbosityOverride(const std::string &module) noexcept;
 		static void SetVerbosityOverride(const std::string &module, EVerbosity verb) noexcept;
 		static void Exit() noexcept;

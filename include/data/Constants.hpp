@@ -8,9 +8,12 @@ namespace tudov
 	{
 		TE_CONSTANT AppName = "DR2CT";
 		TE_CONSTANT AppOrganization = "Tudov";
-		TE_CONSTANT AppConfigFile = "config.json";
-		TE_CONSTANT AppUserDirectoryPrefix = "user_";
-		TE_CONSTANT AppDeveloperAssetsDirectory = "dev";
+		TE_CONSTANT DataConfigFile = "config.json";
+		TE_CONSTANT DataUserDirectoryPrefix = "user_";
+		TE_CONSTANT DataDeveloperAssetsDirectory = "dev";
+		TE_CONSTANT DataVirtualStorageRootApp = "app";
+		TE_CONSTANT DataVirtualStorageRootMods = "mods";
+		TE_CONSTANT DataVirtualStorageRootUser = "user";
 		TE_CONSTANT NetworkChannelsLimit = 8ui8;
 		TE_CONSTANT NetworkServerMaximumClients = 4ui32;
 		TE_CONSTANT NetworkServerPassword = "";
@@ -22,7 +25,7 @@ namespace tudov
 
 	TE_CONSTANT AppName = Constants::AppName;
 	TE_CONSTANT AppOrganization = Constants::AppOrganization;
-	TE_CONSTANT AppConfigFile = Constants::AppConfigFile;
+	TE_CONSTANT AppConfigFile = Constants::DataConfigFile;
 	TE_CONSTANT NetworkChannelsLimit = Constants::NetworkChannelsLimit;
 	TE_CONSTANT NetworkServerMaximumClients = Constants::NetworkServerMaximumClients;
 	TE_CONSTANT NetworkServerPassword = Constants::NetworkServerPassword;

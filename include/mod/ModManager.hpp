@@ -59,7 +59,7 @@ namespace tudov
 		};
 
 	  public:
-		enum class ELoadState
+		enum class ELoadState : std::uint8_t
 		{
 			None = 0,
 			LoadPending = 1 << 0,

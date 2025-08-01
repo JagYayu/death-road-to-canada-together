@@ -17,12 +17,12 @@
 #include "resource/FontResources.hpp"
 #include "resource/ImageResources.hpp"
 #include "resource/ResourceType.hpp"
+#include "resource/ResourcesCollection.hpp"
 #include "resource/TextResources.hpp"
 #include "scripts/GameScripts.hpp"
 #include "util/Log.hpp"
 #include "util/MicrosImpl.hpp"
 #include "util/StringUtils.hpp"
-
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_timer.h"
@@ -49,10 +49,11 @@ Engine::Engine() noexcept
       _previousTick(0),
       _framerate(0),
       _luaAPI(std::make_shared<LuaAPI>()),
-      _fontResources(std::make_shared<FontResources>()),
-      _imageResources(std::make_shared<ImageResources>()),
-      _textResources(std::make_shared<TextResources>()),
-      shaderResources(nullptr), // TODO
+      _resourcesCollection(std::make_shared<ResourcesCollection>()),
+      //   _fontResources(std::make_shared<FontResources>()),
+      //   _imageResources(std::make_shared<ImageResources>()),
+      //   _textResources(std::make_shared<TextResources>()),
+      //   shaderResources(nullptr),
       // shaderResources(std::make_shared<ShaderManager>()),
       _mainWindow(),
       _windows(),
@@ -162,7 +163,7 @@ void Engine::Initialize() noexcept
 	{
 		_config->Load();
 		InitializeMainWindow();
-		InitializeResources();
+		// InitializeResources();
 
 		for (auto &&it = _components.begin(); it != _components.end(); ++it)
 		{
@@ -352,81 +353,81 @@ void Engine::InitializeMainWindow() noexcept
 
 void Engine::InitializeResources() noexcept
 {
-	Debug("Mounting resource files");
+	// Debug("Mounting resource files");
 
-	auto &&renderBackend = _config->GetRenderBackend();
+	// auto &&renderBackend = _config->GetRenderBackend();
 
-	// auto &&loadTexture = [this, renderBackend]() {
-	// 	switch (renderBackend) {
-	// 		textureManager.Load<>(file, window.renderer, std::string_view(data))
+	// // auto &&loadTexture = [this, renderBackend]() {
+	// // 	switch (renderBackend) {
+	// // 		textureManager.Load<>(file, window.renderer, std::string_view(data))
+	// // 	}
+	// // };
+
+	// std::unordered_map<EResourceType, std::uint32_t> fileCounts{};
+
+	// std::vector<std::regex> mountBitmapPatterns{};
+	// for (auto &&pattern : _config->GetMountBitmaps())
+	// {
+	// 	mountBitmapPatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
+	// }
+
+	// auto &&mountDirectories = _config->GetMountFiles();
+	// for (auto &&mountDirectory : _config->GetMountDirectories())
+	// {
+	// 	if (!std::filesystem::exists(mountDirectory.data()) || !std::filesystem::is_directory(mountDirectory.data()))
+	// 	{
+	// 		Warn("Invalid directory for mounting resources: {}", mountDirectory.data());
+	// 		continue;
 	// 	}
-	// };
 
-	std::unordered_map<EResourceType, std::uint32_t> fileCounts{};
+	// 	for (auto &entry : std::filesystem::recursive_directory_iterator(mountDirectory))
+	// 	{
+	// 		if (!entry.is_regular_file())
+	// 		{
+	// 			continue;
+	// 		}
 
-	std::vector<std::regex> mountBitmapPatterns{};
-	for (auto &&pattern : _config->GetMountBitmaps())
-	{
-		mountBitmapPatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
-	}
+	// 		auto &&path = entry.path();
+	// 		auto &&it = mountDirectories.find(path.extension().generic_string());
+	// 		if (it == mountDirectories.end())
+	// 		{
+	// 			continue;
+	// 		}
 
-	auto &&mountDirectories = _config->GetMountFiles();
-	for (auto &&mountDirectory : _config->GetMountDirectories())
-	{
-		if (!std::filesystem::exists(mountDirectory.data()) || !std::filesystem::is_directory(mountDirectory.data()))
-		{
-			Warn("Invalid directory for mounting resources: {}", mountDirectory.data());
-			continue;
-		}
+	// 		auto &&filePath = path.generic_string();
+	// 		auto imageID = _imageResources->Load(filePath);
+	// 		if (!imageID) [[unlikely]]
+	// 		{
+	// 			Error("Image ID of \"{}\" is 0!", filePath);
+	// 			continue;
+	// 		}
 
-		for (auto &entry : std::filesystem::recursive_directory_iterator(mountDirectory))
-		{
-			if (!entry.is_regular_file())
-			{
-				continue;
-			}
+	// 		auto &&image = _imageResources->GetResource(imageID);
+	// 		auto &&fileMemory = ReadFileToString(filePath, true);
+	// 		image->Initialize(fileMemory);
+	// 		if (image->IsValid())
+	// 		{
+	// 			fileCounts.try_emplace(it->second, 0).first->second++;
+	// 		}
 
-			auto &&path = entry.path();
-			auto &&it = mountDirectories.find(path.extension().string());
-			if (it == mountDirectories.end())
-			{
-				continue;
-			}
+	//		bitmap support
+	//		auto &&relative = std::filesystem::relative(path, mountDirectory).generic_string();
+	//		for (auto &&pattern : mountBitmapPatterns)
+	//		{
+	//			if (std::regex_match(relative, pattern))
+	//			{
+	//				fontResources.AddBitmapFont(std::make_shared<BitmapFont>(textureID, std::string_view(data)));
+	//				break;
+	//			}
+	//		}
+	// 	}
+	// }
 
-			auto &&filePath = path.generic_string();
-			auto imageID = _imageResources->Load(filePath);
-			if (!imageID) [[unlikely]]
-			{
-				Error("Image ID of \"{}\" is 0!", filePath);
-				continue;
-			}
-
-			auto &&image = _imageResources->GetResource(imageID);
-			auto &&fileMemory = ReadFileToString(filePath, true);
-			image->Initialize(fileMemory);
-			if (image->IsValid())
-			{
-				fileCounts.try_emplace(it->second, 0).first->second++;
-			}
-
-			// bitmap suppoert
-			// auto &&relative = std::filesystem::relative(path, mountDirectory).generic_string();
-			// for (auto &&pattern : mountBitmapPatterns)
-			// {
-			// 	if (std::regex_match(relative, pattern))
-			// 	{
-			// 		fontResources.AddBitmapFont(std::make_shared<BitmapFont>(textureID, std::string_view(data)));
-			// 		break;
-			// 	}
-			// }
-		}
-	}
-
-	Debug("Mounted all resource files");
-	for (auto [fileType, count] : fileCounts)
-	{
-		Info("{}: {}", ResourceTypeToStringView(fileType).data(), count);
-	}
+	// Debug("Mounted all resource files");
+	// for (auto [fileType, count] : fileCounts)
+	// {
+	// 	Info("{}: {}", ResourceTypeToStringView(fileType).data(), count);
+	// }
 }
 
 Log &Engine::GetLog() noexcept

@@ -44,7 +44,7 @@ bool FatalError_MessageBox(std::string_view errorMessage) noexcept
 
 	int id;
 	SDL_ShowMessageBox(&messageboxdata, &id);
-	return id == 0;
+	return id == buttonYes;
 }
 
 void Tudov::FatalError(std::string_view errorMessage) noexcept

@@ -27,7 +27,7 @@ namespace tudov
 		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 		void UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 
-		ImageID LuaGetID(const sol::string_view &image) noexcept;
-		sol::string_view LuaGetPath(ImageID id) noexcept;
+		ImageID LuaGetID(const std::string_view &image) noexcept;
+		std::string_view LuaGetPath(ImageID id) noexcept;
 	};
 } // namespace tudov

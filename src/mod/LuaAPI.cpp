@@ -6,10 +6,11 @@
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "program/Engine.hpp"
+#include "program/Window.hpp"
 #include "resource/FontResources.hpp"
 #include "resource/ImageResources.hpp"
+#include "resource/ResourcesCollection.hpp"
 
-#include "program/Window.hpp"
 #include "sol/property.hpp"
 
 using namespace tudov;
@@ -154,6 +155,8 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "setViewScaleMode", &RenderTarget::SetViewScaleMode,
 	            "update", &RenderTarget::Update);
 
+	// TE_USERTYPE(ResourcesCollection);
+
 	// TE_USERTYPE(Version,
 	//             "major", &Version::Major,
 	//             "minor", &Version::Minor,
@@ -161,8 +164,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	//             "patch", &Version::Patch);
 
 	lua["engine"] = &context.GetEngine();
-	lua["fonts"] = &context.GetFontResources();
-	lua["images"] = &context.GetImageResources();
+	lua["resources"] = &context.GetResourcesCollection();
 
 	lua["mods"] = &dynamic_cast<ModManager &>(context.GetModManager());
 	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
@@ -170,7 +172,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	lua["scriptLoader"] = &dynamic_cast<ScriptLoader &>(context.GetScriptLoader());
 	lua["scriptProvider"] = &dynamic_cast<ScriptProvider &>(context.GetScriptProvider());
 
-	lua.set_function("getModConfig", [this, &context](sol::string_view modUID) -> ModConfig *
+	lua.set_function("getModConfig", [this, &context](std::string_view modUID) -> ModConfig *
 	{
 		std::weak_ptr<Mod> &&mod = context.GetModManager().FindLoadedMod(modUID);
 		return mod.expired() ? nullptr : &mod.lock()->GetConfig();

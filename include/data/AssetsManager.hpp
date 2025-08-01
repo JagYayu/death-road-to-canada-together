@@ -1,5 +1,6 @@
 #pragma once
 
+#include "event/DelegateEvent.hpp"
 #include "program/EngineComponent.hpp"
 
 #include "util/Log.hpp"
@@ -37,6 +38,7 @@ namespace tudov
 		std::vector<PackInfo> _founded;
 		std::vector<PackInfo> _loaded;
 		void *_developerDirectoryWatch;
+		DelegateEvent<const std::filesystem::path &, EFileChangeType> _developerFilesTrigger;
 
 	  public:
 		explicit AssetsManager(Context &context) noexcept;
@@ -47,13 +49,20 @@ namespace tudov
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
 
+		DelegateEvent<const std::filesystem::path &, EFileChangeType> &GetOnDeveloperFilesTrigger() noexcept;
+
 		const std::vector<PackInfo> &GetFounded() const noexcept override;
 		const std::vector<PackInfo> &GetLoaded() const noexcept override;
+
+		inline const DelegateEvent<const std::filesystem::path &, EFileChangeType> &GetOnDeveloperFilesTrigger() const noexcept
+		{
+			return const_cast<AssetsManager *>(this)->GetOnDeveloperFilesTrigger();
+		}
 
 	  private:
 		void LoadAssetsFromPackageFiles() noexcept;
 		void LoadAssetsFromDeveloperDirectory() noexcept;
-		void DeveloperDirectoryWatchCallback(std::string_view filePath, EFileChangeType type);
+		void DeveloperDirectoryWatchCallback(const std::filesystem::path &filePath, EFileChangeType type);
 		std::vector<std::vector<std::byte>> CollectPackageFileBytes() noexcept;
 	};
 } // namespace tudov

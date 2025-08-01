@@ -9,7 +9,7 @@
 namespace tudov
 {
 	enum class EPathType;
-	
+
 	class ZipStorage : public IStorage
 	{
 	  protected:
@@ -26,18 +26,18 @@ namespace tudov
 
 		virtual bool IsReady() noexcept override;
 
-		EStorageEnumerationResult EnumerateDirectory(std::string_view directory, const EnumerationCallbackFunction<> &callback, void *callbackArgs = nullptr) noexcept override;
+		EStorageIterationResult ForeachDirectory(const std::filesystem::path &directory, const EnumerationCallbackFunction<> &callback, void *callbackArgs = nullptr) noexcept override;
 
-		virtual bool Exists(std::string_view path) noexcept override;
+		virtual bool Exists(const std::filesystem::path &path) noexcept override;
 
-		// virtual PathInfo GetPathInfo(std::string_view path) noexcept override;
+		// virtual PathInfo GetPathInfo(const std::filesystem::path& path) noexcept override;
 
-		virtual std::uint64_t GetPathSize(std::string_view filePath) noexcept override;
-		virtual EPathType GetPathType(std::string_view filePath) noexcept override;
+		virtual std::uint64_t GetPathSize(const std::filesystem::path &filePath) noexcept override;
+		virtual EPathType GetPathType(const std::filesystem::path &filePath) noexcept override;
 
-		virtual std::vector<std::byte> ReadFileToBytes(std::string_view filePath) override;
-		// virtual std::string ReadFileToString(std::string_view filePath) override;
+		virtual std::vector<std::byte> ReadFileToBytes(const std::filesystem::path &filePath) override;
+		// virtual std::string ReadFileToString(const std::filesystem::path& filePath) override;
 
-		// virtual std::uint64_t GetFileCompressedSize(std::string_view filePath) noexcept;
+		// virtual std::uint64_t GetFileCompressedSize(const std::filesystem::path& filePath) noexcept;
 	};
 } // namespace tudov

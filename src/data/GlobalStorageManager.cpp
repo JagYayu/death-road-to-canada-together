@@ -47,13 +47,13 @@ GlobalStorage &GlobalStorageManager::GetUserStorage(std::string_view username) n
 	return *it->second;
 }
 
-bool GlobalStorageManager::HasUser(std::string_view username) noexcept
+bool GlobalStorageManager::HasUserStorage(std::string_view username) noexcept
 {
 	// TODO
 	return true;
 }
 
-bool GlobalStorageManager::DeleteUser(std::string_view username) noexcept
+bool GlobalStorageManager::DeleteUserStorage(std::string_view username) noexcept
 {
 	return _users.erase(username);
 }

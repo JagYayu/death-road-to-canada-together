@@ -1,6 +1,7 @@
 #include "program/Context.hpp"
 #include "program/Engine.hpp"
 
+#include "resource/ResourcesCollection.hpp"
 #include "util/MicrosImpl.hpp"
 
 #include <stdexcept>
@@ -63,17 +64,7 @@ IGlobalStorageManager &Context::GetGlobalStorageManager()
 	return *GetEngine()._globalStorageManager;
 }
 
-ImageResources &Context::GetImageResources()
+ResourcesCollection &Context::GetResourcesCollection()
 {
-	return *GetEngine()._imageResources;
-}
-
-FontResources &Context::GetFontResources()
-{
-	return *GetEngine()._fontResources;
-}
-
-TextResources &Context::GetTextResources()
-{
-	return *GetEngine()._textResources;
+	return *GetEngine()._resourcesCollection;
 }

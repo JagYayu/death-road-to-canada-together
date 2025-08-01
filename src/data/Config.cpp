@@ -31,7 +31,7 @@ static const auto valueMountBitmaps = std::vector<std::string>{
     R"(fonts/.*\.png)",
 };
 static const auto valueMountDirectories = std::vector<std::string>{
-	"data",
+    "data",
     "gfx",
 };
 static const auto valueMountFiles = std::unordered_map<std::string, EResourceType>{
@@ -144,7 +144,7 @@ void Config::Load() noexcept
 			out << _config.dump(4);
 			out.close();
 		}
-		Log::UpdateVerbosities(::GetLog(_config));
+		Log::UpdateVerbosities(&::GetLog(_config));
 	}
 	catch (const std::exception &e)
 	{
