@@ -5,6 +5,7 @@
 #include "data/GlobalStorageLocation.hpp"
 #include "data/GlobalStorageManager.hpp"
 #include "data/HierarchyIterationResult.hpp"
+#include "data/VirtualFileSystem.hpp"
 #include "data/ZipStorage.hpp"
 #include "program/Engine.hpp"
 #include "resource/ResourcesCollection.hpp"
@@ -130,21 +131,24 @@ void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 
 	for (auto &&[path, bytes] : assets)
 	{
-		GetResourcesCollection().LoadResource(path, bytes);
+		GetVirtualFileSystem().MountFile(path, bytes);
 	}
 
-	try
+	if (GlobalStorageLocation::IsAccessible())
 	{
-		auto absolutePath = GlobalStorageLocation::GetPath(EGlobalStorageLocation::Application) / Constants::DataDeveloperAssetsDirectory;
-		_developerDirectoryWatch = new DeveloperDirectoryWatch(absolutePath.generic_string(), [this](std::string_view path, const filewatch::Event changeType)
+		try
 		{
-			auto filePath = Constants::DataDeveloperAssetsDirectory / std::filesystem::path(path);
-			DeveloperDirectoryWatchCallback(filePath, static_cast<EFileChangeType>(changeType));
-		});
-	}
-	catch (std::exception &e)
-	{
-		Error("{}", e.what());
+			auto absolutePath = GlobalStorageLocation::GetPath(EGlobalStorageLocation::Application) / Constants::DataDeveloperAssetsDirectory;
+			_developerDirectoryWatch = new DeveloperDirectoryWatch(absolutePath.generic_string(), [this](std::string_view path, const filewatch::Event changeType)
+			{
+				auto filePath = Constants::DataDeveloperAssetsDirectory / std::filesystem::path(path);
+				DeveloperDirectoryWatchCallback(filePath, static_cast<EFileChangeType>(changeType));
+			});
+		}
+		catch (std::exception &e)
+		{
+			Error("{}", e.what());
+		}
 	}
 }
 
@@ -166,7 +170,7 @@ void AssetsManager::DeveloperDirectoryWatchCallback(const std::filesystem::path 
 	case EFileChangeType::Added:
 	case EFileChangeType::Removed:
 	case EFileChangeType::Modified:
-		resourcesCollection.UpdateResource(filePath, bytes);
+		resourcesCollection.ReloadResource(filePath, bytes);
 	case EFileChangeType::RenamedOld:
 	case EFileChangeType::RenamedNew:
 		break;

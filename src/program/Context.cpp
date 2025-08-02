@@ -68,3 +68,8 @@ ResourcesCollection &Context::GetResourcesCollection()
 {
 	return *GetEngine()._resourcesCollection;
 }
+
+VirtualFileSystem &Context::GetVirtualFileSystem()
+{
+	return *GetEngine()._virtualFileSystem;
+}

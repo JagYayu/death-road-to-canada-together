@@ -28,6 +28,7 @@ namespace tudov
 	class Context;
 	class Log;
 	class ResourcesCollection;
+	class VirtualFileSystem;
 
 	/**
 	 * @brief Tudov game engine
@@ -100,10 +101,11 @@ namespace tudov
 
 		std::shared_ptr<Config> _config;
 		std::shared_ptr<Log> _log;
-		std::shared_ptr<ResourcesCollection> _resourcesCollection;
-
 		std::shared_ptr<ILuaAPI> _luaAPI;
 		std::shared_ptr<IGlobalStorageManager> _globalStorageManager;
+		std::shared_ptr<VirtualFileSystem> _virtualFileSystem;
+
+		std::shared_ptr<ResourcesCollection> _resourcesCollection;
 		std::shared_ptr<IAssetsManager> _assetsManager;
 		std::shared_ptr<INetworkManager> _networkManager;
 		std::shared_ptr<IModManager> _modManager;

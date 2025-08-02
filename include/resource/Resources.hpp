@@ -1,24 +1,17 @@
 #pragma once
 
-#include "data/Hierarchy.hpp"
-#include "data/HierarchyIterationResult.hpp"
 #include "util/Definitions.hpp"
 #include "util/Log.hpp"
 
-#include <filesystem>
-#include <functional>
-#include <map>
 #include <stdexcept>
-#include <vector>
+#include <unordered_map>
 
 namespace tudov
 {
 	template <typename TResource>
-	class Resources : public IHierarchy<TResource &>
+	class Resources
 	{
 	  public:
-		using Path = IHierarchy<TResource>::Path;
-
 		struct Entry
 		{
 			std::string path;
@@ -29,8 +22,8 @@ namespace tudov
 		std::shared_ptr<Log> _log;
 		ResourceID _latestID = 0;
 
-		std::map<std::string_view, ResourceID> _path2ID;
-		std::map<ResourceID, Entry> _id2Entry;
+		std::unordered_map<std::string_view, ResourceID> _path2ID;
+		std::unordered_map<ResourceID, Entry> _id2Entry;
 
 	  public:
 		explicit Resources() noexcept;
@@ -42,88 +35,88 @@ namespace tudov
 		}
 
 	  public:
-		inline EHierarchyElement Check(const Path &path) noexcept override
-		{
-			if (IsData(path))
-				return EHierarchyElement::Data;
-			if (IsDirectory(path))
-				return EHierarchyElement::Directory;
-			return EHierarchyElement::None;
-		}
+		// inline EHierarchyElement Check(const Path &path) noexcept override
+		// {
+		// 	if (IsData(path))
+		// 		return EHierarchyElement::Data;
+		// 	if (IsDirectory(path))
+		// 		return EHierarchyElement::Directory;
+		// 	return EHierarchyElement::None;
+		// }
 
-		inline bool IsData(const Path &path) noexcept override
-		{
-			std::string pathStr = path.generic_string();
-			auto &&it = _path2ID.find(pathStr.data());
-			return it != _path2ID.end();
-		}
+		// inline bool IsData(const Path &path) noexcept override
+		// {
+		// 	std::string pathStr = path.generic_string();
+		// 	auto &&it = _path2ID.find(pathStr.data());
+		// 	return it != _path2ID.end();
+		// }
 
-		inline bool IsDirectory(const Path &path) noexcept override
-		{
-			std::string pathStr = path.generic_string();
-			auto &&it = std::find_if(_path2ID.begin(), _path2ID.end(), [&pathStr](const auto &entry)
-			{
-				auto &&[itSub, _] = std::mismatch(pathStr.begin(), pathStr.end(), entry.first.begin(), entry.first.end());
-				return itSub == pathStr.end();
-			});
-			return it != _path2ID.end();
-		}
+		// inline bool IsDirectory(const Path &path) noexcept override
+		// {
+		// 	std::string pathStr = path.generic_string();
+		// 	auto &&it = std::find_if(_path2ID.begin(), _path2ID.end(), [&pathStr](const auto &entry)
+		// 	{
+		// 		auto &&[itSub, _] = std::mismatch(pathStr.begin(), pathStr.end(), entry.first.begin(), entry.first.end());
+		// 		return itSub == pathStr.end();
+		// 	});
+		// 	return it != _path2ID.end();
+		// }
 
-		inline bool IsNone(const Path &path) noexcept override
-		{
-			return !(IsNone(path) || IsDirectory(path));
-		}
+		// inline bool IsNone(const Path &path) noexcept override
+		// {
+		// 	return !(IsNone(path) || IsDirectory(path));
+		// }
 
-		TResource &Get(const Path &dataPath) override
-		{
-			std::string pathStr = dataPath.generic_string();
-			ResourceID id = GetResourceID(pathStr.data());
-			if (id == 0)
-			{
-				throw std::runtime_error("Resource not found");
-			}
+		// TResource &Get(const Path &dataPath) override
+		// {
+		// 	std::string pathStr = dataPath.generic_string();
+		// 	ResourceID id = GetResourceID(pathStr.data());
+		// 	if (id == 0)
+		// 	{
+		// 		throw std::runtime_error("Resource not found");
+		// 	}
 
-			return *GetResource(id);
-		}
+		// 	return *GetResource(id);
+		// }
 
-		inline EHierarchyIterationResult Foreach(const Path &directory, const IHierarchy<TResource &>::IterationCallback &callback, void *callbackArgs = nullptr) override
-		{
-			std::string prefix = directory.generic_string();
-			auto [lower, upper] = _path2ID.equal_range(prefix);
+		// inline EHierarchyIterationResult Foreach(const Path &directory, const IHierarchy<TResource &>::IterationCallback &callback, void *callbackArgs = nullptr) override
+		// {
+		// 	std::string prefix = directory.generic_string();
+		// 	auto [lower, upper] = _path2ID.equal_range(prefix);
 
-			while (lower != _path2ID.end() && lower->first.starts_with(prefix))
-			{
-				auto path = Path(lower->first);
-				ResourceID id = lower->second;
-				const Entry &entry = _id2Entry.at(id);
-				EHierarchyIterationResult result = callback(path, directory, callbackArgs);
+		// 	while (lower != _path2ID.end() && lower->first.starts_with(prefix))
+		// 	{
+		// 		auto path = Path(lower->first);
+		// 		ResourceID id = lower->second;
+		// 		const Entry &entry = _id2Entry.at(id);
+		// 		EHierarchyIterationResult result = callback(path, directory, callbackArgs);
 
-				if (result != EHierarchyIterationResult::Continue)
-				{
-					return result;
-				}
-				++lower;
-			}
+		// 		if (result != EHierarchyIterationResult::Continue)
+		// 		{
+		// 			return result;
+		// 		}
+		// 		++lower;
+		// 	}
 
-			return EHierarchyIterationResult::Continue;
-		}
+		// 	return EHierarchyIterationResult::Continue;
+		// }
 
-		inline std::vector<std::reference_wrapper<const Entry>> ListResources(const std::filesystem::path &path) const
-		{
-			std::vector<std::reference_wrapper<const Entry>> resources{};
-			std::string prefix = path.generic_string();
-			auto [lower, upper] = _path2ID.equal_range(prefix);
+		// inline std::vector<std::reference_wrapper<const Entry>> ListResources(const std::filesystem::path &path) const
+		// {
+		// 	std::vector<std::reference_wrapper<const Entry>> resources{};
+		// 	std::string prefix = path.generic_string();
+		// 	auto [lower, upper] = _path2ID.equal_range(prefix);
 
-			while (lower != _path2ID.end() && lower->first.starts_with(prefix))
-			{
-				ResourceID id = lower->second;
-				const Entry &entry = _id2Entry.at(id);
-				resources.emplace_back(std::reference_wrapper<const Entry>(entry));
-				++lower;
-			}
+		// 	while (lower != _path2ID.end() && lower->first.starts_with(prefix))
+		// 	{
+		// 		ResourceID id = lower->second;
+		// 		const Entry &entry = _id2Entry.at(id);
+		// 		resources.emplace_back(std::reference_wrapper<const Entry>(entry));
+		// 		++lower;
+		// 	}
 
-			return resources;
-		}
+		// 	return resources;
+		// }
 
 		inline std::shared_ptr<TResource> GetResource(ResourceID id) const noexcept
 		{

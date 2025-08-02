@@ -22,7 +22,7 @@ namespace tudov
 			Version version;
 		};
 
-		virtual ~IAssetsManager() noexcept = default;
+		~IAssetsManager() noexcept override = default;
 
 		virtual const std::vector<PackInfo> &GetFounded() const noexcept = 0;
 		virtual const std::vector<PackInfo> &GetLoaded() const noexcept = 0;

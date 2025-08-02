@@ -127,7 +127,7 @@ void CommonQuit(SDL_AppResult result) noexcept
 	Log::Quit();
 }
 
-#define TE_TEST_GPU_RENDERING
+// #define TE_TEST_GPU_RENDERING
 
 #ifdef TE_TEST_GPU_RENDERING
 
@@ -201,16 +201,18 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
-	auto &&app = Tudov::GetApplication();
-	if (app == nullptr)
 	{
-		return;
-	}
+		auto &&app = Tudov::GetApplication();
+		if (app == nullptr)
+		{
+			return;
+		}
 
-	if (result != SDL_APP_FAILURE)
-	{
-		app->Deinitialize();
-		app = nullptr;
+		if (result != SDL_APP_FAILURE)
+		{
+			app->Deinitialize();
+		}
+		Tudov::ReleaseApplication();
 	}
 
 	CommonQuit(result);

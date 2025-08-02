@@ -13,6 +13,7 @@ namespace tudov
 	class Engine;
 	class MainArgs;
 	class ResourcesCollection;
+	class VirtualFileSystem;
 
 	/**
 	 * Context of tudov engine.
@@ -39,6 +40,7 @@ namespace tudov
 		IScriptProvider &GetScriptProvider();
 		IGlobalStorageManager &GetGlobalStorageManager();
 		ResourcesCollection &GetResourcesCollection();
+		VirtualFileSystem &GetVirtualFileSystem();
 
 		inline const Engine &GetEngine() const
 		{
@@ -88,6 +90,11 @@ namespace tudov
 		inline const ResourcesCollection &GetResourcesCollection() const
 		{
 			return const_cast<Context *>(this)->GetResourcesCollection();
+		}
+
+		inline const VirtualFileSystem &GetVirtualFileSystem() const
+		{
+			return const_cast<Context *>(this)->GetVirtualFileSystem();
 		}
 
 	  private:
@@ -209,6 +216,16 @@ namespace tudov
 		inline const ResourcesCollection &GetResourcesCollection() const noexcept
 		{
 			return GetContext().GetResourcesCollection();
+		}
+
+		inline VirtualFileSystem &GetVirtualFileSystem() noexcept
+		{
+			return GetContext().GetVirtualFileSystem();
+		}
+
+		inline const VirtualFileSystem &GetVirtualFileSystem() const noexcept
+		{
+			return GetContext().GetVirtualFileSystem();
 		}
 	};
 } // namespace tudov

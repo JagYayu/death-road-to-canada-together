@@ -6,7 +6,6 @@
 
 #include "json.hpp"
 
-#include <memory>
 #include <optional>
 #include <string>
 
@@ -21,7 +20,7 @@ namespace tudov
 
 	  public:
 		explicit Config() noexcept;
-		~Config() noexcept;
+		~Config() noexcept override;
 
 	  private:
 		std::uint32_t GetPropertiesID() noexcept;

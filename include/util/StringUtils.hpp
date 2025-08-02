@@ -80,6 +80,9 @@ namespace tudov
 		return std::string{std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
 	}
 
+	/**
+	 * "dr2c/test/HelloWorld.lua" -> "dr2c.text.HelloWorld"
+	 */
 	inline std::string FilePathToLuaScriptName(const std::string &filePath)
 	{
 		std::string result = filePath;
@@ -87,9 +90,14 @@ namespace tudov
 		std::replace(result.begin(), result.end(), '/', '.');
 		std::replace(result.begin(), result.end(), '\\', '.');
 
-		if (result.size() >= luaFileExtension.size() && result.compare(result.size() - luaFileExtension.size(), luaFileExtension.size(), luaFileExtension) == 0)
+		std::size_t lastDotPos = result.find_last_of('.');
+		if (lastDotPos != std::string::npos && lastDotPos > 0)
 		{
-			result.erase(result.size() - luaFileExtension.size());
+			std::size_t lastSlashPos = result.find_last_of("/\\");
+			if (lastSlashPos == std::string::npos || lastDotPos > lastSlashPos)
+			{
+				result.erase(lastDotPos);
+			}
 		}
 
 		return result;
@@ -98,12 +106,12 @@ namespace tudov
 	inline std::u32string Utf8ToTtf32(const std::string_view &utf8str)
 	{
 		std::u32string utf32str;
-		size_t i = 0;
+		std::size_t i = 0;
 		while (i < utf8str.size())
 		{
-			uint32_t ch = 0;
+			std::uint32_t ch = 0;
 			unsigned char c = utf8str[i];
-			size_t extra = 0;
+			std::size_t extra = 0;
 
 			if (c < 0x80)
 			{

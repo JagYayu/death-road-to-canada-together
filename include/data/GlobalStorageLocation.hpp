@@ -9,10 +9,17 @@ namespace tudov
 		User = 2,
 	};
 
+	/**
+	 * Static Class
+	 * Used to check the real directory paths on physical disk.
+	 * Only PC platforms are accessible.
+	 */
 	class GlobalStorageLocation
 	{
 	  public:
 		TE_STATIC_CLASS(GlobalStorageLocation);
+
+		static bool IsAccessible() noexcept;
 
 		static std::filesystem::path GetPath(EGlobalStorageLocation location) noexcept;
 	};

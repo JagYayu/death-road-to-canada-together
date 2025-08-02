@@ -1,12 +1,17 @@
-#ifdef _WIN32
+#include "data/GlobalStorageLocation.hpp"
 
-#	include "data/GlobalStorageLocation.hpp"
+#ifdef _WIN32
 
 #	include <shlobj.h>
 
 #	pragma comment(lib, "shell32.lib")
 
 using namespace tudov;
+
+bool GlobalStorageLocation::IsAccessible() noexcept
+{
+	return true;
+}
 
 std::filesystem::path GlobalStorageLocation::GetPath(EGlobalStorageLocation location) noexcept
 {
@@ -45,6 +50,18 @@ std::filesystem::path GlobalStorageLocation::GetPath(EGlobalStorageLocation loca
 	default:
 		return "";
 	}
+}
+
+#else
+
+bool GlobalStorageLocation::IsAccessible() noexcept
+{
+	return false;
+}
+
+std::filesystem::path GlobalStorageLocation::GetPath(EGlobalStorageLocation location) noexcept
+{
+	return "";
 }
 
 #endif

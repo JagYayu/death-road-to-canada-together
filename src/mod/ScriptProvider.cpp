@@ -1,8 +1,12 @@
 #include "mod/ScriptProvider.hpp"
 
+#include "data/VirtualFileSystem.hpp"
 #include "resource/ResourcesCollection.hpp"
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
+#include <cassert>
+#include <string_view>
+#include <vector>
 
 using namespace tudov;
 
@@ -39,31 +43,27 @@ Log &ScriptProvider::GetLog() noexcept
 
 void ScriptProvider::Initialize() noexcept
 {
-	// AppStorage
-	// 如果有tudov目录，则读取tudov/lua/里面的脚本
-	// 如果有tudov.dat文件，则用zip打开并读取lua/里面的脚本
-	// 否则报错 TODO
-	// 对了其实内容应该从TextResources里读取更正规（反正目前还是DEBUG阶段）
-
-	// for (const auto &entry : std::filesystem::recursive_directory_iterator("tudov/lua"))
-	// {
-	// 	auto &&fullPath = entry.path().generic_string();
-	// 	auto &&relativePath = std::filesystem::relative(fullPath, "tudov").generic_string();
-	// 	auto &&scriptName = StaticScriptNamespace(relativePath);
-
-	// 	AddScriptImpl(scriptName, ReadFileToString(fullPath));
-	// }
-
 	constexpr decltype(auto) directory = "app/lua";
-	auto textResources = GetResourcesCollection().GetTextResources().ListResources(directory);
+	std::vector<std::string_view> luaFilePaths = GetVirtualFileSystem().List(directory, VirtualFileSystem::ListOption::File);
+	auto textResources = GetResourcesCollection().GetTextResources();
 
-	for (auto &&entry : textResources)
+	for (auto &&relativePath : luaFilePaths)
 	{
-		auto &&fullPath = entry.get().path;
-		auto &&relativePath = std::filesystem::relative(fullPath, directory).generic_string();
-		auto &&scriptName = StaticScriptNamespace(relativePath);
+		auto &&fullPath = (std::filesystem::path(directory) / relativePath).generic_string();
+		ResourceID id = textResources.GetResourceID(fullPath);
 
-		AddScriptImpl(scriptName, entry.get().resource);
+		if (id != 0) [[likely]]
+		{
+			auto &&scriptName = StaticScriptNamespace(std::string(relativePath));
+			auto code = textResources.GetResource(id);
+			assert(code != nullptr);
+
+			AddScriptImpl(scriptName, code);
+		}
+		else [[unlikely]]
+		{
+			Warn("lua file was found in VFS, but not in TextResource! path: \"{}\"", relativePath);
+		}
 	}
 }
 

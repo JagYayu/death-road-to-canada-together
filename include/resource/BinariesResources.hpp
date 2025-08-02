@@ -7,7 +7,7 @@ namespace tudov
 {
 	template <>
 	inline Resources<Binaries>::Resources() noexcept
-	    : _log(Log::Get("TextureResources"))
+	    : _log(Log::Get("BinariesResources"))
 	{
 	}
 

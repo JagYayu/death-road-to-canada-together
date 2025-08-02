@@ -70,6 +70,14 @@ std::shared_ptr<Application> Tudov::GetApplication() noexcept
 	return _engine;
 }
 
+void Tudov::ReleaseApplication() noexcept
+{
+	if (_engine != nullptr)
+	{
+		_engine = nullptr;
+	}
+}
+
 static MainArgs _mainArgs = MainArgs();
 static bool _mainArgsInitialized = false;
 

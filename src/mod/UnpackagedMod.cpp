@@ -1,4 +1,6 @@
 #include "mod/UnpackagedMod.hpp"
+
+#include "data/VirtualFileSystem.hpp"
 #include "mod/Mod.hpp"
 #include "mod/ModConfig.hpp"
 #include "mod/ModManager.hpp"
@@ -8,7 +10,6 @@
 #include "resource/Text.hpp"
 #include "resource/TextResources.hpp"
 #include "util/StringUtils.hpp"
-
 
 #include <cassert>
 #include <filesystem>
@@ -129,15 +130,19 @@ void UnpackagedMod::Load()
 				auto &&relative = std::filesystem::relative(filePath, IUnpackagedMod::GetScriptsDirectory());
 				auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relative.generic_string()));
 
-				std::ifstream ins{_directory / filePath};
-				std::ostringstream oss;
-				oss << ins.rdbuf();
-				ins.close();
+				{
+					std::ifstream ins{_directory / filePath};
+					std::ostringstream oss;
+					oss << ins.rdbuf();
+					ins.close();
 
-				auto &textResources = GetResourcesCollection().GetTextResources();
-				textResources.Unload(filePath);
+					auto str = oss.str();
+					const auto *bytes = reinterpret_cast<const std::byte *>(str.data());
+					GetVirtualFileSystem().RemountFile(filePath, std::vector<std::byte>(bytes, bytes + str.size()));
+				}
 
-				auto resourceID = textResources.Load<TextResource>(filePath, oss.str());
+				auto textResources = GetResourcesCollection().GetTextResources();
+				ResourceID resourceID = textResources.GetResourceID(filePath);
 				assert(resourceID);
 
 				_modManager.HotReloadScriptPending(scriptName, textResources.GetResource(resourceID), _config.uniqueID);

@@ -10,7 +10,7 @@ namespace tudov
 {
 	template <>
 	inline Resources<Image>::Resources() noexcept
-	    : _log(Log::Get("TextureResources"))
+	    : _log(Log::Get("ImageResources"))
 	{
 	}
 

@@ -1,10 +1,10 @@
 #include "resource/ResourcesCollection.hpp"
 
-#include "data/HierarchyIterationResult.hpp"
+#include "data/VirtualFileSystem.hpp"
 #include "resource/BinariesResources.hpp"
 #include "resource/ResourceType.hpp"
+
 #include <memory>
-#include <stdexcept>
 
 using namespace tudov;
 
@@ -19,8 +19,9 @@ EResourceType ResourcesCollection::PathExtensionToResourceType(const std::filesy
 	return EResourceType::Unknown;
 }
 
-ResourcesCollection::ResourcesCollection() noexcept
-    : _binariesResources(std::make_shared<BinariesResources>()),
+ResourcesCollection::ResourcesCollection(Context &context) noexcept
+    : _context(context),
+      _binariesResources(std::make_shared<BinariesResources>()),
       _fontResources(std::make_shared<FontResources>()),
       _imageResources(std::make_shared<ImageResources>()),
       _textResources(std::make_shared<TextResources>())
@@ -33,84 +34,116 @@ ResourcesCollection::ResourcesCollection() noexcept
 	};
 }
 
+Context &ResourcesCollection::GetContext() noexcept
+{
+	return _context;
+}
+
 Log &ResourcesCollection::GetLog() noexcept
 {
 	return *Log::Get("ResourcesCollection");
 }
 
-EHierarchyElement ResourcesCollection::Check(const Path &path) noexcept
+void ResourcesCollection::Initialize() noexcept
 {
-	for (const auto &resources : _resourcesList)
+	auto &vfs = GetVirtualFileSystem();
+
+	_handlerIDOnVFSMountFile = vfs.GetOnMountFile() += [this](const std::filesystem::path &path, const std::vector<std::byte> &bytes)
 	{
-		EHierarchyElement result = resources->Check(path);
-		if (result != EHierarchyElement::None)
-		{
-			return result;
-		}
-	}
-	return EHierarchyElement::None;
+		LoadResource(path, bytes);
+	};
+	_handlerIDOnVFSDismountFile = vfs.GetOnDismountFile() += [this](const std::filesystem::path &path)
+	{
+		UnloadResource(path);
+	};
+	_handlerIDOnVFSRemountFile = vfs.GetOnRemountFile() += [this](const std::filesystem::path &path, const std::vector<std::byte> &bytes, const std::vector<std::byte> &)
+	{
+		ReloadResource(path, bytes);
+	};
 }
 
-bool ResourcesCollection::IsData(const Path &path) noexcept
+void ResourcesCollection::Deinitialize() noexcept
 {
-	for (const auto &resources : _resourcesList)
-	{
-		if (resources->IsData(path))
-		{
-			return true;
-		}
-	}
-	return false;
+	auto &vfs = GetVirtualFileSystem();
+
+	vfs.GetOnMountFile() -= _handlerIDOnVFSMountFile;
+	vfs.GetOnDismountFile() -= _handlerIDOnVFSDismountFile;
+	vfs.GetOnRemountFile() -= _handlerIDOnVFSRemountFile;
 }
 
-bool ResourcesCollection::IsDirectory(const Path &path) noexcept
-{
-	for (const auto &resources : _resourcesList)
-	{
-		if (resources->IsDirectory(path))
-		{
-			return true;
-		}
-	}
-	return false;
-}
+// EHierarchyElement ResourcesCollection::Check(const Path &path) noexcept
+// {
+// 	for (const auto &resources : _resourcesList)
+// 	{
+// 		EHierarchyElement result = resources->Check(path);
+// 		if (result != EHierarchyElement::None)
+// 		{
+// 			return result;
+// 		}
+// 	}
+// 	return EHierarchyElement::None;
+// }
 
-bool ResourcesCollection::IsNone(const Path &path) noexcept
-{
-	for (const auto &resources : _resourcesList)
-	{
-		if (resources->IsNone(path))
-		{
-			return true;
-		}
-	}
-	return false;
-}
+// bool ResourcesCollection::IsData(const Path &path) noexcept
+// {
+// 	for (const auto &resources : _resourcesList)
+// 	{
+// 		if (resources->IsData(path))
+// 		{
+// 			return true;
+// 		}
+// 	}
+// 	return false;
+// }
 
-IResource &ResourcesCollection::Get(const Path &dataPath)
-{
-	for (const auto &resources : _resourcesList)
-	{
-		if (resources->IsData(dataPath))
-		{
-			return resources->Get(dataPath);
-		}
-	}
-	throw std::runtime_error("resource not found");
-}
+// bool ResourcesCollection::IsDirectory(const Path &path) noexcept
+// {
+// 	for (const auto &resources : _resourcesList)
+// 	{
+// 		if (resources->IsDirectory(path))
+// 		{
+// 			return true;
+// 		}
+// 	}
+// 	return false;
+// }
 
-EHierarchyIterationResult ResourcesCollection::Foreach(const Path &directory, const IterationCallback &callback, void *callbackArgs)
-{
-	for (const auto &resources : _resourcesList)
-	{
-		EHierarchyIterationResult result = resources->Foreach(directory, callback);
-		if (result != EHierarchyIterationResult::Continue)
-		{
-			return result;
-		}
-	}
-	return EHierarchyIterationResult::Continue;
-}
+// bool ResourcesCollection::IsNone(const Path &path) noexcept
+// {
+// 	for (const auto &resources : _resourcesList)
+// 	{
+// 		if (resources->IsNone(path))
+// 		{
+// 			return true;
+// 		}
+// 	}
+// 	return false;
+// }
+
+// IResource &ResourcesCollection::Get(const Path &dataPath)
+// {
+// 	for (const auto &resources : _resourcesList)
+// 	{
+// 		if (resources->IsData(dataPath))
+// 		{
+// 			return resources->Get(dataPath);
+// 		}
+// 	}
+// 	throw std::runtime_error("resource not found");
+// }
+
+// EHierarchyIterationResult ResourcesCollection::Foreach(const Path &directory, const IterationCallback &callback, void *callbackArgs)
+// {
+// 	for (const auto &resources : _resourcesList)
+// 	{
+// 		EHierarchyIterationResult result = resources->Foreach(directory, callback);
+// 		if (result != EHierarchyIterationResult::Continue)
+// 		{
+// 			return result;
+// 		}
+// 	}
+// 	return EHierarchyIterationResult::Continue;
+// }
 
 BinariesResources &ResourcesCollection::GetBinariesResources() noexcept
 {
@@ -198,7 +231,7 @@ inline EResourceType ResourcesCollection::UnloadResource(const std::filesystem::
 	return type;
 }
 
-std::tuple<EResourceType, ResourceID, ResourceID> ResourcesCollection::UpdateResource(const std::filesystem::path &path, const std::vector<std::byte> &bytes)
+std::tuple<EResourceType, ResourceID, ResourceID> ResourcesCollection::ReloadResource(const std::filesystem::path &path, const std::vector<std::byte> &bytes)
 {
 	if (!path.has_extension()) [[unlikely]]
 	{

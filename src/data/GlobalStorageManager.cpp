@@ -8,15 +8,14 @@
 
 using namespace tudov;
 
-GlobalStorageManager::GlobalStorageManager(Context &context) noexcept
-    : _context(context)
+GlobalStorageManager::GlobalStorageManager() noexcept
 {
 }
 
-Context &GlobalStorageManager::GetContext() noexcept
-{
-	return _context;
-}
+// Context &GlobalStorageManager::GetContext() noexcept
+// {
+// 	return _context;
+// }
 
 GlobalStorage &GlobalStorageManager::GetApplicationStorage() noexcept
 {

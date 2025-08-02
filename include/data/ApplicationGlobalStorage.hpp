@@ -11,7 +11,7 @@ namespace tudov
 	{
 	  public:
 		explicit ApplicationGlobalStorage(GlobalStorageManager &globalStorageManager) noexcept;
-		~ApplicationGlobalStorage() noexcept = default;
+		~ApplicationGlobalStorage() noexcept override= default;
 
 		IGlobalStorageManager &GetGlobalStorageManager() noexcept override;
 		Log &GetLog() noexcept override;

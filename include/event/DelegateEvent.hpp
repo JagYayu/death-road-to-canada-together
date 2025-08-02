@@ -27,8 +27,9 @@ namespace tudov
 
 		HandlerID operator+=(const HandlerType &handler)
 		{
+			++_handlerID;
 			_handlers.emplace_back(_handlerID, handler);
-			return _handlerID++;
+			return _handlerID;
 		}
 
 		void operator-=(HandlerID id)
@@ -44,8 +45,8 @@ namespace tudov
 			}
 		}
 
-		template <typename T>
-		HandlerID Bind(T *obj, void (T::*func)(Args...))
+		template <typename TObj>
+		HandlerID Bind(TObj *obj, void (TObj::*func)(Args...))
 		{
 			return *this += [obj, func](Args... args)
 			{
@@ -53,20 +54,22 @@ namespace tudov
 			};
 		}
 
-		void Invoke(Args &&...args) const
+		template <typename... UArgs>
+		void Invoke(UArgs &&...args) const
 		{
 			for (const auto &handler : _handlers)
 			{
 				if (handler.second)
 				{
-					handler.second(std::forward<Args>(args)...);
+					handler.second(std::forward<UArgs>(args)...);
 				}
 			}
 		}
 
-		void operator()(Args... args) const
+		template <typename... U>
+		void operator()(U &&...args) const
 		{
-			Invoke(std::forward<Args>(args)...);
+			Invoke(std::forward<U>(args)...);
 		}
 	};
 } // namespace tudov

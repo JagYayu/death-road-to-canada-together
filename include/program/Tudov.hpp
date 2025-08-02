@@ -20,6 +20,8 @@ namespace tudov
 
 		static std::shared_ptr<Application> GetApplication() noexcept;
 
+		static void ReleaseApplication() noexcept;
+
 		static const MainArgs &GetMainArgs() noexcept;
 
 		static void InitMainArgs(int argc, char **argv);

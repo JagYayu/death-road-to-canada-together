@@ -3,6 +3,7 @@
 #include "data/AssetsManager.hpp"
 #include "data/Config.hpp"
 #include "data/GlobalStorageManager.hpp"
+#include "data/VirtualFileSystem.hpp"
 #include "debug/Debug.hpp"
 #include "debug/DebugConsole.hpp"
 #include "debug/DebugManager.hpp"
@@ -16,13 +17,11 @@
 #include "program/Window.hpp"
 #include "resource/FontResources.hpp"
 #include "resource/ImageResources.hpp"
-#include "resource/ResourceType.hpp"
 #include "resource/ResourcesCollection.hpp"
 #include "resource/TextResources.hpp"
 #include "scripts/GameScripts.hpp"
 #include "util/Log.hpp"
 #include "util/MicrosImpl.hpp"
-#include "util/StringUtils.hpp"
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_timer.h"
@@ -33,7 +32,6 @@
 #include <cmath>
 #include <memory>
 #include <mutex>
-#include <regex>
 #include <thread>
 #include <vector>
 
@@ -49,19 +47,15 @@ Engine::Engine() noexcept
       _previousTick(0),
       _framerate(0),
       _luaAPI(std::make_shared<LuaAPI>()),
-      _resourcesCollection(std::make_shared<ResourcesCollection>()),
-      //   _fontResources(std::make_shared<FontResources>()),
-      //   _imageResources(std::make_shared<ImageResources>()),
-      //   _textResources(std::make_shared<TextResources>()),
-      //   shaderResources(nullptr),
-      // shaderResources(std::make_shared<ShaderManager>()),
+      _globalStorageManager(std::make_shared<GlobalStorageManager>()),
+      _virtualFileSystem(std::make_shared<VirtualFileSystem>()),
       _mainWindow(),
       _windows(),
       _debugManager(std::make_shared<DebugManager>())
 {
 	context = Context(this);
 
-	_globalStorageManager = std::make_shared<GlobalStorageManager>(context);
+	_resourcesCollection = std::make_shared<ResourcesCollection>(context),
 	_assetsManager = std::make_shared<AssetsManager>(context);
 	_networkManager = std::make_shared<NetworkManager>(context);
 	_modManager = std::make_shared<ModManager>(context);
@@ -148,7 +142,7 @@ bool Engine::ShouldQuit() noexcept
 void Engine::Initialize() noexcept
 {
 	_components = {
-	    _globalStorageManager,
+	    _resourcesCollection,
 	    _assetsManager,
 	    _modManager,
 	    _networkManager,
