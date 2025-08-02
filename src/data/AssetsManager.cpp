@@ -4,7 +4,7 @@
 #include "data/GlobalStorage.hpp"
 #include "data/GlobalStorageLocation.hpp"
 #include "data/GlobalStorageManager.hpp"
-#include "data/StorageIterationResult.hpp"
+#include "data/HierarchyIterationResult.hpp"
 #include "data/ZipStorage.hpp"
 #include "program/Engine.hpp"
 #include "resource/ResourcesCollection.hpp"
@@ -68,12 +68,12 @@ void AssetsManager::LoadAssetsFromPackageFiles() noexcept
 	{
 		ZipStorage zipStorage{bytes};
 
-		zipStorage.ForeachDirectory("", [this](const std::filesystem::path &filePath, const std::filesystem::path &, void *) -> EStorageIterationResult
+		zipStorage.Foreach("", [this](const std::filesystem::path &filePath, const std::filesystem::path &, void *) -> EHierarchyIterationResult
 		{
 			Info("Loading contents from package: {}", filePath.generic_string());
 			// TODO
 
-			return EStorageIterationResult::Continue;
+			return EHierarchyIterationResult::Continue;
 		});
 	}
 }
@@ -84,7 +84,7 @@ std::vector<std::vector<std::byte>> AssetsManager::CollectPackageFileBytes() noe
 
 	GlobalStorage &applicationGlobalStorage = GetGlobalStorageManager().GetApplicationStorage();
 
-	applicationGlobalStorage.ForeachDirectory("", [this, &applicationGlobalStorage, &zipFileBytes](const std::filesystem::path &filePath, const std::filesystem::path &directoryPath, void *) -> EStorageIterationResult
+	applicationGlobalStorage.Foreach("", [this, &applicationGlobalStorage, &zipFileBytes](const std::filesystem::path &filePath, const std::filesystem::path &directoryPath, void *) -> EHierarchyIterationResult
 	{
 		if (std::filesystem::is_regular_file(filePath))
 		{
@@ -94,7 +94,7 @@ std::vector<std::vector<std::byte>> AssetsManager::CollectPackageFileBytes() noe
 			}
 		}
 
-		return EStorageIterationResult::Continue;
+		return EHierarchyIterationResult::Continue;
 	});
 
 	return zipFileBytes;
@@ -112,7 +112,7 @@ void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 
 	std::vector<std::tuple<std::string, std::vector<std::byte>>> assets{};
 
-	applicationGlobalStorage.ForeachDirectoryRecursed(Constants::DataDeveloperAssetsDirectory, [this, &assets, &applicationGlobalStorage](const std::filesystem::path &path, const std::filesystem::path &directory, void *) -> EStorageIterationResult
+	applicationGlobalStorage.ForeachRecursed(Constants::DataDeveloperAssetsDirectory, [this, &assets, &applicationGlobalStorage](const std::filesystem::path &path, const std::filesystem::path &directory, void *) -> EHierarchyIterationResult
 	{
 		if (path.has_extension())
 		{
@@ -125,7 +125,7 @@ void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 			assets.emplace_back(path, bytes);
 		}
 
-		return EStorageIterationResult::Continue;
+		return EHierarchyIterationResult::Continue;
 	});
 
 	for (auto &&[path, bytes] : assets)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "HierarchyElement.hpp"
 #include "Storage.hpp"
 #include "util/Log.hpp"
 
@@ -27,17 +28,16 @@ namespace tudov
 
 		bool CanRead() noexcept override;
 
-		EStorageIterationResult ForeachDirectory(const std::filesystem::path &path, const EnumerationCallbackFunction<> &callback, void *callbackArgs = nullptr) noexcept override;
+		EHierarchyIterationResult Foreach(const Path &path, const EnumerationCallbackFunction<> &callback, void *callbackArgs = nullptr) noexcept override;
 
-		bool Exists(const std::filesystem::path &path) noexcept override;
+		EHierarchyElement Check(const Path &path) noexcept override;
 
-		// PathInfo GetPathInfo(const std::filesystem::path & path) noexcept override;
+		PathInfo GetPathInfo(const Path & path) noexcept override;
 
-		std::uint64_t GetPathSize(const std::filesystem::path &filePath) noexcept override;
-		EPathType GetPathType(const std::filesystem::path &path) noexcept override;
+		std::uint64_t GetPathSize(const Path &filePath) noexcept override;
+		EPathType GetPathType(const Path &path) noexcept override;
 
-		std::vector<std::byte> ReadFileToBytes(const std::filesystem::path &filePath) override;
-		// std::string ReadFileToString(const std::filesystem::path & filePath) override;
+		std::vector<std::byte> ReadFileToBytes(const Path &filePath) override;
 
 		virtual IGlobalStorageManager &GetGlobalStorageManager() noexcept = 0;
 

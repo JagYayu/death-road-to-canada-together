@@ -1,7 +1,7 @@
 #include "data/ZipStorage.hpp"
 
+#include "data/HierarchyIterationResult.hpp"
 #include "data/PathType.hpp"
-#include "data/StorageIterationResult.hpp"
 
 #include <filesystem>
 #include <functional>
@@ -128,11 +128,11 @@ bool ZipStorage::IsReady() noexcept
 	return true;
 }
 
-EStorageIterationResult ZipStorage::ForeachDirectory(const std::filesystem::path& directory, const EnumerationCallbackFunction<> &callback, void *callbackArgs) noexcept
+EHierarchyIterationResult ZipStorage::Foreach(const std::filesystem::path &directory, const EnumerationCallbackFunction<> &callback, void *callbackArgs) noexcept
 {
 	if (unzGoToFirstFile(_unzip) != UNZ_OK)
 	{
-		return EStorageIterationResult::Failure;
+		return EHierarchyIterationResult::Failure;
 	}
 
 	do
@@ -157,23 +157,33 @@ EStorageIterationResult ZipStorage::ForeachDirectory(const std::filesystem::path
 		std::string fillPath{fileInZip};
 		if (fillPath.find(directory.generic_string()) == 0)
 		{
-			EStorageIterationResult result = callback(fillPath, directory, callbackArgs);
-			if (result != EStorageIterationResult::Continue)
+			EHierarchyIterationResult result = callback(fillPath, directory, callbackArgs);
+			if (result != EHierarchyIterationResult::Continue)
 			{
 				return result;
 			}
 		}
 	} while (unzGoToNextFile(_unzip) == UNZ_OK);
 
-	return EStorageIterationResult::Continue;
+	return EHierarchyIterationResult::Continue;
 }
 
-bool ZipStorage::Exists(const std::filesystem::path& path) noexcept
+EHierarchyElement ZipStorage::Check(const std::filesystem::path &path) noexcept
 {
-	return unzLocateFile(_unzip, path.generic_string().c_str(), true) == UNZ_OK;
+	if (unzLocateFile(_unzip, path.generic_string().c_str(), true) == UNZ_OK)
+	{
+		return EHierarchyElement::Data;
+	}
+	return EHierarchyElement::None;
 }
 
-std::uint64_t ZipStorage::GetPathSize(const std::filesystem::path& filePath) noexcept
+PathInfo ZipStorage::GetPathInfo(const std::filesystem::path &path) noexcept
+{
+	// TODO throw std::runtime_error("NOT IMPLEMENT YET");
+	return {};
+}
+
+std::uint64_t ZipStorage::GetPathSize(const std::filesystem::path &filePath) noexcept
 {
 	if (unzLocateFile(_unzip, filePath.generic_string().c_str(), 1) != UNZ_OK)
 	{
@@ -189,7 +199,7 @@ std::uint64_t ZipStorage::GetPathSize(const std::filesystem::path& filePath) noe
 	return file_info.uncompressed_size;
 }
 
-EPathType ZipStorage::GetPathType(const std::filesystem::path& filePath) noexcept
+EPathType ZipStorage::GetPathType(const std::filesystem::path &filePath) noexcept
 {
 	if (unzLocateFile(_unzip, filePath.generic_string().c_str(), 1) != UNZ_OK)
 	{
@@ -208,7 +218,7 @@ EPathType ZipStorage::GetPathType(const std::filesystem::path& filePath) noexcep
 	}
 }
 
-std::vector<std::byte> ZipStorage::ReadFileToBytes(const std::filesystem::path& filePath)
+std::vector<std::byte> ZipStorage::ReadFileToBytes(const std::filesystem::path &filePath)
 {
 	if (unzLocateFile(_unzip, filePath.generic_string().c_str(), true) != UNZ_OK)
 	{

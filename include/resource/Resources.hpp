@@ -1,23 +1,28 @@
 #pragma once
 
+#include "data/Hierarchy.hpp"
+#include "data/HierarchyIterationResult.hpp"
 #include "util/Definitions.hpp"
 #include "util/Log.hpp"
 
 #include <filesystem>
 #include <functional>
 #include <map>
+#include <stdexcept>
 #include <vector>
 
 namespace tudov
 {
-	template <typename T>
-	class Resources
+	template <typename TResource>
+	class Resources : public IHierarchy<TResource &>
 	{
 	  public:
+		using Path = IHierarchy<TResource>::Path;
+
 		struct Entry
 		{
 			std::string path;
-			std::shared_ptr<T> resource;
+			std::shared_ptr<TResource> resource;
 		};
 
 	  protected:
@@ -37,6 +42,72 @@ namespace tudov
 		}
 
 	  public:
+		inline EHierarchyElement Check(const Path &path) noexcept override
+		{
+			if (IsData(path))
+				return EHierarchyElement::Data;
+			if (IsDirectory(path))
+				return EHierarchyElement::Directory;
+			return EHierarchyElement::None;
+		}
+
+		inline bool IsData(const Path &path) noexcept override
+		{
+			std::string pathStr = path.generic_string();
+			auto &&it = _path2ID.find(pathStr.data());
+			return it != _path2ID.end();
+		}
+
+		inline bool IsDirectory(const Path &path) noexcept override
+		{
+			std::string pathStr = path.generic_string();
+			auto &&it = std::find_if(_path2ID.begin(), _path2ID.end(), [&pathStr](const auto &entry)
+			{
+				auto &&[itSub, _] = std::mismatch(pathStr.begin(), pathStr.end(), entry.first.begin(), entry.first.end());
+				return itSub == pathStr.end();
+			});
+			return it != _path2ID.end();
+		}
+
+		inline bool IsNone(const Path &path) noexcept override
+		{
+			return !(IsNone(path) || IsDirectory(path));
+		}
+
+		TResource &Get(const Path &dataPath) override
+		{
+			std::string pathStr = dataPath.generic_string();
+			ResourceID id = GetResourceID(pathStr.data());
+			if (id == 0)
+			{
+				throw std::runtime_error("Resource not found");
+			}
+
+			return *GetResource(id);
+		}
+
+		inline EHierarchyIterationResult Foreach(const Path &directory, const IHierarchy<TResource &>::IterationCallback &callback, void *callbackArgs = nullptr) override
+		{
+			std::string prefix = directory.generic_string();
+			auto [lower, upper] = _path2ID.equal_range(prefix);
+
+			while (lower != _path2ID.end() && lower->first.starts_with(prefix))
+			{
+				auto path = Path(lower->first);
+				ResourceID id = lower->second;
+				const Entry &entry = _id2Entry.at(id);
+				EHierarchyIterationResult result = callback(path, directory, callbackArgs);
+
+				if (result != EHierarchyIterationResult::Continue)
+				{
+					return result;
+				}
+				++lower;
+			}
+
+			return EHierarchyIterationResult::Continue;
+		}
+
 		inline std::vector<std::reference_wrapper<const Entry>> ListResources(const std::filesystem::path &path) const
 		{
 			std::vector<std::reference_wrapper<const Entry>> resources{};
@@ -54,7 +125,7 @@ namespace tudov
 			return resources;
 		}
 
-		inline std::shared_ptr<T> GetResource(ResourceID id) const noexcept
+		inline std::shared_ptr<TResource> GetResource(ResourceID id) const noexcept
 		{
 			auto &&it = _id2Entry.find(id);
 			return it != _id2Entry.end() ? it->second.resource : nullptr;
@@ -72,10 +143,10 @@ namespace tudov
 			return it != _path2ID.end() ? it->second : false;
 		}
 
-		template <typename TDerived = T, typename... Args>
+		template <typename TDerived = TResource, typename... Args>
 		inline ResourceID Load(std::string_view path, Args &&...args)
 		{
-			static_assert(std::is_base_of_v<T, TDerived>, "TDerived must inherit from T");
+			static_assert(std::is_base_of_v<TResource, TDerived>, "TDerived must inherit from T");
 
 			if (auto &&it = _path2ID.find(path); it != _path2ID.end()) [[unlikely]]
 			{
@@ -85,10 +156,10 @@ namespace tudov
 			++_latestID;
 			auto id = _latestID;
 
-			std::shared_ptr<T> resource;
+			std::shared_ptr<TResource> resource;
 			try
 			{
-				resource = std::static_pointer_cast<T>(std::make_shared<TDerived>(std::forward<Args>(args)...));
+				resource = std::static_pointer_cast<TResource>(std::make_shared<TDerived>(std::forward<Args>(args)...));
 			}
 			catch (const std::exception &e)
 			{

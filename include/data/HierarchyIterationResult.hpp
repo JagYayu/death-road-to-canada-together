@@ -4,7 +4,7 @@
 
 namespace tudov
 {
-	enum class EStorageIterationResult
+	enum class EHierarchyIterationResult
 	{
 		Continue = SDL_EnumerationResult::SDL_ENUM_CONTINUE,
 		Success = SDL_EnumerationResult::SDL_ENUM_SUCCESS,

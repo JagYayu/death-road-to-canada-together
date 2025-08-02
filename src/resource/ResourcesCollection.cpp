@@ -1,7 +1,10 @@
 #include "resource/ResourcesCollection.hpp"
 
+#include "data/HierarchyIterationResult.hpp"
 #include "resource/BinariesResources.hpp"
 #include "resource/ResourceType.hpp"
+#include <memory>
+#include <stdexcept>
 
 using namespace tudov;
 
@@ -22,11 +25,91 @@ ResourcesCollection::ResourcesCollection() noexcept
       _imageResources(std::make_shared<ImageResources>()),
       _textResources(std::make_shared<TextResources>())
 {
+	_resourcesList = {
+	    std::dynamic_pointer_cast<Resources<IResource>>(_binariesResources),
+	    std::dynamic_pointer_cast<Resources<IResource>>(_fontResources),
+	    std::dynamic_pointer_cast<Resources<IResource>>(_imageResources),
+	    std::dynamic_pointer_cast<Resources<IResource>>(_textResources),
+	};
 }
 
 Log &ResourcesCollection::GetLog() noexcept
 {
 	return *Log::Get("ResourcesCollection");
+}
+
+EHierarchyElement ResourcesCollection::Check(const Path &path) noexcept
+{
+	for (const auto &resources : _resourcesList)
+	{
+		EHierarchyElement result = resources->Check(path);
+		if (result != EHierarchyElement::None)
+		{
+			return result;
+		}
+	}
+	return EHierarchyElement::None;
+}
+
+bool ResourcesCollection::IsData(const Path &path) noexcept
+{
+	for (const auto &resources : _resourcesList)
+	{
+		if (resources->IsData(path))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool ResourcesCollection::IsDirectory(const Path &path) noexcept
+{
+	for (const auto &resources : _resourcesList)
+	{
+		if (resources->IsDirectory(path))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool ResourcesCollection::IsNone(const Path &path) noexcept
+{
+	for (const auto &resources : _resourcesList)
+	{
+		if (resources->IsNone(path))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+IResource &ResourcesCollection::Get(const Path &dataPath)
+{
+	for (const auto &resources : _resourcesList)
+	{
+		if (resources->IsData(dataPath))
+		{
+			return resources->Get(dataPath);
+		}
+	}
+	throw std::runtime_error("resource not found");
+}
+
+EHierarchyIterationResult ResourcesCollection::Foreach(const Path &directory, const IterationCallback &callback, void *callbackArgs)
+{
+	for (const auto &resources : _resourcesList)
+	{
+		EHierarchyIterationResult result = resources->Foreach(directory, callback);
+		if (result != EHierarchyIterationResult::Continue)
+		{
+			return result;
+		}
+	}
+	return EHierarchyIterationResult::Continue;
 }
 
 BinariesResources &ResourcesCollection::GetBinariesResources() noexcept

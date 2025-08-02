@@ -1,6 +1,8 @@
+#include "data/Constants.hpp"
 #include "graphic/GUI.hpp"
 #include "program/Engine.hpp"
 #include "program/Tudov.hpp"
+#include "test/TestGPURendering.hpp"
 #include "util/Log.hpp"
 
 #define SDL_MAIN_USE_CALLBACKS
@@ -77,18 +79,93 @@ void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority
 	}
 }
 
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
+bool CommonInit(int argc, char **argv) noexcept
 {
+	auto log = Log::Get("Main");
+
+	log->Info("Application initializing ...");
+
+	log->Debug("AppName = {}", Constants::AppName);
+	log->Debug("AppOrganization = {}", Constants::AppOrganization);
+	log->Debug("DataConfigFile = {}", Constants::DataConfigFile);
+	log->Debug("DataUserDirectoryPrefix = {}", Constants::DataUserDirectoryPrefix);
+	log->Debug("DataDeveloperAssetsDirectory = {}", Constants::DataDeveloperAssetsDirectory);
+	log->Debug("DataVirtualStorageRootApp = {}", Constants::DataVirtualStorageRootApp);
+	log->Debug("DataVirtualStorageRootMods = {}", Constants::DataVirtualStorageRootMods);
+	log->Debug("DataVirtualStorageRootUser = {}", Constants::DataVirtualStorageRootUser);
+	log->Debug("NetworkChannelsLimit = {}", Constants::NetworkChannelsLimit);
+	log->Debug("NetworkServerMaximumClients = {}", Constants::NetworkServerMaximumClients);
+	log->Debug("NetworkServerPassword = {}", Constants::NetworkServerPassword);
+	log->Debug("NetworkServerTitle = {}", Constants::NetworkServerTitle);
+	log->Debug("WindowTitle = {}", Constants::WindowTitle);
+	log->Debug("WindowWidth = {}", Constants::WindowWidth);
+	log->Debug("WindowHeight = {}", Constants::WindowHeight);
+
+	Tudov::InitMainArgs(argc, argv);
+
 	SDL_SetLogOutputFunction(SDLLogOutputCallback, nullptr);
 	if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS | SDL_INIT_SENSOR | SDL_INIT_CAMERA)) [[unlikely]]
 	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error initializing SDL3", nullptr);
-		return SDL_APP_FAILURE;
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL3 failed to initialize", nullptr);
+		return true;
 	}
+	log->Info("SDL3 initialized");
 
 	for (auto index = 0; index < SDL_GetNumGPUDrivers(); ++index)
 	{
-		Log::Get("Main")->Info("GPU Driver {}:", index, SDL_GetGPUDriver(index));
+		log->Info("GPU Driver {}: {}", index + 1, SDL_GetGPUDriver(index));
+	}
+
+	return false;
+}
+
+void CommonQuit(SDL_AppResult result) noexcept
+{
+	GUI::Quit();
+
+	Log::GetInstance().Info("Application quit, result code: {}", std::int32_t(result));
+	Log::Quit();
+}
+
+#define TE_TEST_GPU_RENDERING
+
+#ifdef TE_TEST_GPU_RENDERING
+
+SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
+{
+	if (CommonInit(argc, argv))
+	{
+		return SDL_APP_FAILURE;
+	}
+
+	TestGPURendering::Init(appstate);
+
+	return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SDL_AppIterate(void *appstate)
+{
+	return static_cast<SDL_AppResult>(TestGPURendering::Iterate(appstate));
+}
+
+SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
+{
+	return static_cast<SDL_AppResult>(TestGPURendering::Event(appstate, event));
+}
+
+void SDL_AppQuit(void *appstate, SDL_AppResult result)
+{
+	TestGPURendering::Quit(appstate);
+	CommonQuit(result);
+}
+
+#else
+
+SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
+{
+	if (CommonInit(argc, argv))
+	{
+		return SDL_APP_FAILURE;
 	}
 
 	std::shared_ptr<Application> app = Tudov::GetApplication();
@@ -136,35 +213,7 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 		app = nullptr;
 	}
 
-	GUI::Quit();
-
-	Log::GetInstance().Info("Application quit, result code: {}", std::int32_t(result));
-	Log::Quit();
+	CommonQuit(result);
 }
 
-// int main(int argc, char **args)
-// {
-// 	if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS | SDL_INIT_SENSOR | SDL_INIT_CAMERA))
-// 	{
-// 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Error initializing SDL3", nullptr);
-// 	}
-
-// 	IMGUI_CHECKVERSION();
-// 	ImGui::CreateContext();
-// 	ImGui::StyleColorsDark();
-// 	{
-// 		ImGuiIO &io = ImGui::GetIO();
-// 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-// 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
-// 	}
-
-// 	Engine(MainArgs{argc, args}).Run();
-
-// 	ImGui::DestroyContext();
-
-// 	SDL_Quit();
-
-// 	Log::Exit();
-
-// 	return 0;
-// }
+#endif

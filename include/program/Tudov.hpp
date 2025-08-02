@@ -22,7 +22,7 @@ namespace tudov
 
 		static const MainArgs &GetMainArgs() noexcept;
 
-		static void InitMainArgs(const MainArgs &args);
+		static void InitMainArgs(int argc, char **argv);
 
 		// static std::uint64_t GetSystemTimeNS() noexcept;
 		// static void Delay(std::uint32_t ns) noexcept;

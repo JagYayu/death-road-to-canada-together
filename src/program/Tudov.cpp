@@ -8,8 +8,6 @@
 #include "SDL3/SDL_messagebox.h"
 
 #include <Windows.h>
-#include <codecvt>
-#include <cstdlib>
 #include <libloaderapi.h>
 #include <stdexcept>
 #include <string>
@@ -34,12 +32,12 @@ bool FatalError_MessageBox(std::string_view errorMessage) noexcept
 
 	SDL_MessageBoxData messageboxdata = {
 	    SDL_MESSAGEBOX_ERROR,
-	    NULL,
+	    nullptr,
 	    "Tudov Engine",
 	    message.data(),
 	    SDL_arraysize(buttons),
 	    buttons,
-	    NULL,
+	    nullptr,
 	};
 
 	int id;
@@ -80,14 +78,14 @@ const MainArgs &Tudov::GetMainArgs() noexcept
 	return _mainArgs;
 }
 
-void Tudov::InitMainArgs(const MainArgs &mainArgs)
+void Tudov::InitMainArgs(int argc, char **argv)
 {
 	if (_mainArgsInitialized) [[unlikely]]
 	{
 		throw std::runtime_error("main args have already been initialized!");
 	}
 
-	_mainArgs = mainArgs;
+	_mainArgs = MainArgs(argc, argv);
 	_mainArgsInitialized = true;
 }
 
@@ -96,7 +94,7 @@ void Tudov::InitMainArgs(const MainArgs &mainArgs)
 // bool Tudov::Windows_AddDllDirectory() noexcept
 // {
 // 	WCHAR exePath[MAX_PATH];
-// 	GetModuleFileNameW(NULL, exePath, MAX_PATH);
+// 	GetModuleFileNameW(nullptr, exePath, MAX_PATH);
 
 // 	WCHAR *lastBackslash = wcsrchr(exePath, L'\\');
 // 	if (lastBackslash)

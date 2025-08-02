@@ -2,9 +2,7 @@ local Enum = {}
 
 local enumerations = {}
 
-local function makeBits(defaults, extendable)
-
-end
+local function makeBits(defaults, extendable) end
 
 local function makeInts(defaults, extendable)
 	local enumMap = {}
@@ -43,10 +41,8 @@ function Enum.immutable(defaults)
 	return makeInts(defaults, false)
 end
 
-function Enum.extend()
-end
+function Enum.extend() end
 
-function Enum.getAll()
-end
+function Enum.getAll() end
 
 return Enum

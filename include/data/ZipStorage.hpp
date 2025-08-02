@@ -1,5 +1,6 @@
 #pragma once
 
+#include "HierarchyElement.hpp"
 #include "Storage.hpp"
 
 #include <span>
@@ -26,13 +27,14 @@ namespace tudov
 
 		virtual bool IsReady() noexcept override;
 
-		EStorageIterationResult ForeachDirectory(const std::filesystem::path &directory, const EnumerationCallbackFunction<> &callback, void *callbackArgs = nullptr) noexcept override;
+		EHierarchyIterationResult Foreach(const std::filesystem::path &directory, const EnumerationCallbackFunction<> &callback, void *callbackArgs = nullptr) noexcept override;
 
-		virtual bool Exists(const std::filesystem::path &path) noexcept override;
+		virtual EHierarchyElement Check(const std::filesystem::path &path) noexcept override;
 
-		// virtual PathInfo GetPathInfo(const std::filesystem::path& path) noexcept override;
+		virtual PathInfo GetPathInfo(const std::filesystem::path& path) noexcept override;
 
 		virtual std::uint64_t GetPathSize(const std::filesystem::path &filePath) noexcept override;
+
 		virtual EPathType GetPathType(const std::filesystem::path &filePath) noexcept override;
 
 		virtual std::vector<std::byte> ReadFileToBytes(const std::filesystem::path &filePath) override;
