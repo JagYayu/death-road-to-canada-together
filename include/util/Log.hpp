@@ -12,6 +12,10 @@ namespace tudov
 {
 	class LuaAPI;
 
+	/**
+	 * Customized logging system for Tudov Engine.
+	 * Cross platform is not supported.
+	 */
 	class Log
 	{
 		friend LuaAPI;
@@ -150,6 +154,9 @@ namespace tudov
 		{
 			Output(VerbError, std::format(fmt, std::forward<Args>(args)...));
 		}
+		/**
+		 * @warning This function will terminate the program.
+		 */
 		template <typename... Args>
 		TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) noexcept
 		{

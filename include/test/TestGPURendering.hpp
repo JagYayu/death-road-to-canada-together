@@ -4,10 +4,14 @@
 
 #include "util/Micros.hpp"
 
+#include <memory>
+
 union SDL_Event;
 
 namespace tudov
 {
+	class Log;
+
 	class TestGPURendering
 	{
 	  public:

@@ -17,44 +17,47 @@
 
 using namespace tudov;
 
-void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority, const char *message) noexcept
+const char *CategoryToCStr(int category) noexcept
 {
-	const char *cate = "";
 	switch (category)
 	{
 	case SDL_LOG_CATEGORY_APPLICATION:
-		cate = "Application";
+		return "Application";
 		break;
 	case SDL_LOG_CATEGORY_ERROR:
-		cate = "Error";
+		return "Error";
 		break;
 	case SDL_LOG_CATEGORY_ASSERT:
-		cate = "Assert";
+		return "Assert";
 		break;
 	case SDL_LOG_CATEGORY_SYSTEM:
-		cate = "System";
+		return "System";
 		break;
 	case SDL_LOG_CATEGORY_AUDIO:
-		cate = "Audio";
+		return "Audio";
 		break;
 	case SDL_LOG_CATEGORY_VIDEO:
-		cate = "Video";
+		return "Video";
 		break;
 	case SDL_LOG_CATEGORY_RENDER:
-		cate = "Render";
+		return "Render";
 		break;
 	case SDL_LOG_CATEGORY_INPUT:
-		cate = "Input";
+		return "Input";
 		break;
 	case SDL_LOG_CATEGORY_TEST:
-		cate = "Test";
+		return "Test";
 		break;
 	case SDL_LOG_CATEGORY_GPU:
-		cate = "Gpu";
-		break;
+		return "Gpu";
+	default:
+		return "SDL3";
 	}
+}
 
-	auto &&log = Log::Get(std::string("@SDL.") + cate);
+void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority, const char *message) noexcept
+{
+	auto &&log = Log::Get(std::string("@SDL.") + CategoryToCStr(category));
 	switch (priority)
 	{
 	case SDL_LOG_PRIORITY_TRACE:
@@ -111,9 +114,10 @@ bool CommonInit(int argc, char **argv) noexcept
 	}
 	log->Info("SDL3 initialized");
 
+	log->Debug("Listing gpu drivers ...");
 	for (auto index = 0; index < SDL_GetNumGPUDrivers(); ++index)
 	{
-		log->Info("GPU Driver {}: {}", index + 1, SDL_GetGPUDriver(index));
+		log->Debug("{}. {}", index + 1, SDL_GetGPUDriver(index));
 	}
 
 	return false;

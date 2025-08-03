@@ -8,7 +8,7 @@ namespace tudov
 	{
 		TE_CONSTANT AppName = "DR2CT";
 		TE_CONSTANT AppOrganization = "Tudov";
-		TE_CONSTANT DataConfigFile = "config.json";
+		TE_CONSTANT DataConfigFile = "Config.json";
 		TE_CONSTANT DataUserDirectoryPrefix = "user_";
 		TE_CONSTANT DataDeveloperAssetsDirectory = "dev";
 		TE_CONSTANT DataVirtualStorageRootApp = "app";

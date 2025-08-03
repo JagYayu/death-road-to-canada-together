@@ -27,6 +27,8 @@ std::atomic<bool> Log::_exit = false;
 
 std::shared_ptr<Log> Log::Get(std::string_view module) noexcept
 {
+	// * If Error occurred here, are you attempt to call `Log::Get` in static initialization?
+
 	auto &&str = std::string(module);
 	auto &&it = _logInstances.find(str);
 	if (it != _logInstances.end()) [[likely]]
@@ -68,7 +70,7 @@ void Log::Quit() noexcept
 
 	if (!_logInstances.empty())
 	{
-		OutputImpl(defaultModule, VerbWarn, "Unresolved log pointers detected on application quit. Maybe memory leaked?");
+		OutputImpl(defaultModule, VerbWarn, "Unreleased log pointers detected on application quit. Maybe memory leaked?");
 		for (auto &&[name, log] : _logInstances)
 		{
 			OutputImpl(defaultModule, VerbWarn, std::format("Log name \"{}\", ref count {}", name.data(), log.use_count()));
