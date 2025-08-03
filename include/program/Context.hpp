@@ -12,7 +12,7 @@ namespace tudov
 	class Config;
 	class Engine;
 	class MainArgs;
-	class ResourcesCollection;
+	class GlobalResourcesCollection;
 	class VirtualFileSystem;
 
 	/**
@@ -39,7 +39,7 @@ namespace tudov
 		IScriptLoader &GetScriptLoader();
 		IScriptProvider &GetScriptProvider();
 		IGlobalStorageManager &GetGlobalStorageManager();
-		ResourcesCollection &GetResourcesCollection();
+		GlobalResourcesCollection &GetGlobalResourcesCollection();
 		VirtualFileSystem &GetVirtualFileSystem();
 
 		inline const Engine &GetEngine() const
@@ -87,9 +87,9 @@ namespace tudov
 			return This()->GetGlobalStorageManager();
 		}
 
-		inline const ResourcesCollection &GetResourcesCollection() const
+		inline const GlobalResourcesCollection &GetGlobalResourcesCollection() const
 		{
-			return const_cast<Context *>(this)->GetResourcesCollection();
+			return const_cast<Context *>(this)->GetGlobalResourcesCollection();
 		}
 
 		inline const VirtualFileSystem &GetVirtualFileSystem() const
@@ -208,14 +208,14 @@ namespace tudov
 			return GetContext().GetGlobalStorageManager();
 		}
 
-		inline ResourcesCollection &GetResourcesCollection() noexcept
+		inline GlobalResourcesCollection &GetGlobalResourcesCollection() noexcept
 		{
-			return GetContext().GetResourcesCollection();
+			return GetContext().GetGlobalResourcesCollection();
 		}
 
-		inline const ResourcesCollection &GetResourcesCollection() const noexcept
+		inline const GlobalResourcesCollection &GetGlobalResourcesCollection() const noexcept
 		{
-			return GetContext().GetResourcesCollection();
+			return GetContext().GetGlobalResourcesCollection();
 		}
 
 		inline VirtualFileSystem &GetVirtualFileSystem() noexcept

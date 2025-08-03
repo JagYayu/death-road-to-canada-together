@@ -6,7 +6,7 @@
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "resource/FontResources.hpp"
-#include "resource/ResourcesCollection.hpp"
+#include "resource/GlobalResourcesCollection.hpp"
 #include "resource/Text.hpp"
 #include "resource/TextResources.hpp"
 #include "util/StringUtils.hpp"
@@ -141,7 +141,7 @@ void UnpackagedMod::Load()
 					GetVirtualFileSystem().RemountFile(filePath, std::vector<std::byte>(bytes, bytes + str.size()));
 				}
 
-				auto textResources = GetResourcesCollection().GetTextResources();
+				auto textResources = GetGlobalResourcesCollection().GetTextResources();
 				ResourceID resourceID = textResources.GetResourceID(filePath);
 				assert(resourceID);
 
@@ -195,7 +195,7 @@ void UnpackagedMod::Load()
 				scriptCode = oss.str();
 			}
 
-			auto &textResources = GetResourcesCollection().GetTextResources();
+			auto &textResources = GetGlobalResourcesCollection().GetTextResources();
 			auto textID = textResources.Load<TextResource>(filePath, scriptCode);
 			assert(textID != 0);
 
@@ -240,7 +240,7 @@ void UnpackagedMod::Unload()
 
 	for (auto &&fontID : _fonts)
 	{
-		_modManager.GetResourcesCollection().GetFontResources().Unload(fontID);
+		_modManager.GetGlobalResourcesCollection().GetFontResources().Unload(fontID);
 	}
 	_fonts.clear();
 

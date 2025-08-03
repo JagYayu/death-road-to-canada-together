@@ -1,4 +1,7 @@
+#include "SDL3/SDL_error.h"
+#include "SDL3/SDL_gpu.h"
 #include "data/Constants.hpp"
+#include "graphic/Device.hpp"
 #include "graphic/GUI.hpp"
 #include "program/Engine.hpp"
 #include "program/Tudov.hpp"
@@ -7,11 +10,11 @@
 
 #define SDL_MAIN_USE_CALLBACKS
 
-#include "SDL3/SDL_gpu.h"
+#define TE_TEST_GPU_RENDERING
+
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_main.h"
-#include "SDL3/SDL_messagebox.h"
 
 #include <memory>
 
@@ -84,40 +87,42 @@ void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority
 
 bool CommonInit(int argc, char **argv) noexcept
 {
-	auto log = Log::Get("Main");
+	auto log = *Log::Get("Main");
 
-	log->Info("Application initializing ...");
+	log.Info("Application initializing ...");
 
-	log->Debug("AppName = {}", Constants::AppName);
-	log->Debug("AppOrganization = {}", Constants::AppOrganization);
-	log->Debug("DataConfigFile = {}", Constants::DataConfigFile);
-	log->Debug("DataUserDirectoryPrefix = {}", Constants::DataUserDirectoryPrefix);
-	log->Debug("DataDeveloperAssetsDirectory = {}", Constants::DataDeveloperAssetsDirectory);
-	log->Debug("DataVirtualStorageRootApp = {}", Constants::DataVirtualStorageRootApp);
-	log->Debug("DataVirtualStorageRootMods = {}", Constants::DataVirtualStorageRootMods);
-	log->Debug("DataVirtualStorageRootUser = {}", Constants::DataVirtualStorageRootUser);
-	log->Debug("NetworkChannelsLimit = {}", Constants::NetworkChannelsLimit);
-	log->Debug("NetworkServerMaximumClients = {}", Constants::NetworkServerMaximumClients);
-	log->Debug("NetworkServerPassword = {}", Constants::NetworkServerPassword);
-	log->Debug("NetworkServerTitle = {}", Constants::NetworkServerTitle);
-	log->Debug("WindowTitle = {}", Constants::WindowTitle);
-	log->Debug("WindowWidth = {}", Constants::WindowWidth);
-	log->Debug("WindowHeight = {}", Constants::WindowHeight);
+	log.Debug("AppName = {}", Constants::AppName);
+	log.Debug("AppOrganization = {}", Constants::AppOrganization);
+	log.Debug("DataConfigFile = {}", Constants::DataConfigFile);
+	log.Debug("DataUserDirectoryPrefix = {}", Constants::DataUserDirectoryPrefix);
+	log.Debug("DataDeveloperAssetsDirectory = {}", Constants::DataDeveloperAssetsDirectory);
+	log.Debug("DataVirtualStorageRootApp = {}", Constants::DataVirtualStorageRootApp);
+	log.Debug("DataVirtualStorageRootMods = {}", Constants::DataVirtualStorageRootMods);
+	log.Debug("DataVirtualStorageRootUser = {}", Constants::DataVirtualStorageRootUser);
+	log.Debug("NetworkChannelsLimit = {}", Constants::NetworkChannelsLimit);
+	log.Debug("NetworkServerMaximumClients = {}", Constants::NetworkServerMaximumClients);
+	log.Debug("NetworkServerPassword = {}", Constants::NetworkServerPassword);
+	log.Debug("NetworkServerTitle = {}", Constants::NetworkServerTitle);
+	log.Debug("WindowTitle = {}", Constants::WindowTitle);
+	log.Debug("WindowWidth = {}", Constants::WindowWidth);
+	log.Debug("WindowHeight = {}", Constants::WindowHeight);
 
 	Tudov::InitMainArgs(argc, argv);
 
 	SDL_SetLogOutputFunction(SDLLogOutputCallback, nullptr);
 	if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS | SDL_INIT_SENSOR | SDL_INIT_CAMERA)) [[unlikely]]
 	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL3 failed to initialize", nullptr);
-		return true;
+		log.Fatal("SDL3 failed to initialize", SDL_GetError());
 	}
-	log->Info("SDL3 initialized");
+	log.Info("SDL3 initialized");
 
-	log->Debug("Listing gpu drivers ...");
-	for (auto index = 0; index < SDL_GetNumGPUDrivers(); ++index)
+	if (log.CanDebug())
 	{
-		log->Debug("{}. {}", index + 1, SDL_GetGPUDriver(index));
+		log.Debug("Listing available gpu drivers ...");
+		for (std::int32_t index = 0; index < SDL_GetNumGPUDrivers(); ++index)
+		{
+			log.Debug("{}. {}", index + 1, SDL_GetGPUDriver(index));
+		}
 	}
 
 	return false;
@@ -130,8 +135,6 @@ void CommonQuit(SDL_AppResult result) noexcept
 	Log::GetInstance().Info("Application quit, result code: {}", std::int32_t(result));
 	Log::Quit();
 }
-
-// #define TE_TEST_GPU_RENDERING
 
 #ifdef TE_TEST_GPU_RENDERING
 

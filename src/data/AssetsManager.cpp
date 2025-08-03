@@ -8,7 +8,7 @@
 #include "data/VirtualFileSystem.hpp"
 #include "data/ZipStorage.hpp"
 #include "program/Engine.hpp"
-#include "resource/ResourcesCollection.hpp"
+#include "resource/GlobalResourcesCollection.hpp"
 #include "util/FileChangeType.hpp"
 
 #include "FileWatch.hpp"
@@ -162,7 +162,7 @@ void AssetsManager::DeveloperDirectoryWatchCallback(const std::filesystem::path 
 	_developerFilesTrigger.Invoke(filePath, std::move(type));
 
 	auto &applicationGlobalStorage = GetGlobalStorageManager().GetApplicationStorage();
-	auto &resourcesCollection = GetResourcesCollection();
+	auto &globalResourcesCollection = GetGlobalResourcesCollection();
 	auto bytes = applicationGlobalStorage.ReadFileToBytes(file);
 
 	switch (type)
@@ -170,7 +170,7 @@ void AssetsManager::DeveloperDirectoryWatchCallback(const std::filesystem::path 
 	case EFileChangeType::Added:
 	case EFileChangeType::Removed:
 	case EFileChangeType::Modified:
-		resourcesCollection.ReloadResource(filePath, bytes);
+		globalResourcesCollection.ReloadResource(filePath, bytes);
 	case EFileChangeType::RenamedOld:
 	case EFileChangeType::RenamedNew:
 		break;

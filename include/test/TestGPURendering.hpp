@@ -1,10 +1,6 @@
 #pragma once
 
-#define TE_TEST_GPU_RENDERING
-
 #include "util/Micros.hpp"
-
-#include <memory>
 
 union SDL_Event;
 

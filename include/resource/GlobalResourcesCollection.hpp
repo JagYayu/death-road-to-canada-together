@@ -23,7 +23,7 @@ namespace tudov
 	 * Manage all kinds of game resources.
 	 * Automatically monitor VFS, load/unload/update resources when VFS has any event triggered.
 	 */
-	class ResourcesCollection : public IEngineComponent, public ILogProvider
+	class GlobalResourcesCollection : public IEngineComponent, public ILogProvider
 	{
 	  protected:
 		Context &_context;
@@ -41,8 +41,8 @@ namespace tudov
 	  public:
 		static EResourceType PathExtensionToResourceType(const std::filesystem::path &path) noexcept;
 
-		explicit ResourcesCollection(Context &context) noexcept;
-		~ResourcesCollection() noexcept = default;
+		explicit GlobalResourcesCollection(Context &context) noexcept;
+		~GlobalResourcesCollection() noexcept = default;
 
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;

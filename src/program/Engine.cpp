@@ -17,7 +17,7 @@
 #include "program/Window.hpp"
 #include "resource/FontResources.hpp"
 #include "resource/ImageResources.hpp"
-#include "resource/ResourcesCollection.hpp"
+#include "resource/GlobalResourcesCollection.hpp"
 #include "resource/TextResources.hpp"
 #include "scripts/GameScripts.hpp"
 #include "util/Log.hpp"
@@ -55,7 +55,7 @@ Engine::Engine() noexcept
 {
 	context = Context(this);
 
-	_resourcesCollection = std::make_shared<ResourcesCollection>(context),
+	_globalResourcesCollection = std::make_shared<GlobalResourcesCollection>(context),
 	_assetsManager = std::make_shared<AssetsManager>(context);
 	_networkManager = std::make_shared<NetworkManager>(context);
 	_modManager = std::make_shared<ModManager>(context);
@@ -142,7 +142,7 @@ bool Engine::ShouldQuit() noexcept
 void Engine::Initialize() noexcept
 {
 	_components = {
-	    _resourcesCollection,
+	    _globalResourcesCollection,
 	    _assetsManager,
 	    _modManager,
 	    _networkManager,

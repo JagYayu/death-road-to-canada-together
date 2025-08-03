@@ -80,6 +80,26 @@ void Log::Quit() noexcept
 	Exit();
 }
 
+void Log::Exit() noexcept
+{
+	if (logWorker == nullptr)
+	{
+		return;
+	}
+
+	{
+		std::lock_guard<std::mutex> lock{_mutex};
+		_exit = true;
+	}
+	_cv.notify_all();
+
+	if (logWorker->joinable())
+	{
+		logWorker->join();
+		logWorker = nullptr;
+	}
+}
+
 std::optional<Log::EVerbosity> Log::GetVerbosity(const std::string &module) noexcept
 {
 	if (auto &&it = _verbositiesOverrides.find(module); it != _verbositiesOverrides.end())
@@ -138,26 +158,6 @@ std::optional<Log::EVerbosity> Log::GetVerbosityOverride(const std::string &modu
 void Log::SetVerbosityOverride(const std::string &module, EVerbosity verb) noexcept
 {
 	_verbositiesOverrides[module] = verb;
-}
-
-void Log::Exit() noexcept
-{
-	if (logWorker == nullptr)
-	{
-		return;
-	}
-
-	{
-		std::lock_guard<std::mutex> lock{_mutex};
-		_exit = true;
-	}
-	_cv.notify_all();
-
-	if (logWorker->joinable())
-	{
-		logWorker->join();
-		logWorker = nullptr;
-	}
 }
 
 std::size_t Log::CountLogs() noexcept

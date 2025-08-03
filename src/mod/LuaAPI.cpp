@@ -9,7 +9,7 @@
 #include "program/Window.hpp"
 #include "resource/FontResources.hpp"
 #include "resource/ImageResources.hpp"
-#include "resource/ResourcesCollection.hpp"
+#include "resource/GlobalResourcesCollection.hpp"
 
 #include "sol/property.hpp"
 
@@ -155,7 +155,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "setViewScaleMode", &RenderTarget::SetViewScaleMode,
 	            "update", &RenderTarget::Update);
 
-	// TE_USERTYPE(ResourcesCollection);
+	// TE_USERTYPE(GlobalResourcesCollection);
 
 	// TE_USERTYPE(Version,
 	//             "major", &Version::Major,
@@ -164,7 +164,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	//             "patch", &Version::Patch);
 
 	lua["engine"] = &context.GetEngine();
-	lua["resources"] = &context.GetResourcesCollection();
+	lua["resources"] = &context.GetGlobalResourcesCollection();
 
 	lua["mods"] = &dynamic_cast<ModManager &>(context.GetModManager());
 	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());

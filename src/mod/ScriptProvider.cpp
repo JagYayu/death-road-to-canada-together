@@ -1,7 +1,7 @@
 #include "mod/ScriptProvider.hpp"
 
 #include "data/VirtualFileSystem.hpp"
-#include "resource/ResourcesCollection.hpp"
+#include "resource/GlobalResourcesCollection.hpp"
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 #include <cassert>
@@ -45,7 +45,7 @@ void ScriptProvider::Initialize() noexcept
 {
 	constexpr decltype(auto) directory = "app/lua";
 	std::vector<std::string_view> luaFilePaths = GetVirtualFileSystem().List(directory, VirtualFileSystem::ListOption::File);
-	auto textResources = GetResourcesCollection().GetTextResources();
+	auto textResources = GetGlobalResourcesCollection().GetTextResources();
 
 	for (auto &&relativePath : luaFilePaths)
 	{

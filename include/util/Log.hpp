@@ -68,13 +68,21 @@ namespace tudov
 		static std::shared_ptr<Log> Get(std::string_view module) noexcept;
 		static Log &GetInstance() noexcept;
 		static void CleanupExpired() noexcept;
+		/**
+		 * Quit the logging system, will wait until logging thread has being finished, then call `Exit()` internally.
+		 */
 		static void Quit() noexcept;
+		/**
+		 * Call this function only before the program is about to exit.
+		 * e.g. Abort the program.
+		 * Otherwise, use `Exit()` instead.
+		 */
+		static void Exit() noexcept;
 		static std::optional<EVerbosity> GetVerbosity(const std::string &module) noexcept;
 		static bool SetVerbosity(const std::string &module, EVerbosity verb) noexcept;
 		static void UpdateVerbosities(const void *jsonConfig);
 		static std::optional<EVerbosity> GetVerbosityOverride(const std::string &module) noexcept;
 		static void SetVerbosityOverride(const std::string &module, EVerbosity verb) noexcept;
-		static void Exit() noexcept;
 
 		static std::size_t CountLogs() noexcept;
 		static std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator BeginLogs() noexcept;

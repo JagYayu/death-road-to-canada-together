@@ -1,7 +1,7 @@
 #include "program/Context.hpp"
 #include "program/Engine.hpp"
 
-#include "resource/ResourcesCollection.hpp"
+#include "resource/GlobalResourcesCollection.hpp"
 #include "util/MicrosImpl.hpp"
 
 #include <stdexcept>
@@ -64,9 +64,9 @@ IGlobalStorageManager &Context::GetGlobalStorageManager()
 	return *GetEngine()._globalStorageManager;
 }
 
-ResourcesCollection &Context::GetResourcesCollection()
+GlobalResourcesCollection &Context::GetGlobalResourcesCollection()
 {
-	return *GetEngine()._resourcesCollection;
+	return *GetEngine()._globalResourcesCollection;
 }
 
 VirtualFileSystem &Context::GetVirtualFileSystem()

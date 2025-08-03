@@ -27,7 +27,7 @@ namespace tudov
 	struct IWindow;
 	class Context;
 	class Log;
-	class ResourcesCollection;
+	class GlobalResourcesCollection;
 	class VirtualFileSystem;
 
 	/**
@@ -105,7 +105,7 @@ namespace tudov
 		std::shared_ptr<IGlobalStorageManager> _globalStorageManager;
 		std::shared_ptr<VirtualFileSystem> _virtualFileSystem;
 
-		std::shared_ptr<ResourcesCollection> _resourcesCollection;
+		std::shared_ptr<GlobalResourcesCollection> _globalResourcesCollection;
 		std::shared_ptr<IAssetsManager> _assetsManager;
 		std::shared_ptr<INetworkManager> _networkManager;
 		std::shared_ptr<IModManager> _modManager;

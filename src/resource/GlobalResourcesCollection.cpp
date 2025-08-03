@@ -1,4 +1,4 @@
-#include "resource/ResourcesCollection.hpp"
+#include "resource/GlobalResourcesCollection.hpp"
 
 #include "data/VirtualFileSystem.hpp"
 #include "resource/BinariesResources.hpp"
@@ -8,7 +8,7 @@
 
 using namespace tudov;
 
-EResourceType ResourcesCollection::PathExtensionToResourceType(const std::filesystem::path &extension) noexcept
+EResourceType GlobalResourcesCollection::PathExtensionToResourceType(const std::filesystem::path &extension) noexcept
 {
 	if (extension == ".ttf")
 		return EResourceType::Font;
@@ -19,7 +19,7 @@ EResourceType ResourcesCollection::PathExtensionToResourceType(const std::filesy
 	return EResourceType::Unknown;
 }
 
-ResourcesCollection::ResourcesCollection(Context &context) noexcept
+GlobalResourcesCollection::GlobalResourcesCollection(Context &context) noexcept
     : _context(context),
       _binariesResources(std::make_shared<BinariesResources>()),
       _fontResources(std::make_shared<FontResources>()),
@@ -34,17 +34,17 @@ ResourcesCollection::ResourcesCollection(Context &context) noexcept
 	};
 }
 
-Context &ResourcesCollection::GetContext() noexcept
+Context &GlobalResourcesCollection::GetContext() noexcept
 {
 	return _context;
 }
 
-Log &ResourcesCollection::GetLog() noexcept
+Log &GlobalResourcesCollection::GetLog() noexcept
 {
-	return *Log::Get("ResourcesCollection");
+	return *Log::Get("GlobalResourcesCollection");
 }
 
-void ResourcesCollection::Initialize() noexcept
+void GlobalResourcesCollection::Initialize() noexcept
 {
 	auto &vfs = GetVirtualFileSystem();
 
@@ -62,7 +62,7 @@ void ResourcesCollection::Initialize() noexcept
 	};
 }
 
-void ResourcesCollection::Deinitialize() noexcept
+void GlobalResourcesCollection::Deinitialize() noexcept
 {
 	auto &vfs = GetVirtualFileSystem();
 
@@ -71,7 +71,7 @@ void ResourcesCollection::Deinitialize() noexcept
 	vfs.GetOnRemountFile() -= _handlerIDOnVFSRemountFile;
 }
 
-// EHierarchyElement ResourcesCollection::Check(const Path &path) noexcept
+// EHierarchyElement GlobalResourcesCollection::Check(const Path &path) noexcept
 // {
 // 	for (const auto &resources : _resourcesList)
 // 	{
@@ -84,7 +84,7 @@ void ResourcesCollection::Deinitialize() noexcept
 // 	return EHierarchyElement::None;
 // }
 
-// bool ResourcesCollection::IsData(const Path &path) noexcept
+// bool GlobalResourcesCollection::IsData(const Path &path) noexcept
 // {
 // 	for (const auto &resources : _resourcesList)
 // 	{
@@ -96,7 +96,7 @@ void ResourcesCollection::Deinitialize() noexcept
 // 	return false;
 // }
 
-// bool ResourcesCollection::IsDirectory(const Path &path) noexcept
+// bool GlobalResourcesCollection::IsDirectory(const Path &path) noexcept
 // {
 // 	for (const auto &resources : _resourcesList)
 // 	{
@@ -108,7 +108,7 @@ void ResourcesCollection::Deinitialize() noexcept
 // 	return false;
 // }
 
-// bool ResourcesCollection::IsNone(const Path &path) noexcept
+// bool GlobalResourcesCollection::IsNone(const Path &path) noexcept
 // {
 // 	for (const auto &resources : _resourcesList)
 // 	{
@@ -120,7 +120,7 @@ void ResourcesCollection::Deinitialize() noexcept
 // 	return false;
 // }
 
-// IResource &ResourcesCollection::Get(const Path &dataPath)
+// IResource &GlobalResourcesCollection::Get(const Path &dataPath)
 // {
 // 	for (const auto &resources : _resourcesList)
 // 	{
@@ -132,7 +132,7 @@ void ResourcesCollection::Deinitialize() noexcept
 // 	throw std::runtime_error("resource not found");
 // }
 
-// EHierarchyIterationResult ResourcesCollection::Foreach(const Path &directory, const IterationCallback &callback, void *callbackArgs)
+// EHierarchyIterationResult GlobalResourcesCollection::Foreach(const Path &directory, const IterationCallback &callback, void *callbackArgs)
 // {
 // 	for (const auto &resources : _resourcesList)
 // 	{
@@ -145,27 +145,27 @@ void ResourcesCollection::Deinitialize() noexcept
 // 	return EHierarchyIterationResult::Continue;
 // }
 
-BinariesResources &ResourcesCollection::GetBinariesResources() noexcept
+BinariesResources &GlobalResourcesCollection::GetBinariesResources() noexcept
 {
 	return *_binariesResources;
 }
 
-FontResources &ResourcesCollection::GetFontResources() noexcept
+FontResources &GlobalResourcesCollection::GetFontResources() noexcept
 {
 	return *_fontResources;
 }
 
-ImageResources &ResourcesCollection::GetImageResources() noexcept
+ImageResources &GlobalResourcesCollection::GetImageResources() noexcept
 {
 	return *_imageResources;
 }
 
-TextResources &ResourcesCollection::GetTextResources() noexcept
+TextResources &GlobalResourcesCollection::GetTextResources() noexcept
 {
 	return *_textResources;
 }
 
-std::tuple<EResourceType, ResourceID> ResourcesCollection::LoadResource(const std::filesystem::path &path, const std::vector<std::byte> &bytes)
+std::tuple<EResourceType, ResourceID> GlobalResourcesCollection::LoadResource(const std::filesystem::path &path, const std::vector<std::byte> &bytes)
 {
 	if (!path.has_extension()) [[unlikely]]
 	{
@@ -198,7 +198,7 @@ std::tuple<EResourceType, ResourceID> ResourcesCollection::LoadResource(const st
 	return {type, id};
 }
 
-inline EResourceType ResourcesCollection::UnloadResource(const std::filesystem::path &path)
+inline EResourceType GlobalResourcesCollection::UnloadResource(const std::filesystem::path &path)
 {
 	if (!path.has_extension()) [[unlikely]]
 	{
@@ -231,7 +231,7 @@ inline EResourceType ResourcesCollection::UnloadResource(const std::filesystem::
 	return type;
 }
 
-std::tuple<EResourceType, ResourceID, ResourceID> ResourcesCollection::ReloadResource(const std::filesystem::path &path, const std::vector<std::byte> &bytes)
+std::tuple<EResourceType, ResourceID, ResourceID> GlobalResourcesCollection::ReloadResource(const std::filesystem::path &path, const std::vector<std::byte> &bytes)
 {
 	if (!path.has_extension()) [[unlikely]]
 	{
