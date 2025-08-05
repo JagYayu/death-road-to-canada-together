@@ -1,9 +1,11 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
 #include <fstream>
 #include <iterator>
 #include <stdexcept>
+#include <vector>
 
 namespace tudov
 {
@@ -78,6 +80,14 @@ namespace tudov
 			throw std::runtime_error("Failed to open file: " + file);
 		}
 		return std::string{std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
+	}
+
+	inline std::vector<std::byte> ReadFileToBytes(const std::string &file, bool binary = false)
+	{
+		std::string str = ReadFileToString(file, true);
+		auto bytePtr = reinterpret_cast<const std::byte *>(str.c_str());
+		auto bytes = std::vector<std::byte>(bytePtr, bytePtr + str.size());
+		return bytes;
 	}
 
 	/**

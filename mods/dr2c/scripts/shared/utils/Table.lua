@@ -1,7 +1,11 @@
-local Function = require "dr2c.shared.utils.Function"
+local Function = require("dr2c.shared.utils.Function")
 local Table = {}
 
-local _ScriptEngine = require "#ScriptEngine"
+local _ScriptEngine = require("#ScriptEngine")
+
+Table.empty = setmetatable({}, {
+	__newindex = Function.empty,
+})
 
 --- Lock a table's metatable, which can no longer be accessed by `getmetatable` functions in sandboxed scripts.
 --- @param tbl table
@@ -49,8 +53,8 @@ end
 
 --- @param l table
 --- @param r table
-function Table.deepEquals(l, r)
+function Table.deepEquals(l, r) end
 
-end
+Table.lockMetatable(Table.empty)
 
 return Table

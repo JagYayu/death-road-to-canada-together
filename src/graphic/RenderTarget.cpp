@@ -29,10 +29,10 @@ RenderTarget::RenderTarget(Renderer &renderer, std::int32_t width, std::int32_t 
       _positionLerpFactor(0.95f),
       _scaleLerpFactor(0.975f),
       _viewLerpFactor(0.925f),
-      _positionX(0.0f),
-      _positionY(0.0f),
-      _scaleX(1.0f),
-      _scaleY(1.0f),
+      _cameraX(0.0f),
+      _cameraY(0.0f),
+      _cameraScaleX(1.0f),
+      _cameraScaleY(1.0f),
       _viewX(width),
       _viewY(height),
       _targetPositionX(0.0f),
@@ -68,6 +68,11 @@ std::float_t RenderTarget::GetHeight() noexcept
 std::tuple<std::float_t, std::float_t> RenderTarget::GetSize() noexcept
 {
 	return _texture->GetSize();
+}
+
+std::shared_ptr<Texture> RenderTarget::GetTexture() const noexcept
+{
+	return _texture;
 }
 
 SDL_FRect RenderTarget::GetSource() noexcept
@@ -122,8 +127,12 @@ bool RenderTarget::Resize(std::int32_t width, std::int32_t height)
 		}
 	}
 
+	_targetViewX = width;
+	_targetViewY = height;
+
 	_texture = std::make_shared<Texture>(_renderer);
 	_texture->Initialize(width, height, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET);
+
 	return true;
 }
 
@@ -153,72 +162,50 @@ void RenderTarget::SetScaleLerpFactor(std::float_t factor) noexcept
 	_scaleLerpFactor = factor;
 }
 
-std::float_t RenderTarget::GetViewLerpFactor() noexcept
-{
-	return _viewLerpFactor;
-}
-
-void RenderTarget::SetViewLerpFactor(std::float_t factor) noexcept
-{
-	_viewLerpFactor = factor;
-}
-
-std::tuple<std::float_t, std::float_t> RenderTarget::GetTargetPosition() noexcept
+std::tuple<std::float_t, std::float_t> RenderTarget::GetCameraTargetPosition() noexcept
 {
 	return std::make_tuple(_targetPositionX, _targetPositionY);
 }
 
-void RenderTarget::SetTargetPosition(std::float_t x, std::float_t y) noexcept
+void RenderTarget::SetCameraTargetPosition(std::float_t x, std::float_t y) noexcept
 {
 	_targetPositionX = x;
 	_targetPositionY = y;
 }
 
-std::tuple<std::float_t, std::float_t> RenderTarget::GetPosition() noexcept
+std::tuple<std::float_t, std::float_t> RenderTarget::GetCameraPosition() noexcept
 {
-	return std::make_tuple(_positionX, _positionY);
+	return std::make_tuple(_cameraX, _cameraY);
 }
 
-std::tuple<std::float_t, std::float_t> RenderTarget::GetTargetScale() noexcept
+std::tuple<std::float_t, std::float_t> RenderTarget::GetCameraTargetScale() noexcept
 {
 	return std::make_tuple(_targetScaleX, _targetScaleY);
 }
 
-void RenderTarget::SetTargetScale(std::float_t x, std::float_t y) noexcept
+void RenderTarget::SetCameraTargetScale(std::float_t x, std::float_t y) noexcept
 {
 	_targetScaleX = x;
 	_targetScaleY = y;
 }
 
-std::tuple<std::float_t, std::float_t> RenderTarget::GetScale() noexcept
+std::tuple<std::float_t, std::float_t> RenderTarget::GetCameraScale() noexcept
 {
-	return std::make_tuple(_scaleX, _scaleY);
+	return std::make_tuple(_cameraScaleX, _cameraScaleY);
 }
 
-std::tuple<std::float_t, std::float_t> RenderTarget::GetTargetViewSize() noexcept
+void RenderTarget::SnapCameraPosition() noexcept
 {
-	return std::make_tuple(_targetViewX, _targetViewY);
+	_snapCameraPosition = true;
 }
 
-void RenderTarget::SetTargetViewSize(std::float_t x, std::float_t y) noexcept
+void RenderTarget::SnapCameraScale() noexcept
 {
-	_targetViewX = x;
-	_targetViewY = y;
+	_snapCameraScale = true;
 }
 
-std::tuple<std::float_t, std::float_t> RenderTarget::GetViewSize() noexcept
+void RenderTarget::Reset() noexcept
 {
-	return std::make_tuple(_viewX, _viewY);
-}
-
-RenderTarget::EViewScaleMode RenderTarget::GetViewScaleMode() noexcept
-{
-	return _viewScaleMode;
-}
-
-void RenderTarget::SetViewScaleMode(EViewScaleMode mode) noexcept
-{
-	_viewScaleMode = mode;
 }
 
 void RenderTarget::Update() noexcept
@@ -244,14 +231,29 @@ void RenderTarget::Update() noexcept
 	std::float_t tScale = 1.0f - std::exp(-_positionLerpFactor * deltaTime);
 	std::float_t tView = 1.0f - std::exp(-_positionLerpFactor * deltaTime);
 
-	_positionX = std::lerp(_positionX, _targetPositionX, tPosition);
-	_positionY = std::lerp(_positionY, _targetPositionY, tPosition);
-	_scaleX = std::lerp(_scaleX, _targetScaleX, tScale);
-	_scaleY = std::lerp(_scaleY, _targetScaleY, tScale);
-	_viewX = std::lerp(_viewX, _targetViewX, tView);
-	_viewY = std::lerp(_viewY, _targetViewY, tView);
+	if (_snapCameraPosition)
+	{
+		_cameraX = _targetPositionX;
+		_cameraY = _targetPositionY;
+		_snapCameraPosition = false;
+	}
+	else
+	{
+		_cameraX = std::lerp(_cameraX, _targetPositionX, tPosition);
+		_cameraY = std::lerp(_cameraY, _targetPositionY, tPosition);
+	}
+	if (_snapCameraScale)
+	{
+		_cameraScaleX = _targetScaleX;
+		_cameraScaleY = _targetScaleY;
+		_snapCameraScale = false;
+	}
+	else
+	{
+		_cameraScaleX = std::lerp(_cameraScaleX, _targetScaleX, tScale);
+		_cameraScaleY = std::lerp(_cameraScaleY, _targetScaleY, tScale);
+	}
 
-	auto sdlRenderer = _renderer.GetSDLRendererHandle();
-	SDL_SetRenderScale(sdlRenderer, _scaleX, _scaleY);
-	SDL_SetRenderLogicalPresentation(sdlRenderer, _viewX, _viewY, mode);
+	// _viewX = std::lerp(_viewX, _targetViewX, tView);
+	// _viewY = std::lerp(_viewY, _targetViewY, tView);
 }

@@ -1,85 +1,58 @@
---- @class Camera
-local Camera = {}
-local Matrix3x3 = require("dr2c.shared.utils.Matrix3x3")
+-- --- @class Camera
+-- local Camera = {}
+-- local Matrix3x3 = require("dr2c.shared.utils.Matrix3x3")
 
-local centerX = 0
-local centerY = 0
-local rotation = 0
-local scaleX = 1
-local scaleY = 1
-local viewWidth = 1280
-local viewHeight = 768
+-- local centerX = 0
+-- local centerY = 0
+-- local rotation = 0
+-- local scaleX = 1
+-- local scaleY = 1
+-- local viewWidth = 1280
+-- local viewHeight = 768
 
-function Camera.getCenter()
-	return centerX, centerY
-end
+-- function Camera.getCenter()
+-- 	return centerX, centerY
+-- end
 
---- @param x number
---- @param y number
-function Camera.setCenter(x, y)
-	centerX = x
-	centerY = y
-end
+-- --- @param x number
+-- --- @param y number
+-- function Camera.setCenter(x, y)
+-- 	centerX = x
+-- 	centerY = y
+-- end
 
-function Camera.getTargetCenterPosition()
-	return centerX, centerY
-end
+-- function Camera.getTargetCenterPosition()
+-- 	return centerX, centerY
+-- end
 
-local timer = 0
+-- local timer = 0
 
--- Events.add("KeyDown", function(e)
--- 	print(e)
--- end)
+-- -- Events.add("KeyDown", function(e)
+-- -- 	print(e)
+-- -- end)
 
-local renderTarget
-local renderTargetWidth = 1280
-local renderTargetHeight = 720
+-- local layers = {}
+-- local renderTarget
+-- local renderTargetWidth = 1280
+-- local renderTargetHeight = 720
 
-function Camera.getRenderTarget()
-	return renderTarget
-end
+-- function Camera.newLayer(z)
+-- 	layers[#layers+1] = 
+-- end
 
-local eventRenderCamera = events:new(N_("RenderCamera"), {
-	"Sprites",
-})
+-- function Camera.getRenderTarget()
+-- 	return renderTarget
+-- end
 
-local id = images:getID("gfx/cars/cars_unique_110x96.png")
+-- local eventRenderCamera = events:new(N_("RenderCamera"), {
+-- 	"Sprites",
+-- })
 
-local test = 2
+-- local id = images:getID("gfx/cars/cars_unique_110x96.png")
 
-events:add(N_("RenderGame"), function(e)
-	local renderer = e.window.renderer
+-- local test = 2
 
-	if not renderTarget then
-		renderTarget = renderer:newRenderTarget(renderTargetWidth, renderTargetHeight)
-	end
+-- events:add(N_("RenderGame"), function(e)
+-- end, N_("updateCamera"), "Camera")
 
-	do
-		-- local width, height = e.window:getSize()
-		-- local scale = math.min(width / renderTargetWidth, height / renderTargetHeight)
-		-- test = test
-		-- scale = test
-		renderTarget:setTargetScale(1, 1)
-	end
-	renderTarget:setTargetPosition(0, 0)
-	renderTarget:update()
-
-	e.renderTarget = renderTarget
-
-	renderer:beginTarget(renderTarget)
-	renderer:clear()
-
-	events:invoke(eventRenderCamera, e)
-
-	renderer:draw({
-		image = id,
-		source = { 14, 302, 80, 57 },
-		-- destination = { renderTargetWidth / 2 - 800 / 2, renderTargetHeight / 2 - 570 / 2, 800, 570 },
-		-- source = { 49, 343, 1, 1 },
-		destination = { 1280 / 4, 720 / 4, 1280 / 2, 720 / 2 },
-	})
-
-	renderer:endTarget()
-end, N_("updateCamera"), "Camera")
-
-return Camera
+-- return Camera

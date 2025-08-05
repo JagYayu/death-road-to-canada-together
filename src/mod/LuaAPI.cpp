@@ -7,9 +7,10 @@
 #include "mod/ScriptLoader.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
+#include "program/WindowManager.hpp"
 #include "resource/FontResources.hpp"
-#include "resource/ImageResources.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
+#include "resource/ImageResources.hpp"
 
 #include "sol/property.hpp"
 
@@ -35,7 +36,7 @@ decltype(auto) GetMainWindowFromContext(Context &context)
 	{
 		try
 		{
-			return context.GetEngine().GetMainWindow();
+			return context.GetWindowManager().GetMainWindow();
 		}
 		catch (std::exception &e)
 		{
@@ -60,25 +61,6 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            {"Trace", Log::EVerbosity::Trace},
 	            {"Fatal", Log::EVerbosity::Fatal},
 	        });
-
-	TE_USERTYPE(Camera2D,
-	            "getPosition", &Camera2D::GetPosition,
-	            "getPositionLerpFactor", &Camera2D::GetPositionLerpFactor,
-	            "getScale", &Camera2D::GetScale,
-	            "getScaleLerpFactor", &Camera2D::GetScaleLerpFactor,
-	            "getTargetScale", &Camera2D::GetTargetScale,
-	            "getTargetScale", &Camera2D::GetTargetScale,
-	            "getTargetViewSize", &Camera2D::GetTargetViewSize,
-	            "getViewLerpFactor", &Camera2D::GetViewLerpFactor,
-	            "getViewScaleMode", &Camera2D::GetViewScaleMode,
-	            "getViewSize", &Camera2D::GetViewSize,
-	            "setPositionLerpFactor", &Camera2D::SetPositionLerpFactor,
-	            "setScaleLerpFactor", &Camera2D::SetScaleLerpFactor,
-	            "setTargetPosition", &Camera2D::SetTargetPosition,
-	            "setTargetScale", &Camera2D::SetTargetScale,
-	            "setTargetViewSize", &Camera2D::SetTargetViewSize,
-	            "setViewLerpFactor", &Camera2D::SetViewLerpFactor,
-	            "setViewScaleMode", &Camera2D::SetViewScaleMode);
 
 	TE_USERTYPE(Engine,
 	            "mainWindow", GetMainWindowFromContext(context),
@@ -126,33 +108,27 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "clear", &Renderer::LuaClear,
 	            "draw", &Renderer::LuaDraw,
 	            "endTarget", &Renderer::LuaEndTarget,
-	            "getTargetSize", &Renderer::LuaGetTargetSize,
 	            "newRenderTarget", &Renderer::LuaNewRenderTarget,
 	            "render", &Renderer::Render);
 
 	TE_USERTYPE(RenderTarget,
-	            "getPosition", &RenderTarget::GetPosition,
+	            "getPosition", &RenderTarget::GetCameraPosition,
 	            "getHeight", &RenderTarget::GetHeight,
 	            "getPositionLerpFactor", &RenderTarget::GetPositionLerpFactor,
-	            "getScale", &RenderTarget::GetScale,
+	            "getScale", &RenderTarget::GetCameraScale,
 	            "getScaleLerpFactor", &RenderTarget::GetScaleLerpFactor,
 	            "getSize", &RenderTarget::GetSize,
-	            "getTargetScale", &RenderTarget::GetTargetScale,
-	            "getTargetScale", &RenderTarget::GetTargetScale,
-	            "getTargetViewSize", &RenderTarget::GetTargetViewSize,
-	            "getViewLerpFactor", &RenderTarget::GetViewLerpFactor,
-	            "getViewScaleMode", &RenderTarget::GetViewScaleMode,
-	            "getViewSize", &RenderTarget::GetViewSize,
+	            "getCameraTargetScale", &RenderTarget::GetCameraTargetScale,
+	            "getCameraTargetScale", &RenderTarget::GetCameraTargetScale,
 	            "getWidth", &RenderTarget::GetWidth,
 	            "resize", &RenderTarget::Resize,
 	            "resizeToFit", &RenderTarget::ResizeToFit,
 	            "setPositionLerpFactor", &RenderTarget::SetPositionLerpFactor,
 	            "setScaleLerpFactor", &RenderTarget::SetScaleLerpFactor,
-	            "setTargetPosition", &RenderTarget::SetTargetPosition,
-	            "setTargetScale", &RenderTarget::SetTargetScale,
-	            "setTargetViewSize", &RenderTarget::SetTargetViewSize,
-	            "setViewLerpFactor", &RenderTarget::SetViewLerpFactor,
-	            "setViewScaleMode", &RenderTarget::SetViewScaleMode,
+	            "setCameraTargetPosition", &RenderTarget::SetCameraTargetPosition,
+	            "setCameraTargetScale", &RenderTarget::SetCameraTargetScale,
+				"snapCameraPosition", &RenderTarget::SnapCameraPosition,
+				"snapCameraScale", &RenderTarget::SnapCameraScale,
 	            "update", &RenderTarget::Update);
 
 	// TE_USERTYPE(GlobalResourcesCollection);
@@ -164,13 +140,16 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	//             "patch", &Version::Patch);
 
 	lua["engine"] = &context.GetEngine();
-	lua["resources"] = &context.GetGlobalResourcesCollection();
-
 	lua["mods"] = &dynamic_cast<ModManager &>(context.GetModManager());
 	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
 	lua["scriptEngine"] = &dynamic_cast<ScriptEngine &>(context.GetScriptEngine());
 	lua["scriptLoader"] = &dynamic_cast<ScriptLoader &>(context.GetScriptLoader());
 	lua["scriptProvider"] = &dynamic_cast<ScriptProvider &>(context.GetScriptProvider());
+
+	auto &collection = context.GetGlobalResourcesCollection();
+	lua["binaries"] = collection.GetBinariesResources();
+	lua["fonts"] = collection.GetFontResources();
+	lua["images"] = collection.GetImageResources();
 
 	lua.set_function("getModConfig", [this, &context](std::string_view modUID) -> ModConfig *
 	{

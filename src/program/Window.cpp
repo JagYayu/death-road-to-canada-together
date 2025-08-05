@@ -4,9 +4,9 @@
 #include "graphic/Renderer.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "program/Engine.hpp"
+#include "program/WindowManager.hpp"
 
 #include "SDL3/SDL_events.h"
-#include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_video.h"
 
 #include <cmath>
@@ -25,26 +25,11 @@ Window::Window(Context &context, std::string_view logName) noexcept
 
 Window::~Window() noexcept
 {
-	if (_sdlWindow)
-	{
-		SDL_DestroyWindow(_sdlWindow);
-	}
 }
 
 Context &Window::GetContext() noexcept
 {
 	return _context;
-}
-
-void Window::Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept
-{
-	_sdlWindow = SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
-	if (!_sdlWindow)
-	{
-		_log->Error("Failed to initialize SDL3 Window");
-	}
-
-	renderer->Initialize();
 }
 
 bool Window::IsMinimized() const noexcept
@@ -114,7 +99,7 @@ bool Window::RenderPreImpl() noexcept
 
 	auto &&args = GetScriptEngine().CreateTable(0, 1);
 	auto &&key = GetKey();
-	args["isMain"] = GetEngine().GetMainWindow().get() == this;
+	args["isMain"] = GetContext().GetWindowManager().GetMainWindow().get() == this;
 	args["key"] = &key;
 	args["window"] = this;
 	GetEventManager().GetCoreEvents().TickRender().Invoke(args, key);

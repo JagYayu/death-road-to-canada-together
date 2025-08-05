@@ -1,11 +1,17 @@
 #include "test/TestGPURendering.hpp"
 
 #include "SDL3/SDL_iostream.h"
+#include "SDL3/SDL_log.h"
+#include "SDL3/SDL_render.h"
+#include "SDL3/SDL_storage.h"
 #include "util/Log.hpp"
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <tuple>
 #include <vector>
+
+#define STB_IMAGE_IMPLEMENTATION
 
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_events.h"
@@ -14,182 +20,481 @@
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_timer.h"
 #include "SDL3/SDL_video.h"
+#include "stb_image.h"
+#include "stb_include.h"
 
 using namespace tudov;
 
 static std::shared_ptr<Log> gLog = nullptr;
 
-inline SDL_Window *window = nullptr;
-inline SDL_GPUDevice *device = nullptr;
-inline SDL_GPUShader *shaderFrag = nullptr;
-inline SDL_GPUShader *shaderVert = nullptr;
-
-struct DrawWindowContentsArgs
+struct Vertex
 {
-	SDL_GPUCommandBuffer *commandBuffer;
-	SDL_GPURenderPass *renderPass;
+	float x, y;
+	float r, g, b;
+	float u, v;
 };
 
-void RenderWindow(DrawWindowContentsArgs &args) noexcept;
-
-std::tuple<std::vector<std::uint8_t>, std::size_t> ReadFile(std::string_view filePath) noexcept
+struct GPUShaderBundle
 {
-	SDL_IOStream *io = SDL_IOFromFile(filePath.data(), "rb");
-	if (!io)
+	SDL_GPUShader *vertex{};
+	SDL_GPUShader *fragment{};
+
+	operator bool() const
 	{
-		gLog->Fatal("Failed to open file: %s", SDL_GetError());
+		return vertex && fragment;
+	}
+};
+
+SDL_Window *gWindow = nullptr;
+bool gShouldExit = false;
+
+// SDL GPU resources
+SDL_GPUDevice *gDevice = nullptr;
+GPUShaderBundle gShaders;
+SDL_GPUGraphicsPipeline *gGraphicsPipeline;
+
+SDL_GPUBuffer *gPlaneVertexBuffer;
+SDL_GPUBuffer *gIndicesBuffer;
+
+SDL_GPUTexture *gTexture;
+SDL_GPUSampler *gSampler;
+
+SDL_GPUShader *loadSDLGPUShader(const char *filename, SDL_Storage *storage,
+                                SDL_GPUShaderStage stage, uint32_t sampler_num)
+{
+	Uint64 file_size;
+	if (!SDL_GetStorageFileSize(storage, filename, &file_size))
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "get file %s size failed!: %s",
+		             filename, SDL_GetError());
+		return {};
 	}
 
-	Sint64 ioSize = SDL_GetIOSize(io);
-	if (ioSize <= 0)
+	std::vector<Uint8> data(file_size);
+	if (!SDL_ReadStorageFile(storage, filename, data.data(), file_size))
 	{
-		gLog->Fatal("Invalid file size: %s");
+		SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "read file %s failed!: %s",
+		             filename, SDL_GetError());
+		return {};
 	}
 
-	std::vector<std::uint8_t> file;
-	file.resize(static_cast<size_t>(ioSize));
-	size_t readSize = SDL_ReadIO(io, file.data(), static_cast<size_t>(ioSize));
-	SDL_CloseIO(io);
+	SDL_GPUShaderCreateInfo ci;
+	ci.code = data.data();
+	ci.code_size = data.size();
+	ci.entrypoint = "main";
+	ci.format = SDL_GPU_SHADERFORMAT_SPIRV;
+	ci.num_samplers = sampler_num;
+	ci.num_storage_buffers = 0;
+	ci.num_storage_textures = 0;
+	ci.num_uniform_buffers = 0;
+	ci.stage = stage;
 
-	return {file, readSize};
+	SDL_GPUShader *shader = SDL_CreateGPUShader(gDevice, &ci);
+	if (!shader)
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_GPU,
+		             "create gpu shader from %s failed: %s", filename,
+		             SDL_GetError());
+		return {};
+	}
+	return shader;
+}
+
+GPUShaderBundle createSDLGPUShaderBundle()
+{
+	SDL_Storage *storage = SDL_OpenTitleStorage(nullptr, 0);
+	if (!storage)
+	{
+		SDL_LogError(
+		    SDL_LOG_CATEGORY_SYSTEM,
+		    "Open storage failed! You must run this program at root dir!");
+		return {};
+	}
+
+	while (!SDL_StorageReady(storage))
+	{
+		SDL_Delay(1);
+	}
+
+	GPUShaderBundle bundle;
+	bundle.vertex =
+	    loadSDLGPUShader("dev/shader/TestShader.vert.spv", storage, SDL_GPU_SHADERSTAGE_VERTEX, 0);
+	bundle.fragment =
+	    loadSDLGPUShader("dev/shader/TestShader.frag.spv", storage, SDL_GPU_SHADERSTAGE_FRAGMENT, 1);
+
+	SDL_CloseStorage(storage);
+	return bundle;
+}
+
+SDL_GPUGraphicsPipeline *createGraphicsPipeline()
+{
+	SDL_GPUGraphicsPipelineCreateInfo ci{};
+
+	SDL_GPUVertexAttribute attributes[3];
+
+	// position attribute
+	{
+		attributes[0].location = 0;
+		attributes[0].buffer_slot = 0;
+		attributes[0].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2;
+		attributes[0].offset = 0;
+	}
+
+	// color attribute
+	{
+		attributes[1].location = 1;
+		attributes[1].buffer_slot = 0;
+		attributes[1].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
+		attributes[1].offset = sizeof(float) * 2;
+	}
+
+	// uv attribute
+	{
+		attributes[2].location = 2;
+		attributes[2].buffer_slot = 0;
+		attributes[2].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2;
+		attributes[2].offset = sizeof(float) * 5;
+	}
+
+	ci.vertex_input_state.vertex_attributes = attributes;
+	ci.vertex_input_state.num_vertex_attributes = 3;
+
+	SDL_GPUVertexBufferDescription buffer_desc;
+	buffer_desc.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
+	buffer_desc.instance_step_rate = 0;
+	buffer_desc.slot = 0;
+	buffer_desc.pitch = sizeof(float) * 7;
+
+	ci.vertex_input_state.num_vertex_buffers = 1;
+	ci.vertex_input_state.vertex_buffer_descriptions = &buffer_desc;
+	ci.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+	ci.vertex_shader = gShaders.vertex;
+	ci.fragment_shader = gShaders.fragment;
+	ci.rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE;
+	ci.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL;
+	ci.multisample_state.enable_mask = false;
+	ci.multisample_state.sample_count = SDL_GPU_SAMPLECOUNT_1;
+	ci.target_info.num_color_targets = 1;
+	ci.target_info.has_depth_stencil_target = false;
+
+	SDL_GPUColorTargetDescription desc;
+	desc.blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
+	desc.blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
+	desc.blend_state.color_write_mask = SDL_GPU_COLORCOMPONENT_R | SDL_GPU_COLORCOMPONENT_G | SDL_GPU_COLORCOMPONENT_B | SDL_GPU_COLORCOMPONENT_A;
+	desc.blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+	desc.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+	desc.blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO;
+	desc.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ZERO;
+	desc.blend_state.enable_blend = true;
+	desc.blend_state.enable_color_write_mask = false;
+	desc.format = SDL_GetGPUSwapchainTextureFormat(gDevice, gWindow);
+
+	ci.target_info.color_target_descriptions = &desc;
+
+	return SDL_CreateGPUGraphicsPipeline(gDevice, &ci);
+}
+
+void createAndUploadVertexData()
+{
+	Vertex vertices[] = {
+	    // left bottom
+	    Vertex{-0.5, -0.5, 1.0, 0.0, 0.0, 0, 0},
+	    // right bottom
+	    Vertex{0.5, -0.5, 0.0, 1.0, 0.0, 1, 0},
+	    // right top
+	    Vertex{0.5, 0.5, 0.0, 0.0, 1.0, 1, 1},
+	    // left top
+	    Vertex{-0.5, 0.5, 1.0, 1.0, 0.0, 0, 1},
+	};
+
+	SDL_GPUTransferBufferCreateInfo transfer_buffer_ci;
+	transfer_buffer_ci.size = sizeof(vertices);
+	transfer_buffer_ci.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+
+	SDL_GPUTransferBuffer *transfer_buffer =
+	    SDL_CreateGPUTransferBuffer(gDevice, &transfer_buffer_ci);
+	void *ptr = SDL_MapGPUTransferBuffer(gDevice, transfer_buffer, false);
+	memcpy(ptr, &vertices, sizeof(vertices));
+	SDL_UnmapGPUTransferBuffer(gDevice, transfer_buffer);
+
+	SDL_GPUBufferCreateInfo gpu_buffer_ci;
+	gpu_buffer_ci.size = sizeof(vertices);
+	gpu_buffer_ci.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
+
+	gPlaneVertexBuffer = SDL_CreateGPUBuffer(gDevice, &gpu_buffer_ci);
+
+	SDL_GPUCommandBuffer *cmd = SDL_AcquireGPUCommandBuffer(gDevice);
+	SDL_GPUCopyPass *copy_pass = SDL_BeginGPUCopyPass(cmd);
+	SDL_GPUTransferBufferLocation location;
+	location.offset = 0;
+	location.transfer_buffer = transfer_buffer;
+	SDL_GPUBufferRegion region;
+	region.buffer = gPlaneVertexBuffer;
+	region.offset = 0;
+	region.size = sizeof(vertices);
+	SDL_UploadToGPUBuffer(copy_pass, &location, &region, false);
+	SDL_EndGPUCopyPass(copy_pass);
+
+	SDL_SubmitGPUCommandBuffer(cmd);
+
+	SDL_ReleaseGPUTransferBuffer(gDevice, transfer_buffer);
+}
+
+void createAndUploadIndicesData()
+{
+	uint32_t indices[] = {
+	    0,
+	    1,
+	    2,
+	    0,
+	    3,
+	    2,
+	};
+
+	SDL_GPUTransferBufferCreateInfo transfer_buffer_ci;
+	transfer_buffer_ci.size = sizeof(indices);
+	transfer_buffer_ci.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+
+	SDL_GPUTransferBuffer *transfer_buffer =
+	    SDL_CreateGPUTransferBuffer(gDevice, &transfer_buffer_ci);
+	void *ptr = SDL_MapGPUTransferBuffer(gDevice, transfer_buffer, false);
+	memcpy(ptr, &indices, sizeof(indices));
+	SDL_UnmapGPUTransferBuffer(gDevice, transfer_buffer);
+
+	SDL_GPUBufferCreateInfo gpu_buffer_ci;
+	gpu_buffer_ci.size = sizeof(indices);
+	gpu_buffer_ci.usage = SDL_GPU_BUFFERUSAGE_INDEX;
+
+	gIndicesBuffer = SDL_CreateGPUBuffer(gDevice, &gpu_buffer_ci);
+
+	SDL_GPUCommandBuffer *cmd = SDL_AcquireGPUCommandBuffer(gDevice);
+	SDL_GPUCopyPass *copy_pass = SDL_BeginGPUCopyPass(cmd);
+	SDL_GPUTransferBufferLocation location;
+	location.offset = 0;
+	location.transfer_buffer = transfer_buffer;
+	SDL_GPUBufferRegion region;
+	region.buffer = gIndicesBuffer;
+	region.offset = 0;
+	region.size = sizeof(indices);
+	SDL_UploadToGPUBuffer(copy_pass, &location, &region, false);
+	SDL_EndGPUCopyPass(copy_pass);
+
+	SDL_SubmitGPUCommandBuffer(cmd);
+
+	SDL_ReleaseGPUTransferBuffer(gDevice, transfer_buffer);
+}
+
+void createImageTexture()
+{
+	int w, h;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char *data =
+	    stbi_load("gfx/misc/rocketcat.png", &w, &h, NULL, STBI_rgb_alpha);
+
+	size_t image_size = 4 * w * h;
+	SDL_GPUTransferBufferCreateInfo transfer_buffer_ci;
+	transfer_buffer_ci.size = image_size;
+	transfer_buffer_ci.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+
+	SDL_GPUTransferBuffer *transfer_buffer =
+	    SDL_CreateGPUTransferBuffer(gDevice, &transfer_buffer_ci);
+	void *ptr = SDL_MapGPUTransferBuffer(gDevice, transfer_buffer, false);
+	memcpy(ptr, data, image_size);
+	SDL_UnmapGPUTransferBuffer(gDevice, transfer_buffer);
+
+	SDL_GPUTextureCreateInfo texture_ci;
+	texture_ci.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+	texture_ci.height = h;
+	texture_ci.width = w;
+	texture_ci.layer_count_or_depth = true;
+	texture_ci.num_levels = 1;
+	texture_ci.sample_count = SDL_GPU_SAMPLECOUNT_1;
+	texture_ci.type = SDL_GPU_TEXTURETYPE_2D;
+	texture_ci.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER;
+
+	gTexture = SDL_CreateGPUTexture(gDevice, &texture_ci);
+
+	SDL_GPUCommandBuffer *cmd = SDL_AcquireGPUCommandBuffer(gDevice);
+	SDL_GPUCopyPass *copy_pass = SDL_BeginGPUCopyPass(cmd);
+
+	SDL_GPUTextureTransferInfo transfer_info;
+	transfer_info.offset = 0;
+	transfer_info.pixels_per_row = w;
+	transfer_info.rows_per_layer = h;
+	transfer_info.transfer_buffer = transfer_buffer;
+
+	SDL_GPUTextureRegion region;
+	region.w = w;
+	region.h = h;
+	region.x = 0;
+	region.y = 0;
+	region.layer = 0;
+	region.mip_level = 0;
+	region.z = 0;
+	region.d = 1;
+	region.texture = gTexture;
+
+	SDL_UploadToGPUTexture(copy_pass, &transfer_info, &region, false);
+	SDL_EndGPUCopyPass(copy_pass);
+
+	SDL_SubmitGPUCommandBuffer(cmd);
+
+	SDL_ReleaseGPUTransferBuffer(gDevice, transfer_buffer);
+
+	stbi_image_free(data);
+}
+
+void createSampler()
+{
+	SDL_GPUSamplerCreateInfo ci;
+	ci.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+	ci.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+	ci.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+	ci.enable_anisotropy = false;
+	ci.compare_op = SDL_GPU_COMPAREOP_ALWAYS;
+	ci.enable_compare = false;
+	ci.mag_filter = SDL_GPU_FILTER_NEAREST;
+	ci.min_filter = SDL_GPU_FILTER_NEAREST;
+	ci.max_lod = 0.0;
+	ci.min_lod = 0.0;
+	ci.mip_lod_bias = 0.0;
+	ci.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST;
+
+	gSampler = SDL_CreateGPUSampler(gDevice, &ci);
 }
 
 void TestGPURendering::Init(void *appstate) noexcept
 {
-	gLog = Log::Get("TestGPURendering");
-
-	window = SDL_CreateWindow("Main Window", 1920, 1080, SDL_WINDOW_RESIZABLE);
-
-	device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_PRIVATE |
-	                                 SDL_GPU_SHADERFORMAT_SPIRV |
-	                                 SDL_GPU_SHADERFORMAT_DXBC |
-	                                 SDL_GPU_SHADERFORMAT_DXIL |
-	                                 SDL_GPU_SHADERFORMAT_MSL |
-	                                 SDL_GPU_SHADERFORMAT_METALLIB,
-	                             true, "vulkan");
-
-	if (!SDL_ClaimWindowForGPUDevice(device, window))
+	// NOTE: must create gpu gDevice firstly, then create gWindow
+	gDevice = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV |
+	                                  SDL_GPU_SHADERFORMAT_DXIL |
+	                                  SDL_GPU_SHADERFORMAT_MSL,
+	                              true, nullptr);
+	if (!gDevice)
 	{
-		gLog->Fatal("Cannot claim window for gpu device: {}", SDL_GetError());
+		SDL_LogError(SDL_LOG_CATEGORY_GPU, "SDL create gpu gDevice failed: %s",
+		             SDL_GetError());
+		return;
 	}
 
+	gWindow = SDL_CreateWindow("triangle", 1024, 720, SDL_WINDOW_RESIZABLE);
+	if (!gWindow)
 	{
-		auto [file, fileSize] = ReadFile("dev/shader/TestShader.vert.spv");
-		SDL_GPUShaderCreateInfo info{
-		    .code_size = fileSize,
-		    .code = file.data(),
-		    .entrypoint = "main",
-		    .format = SDL_GPU_SHADERFORMAT_SPIRV,
-		    .stage = SDL_GPU_SHADERSTAGE_VERTEX,
-		};
-		shaderVert = SDL_CreateGPUShader(device, &info);
+		SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "SDL create gWindow failed");
 	}
 
+	if (!SDL_ClaimWindowForGPUDevice(gDevice, gWindow))
 	{
-		auto [file, fileSize] = ReadFile("dev/shader/TestShader.frag.spv");
-		SDL_GPUShaderCreateInfo info{
-		    .code_size = fileSize,
-		    .code = file.data(),
-		    .entrypoint = "main",
-		    .format = SDL_GPU_SHADERFORMAT_SPIRV,
-		    .stage = SDL_GPU_SHADERSTAGE_FRAGMENT,
-		};
-		shaderFrag = SDL_CreateGPUShader(device, &info);
+		SDL_LogError(SDL_LOG_CATEGORY_GPU, "Your system don't support SDL GPU");
 	}
+
+	gShaders = createSDLGPUShaderBundle();
+	if (!gShaders)
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_GPU, "Shader load failed! Program exit!");
+		return;
+	}
+
+	gGraphicsPipeline = createGraphicsPipeline();
+	if (!gGraphicsPipeline)
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_GPU, "Graphics pipeline load failed! %s",
+		             SDL_GetError());
+		return;
+	}
+
+	createAndUploadVertexData();
+	createAndUploadIndicesData();
+	createImageTexture();
+	createSampler();
 }
 
 int TestGPURendering::Iterate(void *appstate) noexcept
 {
-	// 1. require command buffer
-	// 2. swapchain texture
-	// -- loop render passes
-	//    3. begin render pass
-	//    4. draw stuff
-	//    5. end render pass
-	// -- loop render passes
-	// 6. submit command buffer
-
-	// 1
-	SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(device);
-	if (commandBuffer == nullptr)
+	bool is_minimized = SDL_GetWindowFlags(gWindow) & SDL_WINDOW_MINIMIZED;
+	if (is_minimized)
 	{
-		gLog->Fatal("Failed to acquire gpu command buffer: {}", SDL_GetError());
+		return SDL_APP_CONTINUE;
 	}
 
-	// 2
-	SDL_GPUTexture *swapchainTexture;
-	if (!SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer, window, &swapchainTexture, nullptr, nullptr))
+	SDL_GPUCommandBuffer *cmd = SDL_AcquireGPUCommandBuffer(gDevice);
+	SDL_GPUTexture *swapchain_texture = nullptr;
+	Uint32 width, height;
+
+	if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmd, gWindow, &swapchain_texture,
+	                                           &width, &height))
 	{
-		gLog->Fatal("Failed to acquire gpu swapchain texture: {}", SDL_GetError());
-		swapchainTexture = nullptr;
+		SDL_LogError(SDL_LOG_CATEGORY_GPU,
+		             "SDL swapchain texture acquire failed! %s",
+		             SDL_GetError());
 	}
 
-	// 3
-	SDL_GPUColorTargetInfo colorTargetInfo{
-	    .texture = swapchainTexture,
-	    // .mip_level = 0,
-	    // .layer_or_depth_plane = 0,
-	    .clear_color = SDL_FColor(0, 0, 0, 1),
-	    .load_op = SDL_GPU_LOADOP_CLEAR,
-	    .store_op = SDL_GPU_STOREOP_STORE,
-	    // .resolve_texture = nullptr,
-	    // .resolve_mip_level = nullptr,
-	    // .resolve_layer = nullptr,
-	    // .cycle = nullptr,
-	    // .cycle_resolve_texture = nullptr,
-	    // .padding1 = nullptr,
-	    // .padding2 = nullptr,
-	};
-	SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, nullptr);
-	if (renderPass == nullptr)
+	if (!swapchain_texture)
 	{
-		gLog->Fatal("Failed to begin gpu render pass");
+		return SDL_APP_CONTINUE;
 	}
 
-	// 4
-	DrawWindowContentsArgs args{
-	    .commandBuffer = commandBuffer,
-	    .renderPass = renderPass,
-	};
-	RenderWindow(args);
+	SDL_GPUColorTargetInfo color_target_info{};
+	color_target_info.clear_color.r = 0.1;
+	color_target_info.clear_color.g = 0.1;
+	color_target_info.clear_color.b = 0.1;
+	color_target_info.clear_color.a = 1;
+	color_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
+	color_target_info.mip_level = 0;
+	color_target_info.store_op = SDL_GPU_STOREOP_STORE;
+	color_target_info.texture = swapchain_texture;
+	color_target_info.cycle = true;
+	color_target_info.layer_or_depth_plane = 0;
+	color_target_info.cycle_resolve_texture = false;
+	SDL_GPURenderPass *render_pass =
+	    SDL_BeginGPURenderPass(cmd, &color_target_info, 1, nullptr);
+	SDL_BindGPUGraphicsPipeline(render_pass, gGraphicsPipeline);
 
-	// 5
-	SDL_EndGPURenderPass(renderPass);
+	SDL_GPUBufferBinding binding;
+	binding.buffer = gPlaneVertexBuffer;
+	binding.offset = 0;
+	SDL_BindGPUVertexBuffers(render_pass, 0, &binding, 1);
 
-	// 6
-	if (!SDL_SubmitGPUCommandBuffer(commandBuffer))
+	SDL_GPUBufferBinding indices_binding;
+	indices_binding.buffer = gIndicesBuffer;
+	indices_binding.offset = 0;
+	SDL_BindGPUIndexBuffer(render_pass, &indices_binding,
+	                       SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+	SDL_GPUTextureSamplerBinding sampler_binding;
+	sampler_binding.texture = gTexture;
+	sampler_binding.sampler = gSampler;
+	SDL_BindGPUFragmentSamplers(render_pass, 0, &sampler_binding, 1);
+
+	int window_width, window_height;
+	SDL_GetWindowSize(gWindow, &window_width, &window_height);
+
+	SDL_GPUViewport viewport;
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.w = window_width;
+	viewport.h = window_height;
+	viewport.min_depth = 0;
+	viewport.max_depth = 1;
+	SDL_SetGPUViewport(render_pass, &viewport);
+	SDL_DrawGPUIndexedPrimitives(render_pass, 6, 1, 0, 0, 0);
+
+	SDL_EndGPURenderPass(render_pass);
+
+	if (!SDL_SubmitGPUCommandBuffer(cmd))
 	{
-		gLog->Fatal("Failed to submit gpu command buffer");
+		SDL_LogError(SDL_LOG_CATEGORY_GPU,
+		             "SDL submit command buffer failed! %s", SDL_GetError());
 	}
 
-	SDL_Delay(1);
 	return SDL_APP_CONTINUE;
 }
 
 int TestGPURendering::Event(void *appstate, SDL_Event *event) noexcept
 {
-	gLog->Trace("sdl event: {}", event->type);
-
-	switch (event->type)
+	if (event->type == SDL_EVENT_QUIT)
 	{
-	case SDL_EventType::SDL_EVENT_QUIT:
 		return SDL_APP_SUCCESS;
-	case SDL_EventType::SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-	{
-		// if (SDL_GetWindowID(mainWindow) == event->windowID)
-		// {
-		// 	SDL_DestroyWindow(mainWindow);
-		// 	mainWindow = nullptr;
-		// }
-		// if (SDL_GetWindowID(gpuWindowSub) == event->windowID)
-		// {
-		// 	SDL_DestroyWindow(gpuWindowSub);
-		// 	gpuWindowSub = nullptr;
-		// }
-		break;
-	}
-	default:
-		break;
 	}
 
 	return SDL_APP_CONTINUE;
@@ -197,65 +502,17 @@ int TestGPURendering::Event(void *appstate, SDL_Event *event) noexcept
 
 void TestGPURendering::Quit(void *appstate) noexcept
 {
-	gLog = nullptr;
-}
+	SDL_WaitForGPUIdle(gDevice);
 
-void RenderWindow(DrawWindowContentsArgs &args) noexcept
-{
-	SDL_GPUVertexInputState vertexInputState{
-	    .num_vertex_buffers = 0,
-	    .num_vertex_attributes = 0,
-	};
-
-	SDL_GPUColorTargetDescription colorTargetDescription{
-	    .format = SDL_GetGPUSwapchainTextureFormat(device, window),
-	    // .blend_state = ,
-	};
-
-	SDL_GPUGraphicsPipelineCreateInfo ci{};
-
-	ci.vertex_input_state.num_vertex_attributes = 0;
-	ci.vertex_input_state.num_vertex_buffers = 0;
-
-	ci.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
-	ci.vertex_shader = shaderVert;
-	ci.fragment_shader = shaderFrag;
-
-	ci.rasterizer_state.cull_mode = SDL_GPU_CULLMODE_NONE;
-	ci.rasterizer_state.fill_mode = SDL_GPU_FILLMODE_FILL;
-
-	ci.multisample_state.enable_mask = false;
-	ci.multisample_state.sample_count = SDL_GPU_SAMPLECOUNT_1;
-
-	ci.target_info.num_color_targets = 1;
-	ci.target_info.has_depth_stencil_target = false;
-
-	SDL_GPUColorTargetDescription desc;
-	desc.blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
-	desc.blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
-	desc.blend_state.color_write_mask = SDL_GPU_COLORCOMPONENT_A | SDL_GPU_COLORCOMPONENT_R | SDL_GPU_COLORCOMPONENT_G | SDL_GPU_COLORCOMPONENT_B;
-	desc.blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
-	desc.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
-	desc.blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO;
-	desc.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ZERO;
-	desc.blend_state.enable_blend = true;
-	desc.blend_state.enable_color_write_mask = false;
-	desc.format = SDL_GetGPUSwapchainTextureFormat(device, window);
-
-	ci.target_info.color_target_descriptions = &desc;
-
-	auto *pipeline = SDL_CreateGPUGraphicsPipeline(device, &ci);
-
-	SDL_BindGPUGraphicsPipeline(args.renderPass, pipeline);
-
-	std::int32_t w, h;
-	SDL_GetWindowSize(window, &w, &h);
-
-	SDL_GPUViewport viewport{
-	    .w = static_cast<std::float_t>(w),
-	    .h = static_cast<std::float_t>(h),
-	};
-	SDL_SetGPUViewport(args.renderPass, &viewport);
-
-	SDL_DrawGPUPrimitives(args.renderPass, 3, 1, 0, 0);
+	SDL_ReleaseGPUSampler(gDevice, gSampler);
+	SDL_ReleaseGPUTexture(gDevice, gTexture);
+	SDL_ReleaseGPUBuffer(gDevice, gIndicesBuffer);
+	SDL_ReleaseGPUBuffer(gDevice, gPlaneVertexBuffer);
+	SDL_ReleaseGPUGraphicsPipeline(gDevice, gGraphicsPipeline);
+	SDL_ReleaseGPUShader(gDevice, gShaders.vertex);
+	SDL_ReleaseGPUShader(gDevice, gShaders.fragment);
+	SDL_ReleaseWindowFromGPUDevice(gDevice, gWindow);
+	SDL_DestroyGPUDevice(gDevice);
+	SDL_DestroyWindow(gWindow);
+	SDL_Quit();
 }

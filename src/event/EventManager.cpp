@@ -1,8 +1,8 @@
 #include "event/EventManager.hpp"
 #include "event/AbstractEvent.hpp"
 #include "event/CoreEvents.hpp"
-#include "event/RuntimeEvent.hpp"
 #include "event/LoadtimeEvent.hpp"
+#include "event/RuntimeEvent.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptLoader.hpp"
@@ -59,6 +59,7 @@ void EventManager::OnScriptsLoaded()
 
 	std::vector<std::reference_wrapper<LoadtimeEvent>> invalidEvents;
 
+	// Build loadtime events to runtime events.
 	for (auto &&[eventID, loadtimeEvent] : _loadtimeEvents)
 	{
 		if (!eventID) [[unlikely]]
@@ -68,8 +69,17 @@ void EventManager::OnScriptsLoaded()
 
 		if (_runtimeEvents.contains(eventID))
 		{
-			auto &&msg = std::format("duplicated event <{}>\"{}\"", eventID, GetEventNameByID(eventID)->data());
-			throw std::runtime_error(msg);
+			auto &&msg = std::format("Loadtime events contains a duplicated event <{}>\"{}\"", eventID, GetEventNameByID(eventID)->data());
+
+			ScriptID scriptID = loadtimeEvent->GetScriptID();
+			if (scriptID == 0)
+			{
+				throw std::runtime_error(msg);
+			}
+
+			auto &&scriptProvider = GetScriptProvider();
+			_log->Error("{}, source script: <{}>\"{}\"", msg, scriptID, scriptProvider.GetScriptNameByID(scriptID)->data());
+			continue;
 		}
 
 		if (loadtimeEvent->IsBuilt())

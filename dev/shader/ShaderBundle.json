@@ -1,0 +1,61 @@
+{
+	"name": "Default",
+	"vertex": {
+		"path": "dev/shader/Shader.vert.spv",
+		"entry": "main",
+		"inputs": [
+			{
+				"location": 0,
+				"name": "inPosition",
+				"type": "vec3"
+			},
+			{
+				"location": 1,
+				"name": "inColor",
+				"type": "vec4"
+			},
+			{
+				"location": 2,
+				"name": "inTexCoord",
+				"type": "vec2"
+			}
+		]
+	},
+	"fragment": {
+		"path": "shaders/textured.frag.spv",
+		"entry": "main"
+	},
+	"uniforms": [
+		{
+			"set": 0,
+			"binding": 0,
+			"name": "UBO",
+			"type": "uniform_buffer",
+			"size": 192,
+			"stages": [
+				"vertex"
+			]
+		},
+		{
+			"set": 0,
+			"binding": 1,
+			"name": "uTexture",
+			"type": "combined_image_sampler",
+			"stages": [
+				"fragment"
+			]
+		}
+	],
+	"blend": {
+		"enable": true,
+		"src_color": "src_alpha",
+		"dst_color": "one_minus_src_alpha",
+		"color_op": "add",
+		"src_alpha": "one",
+		"dst_alpha": "zero",
+		"alpha_op": "add"
+	},
+	"depth_test": true,
+	"cull_mode": "back",
+	"front_face": "counter_clockwise"
+}

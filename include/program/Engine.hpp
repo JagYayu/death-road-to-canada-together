@@ -29,6 +29,7 @@ namespace tudov
 	class Log;
 	class GlobalResourcesCollection;
 	class VirtualFileSystem;
+	class WindowManager;
 
 	/**
 	 * @brief Tudov game engine
@@ -107,6 +108,7 @@ namespace tudov
 
 		std::shared_ptr<GlobalResourcesCollection> _globalResourcesCollection;
 		std::shared_ptr<IAssetsManager> _assetsManager;
+		std::shared_ptr<WindowManager> _windowManager;
 		std::shared_ptr<INetworkManager> _networkManager;
 		std::shared_ptr<IModManager> _modManager;
 		std::shared_ptr<IEventManager> _eventManager;
@@ -114,15 +116,6 @@ namespace tudov
 		std::shared_ptr<IScriptEngine> _scriptEngine;
 		std::shared_ptr<IScriptLoader> _scriptLoader;
 		std::shared_ptr<IScriptProvider> _scriptProvider;
-
-		// std::shared_ptr<FontResources> _fontResources;
-		// std::shared_ptr<ImageResources> _imageResources;
-		// std::shared_ptr<TextResources> _textResources;
-		// std::shared_ptr<ShaderManager> shaderResources;
-
-		std::weak_ptr<IWindow> _mainWindow;
-		std::vector<std::shared_ptr<IWindow>> _windows;
-		std::shared_ptr<IDebugManager> _debugManager;
 
 	  public:
 		Context context;
@@ -158,10 +151,10 @@ namespace tudov
 
 		// Windows operations.
 
-		std::shared_ptr<IWindow> GetMainWindow() noexcept;
-		std::shared_ptr<const IWindow> GetMainWindow() const noexcept;
-		void AddWindow(const std::shared_ptr<IWindow> &window);
-		void RemoveWindow(const std::shared_ptr<IWindow> &window);
+		// std::shared_ptr<IWindow> GetMainWindow() noexcept;
+		// std::shared_ptr<const IWindow> GetMainWindow() const noexcept;
+		// void AddWindow(const std::shared_ptr<IWindow> &window);
+		// void RemoveWindow(const std::shared_ptr<IWindow> &window);
 
 		// Background loading info operations.
 

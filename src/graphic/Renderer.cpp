@@ -1,19 +1,21 @@
 #include "graphic/Renderer.hpp"
+#include "SDL3/SDL_error.h"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/VSyncMode.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
-#include "resource/ImageResources.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
+#include "resource/ImageResources.hpp"
 
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
+#include "sol/forward.hpp"
 #include "sol/table.hpp"
 
-#include <algorithm>
 #include <cmath>
 #include <memory>
+#include <stdexcept>
 #include <tuple>
 
 using namespace tudov;
@@ -25,19 +27,45 @@ Renderer::Renderer(Window &window) noexcept
       _sdlTextureMain(nullptr),
       _sdlTextureBackground(nullptr)
 {
+	if (_sdlRenderer)
+	{
+		DeinitializeRenderer();
+	}
 }
 
-void Renderer::Initialize() noexcept
+void Renderer::InitializeRenderer() noexcept
 {
+	if (_sdlRenderer) [[unlikely]]
+	{
+		_log->Warn("Already initialized renderer");
+		return;
+	}
+
 	_sdlRenderer = SDL_CreateRenderer(_window.GetSDLWindowHandle(), nullptr);
 	if (!_sdlRenderer)
 	{
+		auto [width, height] = _window.GetSize();
+		_sdlTextureMain = SDL_CreateTexture(_sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
+		_sdlTextureBackground = SDL_CreateTexture(_sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
+	}
+	else
+	{
 		_log->Error("Failed to create SDL3 Renderer");
 	}
+}
 
-	auto [width, height] = _window.GetSize();
-	_sdlTextureMain = SDL_CreateTexture(_sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
-	_sdlTextureBackground = SDL_CreateTexture(_sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
+void Renderer::DeinitializeRenderer() noexcept
+{
+	_sdlRenderer = SDL_CreateRenderer(_window.GetSDLWindowHandle(), nullptr);
+	if (_sdlRenderer) [[likely]]
+	{
+		SDL_DestroyRenderer(_sdlRenderer);
+		_sdlRenderer = nullptr;
+	}
+	else [[unlikely]]
+	{
+		_log->Error("Failed to deinitialize renderer");
+	}
 }
 
 IWindow &Renderer::GetWindow() noexcept
@@ -130,80 +158,54 @@ bool Renderer::SetVSync(EVSyncMode value) noexcept
 	return SDL_SetRenderVSync(_sdlRenderer, std::int32_t(value));
 }
 
-void Renderer::ApplyTransform(SDL_FRect &dst) noexcept
+SDL_FRect Renderer::ApplyTransform(const SDL_FRect &rect) noexcept
 {
-	std::float_t positionX = 0.0f;
-	std::float_t positionY = 0.0f;
-	std::float_t scaleX = 1.0f;
-	std::float_t scaleY = 1.0f;
-	std::float_t pivotX = 0.0f;
-	std::float_t pivotY = 0.0f;
-
-	if (!_renderTargets.empty())
+	if (_renderTargets.empty())
 	{
-		auto &renderTarget = _renderTargets.top();
-		scaleX = renderTarget->_scaleX;
-		scaleY = renderTarget->_scaleY;
-		positionX = renderTarget->_positionX;
-		positionY = renderTarget->_positionY;
-
-		auto [width, height] = renderTarget->GetSize();
-		pivotX = width * 0.5f;
-		pivotY = height * 0.5f;
+		return rect;
 	}
 
-	dst.x -= pivotX;
-	dst.y -= pivotY;
+	auto &renderTarget = _renderTargets.top();
+	std::float_t x = renderTarget->_cameraX;
+	std::float_t y = renderTarget->_cameraY;
+	std::float_t scaleX = renderTarget->_cameraScaleX;
+	std::float_t scaleY = renderTarget->_cameraScaleY;
 
-	dst.x *= scaleX;
-	dst.y *= scaleY;
-	dst.w *= scaleX * .5;
-	dst.h *= scaleY * .5;
+	auto [w, h] = renderTarget->GetSize();
 
-	dst.x += pivotX - positionX;
-	dst.y += pivotY - positionY;
+	auto dst = rect;
+
+	dst.x = ((rect.x - x) * scaleX) + _window.GetWidth() * 0.5f;
+	dst.y = ((rect.y - y) * scaleY) + _window.GetHeight() * 0.5f;
+	dst.w = (rect.w * scaleX);
+	dst.h = (rect.h * scaleY);
+
+	return dst;
 }
 
-void Renderer::DrawRect(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src, std::float_t z) noexcept
+void Renderer::Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src)
 {
-	RenderCommand::DrawRect cmd{};
-
-	cmd.tex = texture->GetSDLTextureHandle();
-	cmd.dst = dst;
-	cmd.src = src;
-	cmd.ang = 0;
-	cmd.nulls = RenderCommand::DrawRect::Ori;
-
-	ApplyTransform(cmd.dst);
-
-	_renderCommands.emplace_back(RenderCommand{
-	    .type = RenderCommand::Type::DrawRect,
-	    .cmd = {cmd},
-	    .z = z,
-	});
+	auto tDst = ApplyTransform(dst);
+	if (!SDL_RenderTexture(_sdlRenderer, texture->GetSDLTextureHandle(), &src, &tDst)) [[unlikely]]
+	{
+		throw std::runtime_error(SDL_GetError());
+	}
 }
 
-void Renderer::LuaDraw(const sol::table &args)
+void Renderer::LuaDraw(sol::table args)
 {
-	RenderCommand::DrawRect cmd{};
-
 	try
 	{
-		if (auto &&renderTarget = args.get_or("texture", static_cast<RenderTarget *>(nullptr)); renderTarget != nullptr)
+		auto &&texture = LuaDrawExtractTexture(args);
+		if (texture == nullptr) [[unlikely]]
 		{
-			cmd.tex = renderTarget->_texture->GetSDLTextureHandle();
-		}
-		else if (auto &&texture = GetOrCreateImageTexture(args.get_or<ImageID>("image", 0)); texture != nullptr)
-		{
-			cmd.tex = texture->GetSDLTextureHandle();
-		}
-		else [[unlikely]]
-		{
-			_log->Error("Failed to draw texture: require a RenderTarget 'texture' or valid ImageID 'image'");
-			return;
+			throw std::runtime_error("Texture was not found");
 		}
 
-		auto &&texture = LuaDrawExtractTexture(args);
+		if (!args["destination"].is<sol::table>()) [[unlikely]]
+		{
+			throw std::runtime_error("Failed to draw rect: missing parameter 'destination'");
+		}
 
 		SDL_FRect rectDst;
 		{
@@ -214,48 +216,56 @@ void Renderer::LuaDraw(const sol::table &args)
 			rectDst.h = t.get_or<std::float_t>(4, 0);
 		}
 
-		if (const sol::object &source = args["source"]; source.is<sol::table>())
+		SDL_FRect rectSrc;
+		if (texture != nullptr)
 		{
-			sol::table t = source.as<sol::table>();
-			cmd.src.x = t.get_or(1, 0);
-			cmd.src.y = t.get_or(2, 0);
-			cmd.src.w = t.get_or(3, 0);
-			cmd.src.h = t.get_or(4, 0);
-		}
-		else
-		{
-			cmd.nulls = RenderCommand::DrawRect::Nulls(cmd.nulls | RenderCommand::DrawRect::Src);
-		}
-
-		if (const sol::object &origin = args["origin"]; origin.is<sol::table>())
-		{
-			sol::table ori = origin.as<sol::table>();
-			cmd.ori.x = ori.get_or(1, 0);
-			cmd.ori.y = ori.get_or(2, 0);
-		}
-		else
-		{
-			cmd.nulls = RenderCommand::DrawRect::Nulls(cmd.nulls | RenderCommand::DrawRect::Ori);
+			auto source = args["source"].get<sol::object>();
+			auto [tw, th] = texture->GetSize();
+			if (source.valid())
+			{
+				auto t = source.as<sol::table>();
+				rectSrc.x = t.get_or<std::float_t>(1, 0);
+				rectSrc.y = t.get_or<std::float_t>(2, 0);
+				rectSrc.w = t.get_or<std::float_t>(3, tw);
+				rectSrc.h = t.get_or<std::float_t>(4, th);
+			}
+			else
+			{
+				rectSrc.x = 0;
+				rectSrc.y = 0;
+				rectSrc.w = tw;
+				rectSrc.h = th;
+			}
 		}
 
-		cmd.ang = args.get_or("angle", 0.0f);
-		std::float_t z = args.get_or("z", 0.0f);
-
-		ApplyTransform(cmd.dst);
-
-		auto &&renderCommands = _renderTargets.empty() ? _renderCommands : _renderTargets.top()->_renderCommands;
-
-		renderCommands.emplace_back(RenderCommand{
-		    RenderCommand::Type::DrawRect,
-		    cmd,
-		    SDL_Color(255, 255, 255, 255),
-		    z,
-		});
+		Draw(texture, rectDst, rectSrc);
 	}
 	catch (std::exception &e)
 	{
 		GetScriptEngine().ThrowError("C++ exception in `Renderer::DrawImage`: {}", e.what());
 	}
+}
+
+std::shared_ptr<Texture> Renderer::LuaDrawExtractTexture(sol::table args) noexcept
+{
+	{
+		auto &&renderTarget = args.get_or("renderTarget", static_cast<RenderTarget *>(nullptr));
+		if (renderTarget != nullptr)
+		{
+			return renderTarget->_texture;
+		}
+	}
+
+	{
+		auto imageID = args.get_or<ImageID>("image", 0);
+		auto &&texture = GetOrCreateImageTexture(imageID);
+		if (texture != nullptr)
+		{
+			return texture;
+		}
+	}
+
+	return nullptr;
 }
 
 std::shared_ptr<RenderTarget> Renderer::LuaNewRenderTarget(const sol::object &width, const sol::object &height)
@@ -274,17 +284,21 @@ void Renderer::BeginTarget(const std::shared_ptr<RenderTarget> &renderTarget) no
 
 	_renderTargets.push(renderTarget);
 
-	if (auto &&texture = renderTarget->_texture; texture != nullptr)
+	auto &&texture = renderTarget->_texture;
+	if (texture != nullptr)
 	{
 		SetRenderTexture(texture);
 	}
 }
 
-void Renderer::LuaBeginTarget(const std::shared_ptr<RenderTarget> &renderTarget) noexcept
+void Renderer::LuaBeginTarget(sol::object renderTarget) noexcept
 {
 	try
 	{
-		BeginTarget(renderTarget);
+		if (renderTarget.is<std::shared_ptr<RenderTarget>>())
+		{
+			BeginTarget(renderTarget.as<std::shared_ptr<RenderTarget>>());
+		}
 	}
 	catch (std::exception &e)
 	{
@@ -292,88 +306,31 @@ void Renderer::LuaBeginTarget(const std::shared_ptr<RenderTarget> &renderTarget)
 	}
 }
 
-bool Renderer::EndTarget(const std::optional<SDL_FRect> &source, const std::optional<SDL_FRect> &destination) noexcept
+std::shared_ptr<RenderTarget> Renderer::EndTarget() noexcept
 {
 	if (_renderTargets.empty())
 	{
-		return false;
+		return nullptr;
 	}
 
 	std::shared_ptr<RenderTarget> &renderTarget = _renderTargets.top();
 	_renderTargets.pop();
 
-	SetRenderTexture(renderTarget->_texture);
-	RenderImpl(renderTarget->_renderCommands);
-
 	SetRenderTexture(_renderTargets.empty() ? nullptr : _renderTargets.top()->_texture);
 
-	SDL_FRect src;
-	if (source.has_value())
-	{
-		src = source.value();
-	}
-	else
-	{
-		auto [width, height] = renderTarget->_texture->GetSize();
-		src = {0, 0, width, height};
-	}
-
-	SDL_FRect dst;
-	if (destination.has_value())
-	{
-		dst = destination.value();
-	}
-	else
-	{
-		auto [width, height] = _window.GetSize();
-		dst = {0, 0, std::float_t(width), std::float_t(height)};
-	}
-
-	SDL_RenderTexture(_sdlRenderer, renderTarget->_texture->GetSDLTextureHandle(), &src, &dst);
-
-	return true;
+	return renderTarget;
 }
 
-bool Renderer::LuaEndTarget(const sol::object &source, const sol::object &destination) noexcept
+std::shared_ptr<RenderTarget> Renderer::LuaEndTarget() noexcept
 {
 	try
 	{
-		std::optional<SDL_FRect> srcRect;
-		if (source.is<sol::table>())
-		{
-			auto &&src = source.as<sol::table>();
-			auto x = src.get_or<std::float_t>(1, 0);
-			auto y = src.get_or<std::float_t>(2, 0);
-			auto w = src.get_or<std::float_t>(3, 0);
-			auto h = src.get_or<std::float_t>(4, 0);
-			srcRect = {x, y, w, h};
-		}
-		else
-		{
-			srcRect = std::nullopt;
-		}
-
-		std::optional<SDL_FRect> dstRect;
-		if (destination.is<sol::table>())
-		{
-			auto &&dst = destination.as<sol::table>();
-			auto x = dst.get_or<std::float_t>(1, 0);
-			auto y = dst.get_or<std::float_t>(2, 0);
-			auto w = dst.get_or<std::float_t>(3, 0);
-			auto h = dst.get_or<std::float_t>(4, 0);
-			dstRect = {x, y, w, h};
-		}
-		else
-		{
-			dstRect = std::nullopt;
-		}
-
-		return EndTarget(srcRect, dstRect);
+		return EndTarget();
 	}
 	catch (std::exception &e)
 	{
 		assert(false && "UNHANDLED ERROR");
-		return false;
+		return nullptr;
 	}
 }
 
@@ -397,38 +354,16 @@ void Renderer::LuaClear(std::uint32_t color) noexcept
 	Clear(SDL_Color(0, 0, 0, 0));
 }
 
-void Renderer::RenderImpl(std::vector<RenderCommand> &renderCommands) noexcept
-{
-	std::sort(renderCommands.begin(), renderCommands.end());
-
-	for (auto &&command : renderCommands)
-	{
-		switch (command.type)
-		{
-		case RenderCommand::Type::DrawRect:
-		{
-			auto &args = command.cmd.drawRect;
-			SDL_FRect *src = (args.nulls & RenderCommand::DrawRect::Src) ? nullptr : &args.src;
-			SDL_FPoint *ori = (args.nulls & RenderCommand::DrawRect::Ori) ? nullptr : &args.ori;
-			SDL_RenderTextureRotated(_sdlRenderer, args.tex, src, &args.dst, args.ang, ori, SDL_FlipMode::SDL_FLIP_NONE);
-			break;
-		}
-		}
-	}
-
-	renderCommands.clear();
-}
-
 void Renderer::Render() noexcept
 {
-	if (_renderTargets.empty())
-	{
-		RenderImpl(_renderCommands);
-	}
-	else
-	{
-		RenderImpl(_renderTargets.top()->_renderCommands);
-	}
+	// if (_renderTargets.empty())
+	// {
+	// 	RenderImpl(_renderCommands);
+	// }
+	// else
+	// {
+	// 	RenderImpl(_renderTargets.top()->_renderCommands);
+	// }
 }
 
 void Renderer::Begin() noexcept
@@ -456,7 +391,7 @@ void Renderer::End() noexcept
 		std::float_t w2, h2;
 		SDL_GetTextureSize(_sdlTextureMain, &w2, &h2);
 
-		if (std::float_t(w1) != w2 || std::float_t(h1) != h2) [[unlikely]]
+		if (static_cast<std::float_t>(w1) != w2 || static_cast<std::float_t>(h1) != h2) [[unlikely]]
 		{
 			_sdlTextureMain = SDL_CreateTexture(_sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w1, h1);
 			_sdlTextureBackground = SDL_CreateTexture(_sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w1, h1);
@@ -475,6 +410,7 @@ void Renderer::End() noexcept
 
 	if (!_renderTargets.empty())
 	{
+		_log->Warn("Render target stack is not empty!");
 		do
 		{
 			_renderTargets.pop();

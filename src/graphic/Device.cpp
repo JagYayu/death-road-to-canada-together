@@ -1,11 +1,11 @@
 #include "graphic/Device.hpp"
 
-#include "util/Log.hpp"
+// #include "util/Log.hpp"
 
-#include "SDL3/SDL_error.h"
-#include "SDL3/SDL_gpu.h"
+// #include "SDL3/SDL_error.h"
+// #include "SDL3/SDL_gpu.h"
 
-#include <stdexcept>
+// #include <stdexcept>
 
 using namespace tudov;
 

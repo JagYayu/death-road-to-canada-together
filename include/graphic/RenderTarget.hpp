@@ -1,14 +1,14 @@
 #pragma once
 
-#include "RenderCommand.hpp"
-#include "SDL3/SDL_rect.h"
 #include "program/Context.hpp"
+
+#include "SDL3/SDL_rect.h"
+#include "SDL3/SDL_render.h"
 
 #include <cmath>
 #include <memory>
 #include <optional>
 #include <tuple>
-#include <vector>
 
 namespace tudov
 {
@@ -35,7 +35,6 @@ namespace tudov
 	  private:
 		Renderer &_renderer;
 		std::shared_ptr<Texture> _texture;
-		std::vector<RenderCommand> _renderCommands;
 		std::optional<SDL_FRect> _source;
 		std::optional<SDL_FRect> _destination;
 
@@ -44,10 +43,12 @@ namespace tudov
 		std::float_t _scaleLerpFactor;
 		std::float_t _viewLerpFactor;
 
-		std::float_t _positionX;
-		std::float_t _positionY;
-		std::float_t _scaleX;
-		std::float_t _scaleY;
+		std::float_t _cameraX;
+		std::float_t _cameraY;
+		std::float_t _cameraScaleX;
+		std::float_t _cameraScaleY;
+		bool _snapCameraPosition;
+		bool _snapCameraScale;
 		std::float_t _viewX;
 		std::float_t _viewY;
 
@@ -69,6 +70,8 @@ namespace tudov
 		std::float_t GetHeight() noexcept;
 		std::tuple<std::float_t, std::float_t> GetSize() noexcept;
 
+		std::shared_ptr<Texture> GetTexture() const noexcept;
+
 		SDL_FRect GetSource() noexcept;
 		void SetSource(const std::optional<SDL_FRect> &value) noexcept;
 		SDL_FRect GetDestination() noexcept;
@@ -80,21 +83,16 @@ namespace tudov
 		void SetPositionLerpFactor(std::float_t factor) noexcept;
 		std::float_t GetScaleLerpFactor() noexcept;
 		void SetScaleLerpFactor(std::float_t factor) noexcept;
-		std::float_t GetViewLerpFactor() noexcept;
-		void SetViewLerpFactor(std::float_t factor) noexcept;
 
-		std::tuple<std::float_t, std::float_t> GetTargetPosition() noexcept;
-		void SetTargetPosition(std::float_t x, std::float_t y) noexcept;
-		std::tuple<std::float_t, std::float_t> GetPosition() noexcept;
-		std::tuple<std::float_t, std::float_t> GetTargetScale() noexcept;
-		void SetTargetScale(std::float_t x, std::float_t y) noexcept;
-		std::tuple<std::float_t, std::float_t> GetScale() noexcept;
-		std::tuple<std::float_t, std::float_t> GetTargetViewSize() noexcept;
-		void SetTargetViewSize(std::float_t x, std::float_t y) noexcept;
-		std::tuple<std::float_t, std::float_t> GetViewSize() noexcept;
-		EViewScaleMode GetViewScaleMode() noexcept;
-		void SetViewScaleMode(EViewScaleMode mode) noexcept;
+		std::tuple<std::float_t, std::float_t> GetCameraTargetPosition() noexcept;
+		void SetCameraTargetPosition(std::float_t x, std::float_t y) noexcept;
+		std::tuple<std::float_t, std::float_t> GetCameraPosition() noexcept;
+		std::tuple<std::float_t, std::float_t> GetCameraTargetScale() noexcept;
+		void SetCameraTargetScale(std::float_t x, std::float_t y) noexcept;
+		std::tuple<std::float_t, std::float_t> GetCameraScale() noexcept;
 
+		void SnapCameraPosition() noexcept;
+		void SnapCameraScale() noexcept;
 		void Reset() noexcept;
 		void Update() noexcept;
 	};

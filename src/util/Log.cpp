@@ -14,7 +14,7 @@ using namespace tudov;
 
 static constexpr decltype(auto) defaultModule = "Log";
 static uint32_t logCount = 0;
-static std::unique_ptr<std::thread> logWorker;
+static std::unique_ptr<std::thread> logWorker = nullptr;
 
 Log::EVerbosity Log::_globalVerbosities = tudov::Log::EVerbosity::All;
 std::unordered_map<std::string, Log::EVerbosity> Log::_verbosities{};
@@ -208,9 +208,8 @@ std::unordered_map<std::string, Log::EVerbosity>::const_iterator Log::EndVerbosi
 Log::Log(const std::string &module) noexcept
     : _module(module)
 {
-	if (logCount == 0)
+	if (logCount == 0 && logWorker == nullptr)
 	{
-		assert(logWorker == nullptr);
 		logWorker = std::make_unique<std::thread>(Log::Process);
 
 		OutputImpl(defaultModule, VerbDebug, "Logging system initialized");
@@ -221,10 +220,7 @@ Log::Log(const std::string &module) noexcept
 Log::~Log() noexcept
 {
 	--logCount;
-	if (logCount == 0)
-	{
-		Exit();
-	}
+	assert(logCount >= 0);
 }
 
 void Log::Process()

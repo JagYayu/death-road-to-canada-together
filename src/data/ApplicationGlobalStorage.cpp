@@ -13,7 +13,7 @@ using namespace tudov;
 ApplicationGlobalStorage::ApplicationGlobalStorage(GlobalStorageManager &globalStorageManager) noexcept
     : GlobalStorage(globalStorageManager)
 {
-	GlobalStorage::_sdlStorage = SDL_OpenTitleStorage(nullptr, SDL_PropertiesID(0));
+	GlobalStorage::_sdlStorage = SDL_OpenTitleStorage(nullptr, static_cast<SDL_PropertiesID>(0));
 }
 
 IGlobalStorageManager &ApplicationGlobalStorage::GetGlobalStorageManager() noexcept

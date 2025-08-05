@@ -11,40 +11,49 @@ local drawOnce = true
 
 local imageID = images:getID("gfx/cars/cars_unique_110x96.png")
 
-local i
-i = persist("i", 1, function()
-	return i
-end)
+local renderTargetWidth, renderTargetHeight = 960, 640
 
 events:add(N_("RenderGame"), function(e)
-	i = i + 1
+	-- local snapScale
 	-- local renderer = e.window.renderer
-	-- renderTarget = renderTarget or renderer:newRenderTarget(1280, 720)
+	-- if not renderTarget then
+	-- 	renderTarget = renderer:newRenderTarget(renderTargetWidth, renderTargetHeight)
+	-- 	snapScale = true
+	-- elseif renderTarget:resizeToFit() then
+	-- 	snapScale = true
+	-- end
+	-- renderTarget:update()
+
+	-- local width, height = e.window:getSize()
+
+	-- local scale = math.max(width / renderTargetWidth, height / renderTargetHeight)
+	-- renderTarget:setCameraTargetPosition(100, 0)
+	-- renderTarget:setCameraTargetScale(scale, scale)
+
+	-- if snapScale then
+	-- 	renderTarget:snapCameraScale()
+	-- end
 
 	-- renderer:beginTarget(renderTarget)
+	-- renderer:clear()
 
-	-- -- renderer:clear()
+	-- for x = -1, 2 do
+	-- 	renderer:draw({
+	-- 		image = imageID,
+	-- 		destination = { x * 100, x * 100, 80, 57 },
+	-- 		source = { 14, 302, 80, 57 },
+	-- 	})
+	-- end
 
+	-- local renderTarget = renderer:endTarget()
 	-- renderer:draw({
-	-- 	image = imageID,
+	-- 	renderTarget = renderTarget,
 	-- 	destination = {
-	-- 		i,
 	-- 		0,
-	-- 		1000,
-	-- 		1000,
+	-- 		0,
+	-- 		width,
+	-- 		height,
 	-- 	},
-	-- })
-
-	-- renderer:endTarget({
-	-- 	0,
-	-- 	0,
-	-- 	1280,
-	-- 	720,
-	-- }, {
-	-- 	0,
-	-- 	0,
-	-- 	1280,
-	-- 	720,
 	-- })
 end, N_("renderSprites"))
 

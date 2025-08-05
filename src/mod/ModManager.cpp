@@ -103,7 +103,7 @@ void ModManager::LoadMods()
 	std::error_code errorCode;
 	std::filesystem::recursive_directory_iterator it{"mods", std::filesystem::directory_options::skip_permission_denied, errorCode}, end;
 
-	while (it != end)
+ 	while (it != end)
 	{
 		const std::filesystem::directory_entry &entry = *it;
 

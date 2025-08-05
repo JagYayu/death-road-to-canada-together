@@ -31,7 +31,9 @@ namespace tudov
 		void RenderLoadingGUI(Engine &engine) noexcept;
 
 	  public:
-		void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;
+		void InitializeWindow(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;
+		void DeinitializeWindow() noexcept override;
+
 		EventHandleKey GetKey() const noexcept override;
 		bool HandleEvent(SDL_Event &event) noexcept override;
 		void Render() noexcept override;

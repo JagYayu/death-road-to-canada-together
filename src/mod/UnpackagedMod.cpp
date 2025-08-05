@@ -111,11 +111,12 @@ void UnpackagedMod::Load()
 		return;
 	}
 
-	_fileWatcher = std::make_unique<filewatch::FileWatch<std::string>>(_directory.generic_string(), [this](const std::string &filePath, const filewatch::Event changeType)
+	_fileWatcher = std::make_unique<filewatch::FileWatch<std::string>>(_directory.generic_string(), [this](const std::filesystem::path &filePath, const filewatch::Event changeType)
 	{
 		auto &&scriptProvider = _modManager.GetScriptProvider();
 
-		if (IsScript(filePath))
+		auto file = filePath.generic_string();
+		if (IsScript(file))
 		{
 			switch (changeType)
 			{
@@ -125,9 +126,9 @@ void UnpackagedMod::Load()
 				break;
 			case filewatch::Event::modified:
 			{
-				_log->Trace("Script modified: \"{}\"", filePath);
+				_log->Trace("Script modified: \"{}\"", file);
 
-				auto &&relative = std::filesystem::relative(filePath, IUnpackagedMod::GetScriptsDirectory());
+				auto &&relative = std::filesystem::relative(file, _config.scripts.directory);
 				auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relative.generic_string()));
 
 				{
@@ -142,7 +143,7 @@ void UnpackagedMod::Load()
 				}
 
 				auto textResources = GetGlobalResourcesCollection().GetTextResources();
-				ResourceID resourceID = textResources.GetResourceID(filePath);
+				ResourceID resourceID = textResources.GetResourceID(file);
 				assert(resourceID);
 
 				_modManager.HotReloadScriptPending(scriptName, textResources.GetResource(resourceID), _config.uniqueID);

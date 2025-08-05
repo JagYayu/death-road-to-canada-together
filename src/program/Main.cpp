@@ -1,7 +1,4 @@
-#include "SDL3/SDL_error.h"
-#include "SDL3/SDL_gpu.h"
 #include "data/Constants.hpp"
-#include "graphic/Device.hpp"
 #include "graphic/GUI.hpp"
 #include "program/Engine.hpp"
 #include "program/Tudov.hpp"
@@ -9,8 +6,6 @@
 #include "util/Log.hpp"
 
 #define SDL_MAIN_USE_CALLBACKS
-
-#define TE_TEST_GPU_RENDERING
 
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_log.h"
@@ -116,15 +111,6 @@ bool CommonInit(int argc, char **argv) noexcept
 	}
 	log.Info("SDL3 initialized");
 
-	if (log.CanDebug())
-	{
-		log.Debug("Listing available gpu drivers ...");
-		for (std::int32_t index = 0; index < SDL_GetNumGPUDrivers(); ++index)
-		{
-			log.Debug("{}. {}", index + 1, SDL_GetGPUDriver(index));
-		}
-	}
-
 	return false;
 }
 
@@ -187,10 +173,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
 	auto &&app = Tudov::GetApplication();
-	if (app == nullptr)
+	if (app == nullptr) [[unlikely]]
 	{
 		return SDL_APP_FAILURE;
 	}
+
 	return app->Tick() ? SDL_APP_CONTINUE : SDL_APP_SUCCESS;
 }
 

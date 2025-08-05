@@ -1,7 +1,6 @@
 #pragma once
 
 #include "EngineComponent.hpp"
-#include "event/DelegateEvent.hpp"
 #include "graphic/Renderer.hpp"
 #include "mod/LuaAPI.hpp"
 #include "util/Log.hpp"
@@ -15,12 +14,13 @@ struct SDL_Window;
 namespace tudov
 {
 	class Engine;
-	class EventHandleKey;
 	class ScriptEngine;
+	struct EventHandleKey;
 
 	struct IWindow : public IContextProvider
 	{
-		virtual void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept = 0;
+		virtual void InitializeWindow(std::int32_t width, std::int32_t height, std::string_view title) noexcept = 0;
+		virtual void DeinitializeWindow() noexcept = 0;
 		virtual std::int32_t GetWidth() const noexcept = 0;
 		virtual std::int32_t GetHeight() const noexcept = 0;
 		virtual std::float_t GetDisplayScale() const noexcept = 0;
@@ -34,6 +34,9 @@ namespace tudov
 		virtual void Render() noexcept = 0;
 	};
 
+	/**
+	 * Abstract Class
+	 */
 	class Window : public IWindow
 	{
 	  protected:
@@ -54,7 +57,6 @@ namespace tudov
 
 	  public:
 		Context &GetContext() noexcept override;
-		void Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;
 		std::int32_t GetWidth() const noexcept override;
 		std::int32_t GetHeight() const noexcept override;
 		std::tuple<std::int32_t, std::int32_t> GetSize() const noexcept override;

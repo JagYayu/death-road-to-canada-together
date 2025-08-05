@@ -15,18 +15,19 @@
 #include "program/EngineComponent.hpp"
 #include "program/MainWindow.hpp"
 #include "program/Window.hpp"
+#include "program/WindowManager.hpp"
 #include "resource/FontResources.hpp"
-#include "resource/ImageResources.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
+#include "resource/ImageResources.hpp"
 #include "resource/TextResources.hpp"
 #include "scripts/GameScripts.hpp"
 #include "util/Log.hpp"
 #include "util/MicrosImpl.hpp"
+#include "util/StringUtils.hpp"
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_timer.h"
 
-#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -48,15 +49,13 @@ Engine::Engine() noexcept
       _framerate(0),
       _luaAPI(std::make_shared<LuaAPI>()),
       _globalStorageManager(std::make_shared<GlobalStorageManager>()),
-      _virtualFileSystem(std::make_shared<VirtualFileSystem>()),
-      _mainWindow(),
-      _windows(),
-      _debugManager(std::make_shared<DebugManager>())
+      _virtualFileSystem(std::make_shared<VirtualFileSystem>())
 {
 	context = Context(this);
 
 	_globalResourcesCollection = std::make_shared<GlobalResourcesCollection>(context),
 	_assetsManager = std::make_shared<AssetsManager>(context);
+	_windowManager = std::make_shared<WindowManager>(context);
 	_networkManager = std::make_shared<NetworkManager>(context);
 	_modManager = std::make_shared<ModManager>(context);
 	_scriptProvider = std::make_shared<ScriptProvider>(context);
@@ -136,7 +135,7 @@ bool Engine::ShouldQuit() noexcept
 	case EState::Initialized:
 		break;
 	}
-	return _windows.empty();
+	return _windowManager->IsEmpty();
 }
 
 void Engine::Initialize() noexcept
@@ -156,8 +155,9 @@ void Engine::Initialize() noexcept
 	Debug("Initializing engine ...");
 	{
 		_config->Load();
+		_windowManager->InitializeMainWindow();
 		InitializeMainWindow();
-		// InitializeResources();
+		InitializeResources();
 
 		for (auto &&it = _components.begin(); it != _components.end(); ++it)
 		{
@@ -171,23 +171,13 @@ void Engine::Initialize() noexcept
 
 void Engine::PostInitialization() noexcept
 {
-	// if (!_mainWindow.expired())
-	// {
-	// 	_graphicManager->BindToWindow(_mainWindow.lock());
-	// }
-
-	ProvideDebug(*_debugManager);
+	ProvideDebug(*_windowManager->GetDebugManager());
 
 	_modManager->LoadModsDeferred();
 	_previousTick = SDL_GetTicksNS();
 	_beginTick = SDL_GetTicksNS();
 	_framerate = 0;
 	_state = EState::Initialized;
-}
-
-bool IsWindowShouldClose(const std::shared_ptr<IWindow> &window) noexcept
-{
-	return window->ShouldClose();
 }
 
 bool Engine::Tick() noexcept
@@ -243,18 +233,10 @@ bool Engine::Tick() noexcept
 			}
 			_sdlEvents.clear();
 
-			for (auto &&window : _windows)
-			{
-				window->HandleEvents();
-			}
-
-			_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
+			_windowManager->HandleEvents();
 		}
 
-		for (auto &&window : _windows)
-		{
-			window->Render();
-		}
+		_windowManager->Render();
 	}
 
 	std::uint64_t endNS = SDL_GetTicksNS();
@@ -270,10 +252,7 @@ bool Engine::Tick() noexcept
 
 void Engine::HandleEvent(SDL_Event &event) noexcept
 {
-	for (auto &&window : _windows)
-	{
-		window->HandleEvent(event);
-	}
+	_windowManager->HandleEvents(event);
 }
 
 void Engine::Event(void *event) noexcept
@@ -322,106 +301,82 @@ void Engine::Quit()
 		Debug("Engine is pending quit!");
 
 		_state = EState::Quit;
-		for (auto &&window : _windows)
-		{
-			window->Close();
-		}
+		_windowManager->CloseWindows();
 	}
 }
 
 void Engine::InitializeMainWindow() noexcept
 {
-	if (!_mainWindow.expired())
-	{
-		Error("Engine main window has already been initialized!");
-	}
-
-	auto &&mainWindow = std::make_shared<MainWindow>(context);
-	mainWindow->Initialize(_config->GetWindowWidth(), _config->GetWindowHeight(), _config->GetWindowTitle());
-	AddWindow(mainWindow);
-	_mainWindow = mainWindow;
-
-	_debugManager = std::make_shared<DebugManager>();
-	mainWindow->SetDebugManager(_debugManager);
 }
 
 void Engine::InitializeResources() noexcept
 {
-	// Debug("Mounting resource files");
+	Debug("Mounting resource files");
 
-	// auto &&renderBackend = _config->GetRenderBackend();
+	auto &&renderBackend = _config->GetRenderBackend();
 
-	// // auto &&loadTexture = [this, renderBackend]() {
-	// // 	switch (renderBackend) {
-	// // 		textureManager.Load<>(file, window.renderer, std::string_view(data))
-	// // 	}
-	// // };
-
-	// std::unordered_map<EResourceType, std::uint32_t> fileCounts{};
-
-	// std::vector<std::regex> mountBitmapPatterns{};
-	// for (auto &&pattern : _config->GetMountBitmaps())
-	// {
-	// 	mountBitmapPatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
-	// }
-
-	// auto &&mountDirectories = _config->GetMountFiles();
-	// for (auto &&mountDirectory : _config->GetMountDirectories())
-	// {
-	// 	if (!std::filesystem::exists(mountDirectory.data()) || !std::filesystem::is_directory(mountDirectory.data()))
-	// 	{
-	// 		Warn("Invalid directory for mounting resources: {}", mountDirectory.data());
-	// 		continue;
+	// auto &&loadTexture = [this, renderBackend]() {
+	// 	switch (renderBackend) {
+	// 		textureManager.Load<>(file, window.renderer, std::string_view(data))
 	// 	}
+	// };
 
-	// 	for (auto &entry : std::filesystem::recursive_directory_iterator(mountDirectory))
-	// 	{
-	// 		if (!entry.is_regular_file())
-	// 		{
-	// 			continue;
-	// 		}
+	std::unordered_map<EResourceType, std::uint32_t> fileCounts{};
 
-	// 		auto &&path = entry.path();
-	// 		auto &&it = mountDirectories.find(path.extension().generic_string());
-	// 		if (it == mountDirectories.end())
-	// 		{
-	// 			continue;
-	// 		}
+	std::vector<std::regex> mountBitmapPatterns{};
+	for (auto &&pattern : _config->GetMountBitmaps())
+	{
+		mountBitmapPatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
+	}
 
-	// 		auto &&filePath = path.generic_string();
-	// 		auto imageID = _imageResources->Load(filePath);
-	// 		if (!imageID) [[unlikely]]
-	// 		{
-	// 			Error("Image ID of \"{}\" is 0!", filePath);
-	// 			continue;
-	// 		}
+	auto &imageResources = _globalResourcesCollection->GetImageResources();
 
-	// 		auto &&image = _imageResources->GetResource(imageID);
-	// 		auto &&fileMemory = ReadFileToString(filePath, true);
-	// 		image->Initialize(fileMemory);
-	// 		if (image->IsValid())
-	// 		{
-	// 			fileCounts.try_emplace(it->second, 0).first->second++;
-	// 		}
+	auto &&mountDirectories = _config->GetMountFiles();
+	for (auto &&mountDirectory : _config->GetMountDirectories())
+	{
+		if (!std::filesystem::exists(mountDirectory.data()) || !std::filesystem::is_directory(mountDirectory.data()))
+		{
+			Warn("Invalid directory for mounting resources: {}", mountDirectory.data());
+			continue;
+		}
 
-	//		bitmap support
-	//		auto &&relative = std::filesystem::relative(path, mountDirectory).generic_string();
-	//		for (auto &&pattern : mountBitmapPatterns)
-	//		{
-	//			if (std::regex_match(relative, pattern))
-	//			{
-	//				fontResources.AddBitmapFont(std::make_shared<BitmapFont>(textureID, std::string_view(data)));
-	//				break;
-	//			}
-	//		}
-	// 	}
-	// }
+		for (auto &entry : std::filesystem::recursive_directory_iterator(mountDirectory))
+		{
+			if (!entry.is_regular_file())
+			{
+				continue;
+			}
 
-	// Debug("Mounted all resource files");
-	// for (auto [fileType, count] : fileCounts)
-	// {
-	// 	Info("{}: {}", ResourceTypeToStringView(fileType).data(), count);
-	// }
+			auto &&path = entry.path();
+			auto &&it = mountDirectories.find(path.extension().generic_string());
+			if (it == mountDirectories.end())
+			{
+				continue;
+			}
+
+			auto &&filePath = path.generic_string();
+			auto imageID = imageResources.Load(filePath, ReadFileToBytes(filePath));
+			if (!imageID) [[unlikely]]
+			{
+				Error("Image ID of \"{}\" is 0!", filePath);
+				continue;
+			}
+
+			// auto &&image = imageResources.GetResource(imageID);
+			// auto &&fileMemory = ReadFileToString(filePath, true);
+			// image->Initialize(fileMemory);
+			// if (image->IsValid())
+			// {
+			// 	fileCounts.try_emplace(it->second, 0).first->second++;
+			// }
+		}
+	}
+
+	Debug("Mounted all resource files");
+	for (auto [fileType, count] : fileCounts)
+	{
+		Info("{}: {}", ResourceTypeToStringView(fileType).data(), count);
+	}
 }
 
 Log &Engine::GetLog() noexcept
@@ -451,7 +406,7 @@ void Engine::ProvideDebug(IDebugManager &debugManager) noexcept
 	{
 		if (auto &&debugProvider = std::dynamic_pointer_cast<IDebugProvider>(component); debugProvider != nullptr)
 		{
-			debugProvider->ProvideDebug(*_debugManager);
+			debugProvider->ProvideDebug(debugManager);
 		}
 	}
 }
@@ -474,18 +429,6 @@ std::uint64_t Engine::GetBeginTick() const noexcept
 std::uint64_t Engine::GetTick() const noexcept
 {
 	return SDL_GetTicksNS();
-}
-
-TE_GEN_GETTER_SMART_PTR(std::shared_ptr, IWindow, Engine::GetMainWindow, _mainWindow, noexcept);
-
-void Engine::AddWindow(const std::shared_ptr<IWindow> &window)
-{
-	_windows.emplace_back(window);
-}
-
-void Engine::RemoveWindow(const std::shared_ptr<IWindow> &window)
-{
-	// TODO
 }
 
 Engine::ELoadingState Engine::GetLoadingState() noexcept

@@ -223,6 +223,7 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	    "collectgarbage",
 	    "coroutine",
 	    "error",
+	    "getmetatable",
 	    "ipairs",
 	    "load",
 	    "loadstring",
@@ -245,10 +246,12 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	    "engine",
 	    "events",
 	    "images",
+	    "vfs",
 	};
 
 	for (auto &&key : keys)
 	{
+		assert(!modGlobals[key].valid() && "global field duplicated!");
 		modGlobals[key] = luaGlobals[key];
 	}
 
@@ -352,14 +355,17 @@ void ScriptEngine::DeinitializeScript(ScriptID scriptID, std::string_view script
 	{
 		for (auto &&[_, variable] : it->second)
 		{
-			auto result = variable.getter();
-			if (result.valid())
+			if (variable.getter.valid())
 			{
-				auto &&value = result.get<sol::object>();
-				if (value != sol::nil)
+				auto result = variable.getter();
+				if (result.valid())
 				{
-					variable.value = value;
-					variable.getter = sol::nil;
+					auto &&value = result.get<sol::object>();
+					if (value != sol::nil)
+					{
+						variable.value = value;
+						variable.getter = sol::nil;
+					}
 				}
 			}
 		}

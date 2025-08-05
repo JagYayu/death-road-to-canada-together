@@ -151,7 +151,7 @@ void MainWindow::UpdateGuiStyle() noexcept
 	fonts->Clear();
 	ImFontConfig config;
 	config.FontDataOwnedByAtlas = false;
-	_guiFontMemory = ReadFileToString("tudov/fonts/FiraCode-Medium.ttf", true);
+	_guiFontMemory = ReadFileToString("dev/fonts/FiraCode-Medium.ttf", true);
 	_guiFontMedium = fonts->AddFontFromMemoryTTF(_guiFontMemory.data(), _guiFontMemory.size() * sizeof(char), 12.0f * scale, &config);
 	_guiFontSmall = fonts->AddFontFromMemoryTTF(_guiFontMemory.data(), _guiFontMemory.size() * sizeof(char), 6.0f * scale, &config);
 	_guiFontLarge = fonts->AddFontFromMemoryTTF(_guiFontMemory.data(), _guiFontMemory.size() * sizeof(char), 18.0f * scale, &config);
@@ -162,9 +162,15 @@ void MainWindow::UpdateGuiStyle() noexcept
 	ImGui_ImplSDLRenderer3_Init(sdlRenderer);
 }
 
-void MainWindow::Initialize(std::int32_t width, std::int32_t height, std::string_view title) noexcept
+void MainWindow::InitializeWindow(std::int32_t width, std::int32_t height, std::string_view title) noexcept
 {
-	Window::Initialize(width, height, title);
+	_sdlWindow = SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+	if (!_sdlWindow)
+	{
+		_log->Fatal("Failed to initialize SDL3 Window");
+	}
+
+	renderer->InitializeRenderer();
 
 	if (!bSDLImGUI)
 	{
@@ -186,6 +192,13 @@ void MainWindow::Initialize(std::int32_t width, std::int32_t height, std::string
 
 	_renderTarget = std::make_shared<RenderTarget>(*renderer, width, height);
 	SetShowDebugElements(true);
+}
+
+void MainWindow::DeinitializeWindow() noexcept
+{
+	renderer->DeinitializeRenderer();
+
+	SDL_DestroyWindow(_sdlWindow);
 }
 
 ImFont *MainWindow::GetGUIFontSmall() noexcept
@@ -278,6 +291,7 @@ void MainWindow::Render() noexcept
 	// Process ImGui render target.
 	_renderTarget->Update();
 	_renderTarget->ResizeToFit();
+
 	renderer->BeginTarget(_renderTarget);
 	renderer->Clear();
 	if (auto data = ImGui::GetDrawData(); data)
@@ -286,7 +300,18 @@ void MainWindow::Render() noexcept
 	}
 	renderer->EndTarget();
 
-	renderer->Render();
+	{
+		auto [w, h] = GetSize();
+		SDL_FRect dst{
+		    .x = 0,
+		    .y = 0,
+		    .w = static_cast<std::float_t>(w),
+		    .h = static_cast<std::float_t>(h),
+		};
+		renderer->IRenderer::Draw(_renderTarget->GetTexture(), dst);
+	}
+
+	// renderer->Render();
 	renderer->End();
 }
 

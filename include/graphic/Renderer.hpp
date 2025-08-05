@@ -1,11 +1,11 @@
 #pragma once
 
-#include "RenderCommand.hpp"
 #include "SDL3/SDL_rect.h"
 #include "VSyncMode.hpp"
 #include "mod/LuaAPI.hpp"
 #include "program/Context.hpp"
 #include "resource/TextureResources.hpp"
+#include "sol/forward.hpp"
 #include "util/Definitions.hpp"
 #include "util/Log.hpp"
 
@@ -30,20 +30,35 @@ namespace tudov
 
 		virtual IWindow &GetWindow() noexcept = 0;
 
+		virtual void InitializeRenderer() noexcept = 0;
+		virtual void DeinitializeRenderer() noexcept = 0;
+
 		virtual bool ReleaseTexture(const std::shared_ptr<Texture> &texture) noexcept = 0;
 		virtual std::shared_ptr<Texture> GetRenderTexture() noexcept = 0;
 		virtual void SetRenderTexture(const std::shared_ptr<Texture> &texture = nullptr) noexcept = 0;
 
 		virtual EVSyncMode GetVSync() noexcept = 0;
-		virtual bool SetVSync(EVSyncMode value) noexcept = 0;
+		virtual bool SetVSync(EVSyncMode mode) noexcept = 0;
 
-		virtual void DrawRect(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src, std::float_t z) noexcept = 0;
+		virtual void Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src) = 0;
 
 		virtual void Clear(const SDL_Color &color = SDL_Color(0ui8, 0ui8, 0ui8, 0ui8)) noexcept = 0;
 		virtual void Reset() noexcept = 0;
 		virtual void Render() noexcept = 0;
 		virtual void Begin() noexcept = 0;
 		virtual void End() noexcept = 0;
+
+		void Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst)
+		{
+			auto [w, h] = texture->GetSize();
+			SDL_FRect src{
+			    .x = 0,
+			    .y = 0,
+			    .w = w,
+			    .h = h,
+			};
+			Draw(texture, dst, src);
+		}
 	};
 
 	class Window;
@@ -63,7 +78,6 @@ namespace tudov
 		TextureResources _textureManager;
 		std::unordered_map<ImageID, TextureID> _imageTextureMap;
 		std::unordered_map<SDL_Texture *, std::shared_ptr<Texture>> _heldTextures;
-		std::vector<RenderCommand> _renderCommands;
 		SDL_Texture *_sdlTextureMain;
 		SDL_Texture *_sdlTextureBackground;
 
@@ -71,14 +85,15 @@ namespace tudov
 		explicit Renderer(Window &window) noexcept;
 		~Renderer() noexcept = default;
 
-		void Initialize() noexcept;
+		void InitializeRenderer() noexcept override;
+		void DeinitializeRenderer() noexcept override;
 
 		IWindow &GetWindow() noexcept override;
 		Context &GetContext() noexcept override;
 
 		std::shared_ptr<RenderTarget> NewRenderTarget(std::int32_t width, std::int32_t height) noexcept;
 		void BeginTarget(const std::shared_ptr<RenderTarget> &renderTarget) noexcept;
-		bool EndTarget(const std::optional<SDL_FRect> &source = std::nullopt, const std::optional<SDL_FRect> &destination = std::nullopt) noexcept;
+		std::shared_ptr<RenderTarget> EndTarget() noexcept;
 
 		bool ReleaseTexture(const std::shared_ptr<Texture> &texture) noexcept override;
 		std::shared_ptr<Texture> GetRenderTexture() noexcept override;
@@ -87,7 +102,7 @@ namespace tudov
 		EVSyncMode GetVSync() noexcept override;
 		bool SetVSync(EVSyncMode mode) noexcept override;
 
-		void DrawRect(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src, std::float_t z) noexcept override;
+		void Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src) override;
 
 		void Clear(const SDL_Color &color = SDL_Color(0ui8, 0ui8, 0ui8, 0ui8)) noexcept override;
 		void Reset() noexcept override;
@@ -104,15 +119,15 @@ namespace tudov
 
 	  private:
 		std::shared_ptr<Texture> GetOrCreateImageTexture(ImageID imageID);
-		void RenderImpl(std::vector<RenderCommand> &renderCommands) noexcept;
 
-		void LuaBeginTarget(const std::shared_ptr<RenderTarget> &renderTarget) noexcept;
-		bool LuaEndTarget(const sol::object &source, const sol::object &destination) noexcept;
-		void LuaDraw(const sol::table &args);
+		void LuaBeginTarget(sol::object renderTarget) noexcept;
+		std::shared_ptr<RenderTarget> LuaEndTarget() noexcept;
+		void LuaDraw(sol::table args);
+		std::shared_ptr<Texture> LuaDrawExtractTexture(sol::table args) noexcept;
 		std::shared_ptr<RenderTarget> LuaNewRenderTarget(const sol::object &width = sol::nil, const sol::object &height = sol::nil);
 		void LuaClear(std::uint32_t color) noexcept;
 		std::tuple<std::float_t, std::float_t> LuaGetTargetSize(const std::shared_ptr<RenderTarget> &renderTarget) noexcept;
 
-		void ApplyTransform(SDL_FRect &dst) noexcept;
+		SDL_FRect ApplyTransform(const SDL_FRect &dst) noexcept;
 	};
 } // namespace tudov

@@ -73,3 +73,8 @@ VirtualFileSystem &Context::GetVirtualFileSystem()
 {
 	return *GetEngine()._virtualFileSystem;
 }
+
+WindowManager &Context::GetWindowManager()
+{
+	return *GetEngine()._windowManager;
+}
