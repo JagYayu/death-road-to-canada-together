@@ -203,19 +203,15 @@ void Renderer::LuaDraw(const sol::table &args)
 			return;
 		}
 
-		if (const sol::object &destination = args["destination"])
-		{
-			if (!destination.is<sol::table>()) [[unlikely]]
-			{
-				_log->Error("Failed to draw rect: invalid 'destination'");
-				return;
-			}
+		auto &&texture = LuaDrawExtractTexture(args);
 
-			sol::table t = destination.as<sol::table>();
-			cmd.dst.x = t.get_or(1, 0);
-			cmd.dst.y = t.get_or(2, 0);
-			cmd.dst.w = t.get_or(3, 0);
-			cmd.dst.h = t.get_or(4, 0);
+		SDL_FRect rectDst;
+		{
+			auto t = args["destination"].get<sol::table>();
+			rectDst.x = t.get_or<std::float_t>(1, 0);
+			rectDst.y = t.get_or<std::float_t>(2, 0);
+			rectDst.w = t.get_or<std::float_t>(3, 0);
+			rectDst.h = t.get_or<std::float_t>(4, 0);
 		}
 
 		if (const sol::object &source = args["source"]; source.is<sol::table>())
