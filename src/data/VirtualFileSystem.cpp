@@ -2,6 +2,7 @@
 
 #include "data/PathType.hpp"
 #include "util/EnumFlag.hpp"
+#include "util/LogMicros.hpp"
 
 #include <filesystem>
 #include <memory>

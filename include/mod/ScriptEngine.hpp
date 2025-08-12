@@ -11,6 +11,7 @@
 #include <memory>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 namespace tudov
 {
@@ -60,6 +61,7 @@ namespace tudov
 	};
 
 	class Log;
+	class ScriptError;
 
 	class ScriptEngine : public IScriptEngine, public ILogProvider
 	{
@@ -84,6 +86,8 @@ namespace tudov
 		sol::function _luaPostProcessModGlobals;
 		sol::function _luaPostProcessScriptGlobals;
 		sol::function _luaMarkAsLocked;
+
+		std::vector<std::shared_ptr<ScriptError>> _scriptRuntimeErrors;
 
 	  public:
 		explicit ScriptEngine(Context &context) noexcept;

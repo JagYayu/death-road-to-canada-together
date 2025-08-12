@@ -36,6 +36,11 @@ Context &UnpackagedMod::GetContext() noexcept
 	return _modManager.GetContext();
 }
 
+std::filesystem::path UnpackagedMod::GetDirectory() noexcept
+{
+	return _directory;
+}
+
 void UnpackagedMod::UpdateFileMatchPatterns()
 {
 	_scriptFilePatterns = std::vector<std::regex>(_config.scripts.files.size());
@@ -193,15 +198,12 @@ void UnpackagedMod::ScriptAdded(const std::filesystem::path &file) noexcept
 	GetVirtualFileSystem().MountFile(file, scriptCode);
 
 	TextResources &textResources = GetGlobalResourcesCollection().GetTextResources();
-	ResourceID textID = textResources.GetResourceID(filePathStr);
-	assert(textID != 0 && "It looks like texture resource is not loaded after file mounting.");
+	TextID scriptTextID = textResources.GetResourceID(filePathStr);
+	assert(scriptTextID != 0 && "It looks like texture resource is not loaded after file mounting.");
 
 	if (ShouldScriptLoad(relativePath))
 	{
-		auto &&scriptCode = textResources.GetResource(textID);
-		assert(scriptCode != nullptr);
-
-		_modManager.UpdateScriptPending(scriptName, scriptCode, _config.uniqueID);
+		_modManager.UpdateScriptPending(scriptName, scriptTextID, _config.uniqueID);
 	}
 }
 
@@ -214,7 +216,7 @@ void UnpackagedMod::ScriptRemoved(const std::filesystem::path &file) noexcept
 
 	assert(GetVirtualFileSystem().DismountFile(file) && "Invalid file path!");
 
-	_modManager.UpdateScriptPending(scriptName, nullptr, _config.uniqueID);
+	_modManager.UpdateScriptPending(scriptName, 0, _config.uniqueID);
 }
 
 void UnpackagedMod::ScriptModified(const std::filesystem::path &file) noexcept
@@ -230,19 +232,16 @@ void UnpackagedMod::ScriptModified(const std::filesystem::path &file) noexcept
 	assert(GetVirtualFileSystem().RemountFile(file, scriptCode) && "Invalid file path!");
 
 	TextResources &textResources = GetGlobalResourcesCollection().GetTextResources();
-	ResourceID resourceID = textResources.GetResourceID(filePathStr);
-	assert(resourceID != 0 && "It looks like texture resource is not loaded after file mounting.");
+	TextID scriptTextID = textResources.GetResourceID(filePathStr);
+	assert(scriptTextID != 0 && "It looks like texture resource is not loaded after file mounting.");
 
 	if (ShouldScriptLoad(relativePath))
 	{
-		auto &&scriptCode = textResources.GetResource(resourceID);
-		assert(scriptCode != nullptr);
-
-		_modManager.UpdateScriptPending(scriptName, scriptCode, _config.uniqueID);
+		_modManager.UpdateScriptPending(scriptName, scriptTextID, _config.uniqueID);
 	}
 	else
 	{
-		_modManager.UpdateScriptPending(scriptName, nullptr, _config.uniqueID);
+		_modManager.UpdateScriptPending(scriptName, 0, _config.uniqueID);
 	}
 }
 

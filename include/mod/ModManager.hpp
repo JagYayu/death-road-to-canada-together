@@ -34,12 +34,12 @@ namespace tudov
 
 		virtual std::vector<ModListedEntry> ListAvailableMods() noexcept = 0;
 
-		virtual std::weak_ptr<Mod> FindLoadedMod(std::string_view uid) noexcept = 0;
+		virtual std::shared_ptr<Mod> FindLoadedMod(std::string_view uid) noexcept = 0;
 
 		virtual std::vector<ModRequirement> &GetRequiredMods() noexcept = 0;
 		virtual const std::vector<ModRequirement> &GetRequiredMods() const noexcept = 0;
 
-		virtual void UpdateScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptNamespace) = 0;
+		virtual void UpdateScriptPending(std::string_view scriptName, TextID scriptTextID, std::string_view scriptModUID) = 0;
 
 		virtual void Update() = 0;
 	};
@@ -69,7 +69,7 @@ namespace tudov
 		};
 
 	  protected:
-		using HotReloadScriptsMap = std::unordered_map<std::string, std::tuple<std::shared_ptr<TextResource>, std::string>>;
+		using HotReloadScriptsMap = std::unordered_map<std::string, std::tuple<TextID, std::string>>;
 
 	  private:
 		std::shared_ptr<Log> _log;
@@ -102,12 +102,12 @@ namespace tudov
 
 		std::vector<ModListedEntry> ListAvailableMods() noexcept override;
 
-		std::weak_ptr<Mod> FindLoadedMod(std::string_view namespace_) noexcept override;
+		std::shared_ptr<Mod> FindLoadedMod(std::string_view namespace_) noexcept override;
 
 		std::vector<ModRequirement> &GetRequiredMods() noexcept override;
 		const std::vector<ModRequirement> &GetRequiredMods() const noexcept override;
 
-		void UpdateScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptModUID) override;
+		void UpdateScriptPending(std::string_view scriptName, TextID scriptTextID, std::string_view scriptModUID) override;
 
 		void Update() override;
 

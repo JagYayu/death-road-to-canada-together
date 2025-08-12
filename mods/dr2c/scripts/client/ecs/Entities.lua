@@ -108,7 +108,9 @@ function CEntities.getComponentByType(entityID, componentType)
 	error("Invalid component " .. componentType, 2)
 end
 
-function CEntities.iterate(filterID) end
+function CEntities.iterate(filterID)
+	--
+end
 
 function CEntities.filter() end
 

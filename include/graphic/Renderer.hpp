@@ -1,6 +1,5 @@
 #pragma once
 
-#include "SDL3/SDL_rect.h"
 #include "VSyncMode.hpp"
 #include "mod/LuaAPI.hpp"
 #include "program/Context.hpp"
@@ -9,6 +8,7 @@
 #include "util/Definitions.hpp"
 #include "util/Log.hpp"
 
+#include "SDL3/SDL_rect.h"
 #include "sol/table.hpp"
 
 #include <cstdint>

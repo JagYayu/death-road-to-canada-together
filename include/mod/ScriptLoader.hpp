@@ -6,8 +6,10 @@
 #include "event/DelegateEvent.hpp"
 #include "program/EngineComponent.hpp"
 #include "util/Definitions.hpp"
+#include "util/Log.hpp"
 #include "util/Micros.hpp"
 
+#include <memory>
 #include <sol/table.hpp>
 
 #include <optional>
@@ -21,6 +23,7 @@
 namespace tudov
 {
 	class ScriptEngine;
+	class ScriptError;
 
 	/**
 	 * Manage script's modules / functions.
@@ -162,7 +165,8 @@ namespace tudov
 		 */
 		virtual bool HasAnyLoadError() const noexcept = 0;
 
-		virtual std::vector<std::string> GetLoadErrors() noexcept = 0;
+		virtual std::vector<std::shared_ptr<ScriptError>> GetLoadErrors() const noexcept = 0;
+		virtual const std::vector<std::shared_ptr<ScriptError>> &GetLoadErrorsCached() noexcept = 0;
 
 		inline const DelegateEvent<> &GetOnPreLoadAllScripts() const noexcept
 		{
@@ -221,14 +225,15 @@ namespace tudov
 		}
 	};
 
-	class Log;
-
-	class ScriptLoader : public IScriptLoader
+	class ScriptLoader : public IScriptLoader, public ILogProvider
 	{
 	  private:
-		struct Module : IModule
+		struct Module : public IModule, public ILogProvider
 		{
-		  private:
+		  protected:
+			static std::weak_ptr<Log> _parentLog;
+
+		  protected:
 			ScriptID _scriptID;
 			sol::protected_function _func;
 			bool _fullyLoaded;
@@ -237,6 +242,8 @@ namespace tudov
 		  public:
 			explicit Module();
 			explicit Module(ScriptID scriptID, const sol::protected_function &func);
+
+			Log &GetLog() noexcept override;
 
 			bool IsLazyLoaded() const override;
 			bool IsFullyLoaded() const override;
@@ -256,8 +263,8 @@ namespace tudov
 		std::shared_ptr<Log> _log;
 		std::unordered_map<ScriptID, std::shared_ptr<Module>> _scriptModules;
 		std::unordered_map<ScriptID, std::unordered_set<ScriptID>> _scriptReverseDependencies;
-		std::unordered_map<ScriptID, std::tuple<std::size_t, std::string>> _scriptErrors;
-		std::optional<std::vector<std::string>> _scriptErrorsCache;
+		std::unordered_map<ScriptID, std::shared_ptr<ScriptError>> _scriptLoadErrors;
+		std::optional<std::vector<std::shared_ptr<ScriptError>>> _scriptLoadErrorsCache;
 
 		// Set this value when a script module is doing whatever loads.
 		ScriptID _loadingScript;
@@ -281,6 +288,7 @@ namespace tudov
 
 	  public:
 		Context &GetContext() noexcept override;
+		Log &GetLog() noexcept override;
 
 		DelegateEvent<> &GetOnPreLoadAllScripts() noexcept override;
 		DelegateEvent<> &GetOnPostLoadAllScripts() noexcept override;
@@ -308,6 +316,7 @@ namespace tudov
 		void ProcessFullLoads() override;
 
 		bool HasAnyLoadError() const noexcept override;
-		std::vector<std::string> GetLoadErrors() noexcept override;
+		std::vector<std::shared_ptr<ScriptError>> GetLoadErrors() const noexcept override;
+		const std::vector<std::shared_ptr<ScriptError>> &GetLoadErrorsCached() noexcept override;
 	};
 } // namespace tudov

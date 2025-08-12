@@ -4,6 +4,7 @@
 #include "resource/GlobalResourcesCollection.hpp"
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
+
 #include <cassert>
 #include <string_view>
 #include <vector>
@@ -50,15 +51,14 @@ void ScriptProvider::Initialize() noexcept
 	for (auto &&relativePath : luaFilePaths)
 	{
 		auto &&fullPath = (std::filesystem::path(directory) / relativePath).generic_string();
-		ResourceID id = textResources.GetResourceID(fullPath);
+		TextID textID = textResources.GetResourceID(fullPath);
 
-		if (id != 0) [[likely]]
+		if (textID != 0) [[likely]]
 		{
 			auto &&scriptName = StaticScriptNamespace(std::string(relativePath));
-			auto code = textResources.GetResource(id);
-			assert(code != nullptr);
+			// assert(code != nullptr);
 
-			AddScriptImpl(scriptName, code);
+			AddScriptImpl(scriptName, textID);
 		}
 		else [[unlikely]]
 		{
@@ -72,7 +72,7 @@ void ScriptProvider::Deinitialize() noexcept
 	//
 }
 
-ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view modUID)
+ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, TextID scriptTextID, std::string_view modUID)
 {
 	{
 		auto &&it = _scriptName2ID.find(scriptName);
@@ -83,12 +83,14 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, const std::s
 		}
 	}
 
+	// std::shared_ptr<TextResource> scriptCode = GetGlobalResourcesCollection().GetTextResources().GetResource(scriptTextID);
+
 	++_latestScriptID;
-	auto &&id = _latestScriptID;
-	auto &&name = _scriptID2Entry.try_emplace(id, std::string(scriptName), scriptCode, modUID).first->second.name;
-	Trace("Add script <{}>\"{}\"", id, name);
-	_scriptName2ID.emplace(name, id);
-	return id;
+	ScriptID scriptID = _latestScriptID;
+	std::string &name = _scriptID2Entry.try_emplace(scriptID, std::string(scriptName), scriptTextID, modUID).first->second.name;
+	Trace("Add script <{}>\"{}\"", scriptID, name);
+	_scriptName2ID.emplace(name, scriptID);
+	return scriptID;
 }
 
 size_t ScriptProvider::GetCount() const noexcept
@@ -135,7 +137,7 @@ std::optional<std::string_view> ScriptProvider::GetScriptNameByID(ScriptID scrip
 	return std::nullopt;
 }
 
-ScriptID ScriptProvider::AddScript(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptModUID) noexcept
+ScriptID ScriptProvider::AddScript(std::string_view scriptName, TextID scriptTextID, std::string_view scriptModUID) noexcept
 {
 	if (scriptName.starts_with(scriptNamespace))
 	{
@@ -148,7 +150,7 @@ ScriptID ScriptProvider::AddScript(std::string_view scriptName, const std::share
 		Info("Script has already been added: {}", scriptName);
 	}
 
-	return AddScriptImpl(scriptName, scriptCode, scriptModUID);
+	return AddScriptImpl(scriptName, scriptTextID, scriptModUID);
 }
 
 bool ScriptProvider::RemoveScript(ScriptID scriptID) noexcept
@@ -186,6 +188,16 @@ std::size_t ScriptProvider::RemoveScriptsBy(std::string_view uid) noexcept
 	});
 }
 
+TextID ScriptProvider::GetScriptTextID(ScriptID scriptID) const noexcept
+{
+	auto &&it = _scriptID2Entry.find(scriptID);
+	if (it == _scriptID2Entry.end())
+	{
+		return 0;
+	}
+	return it->second.textID;
+}
+
 std::shared_ptr<TextResource> ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
 {
 	auto &&it = _scriptID2Entry.find(scriptID);
@@ -193,7 +205,14 @@ std::shared_ptr<TextResource> ScriptProvider::GetScriptCode(ScriptID scriptID) c
 	{
 		return nullptr;
 	}
-	return it->second.code;
+
+	TextID textID = it->second.textID;
+	if (textID == 0)
+	{
+		return nullptr;
+	}
+
+	return GetGlobalResourcesCollection().GetTextResources().GetResource(textID);
 }
 
 std::string_view ScriptProvider::GetScriptModUID(ScriptID scriptID) noexcept

@@ -63,5 +63,25 @@ namespace tudov
 		EResourceType UnloadResource(const std::filesystem::path &path);
 
 		std::tuple<EResourceType, ResourceID, ResourceID> ReloadResource(const std::filesystem::path &path, const std::vector<std::byte> &bytes);
+
+		const BinariesResources &GetBinariesResources() const noexcept
+		{
+			return const_cast<GlobalResourcesCollection *>(this)->GetBinariesResources();
+		}
+
+		const FontResources &GetFontResources() const noexcept
+		{
+			return const_cast<GlobalResourcesCollection *>(this)->GetFontResources();
+		}
+
+		const ImageResources &GetImageResources() const noexcept
+		{
+			return const_cast<GlobalResourcesCollection *>(this)->GetImageResources();
+		}
+
+		const TextResources &GetTextResources() const noexcept
+		{
+			return const_cast<GlobalResourcesCollection *>(this)->GetTextResources();
+		}
 	};
 } // namespace tudov

@@ -13,6 +13,7 @@ namespace tudov
 {
 	struct IUnpackagedMod : public virtual IMod
 	{
+		virtual std::filesystem::path GetDirectory() noexcept = 0;
 	};
 
 	class UnpackagedMod : public Mod, public IUnpackagedMod, public IContextProvider
@@ -33,6 +34,8 @@ namespace tudov
 
 	  public:
 		Context &GetContext() noexcept override;
+
+		std::filesystem::path GetDirectory() noexcept override;
 
 		bool IsScript(std::string_view file) const;
 		bool IsFont(std::string_view file) const;

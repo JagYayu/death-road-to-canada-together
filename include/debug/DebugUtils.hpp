@@ -1,10 +1,13 @@
 #pragma once
 
+#include <cmath>
 #include <sstream>
 #include <string>
 
 namespace tudov
 {
+	struct IWindow;
+
 	struct DebugUtils
 	{
 		explicit DebugUtils() noexcept = delete;
@@ -27,5 +30,8 @@ namespace tudov
 
 			return result;
 		}
+
+		[[deprecated("Use `IWindow::GetGUIScale` instead")]]
+		static std::float_t GetWindowGUIScale(IWindow &window) noexcept;
 	};
 } // namespace tudov

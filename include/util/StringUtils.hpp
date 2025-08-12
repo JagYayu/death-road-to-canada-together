@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Micros.hpp"
 #include <algorithm>
 #include <cstddef>
 #include <fstream>
@@ -159,4 +160,13 @@ namespace tudov
 		return utf32str;
 	}
 
+	struct StringUtils
+	{
+		TE_STATIC_CLASS(StringUtils);
+
+		/**
+		 * "dr2c/scripts/test/HelloWorld.lua" -> "dr2c.test.HelloWorld"
+		 */
+		static std::string FilePathToLuaScriptName(std::string_view filePath) noexcept;
+	};
 } // namespace tudov

@@ -1,27 +1,34 @@
 #include "mod/ScriptLoader.hpp"
+
 #include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"
+#include "mod/ScriptError.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
+#include "resource/GlobalResourcesCollection.hpp"
 #include "resource/Text.hpp"
 #include "util/Definitions.hpp"
+#include "util/LogMicros.hpp"
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
 
-#include <corecrt_terminate.h>
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
 
 #include <algorithm>
 #include <cassert>
+#include <corecrt_terminate.h>
 #include <format>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <tuple>
 #include <vector>
 
 using namespace tudov;
+
+std::weak_ptr<Log> ScriptLoader::Module::_parentLog = std::shared_ptr<Log>(nullptr);
 
 ScriptLoader::Module::Module()
     : _scriptID(),
@@ -37,6 +44,12 @@ ScriptLoader::Module::Module(ScriptID scriptID, const sol::protected_function &f
       _fullyLoaded(),
       _table()
 {
+}
+
+Log &ScriptLoader::Module::GetLog() noexcept
+{
+	assert(!_parentLog.expired());
+	return *_parentLog.lock();
 }
 
 bool ScriptLoader::Module::IsLazyLoaded() const
@@ -64,6 +77,8 @@ const sol::table &ScriptLoader::Module::RawLoad(IScriptLoader &scriptLoader)
 	assert(_scriptID);
 
 	auto &&parent = static_cast<ScriptLoader &>(scriptLoader);
+	_parentLog = parent._log;
+
 	auto &&engine = scriptLoader.GetEngine();
 
 	engine.SetLoadingDescription(scriptLoader.GetScriptProvider().GetScriptNameByID(_scriptID).value());
@@ -80,7 +95,7 @@ const sol::table &ScriptLoader::Module::RawLoad(IScriptLoader &scriptLoader)
 
 	if (result.get<sol::object>(1))
 	{
-		parent._log->Warn("'{}': Does not support receiving multiple return values", scriptLoader.GetLoadingScriptName().value());
+		TE_WARN("'{}': Does not support receiving multiple return values", scriptLoader.GetLoadingScriptName().value());
 	}
 
 	parent._loadingScript = previousLoadingScript;
@@ -138,6 +153,8 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 	assert(_scriptID);
 
 	auto &&parent = static_cast<ScriptLoader &>(scriptLoader);
+	_parentLog = parent._log;
+
 	auto &&engine = parent.GetEngine();
 
 	engine.SetLoadingDescription(parent.GetScriptProvider().GetScriptNameByID(_scriptID).value());
@@ -182,14 +199,19 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 	if (!result.valid())
 	{
 		sol::error err = result;
-		parent._log->Error("{}", err.what());
-		parent._scriptErrors.try_emplace(_scriptID, std::make_tuple(parent._scriptErrors.size(), std::string(err.what())));
+		auto what = std::string_view(err.what());
+
+		parent._log->Error("{}", what);
+
+		auto &&scriptError = std::make_shared<ScriptError>(_scriptID, EScriptErrorType::Loadtime, what);
+		parent._scriptLoadErrors.try_emplace(_scriptID, scriptError);
+		parent._scriptLoadErrorsCache = std::nullopt;
 	}
 	else
 	{
 		if (result.get<sol::object>(1))
 		{
-			parent._log->Warn("'{}': Does not support receiving multiple return values", parent.GetLoadingScriptName().value());
+			TE_WARN("'{}': Does not support receiving multiple return values", parent.GetLoadingScriptName().value());
 		}
 
 		auto &&value = result.get<sol::object>(0);
@@ -201,7 +223,7 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 		{
 			if (value.get_type() != sol::type::nil)
 			{
-				parent._log->Warn("'{}': Does not support receiving non-table values", parent.GetLoadingScriptName().value());
+				TE_WARN("'{}': Does not support receiving non-table values", parent.GetLoadingScriptName().value());
 			}
 			tbl = scriptEngine.CreateTable();
 		}
@@ -238,6 +260,11 @@ ScriptLoader::~ScriptLoader() noexcept
 Context &ScriptLoader::GetContext() noexcept
 {
 	return _context;
+}
+
+Log &ScriptLoader::GetLog() noexcept
+{
+	return *_log;
 }
 
 DelegateEvent<> &ScriptLoader::GetOnPreLoadAllScripts() noexcept
@@ -338,9 +365,9 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 	{
 		auto &&sourceName = scriptProvider.GetScriptNameByID(source);
 		auto &&targetName = scriptProvider.GetScriptNameByID(target);
-		_log->Warn("Attempt to link invalid scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
-		           source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
-		           target, targetName.has_value() ? targetName->data() : "#INVALID#");
+		TE_WARN("Attempt to link invalid scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
+		        source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
+		        target, targetName.has_value() ? targetName->data() : "#INVALID#");
 
 		return;
 	}
@@ -348,9 +375,9 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 	{
 		auto &&sourceName = scriptProvider.GetScriptNameByID(source);
 		auto &&targetName = scriptProvider.GetScriptNameByID(target);
-		_log->Warn("Attempt to link static scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
-		           source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
-		           target, targetName.has_value() ? targetName->data() : "#INVALID#");
+		TE_WARN("Attempt to link static scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
+		        source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
+		        target, targetName.has_value() ? targetName->data() : "#INVALID#");
 
 		return;
 	}
@@ -369,7 +396,7 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 
 void ScriptLoader::LoadAllScripts()
 {
-	_log->Debug("Loading provided scripts ...");
+	TE_DEBUG("{}", "Loading provided scripts ...");
 
 	auto &&scriptProvider = GetScriptProvider();
 
@@ -388,19 +415,24 @@ void ScriptLoader::LoadAllScripts()
 	}
 
 	_scriptModules.clear();
-	_scriptErrors.clear();
+	_scriptLoadErrors.clear();
+	_scriptLoadErrorsCache = std::nullopt;
+
+	TextResources &textResources = GetGlobalResourcesCollection().GetTextResources();
 
 	auto &&count = scriptProvider.GetCount();
 	for (auto &&[scriptID, entry] : scriptProvider)
 	{
-		LoadImpl(scriptID, entry.name, entry.code->View(), entry.modUID);
+		std::shared_ptr<TextResource> code = textResources.GetResource(entry.textID);
+		assert(code != nullptr);
+		LoadImpl(scriptID, entry.name, code->View(), entry.modUID);
 	}
 
 	ProcessFullLoads();
 
 	_onPostLoadAllScripts();
 
-	_log->Debug("Loaded provided scripts");
+	TE_DEBUG("{}", "Loaded provided scripts");
 
 	Log::CleanupExpired();
 }
@@ -417,20 +449,26 @@ std::shared_ptr<IScriptLoader::IModule> ScriptLoader::Load(std::string_view scri
 
 std::shared_ptr<IScriptLoader::IModule> ScriptLoader::Load(ScriptID scriptID)
 {
-	if (!scriptID)
+	if (!scriptID) [[unlikely]]
 	{
-		_log->Warn("Attempt to load invalid script <{}>: id is 0", scriptID);
+		TE_WARN("Attempt to load invalid script <{}>: id is 0", scriptID);
 		return nullptr;
 	}
-	auto &&scriptProvider = GetScriptProvider();
+	IScriptProvider &scriptProvider = GetScriptProvider();
 	auto &&scriptName = scriptProvider.GetScriptNameByID(scriptID);
-	if (!scriptName.has_value())
+	if (!scriptName.has_value()) [[unlikely]]
 	{
-		_log->Warn("Attempt to load invalid script <{}>: not provided", scriptID);
+		TE_WARN("Attempt to load invalid script <{}>: not provided", scriptID);
 		return nullptr;
 	}
 
 	auto &&scriptCode = scriptProvider.GetScriptCode(scriptID);
+	if (scriptCode == nullptr) [[unlikely]]
+	{
+		TE_WARN("Attempt to load invalid script <{}>\"{}\": script code not found", scriptID, scriptName->data());
+		return nullptr;
+	}
+
 	auto &&modUID = scriptProvider.GetScriptModUID(scriptID);
 	return LoadImpl(scriptID, scriptName.value(), scriptCode->View(), modUID);
 }
@@ -445,15 +483,16 @@ std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, 
 		}
 	}
 
-	_log->Debug("Loading script <{}>\"{}\" ...", scriptID, scriptName);
+	TE_DEBUG("Loading script <{}>\"{}\" ...", scriptID, scriptName);
 
-	_scriptErrors.erase(scriptID);
+	_scriptLoadErrors.erase(scriptID);
+	_scriptLoadErrorsCache = std::nullopt;
 	// _scriptErrorsCascaded.erase(scriptID);
 
 	auto &&result = GetScriptEngine().LoadFunction(std::string(scriptName), scriptCode);
 	if (!result.valid())
 	{
-		_log->Debug("Failed to load script <{}>\"{}\": {}", scriptID, scriptName, result.get<sol::error>().what());
+		TE_DEBUG("Failed to load script <{}>\"{}\": {}", scriptID, scriptName, result.get<sol::error>().what());
 
 		return nullptr;
 	}
@@ -474,7 +513,7 @@ std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, 
 		if (modUID != emptyString)
 		{
 			auto &&mod = GetModManager().FindLoadedMod(modUID);
-			if (!mod.expired() && mod.lock()->GetConfig().scripts.sandbox)
+			if (mod != nullptr && mod->GetConfig().scripts.sandbox)
 			{
 				sandboxed = true;
 			}
@@ -542,7 +581,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 	auto &&scriptName = GetScriptProvider().GetScriptNameByID(scriptID);
 	if (!scriptName.has_value()) [[unlikely]]
 	{
-		_log->Warn("Attempt to unload invalid script <{}> ...", scriptID);
+		TE_WARN("Attempt to unload invalid script <{}> ...", scriptID);
 
 		return;
 	}
@@ -564,7 +603,8 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 		unloadedScripts.emplace_back(dependency);
 	}
 
-	_scriptErrors.erase(scriptID);
+	_scriptLoadErrors.erase(scriptID);
+	_scriptLoadErrorsCache = std::nullopt;
 	// _scriptErrorsCascaded.erase(scriptID);
 	// _scriptDependencyGraph.UnlinkOutgoing(scriptID);
 	_scriptReverseDependencies.erase(scriptID);
@@ -579,7 +619,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 
 void ScriptLoader::HotReloadScripts(const std::vector<ScriptID> &scriptIDs)
 {
-	_log->Debug("Hot reloading scripts ...");
+	TE_DEBUG("{}", "Hot reloading scripts ...");
 
 	GetEngine().SetLoadingInfo(Engine::LoadingInfoArgs{
 	    .title = "Loading scripts",
@@ -608,14 +648,14 @@ void ScriptLoader::HotReloadScripts(const std::vector<ScriptID> &scriptIDs)
 
 	_onPostHotReloadScripts(scriptIDs);
 
-	_log->Debug("Hot reloaded scripts");
+	TE_DEBUG("{}", "Hot reloaded scripts");
 
 	Log::CleanupExpired();
 }
 
 void ScriptLoader::ProcessFullLoads()
 {
-	_log->Debug("Processing full loads ...");
+	TE_DEBUG("{}", "Processing full loads ...");
 
 	for (auto &&[scriptID, module] : _scriptModules)
 	{
@@ -626,39 +666,38 @@ void ScriptLoader::ProcessFullLoads()
 		}
 	}
 
-	_log->Debug("Processed full loads");
+	TE_DEBUG("{}", "Processed full loads");
 }
 
 bool ScriptLoader::HasAnyLoadError() const noexcept
 {
-	return !_scriptErrors.empty();
+	return !_scriptLoadErrors.empty();
 }
 
-std::vector<std::string> ScriptLoader::GetLoadErrors() noexcept
+std::vector<std::shared_ptr<ScriptError>> ScriptLoader::GetLoadErrors() const noexcept
 {
-	if (!_scriptErrorsCache.has_value())
+	std::vector<std::shared_ptr<ScriptError>> loadErrors{};
+	loadErrors.reserve(_scriptLoadErrors.size());
+
+	for (auto &[scriptID, error] : _scriptLoadErrors)
 	{
-		std::vector<std::pair<std::size_t, std::string>> temp;
-
-		for (const auto &[scriptID, entry] : _scriptErrors)
-		{
-			temp.emplace_back(std::get<0>(entry), std::get<1>(entry));
-		}
-
-		std::ranges::sort(temp, [](const auto &a, const auto &b) constexpr
-		{
-			return a.first < b.first;
-		});
-
-		std::vector<std::string> result;
-		result.reserve(temp.size());
-		for (const auto &[order, message] : temp)
-		{
-			result.emplace_back(message);
-		}
-
-		_scriptErrorsCache = std::make_optional(result);
+		assert(error != nullptr);
+		loadErrors.emplace_back(error);
 	}
 
-	return _scriptErrorsCache.value();
+	std::sort(loadErrors.begin(), loadErrors.end(), [](std::shared_ptr<ScriptError> &l, std::shared_ptr<ScriptError> &r) -> bool
+	{
+		return l->time < r->time;
+	});
+
+	return loadErrors;
+}
+
+const std::vector<std::shared_ptr<ScriptError>> &ScriptLoader::GetLoadErrorsCached() noexcept
+{
+	if (_scriptLoadErrorsCache == std::nullopt)
+	{
+		_scriptLoadErrorsCache = GetLoadErrors();
+	}
+	return *_scriptLoadErrorsCache;
 }

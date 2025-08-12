@@ -40,6 +40,7 @@ namespace tudov
 	class DebugConsole;
 	class DebugLog;
 	class DebugProfiler;
+	class DebugScripts;
 
 	class DebugManager : public IDebugManager
 	{
@@ -51,6 +52,7 @@ namespace tudov
 		std::shared_ptr<DebugConsole> console;
 		std::shared_ptr<DebugLog> log;
 		std::shared_ptr<DebugProfiler> profiler;
+		std::shared_ptr<DebugScripts> scripts;
 
 	  public:
 		explicit DebugManager() noexcept;

@@ -1,7 +1,9 @@
 #include "debug/DebugManager.hpp"
+
 #include "debug/DebugConsole.hpp"
 #include "debug/DebugLog.hpp"
 #include "debug/DebugProfiler.hpp"
+#include "debug/DebugScripts.hpp"
 #include "program/Window.hpp"
 
 #include "imgui.h"
@@ -14,6 +16,7 @@ DebugManager::DebugManager() noexcept
     : console(std::make_shared<DebugConsole>()),
       log(std::make_shared<DebugLog>()),
       profiler(std::make_shared<DebugProfiler>()),
+      scripts(std::make_shared<DebugScripts>()),
       _elements(),
       _shownElements()
 {
@@ -21,6 +24,7 @@ DebugManager::DebugManager() noexcept
 	    console,
 	    log,
 	    profiler,
+	    scripts,
 	};
 }
 

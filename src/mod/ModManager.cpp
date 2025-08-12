@@ -176,7 +176,7 @@ std::vector<ModListedEntry> ModManager::ListAvailableMods() noexcept
 	return entries;
 }
 
-std::weak_ptr<Mod> ModManager::FindLoadedMod(std::string_view uid) noexcept
+std::shared_ptr<Mod> ModManager::FindLoadedMod(std::string_view uid) noexcept
 {
 	for (auto &&mod : _loadedMods)
 	{
@@ -185,7 +185,7 @@ std::weak_ptr<Mod> ModManager::FindLoadedMod(std::string_view uid) noexcept
 			return mod;
 		}
 	}
-	return std::weak_ptr<Mod>();
+	return nullptr;
 }
 
 std::vector<ModRequirement> &ModManager::GetRequiredMods() noexcept
@@ -198,13 +198,13 @@ const std::vector<ModRequirement> &ModManager::GetRequiredMods() const noexcept
 	return _requiredMods;
 }
 
-void ModManager::UpdateScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptModUID)
+void ModManager::UpdateScriptPending(std::string_view scriptName, TextID scriptTextID, std::string_view scriptModUID)
 {
 	if (!_updateScriptsPending)
 	{
 		_updateScriptsPending = std::make_unique<HotReloadScriptsMap>();
 	}
-	_updateScriptsPending->try_emplace(std::string(scriptName), scriptCode, std::string(scriptModUID));
+	_updateScriptsPending->try_emplace(std::string(scriptName), scriptTextID, std::string(scriptModUID));
 }
 
 void ModManager::Update()
@@ -233,18 +233,18 @@ void ModManager::UpdateScripts() noexcept
 
 	for (auto &&[scriptName, entry] : *_updateScriptsPending)
 	{
-		auto &&[scriptCode, scriptModUID] = entry;
+		auto &&[scriptTextID, scriptModUID] = entry;
 
 		ScriptID scriptID = scriptProvider.GetScriptIDByName(scriptName);
 		if (!scriptID) // add new script
 		{
-			scriptID = scriptProvider.AddScript(scriptName, scriptCode, scriptModUID);
+			scriptID = scriptProvider.AddScript(scriptName, scriptTextID, scriptModUID);
 			scriptIDs.emplace_back(scriptID);
 
 			continue;
 		}
 
-		if (scriptCode != nullptr) // update script
+		if (scriptTextID != 0) // update script
 		{
 			auto &&pendingScripts = GetScriptLoader().UnloadScript(scriptID);
 			scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
@@ -254,7 +254,7 @@ void ModManager::UpdateScripts() noexcept
 				_log->Warn("Attempt to remove non-exist script id", scriptID);
 			}
 
-			scriptID = scriptProvider.AddScript(scriptName, scriptCode, scriptModUID);
+			scriptID = scriptProvider.AddScript(scriptName, scriptTextID, scriptModUID);
 			scriptIDs.emplace_back(scriptID);
 		}
 		else // remove script

@@ -13,9 +13,10 @@ namespace tudov
 
 	// Resources
 
-	using ImageID = ResourceID;
-	using TextureID = ResourceID;
 	using FontID = ResourceID;
+	using ImageID = ResourceID;
+	using TextID = ResourceID;
+	using TextureID = ResourceID;
 } // namespace tudov
 
 #undef TE_DEF
