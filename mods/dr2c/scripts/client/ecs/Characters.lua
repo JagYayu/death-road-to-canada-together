@@ -1,0 +1,3 @@
+local CCharacters = {}
+
+return CCharacters

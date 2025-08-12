@@ -30,7 +30,7 @@ namespace tudov
 			return const_cast<IMod *>(this)->GetConfig();
 		}
 
-		[[deprecated("use `GetConfig().namespace_` instead")]]
+		[[deprecated("use `GetConfig().namespace_` or `_config.namespace_` instead")]]
 		inline std::string_view GetNamespace() const noexcept
 		{
 			return GetConfig().namespace_;

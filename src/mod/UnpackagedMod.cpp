@@ -36,7 +36,7 @@ Context &UnpackagedMod::GetContext() noexcept
 	return _modManager.GetContext();
 }
 
-void UnpackagedMod::UpdateFilePatterns()
+void UnpackagedMod::UpdateFileMatchPatterns()
 {
 	_scriptFilePatterns = std::vector<std::regex>(_config.scripts.files.size());
 	for (auto &&pattern : _config.scripts.files)
@@ -113,45 +113,29 @@ void UnpackagedMod::Load()
 
 	_fileWatcher = std::make_unique<filewatch::FileWatch<std::string>>(_directory.generic_string(), [this](const std::filesystem::path &filePath, const filewatch::Event changeType)
 	{
-		auto &&scriptProvider = _modManager.GetScriptProvider();
+		// auto &&scriptProvider = _modManager.GetScriptProvider();
 
-		auto file = filePath.generic_string();
+		std::string file = (_directory / filePath).generic_string();
 		if (IsScript(file))
 		{
+			_log->Trace("Script modified: \"{}\"", file);
+
 			switch (changeType)
 			{
 			case filewatch::Event::added:
+				ScriptAdded(file);
 				break;
 			case filewatch::Event::removed:
+				ScriptRemoved(file);
 				break;
 			case filewatch::Event::modified:
-			{
-				_log->Trace("Script modified: \"{}\"", file);
-
-				auto &&relative = std::filesystem::relative(file, _config.scripts.directory);
-				auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relative.generic_string()));
-
-				{
-					std::ifstream ins{_directory / filePath};
-					std::ostringstream oss;
-					oss << ins.rdbuf();
-					ins.close();
-
-					auto str = oss.str();
-					const auto *bytes = reinterpret_cast<const std::byte *>(str.data());
-					GetVirtualFileSystem().RemountFile(filePath, std::vector<std::byte>(bytes, bytes + str.size()));
-				}
-
-				auto textResources = GetGlobalResourcesCollection().GetTextResources();
-				ResourceID resourceID = textResources.GetResourceID(file);
-				assert(resourceID);
-
-				_modManager.HotReloadScriptPending(scriptName, textResources.GetResource(resourceID), _config.uniqueID);
-
+				ScriptModified(file);
 				break;
-			}
 			case filewatch::Event::renamed_old:
+				break;
 			case filewatch::Event::renamed_new:
+				break;
+			default:
 				break;
 			}
 		}
@@ -168,11 +152,11 @@ void UnpackagedMod::Load()
 
 	_log->Debug("Loading unpacked mod from \"{}\" ...", dir);
 
-	UpdateFilePatterns();
+	UpdateFileMatchPatterns();
 
 	ModConfig &config = Mod::GetConfig();
 
-	auto &&scriptProvider = _modManager.GetScriptProvider();
+	// auto &&scriptProvider = _modManager.GetScriptProvider();
 	for (const auto &entry : std::filesystem::recursive_directory_iterator(_directory))
 	{
 		if (!entry.is_regular_file())
@@ -180,33 +164,10 @@ void UnpackagedMod::Load()
 			continue;
 		}
 
-		auto &&filePath = entry.path().generic_string();
-		if (IsScript(filePath))
+		auto &&file = entry.path().generic_string();
+		if (IsScript(file))
 		{
-			auto &scripts = config.scripts;
-
-			auto &&relativePath = std::filesystem::relative(std::filesystem::relative(filePath, _directory), scripts.directory).generic_string();
-			auto &&scriptName = FilePathToLuaScriptName(std::format("{}.{}", namespace_, relativePath));
-			std::string scriptCode;
-			{
-				std::ifstream ins{filePath};
-				std::ostringstream oss;
-				oss << ins.rdbuf();
-				ins.close();
-				scriptCode = oss.str();
-			}
-
-			auto &textResources = GetGlobalResourcesCollection().GetTextResources();
-			auto textID = textResources.Load<TextResource>(filePath, scriptCode);
-			assert(textID != 0);
-
-			if (ShouldScriptLoad(relativePath))
-			{
-				auto scriptCode = textResources.GetResource(textID);
-				assert(scriptCode != nullptr);
-				scriptProvider.AddScript(scriptName, scriptCode, _config.uniqueID);
-			}
-			// _scripts.emplace_back(scriptName);
+			ScriptAdded(file);
 		}
 		// else if (IsFont(filePath))
 		// {
@@ -218,6 +179,71 @@ void UnpackagedMod::Load()
 	_log->Debug("Loaded unpacked mod from \"{}\"", dir);
 
 	_loaded = true;
+}
+
+void UnpackagedMod::ScriptAdded(const std::filesystem::path &file) noexcept
+{
+	std::filesystem::path &&relative = std::filesystem::relative(file, _directory);
+	relative = std::filesystem::relative(relative, _config.scripts.directory);
+	std::string filePathStr = file.generic_string();
+	std::string relativePath = relative.generic_string();
+	std::string scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relativePath));
+	std::vector<std::byte> scriptCode = ReadFileToBytes(filePathStr, true);
+
+	GetVirtualFileSystem().MountFile(file, scriptCode);
+
+	TextResources &textResources = GetGlobalResourcesCollection().GetTextResources();
+	ResourceID textID = textResources.GetResourceID(filePathStr);
+	assert(textID != 0 && "It looks like texture resource is not loaded after file mounting.");
+
+	if (ShouldScriptLoad(relativePath))
+	{
+		auto &&scriptCode = textResources.GetResource(textID);
+		assert(scriptCode != nullptr);
+
+		_modManager.UpdateScriptPending(scriptName, scriptCode, _config.uniqueID);
+	}
+}
+
+void UnpackagedMod::ScriptRemoved(const std::filesystem::path &file) noexcept
+{
+	std::filesystem::path &&relative = std::filesystem::relative(file, _directory);
+	relative = std::filesystem::relative(relative, _config.scripts.directory);
+
+	std::string scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relative.generic_string()));
+
+	assert(GetVirtualFileSystem().DismountFile(file) && "Invalid file path!");
+
+	_modManager.UpdateScriptPending(scriptName, nullptr, _config.uniqueID);
+}
+
+void UnpackagedMod::ScriptModified(const std::filesystem::path &file) noexcept
+{
+	std::filesystem::path &&relative = std::filesystem::relative(file, _directory);
+	relative = std::filesystem::relative(relative, _config.scripts.directory);
+	std::string scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relative.generic_string()));
+
+	std::string filePathStr = file.generic_string();
+	std::string relativePath = relative.generic_string();
+	std::vector<std::byte> scriptCode = ReadFileToBytes(filePathStr, true);
+
+	assert(GetVirtualFileSystem().RemountFile(file, scriptCode) && "Invalid file path!");
+
+	TextResources &textResources = GetGlobalResourcesCollection().GetTextResources();
+	ResourceID resourceID = textResources.GetResourceID(filePathStr);
+	assert(resourceID != 0 && "It looks like texture resource is not loaded after file mounting.");
+
+	if (ShouldScriptLoad(relativePath))
+	{
+		auto &&scriptCode = textResources.GetResource(resourceID);
+		assert(scriptCode != nullptr);
+
+		_modManager.UpdateScriptPending(scriptName, scriptCode, _config.uniqueID);
+	}
+	else
+	{
+		_modManager.UpdateScriptPending(scriptName, nullptr, _config.uniqueID);
+	}
 }
 
 void UnpackagedMod::Unload()
@@ -235,7 +261,7 @@ void UnpackagedMod::Unload()
 	{
 		auto &modUID = Mod::GetConfig().uniqueID;
 		_modManager.GetScriptLoader().UnloadScriptsBy(modUID);
-		_modManager.GetScriptProvider().RemoveScriptBy(modUID);
+		_modManager.GetScriptProvider().RemoveScriptsBy(modUID);
 		// _scripts.clear();
 	}
 

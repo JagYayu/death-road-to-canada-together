@@ -4,11 +4,13 @@
 #include "Storage.hpp"
 #include "util/Log.hpp"
 
+#include <cstdint>
+
 struct SDL_Storage;
 
 namespace tudov
 {
-	enum class EGlobalStorageLocation;
+	enum class EGlobalStorageLocation : std::uint8_t;
 	struct IGlobalStorageManager;
 
 	/**
@@ -32,7 +34,7 @@ namespace tudov
 
 		EHierarchyElement Check(const Path &path) noexcept override;
 
-		PathInfo GetPathInfo(const Path & path) noexcept override;
+		PathInfo GetPathInfo(const Path &path) noexcept override;
 
 		std::uint64_t GetPathSize(const Path &filePath) noexcept override;
 		EPathType GetPathType(const Path &path) noexcept override;

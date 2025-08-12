@@ -38,7 +38,7 @@ namespace tudov
 
 		virtual ScriptID AddScript(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view modUID) noexcept = 0;
 		virtual bool RemoveScript(ScriptID scriptID) noexcept = 0;
-		virtual std::size_t RemoveScriptBy(std::string_view modUID) noexcept = 0;
+		virtual std::size_t RemoveScriptsBy(std::string_view modUID) noexcept = 0;
 		virtual std::shared_ptr<TextResource> GetScriptCode(ScriptID scriptID) const noexcept = 0;
 		/*
 		 * Return an empty string if script id not exists.
@@ -112,7 +112,7 @@ namespace tudov
 
 		ScriptID AddScript(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view modUID) noexcept override;
 		bool RemoveScript(ScriptID scriptID) noexcept override;
-		std::size_t RemoveScriptBy(std::string_view modUID) noexcept override;
+		std::size_t RemoveScriptsBy(std::string_view modUID) noexcept override;
 		std::shared_ptr<TextResource> GetScriptCode(ScriptID scriptID) const noexcept override;
 		std::string_view GetScriptModUID(ScriptID scriptID) noexcept override;
 

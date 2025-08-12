@@ -1,5 +1,7 @@
 #include "debug/DebugScripts.hpp"
 
+#include "mod/ScriptLoader.hpp"
+
 using namespace tudov;
 
 std::string_view DebugScripts::GetName() noexcept
@@ -9,5 +11,8 @@ std::string_view DebugScripts::GetName() noexcept
 
 void DebugScripts::UpdateAndRender(IWindow &window) noexcept
 {
-	// todo
+	IScriptLoader &scriptLoader = window.GetContext().GetScriptLoader();
+	// scriptLoader.GetLoadErrors()
+
+	// scriptLoader.GetOnLoadedScript().Invoke();
 }

@@ -20,7 +20,7 @@
  */
 #define TE_NAMEOF(Name) ("" #Name "")
 
-#define TE_STATIC_CLASS(Class)                  \
+#define TE_STATIC_CLASS(Class)          \
 	explicit Class() noexcept = delete; \
 	~Class() noexcept = delete
 
@@ -48,3 +48,13 @@
 // {                                                                 \
 // 	return a = a & b;                                             \
 // }
+
+#define TE_LOG(What, Format, ...) \
+	if (this->Can##What())        \
+	this->What(Format, __VA_ARGS__)
+#define TE_TRACE(Format, ...) TE_LOG(Trace, Format, __VA_ARGS__)
+#define TE_DEBUG(Format, ...) TE_LOG(Debug, Format, __VA_ARGS__)
+#define TE_INFO(Format, ...)  TE_LOG(Info, Format, __VA_ARGS__)
+#define TE_WARN(Format, ...)  TE_LOG(Warn, Format, __VA_ARGS__)
+#define TE_ERROR(Format, ...) TE_LOG(Error, Format, __VA_ARGS__)
+#define TE_FATAL(Format, ...) TE_LOG(Fatal, Format, __VA_ARGS__)

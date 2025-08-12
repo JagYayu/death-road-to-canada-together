@@ -31,9 +31,6 @@ namespace tudov
 		explicit UnpackagedMod(ModManager &modManager, const std::filesystem::path &directory);
 		virtual ~UnpackagedMod() noexcept = default;
 
-	  private:
-		void UpdateFilePatterns();
-
 	  public:
 		Context &GetContext() noexcept override;
 
@@ -45,5 +42,11 @@ namespace tudov
 
 		void Load() override;
 		void Unload() override;
+
+	  private:
+		void UpdateFileMatchPatterns();
+		void ScriptAdded(const std::filesystem::path &file) noexcept;
+		void ScriptRemoved(const std::filesystem::path &file) noexcept;
+		void ScriptModified(const std::filesystem::path &file) noexcept;
 	};
 } // namespace tudov

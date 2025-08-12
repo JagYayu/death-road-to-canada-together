@@ -51,7 +51,7 @@ void ModManager::Initialize() noexcept
 	_requiredMods = {
 	    ModRequirement("dr2c_e0c8375e09d74bb9aa704d4a3c4afa79", Version(1, 0, 0), 0),
 	};
-	_hotReloadScriptsPending = nullptr;
+	_updateScriptsPending = nullptr;
 }
 
 void ModManager::Deinitialize() noexcept
@@ -103,7 +103,7 @@ void ModManager::LoadMods()
 	std::error_code errorCode;
 	std::filesystem::recursive_directory_iterator it{"mods", std::filesystem::directory_options::skip_permission_denied, errorCode}, end;
 
- 	while (it != end)
+	while (it != end)
 	{
 		const std::filesystem::directory_entry &entry = *it;
 
@@ -198,13 +198,13 @@ const std::vector<ModRequirement> &ModManager::GetRequiredMods() const noexcept
 	return _requiredMods;
 }
 
-void ModManager::HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptModUID)
+void ModManager::UpdateScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptModUID)
 {
-	if (!_hotReloadScriptsPending)
+	if (!_updateScriptsPending)
 	{
-		_hotReloadScriptsPending = std::make_unique<HotReloadScriptsMap>();
+		_updateScriptsPending = std::make_unique<HotReloadScriptsMap>();
 	}
-	_hotReloadScriptsPending->try_emplace(std::string(scriptName), scriptCode, std::string(scriptModUID));
+	_updateScriptsPending->try_emplace(std::string(scriptName), scriptCode, std::string(scriptModUID));
 }
 
 void ModManager::Update()
@@ -212,44 +212,70 @@ void ModManager::Update()
 	if (EnumFlag::HasAny(_loadState, ELoadState::LoadPending)) [[unlikely]]
 	{
 		LoadMods();
+
 		EnumFlag::Unmask(_loadState, ELoadState::LoadPending);
-		_hotReloadScriptsPending = nullptr;
 	}
-	else if (_hotReloadScriptsPending) [[unlikely]]
+
+	if (_updateScriptsPending) [[unlikely]]
 	{
-		std::vector<ScriptID> scriptIDs{};
+		UpdateScripts();
 
-		auto &&scriptLoader = GetScriptLoader();
-		auto &&scriptProvider = GetScriptProvider();
+		_updateScriptsPending = nullptr;
+	}
+}
 
-		for (auto &&[scriptName, entry] : *_hotReloadScriptsPending)
+void ModManager::UpdateScripts() noexcept
+{
+	std::vector<ScriptID> scriptIDs{};
+
+	auto &&scriptLoader = GetScriptLoader();
+	auto &&scriptProvider = GetScriptProvider();
+
+	for (auto &&[scriptName, entry] : *_updateScriptsPending)
+	{
+		auto &&[scriptCode, scriptModUID] = entry;
+
+		ScriptID scriptID = scriptProvider.GetScriptIDByName(scriptName);
+		if (!scriptID) // add new script
 		{
-			auto &&[scriptCode, scriptModUID] = entry;
+			scriptID = scriptProvider.AddScript(scriptName, scriptCode, scriptModUID);
+			scriptIDs.emplace_back(scriptID);
 
-			auto scriptID = scriptProvider.GetScriptIDByName(scriptName);
-			if (scriptID)
+			continue;
+		}
+
+		if (scriptCode != nullptr) // update script
+		{
+			auto &&pendingScripts = GetScriptLoader().UnloadScript(scriptID);
+			scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
+
+			if (!scriptProvider.RemoveScript(scriptID)) [[unlikely]]
 			{
-				auto &&pendingScripts = GetScriptLoader().UnloadScript(scriptID);
-				scriptIDs.insert(scriptIDs.end(), pendingScripts.begin(), pendingScripts.end());
-
-				if (!scriptProvider.RemoveScript(scriptID)) [[unlikely]]
-				{
-					_log->Warn("Attempt to remove non-exist script id", scriptID);
-				}
+				_log->Warn("Attempt to remove non-exist script id", scriptID);
 			}
 
 			scriptID = scriptProvider.AddScript(scriptName, scriptCode, scriptModUID);
 			scriptIDs.emplace_back(scriptID);
 		}
+		else // remove script
+		{
+			scriptLoader.UnloadScript(scriptID);
 
-		std::sort(scriptIDs.begin(), scriptIDs.end());
-		scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
-
-		scriptLoader.HotReloadScripts(scriptIDs);
-		GetScriptEngine().CollectGarbage();
-
-		_hotReloadScriptsPending = nullptr;
+			if (!scriptProvider.RemoveScript(scriptID)) [[unlikely]]
+			{
+				_log->Warn("Attempt to remove non-exist script id", scriptID);
+			}
+		}
 	}
+
+	scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
+	if (!scriptIDs.empty())
+	{
+		std::sort(scriptIDs.begin(), scriptIDs.end());
+		scriptLoader.HotReloadScripts(scriptIDs);
+	}
+
+	GetScriptEngine().CollectGarbage();
 }
 
 std::vector<DebugConsoleResult> ModManager::DebugAdd(std::string_view arg)

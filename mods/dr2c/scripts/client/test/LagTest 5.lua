@@ -1,0 +1,1 @@
+require("dr2c.client.test.LagTest").test()

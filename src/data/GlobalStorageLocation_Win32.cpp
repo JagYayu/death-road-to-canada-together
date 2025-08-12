@@ -52,16 +52,4 @@ std::filesystem::path GlobalStorageLocation::GetPath(EGlobalStorageLocation loca
 	}
 }
 
-#else
-
-bool GlobalStorageLocation::IsAccessible() noexcept
-{
-	return false;
-}
-
-std::filesystem::path GlobalStorageLocation::GetPath(EGlobalStorageLocation location) noexcept
-{
-	return "";
-}
-
 #endif

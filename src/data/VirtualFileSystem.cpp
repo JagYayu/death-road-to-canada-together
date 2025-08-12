@@ -3,6 +3,7 @@
 #include "data/PathType.hpp"
 #include "util/EnumFlag.hpp"
 
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <variant>
@@ -140,36 +141,50 @@ bool VirtualFileSystem::DismountFile(const std::filesystem::path &path) noexcept
 
 	DirectoryNode *currentDirectory = &std::get<DirectoryNode>(_rootNode);
 
-	for (const auto &part : path)
+	auto itLast = path.end();
+	--itLast;
+
+	for (auto it = path.begin(); it != path.end(); ++it)
 	{
-		auto partStr = path.generic_string();
+		auto partStr = it->generic_string();
 		auto &children = currentDirectory->children;
 
 		if (children.find(partStr) == children.end())
 		{
 			return false;
 		}
+
+		if (it == itLast)
+		{
+			bool result = currentDirectory->children.erase(partStr);
+			if (result)
+			{
+				_onDismountFile.Invoke(path);
+
+				return true;
+			}
+
+			return result;
+		}
+
 		currentDirectory = &std::get<DirectoryNode>(children.at(partStr));
 	}
 
-	bool result = currentDirectory->children.erase(path.filename().generic_string());
-	if (result)
-	{
-		_onDismountFile.Invoke(path);
-	}
-	return result;
+	return false;
+	// bool result = currentDirectory->children.erase(path.filename().generic_string());
+	// if (result)
+	// {
+	// 	_onDismountFile.Invoke(path);
+	// }
+	// return result;
 }
 
 bool VirtualFileSystem::RemountFile(const std::filesystem::path &path, const std::vector<std::byte> &bytes) noexcept
 {
-	if (CanDebug())
-	{
-		Debug("Remount file \"{}\"", path.generic_string());
-	}
+	TE_DEBUG("Remount file \"{}\"", path.generic_string());
 
 	Node *node = FindNode(path);
-
-	if (node && std::holds_alternative<FileNode>(*node))
+	if (node != nullptr && std::holds_alternative<FileNode>(*node))
 	{
 		auto &fileNode = std::get<FileNode>(*node);
 		auto &oldBytes = fileNode.bytes;
@@ -179,7 +194,7 @@ bool VirtualFileSystem::RemountFile(const std::filesystem::path &path, const std
 		return true;
 	}
 
-	MountFile(path, std::move(bytes));
+	// MountFile(path, bytes);
 	return false;
 }
 

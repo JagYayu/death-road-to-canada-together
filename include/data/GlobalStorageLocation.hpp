@@ -1,12 +1,29 @@
 #include "util/Micros.hpp"
+
+#include <cstdint>
 #include <filesystem>
+
 namespace tudov
 {
-	enum class EGlobalStorageLocation
+	enum class EGlobalStorageLocation : std::uint8_t
 	{
+		/**
+		 * Entire disk location, readonly, e.g. "C:/".
+		 */
 		Readonly = 0,
+		/**
+		 * Application storage location, e.g. "D:/Program Files/<AppName>".
+		 */
 		Application = 1,
+		/**
+		 * User storage location, e.g. "C:/Users/Admin/AppData/Roaming/<AppOrganization>/<AppName>".
+		 */
 		User = 2,
+		/**
+		 * Other storage locations, represent virtual locations so they don't have actual physical storage location
+		 * and just represent the locations in Virtual File System.
+		 */
+		Other = 3,
 	};
 
 	/**
@@ -21,6 +38,13 @@ namespace tudov
 
 		static bool IsAccessible() noexcept;
 
+		/**
+		 * Return the file physical path of specific Global Storage Location.
+		 *
+		 * @param[in]  location
+		 *
+		 * @return
+		 */
 		static std::filesystem::path GetPath(EGlobalStorageLocation location) noexcept;
 	};
 } // namespace tudov

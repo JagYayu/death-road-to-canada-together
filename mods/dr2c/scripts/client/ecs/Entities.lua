@@ -1,4 +1,4 @@
-local CEntitySchema = require("dr2c.client.system.EntitySchema")
+local CEntitySchema = require("dr2c.client.ecs.EntitySchema")
 local STable = require("dr2c.shared.utils.Table")
 
 local CEntitySchema_componentID = CEntitySchema.componentID
@@ -20,9 +20,7 @@ local entityComponentsWrappers = {}
 
 --- @param entityID dr2c.EntityID
 --- @return boolean
-function CEntities.exists(entityID)
-	
-end
+function CEntities.exists(entityID) end
 
 --- @param entityType any
 --- @return dr2c.EntityID

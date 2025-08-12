@@ -1,0 +1,1 @@
+local CLagTest = require("dr2c.client.test.LagTest")

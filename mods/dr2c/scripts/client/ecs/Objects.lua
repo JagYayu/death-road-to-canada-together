@@ -1,0 +1,3 @@
+local CObjects = {}
+
+return CObjects

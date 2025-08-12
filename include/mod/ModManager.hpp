@@ -39,7 +39,7 @@ namespace tudov
 		virtual std::vector<ModRequirement> &GetRequiredMods() noexcept = 0;
 		virtual const std::vector<ModRequirement> &GetRequiredMods() const noexcept = 0;
 
-		virtual void HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptNamespace) = 0;
+		virtual void UpdateScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptNamespace) = 0;
 
 		virtual void Update() = 0;
 	};
@@ -82,14 +82,11 @@ namespace tudov
 		std::vector<std::shared_ptr<Mod>> _loadedMods;
 		std::vector<ModRequirement> _requiredMods;
 
-		std::unique_ptr<HotReloadScriptsMap> _hotReloadScriptsPending;
+		std::unique_ptr<HotReloadScriptsMap> _updateScriptsPending;
 
 	  public:
 		explicit ModManager(Context &context) noexcept;
 		~ModManager() noexcept override;
-
-	  private:
-		std::vector<DebugConsoleResult> DebugAdd(std::string_view arg);
 
 	  public:
 		Context &GetContext() noexcept override;
@@ -110,10 +107,15 @@ namespace tudov
 		std::vector<ModRequirement> &GetRequiredMods() noexcept override;
 		const std::vector<ModRequirement> &GetRequiredMods() const noexcept override;
 
-		void HotReloadScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptNamespace) override;
+		void UpdateScriptPending(std::string_view scriptName, const std::shared_ptr<TextResource> &scriptCode, std::string_view scriptModUID) override;
 
 		void Update() override;
 
 		void ProvideDebug(IDebugManager &debugManager) noexcept override;
+
+	  private:
+		void UpdateScripts() noexcept;
+
+		std::vector<DebugConsoleResult> DebugAdd(std::string_view arg);
 	};
 } // namespace tudov

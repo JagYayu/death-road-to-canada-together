@@ -173,7 +173,7 @@ bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 	return true;
 }
 
-std::size_t ScriptProvider::RemoveScriptBy(std::string_view uid) noexcept
+std::size_t ScriptProvider::RemoveScriptsBy(std::string_view uid) noexcept
 {
 	return std::erase_if(_scriptID2Entry, [this, &uid](const std::pair<const ScriptID, Entry> &pair)
 	{

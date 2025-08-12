@@ -6,8 +6,8 @@ images = {}
 
 --- @param imagePath string
 --- @return ImageID
-function images.getID(imagePath) end
+function images:getID(imagePath) end
 
 --- @param imageID ImageID
 --- @return Image
-function images.get(imageID) end
+function images:get(imageID) end
