@@ -4,20 +4,19 @@
 
 #include "ScriptProvider.hpp"
 #include "event/DelegateEvent.hpp"
+#include "program/Context.hpp"
 #include "program/EngineComponent.hpp"
 #include "util/Definitions.hpp"
 #include "util/Log.hpp"
 #include "util/Micros.hpp"
 
-#include <memory>
 #include <sol/table.hpp>
 
+#include <memory>
 #include <optional>
-#include <string>
+#include <set>
 #include <string_view>
-#include <tuple>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace tudov
@@ -228,9 +227,10 @@ namespace tudov
 	class ScriptLoader : public IScriptLoader, public ILogProvider
 	{
 	  private:
-		struct Module : public IModule, public ILogProvider
+		struct Module : public IModule, public IContextProvider, public ILogProvider
 		{
 		  protected:
+			static Context *_parentContext;
 			static std::weak_ptr<Log> _parentLog;
 
 		  protected:
@@ -243,6 +243,7 @@ namespace tudov
 			explicit Module();
 			explicit Module(ScriptID scriptID, const sol::protected_function &func);
 
+			Context &GetContext() noexcept override;
 			Log &GetLog() noexcept override;
 
 			bool IsLazyLoaded() const override;
@@ -254,21 +255,18 @@ namespace tudov
 			const sol::table &FullLoad(IScriptLoader &scriptLoader) override;
 		};
 
-	  public:
-		// huh wtf?
-		using ScriptID = ScriptID;
-
 	  protected:
 		Context &_context;
 		std::shared_ptr<Log> _log;
 		std::unordered_map<ScriptID, std::shared_ptr<Module>> _scriptModules;
-		std::unordered_map<ScriptID, std::unordered_set<ScriptID>> _scriptReverseDependencies;
-		std::unordered_map<ScriptID, std::shared_ptr<ScriptError>> _scriptLoadErrors;
-		std::optional<std::vector<std::shared_ptr<ScriptError>>> _scriptLoadErrorsCache;
+		std::unordered_map<ScriptID, std::set<ScriptID>> _scriptReversedDependencies;
 
 		// Set this value when a script module is doing whatever loads.
 		ScriptID _loadingScript;
-		// Push scriptID whenever a script is doing full load, pop after done. Used to detect which modules encountered circular dependency issue.
+		/**
+		 * Push scriptID whenever a script is doing full load, pop it after load done.
+		 * It is used to detect which modules encountered circular dependency issue.
+		 */
 		std::vector<ScriptID> _scriptLoopLoadStack;
 
 		DelegateEvent<> _onPreLoadAllScripts;
@@ -315,8 +313,11 @@ namespace tudov
 		void HotReloadScripts(const std::vector<ScriptID> &scriptIDs) override;
 		void ProcessFullLoads() override;
 
+		[[deprecated("Use `GetScriptErrors().HasLoadtimeError()` instead")]]
 		bool HasAnyLoadError() const noexcept override;
+		[[deprecated("Use `GetScriptErrors().GetLoadtimeErrors()` instead")]]
 		std::vector<std::shared_ptr<ScriptError>> GetLoadErrors() const noexcept override;
+		[[deprecated("Use `GetScriptErrors().GetLoadtimeErrorsCached()` instead")]]
 		const std::vector<std::shared_ptr<ScriptError>> &GetLoadErrorsCached() noexcept override;
 	};
 } // namespace tudov

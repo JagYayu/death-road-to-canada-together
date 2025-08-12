@@ -19,6 +19,10 @@ namespace tudov
 		virtual ModManager &GetModManager() noexcept = 0;
 		virtual ModConfig &GetConfig() noexcept = 0;
 
+		virtual void Update()
+		{
+		}
+
 		inline void Reload()
 		{
 			Unload();

@@ -114,6 +114,7 @@ namespace tudov
 		std::shared_ptr<IEventManager> _eventManager;
 		std::shared_ptr<IGameScripts> _gameScripts;
 		std::shared_ptr<IScriptEngine> _scriptEngine;
+		std::shared_ptr<IScriptErrors> _scriptErrors;
 		std::shared_ptr<IScriptLoader> _scriptLoader;
 		std::shared_ptr<IScriptProvider> _scriptProvider;
 

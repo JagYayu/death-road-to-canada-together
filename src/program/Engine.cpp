@@ -9,6 +9,7 @@
 #include "debug/DebugManager.hpp"
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
+#include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "network/NetworkManager.hpp"
 #include "program/Context.hpp"
@@ -61,6 +62,7 @@ Engine::Engine() noexcept
 	_scriptProvider = std::make_shared<ScriptProvider>(context);
 	_scriptLoader = std::make_shared<ScriptLoader>(context);
 	_scriptEngine = std::make_shared<ScriptEngine>(context);
+	_scriptErrors = std::make_shared<ScriptErrors>(context);
 	_eventManager = std::make_shared<EventManager>(context);
 	_gameScripts = std::make_shared<GameScripts>(context);
 
@@ -107,7 +109,7 @@ void Engine::BackgroundLoadingThread() noexcept
 Engine::~Engine() noexcept
 {
 	_state = EState::Quit;
-	// Waiting for background thread quit.
+
 	if (_loadingThread.joinable())
 	{
 		_loadingThread.join();
@@ -150,6 +152,7 @@ void Engine::Initialize() noexcept
 	    _scriptProvider,
 	    _scriptLoader,
 	    _scriptEngine,
+	    _scriptErrors,
 	};
 
 	Debug("Initializing engine ...");
@@ -278,6 +281,11 @@ void Engine::Deinitialize() noexcept
 	if (_state != EState::Quit)
 	{
 		return;
+	}
+
+	if (_loadingThread.joinable())
+	{
+		_loadingThread.join();
 	}
 
 	Debug("Deinitializing engine ...");

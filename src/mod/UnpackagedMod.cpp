@@ -7,9 +7,11 @@
 #include "mod/ScriptLoader.hpp"
 #include "resource/FontResources.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
-#include "resource/Text.hpp"
 #include "resource/TextResources.hpp"
+#include "util/LogMicros.hpp"
 #include "util/StringUtils.hpp"
+
+#include "FileWatch.hpp"
 
 #include <cassert>
 #include <filesystem>
@@ -17,6 +19,7 @@
 #include <memory>
 #include <regex>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 using namespace tudov;
@@ -27,13 +30,28 @@ UnpackagedMod::UnpackagedMod(ModManager &modManager, const std::filesystem::path
     : Mod(modManager, LoadConfig(directory)),
       _log(Log::Get("UnpackagedMod")),
       _loaded(false),
-      _directory(directory)
+      _directory(directory),
+      _fileWatcher(nullptr)
 {
+}
+
+UnpackagedMod::~UnpackagedMod() noexcept
+{
+	if (_fileWatcher != nullptr)
+	{
+		delete (filewatch::FileWatch<std::string> *)_fileWatcher;
+		_fileWatcher = nullptr;
+	}
 }
 
 Context &UnpackagedMod::GetContext() noexcept
 {
 	return _modManager.GetContext();
+}
+
+Log &UnpackagedMod::GetLog() noexcept
+{
+	return *_log;
 }
 
 std::filesystem::path UnpackagedMod::GetDirectory() noexcept
@@ -83,6 +101,48 @@ bool UnpackagedMod::IsValidDirectory(const std::filesystem::path &directory)
 	return std::filesystem::exists(directory / modConfigFile);
 }
 
+void UnpackagedMod::Update()
+{
+	std::lock_guard lock{_fileWatchMutex};
+
+	while (!_fileWatchQueue.empty()) [[unlikely]]
+	{
+		auto [path, changeType] = _fileWatchQueue.front();
+		auto changeEvent = static_cast<filewatch::Event>(changeType);
+
+		_fileWatchQueue.pop();
+
+		std::string file = (_directory / path).generic_string();
+		if (IsScript(file))
+		{
+			switch (changeEvent)
+			{
+			case filewatch::Event::added:
+				TE_TRACE("Script added: \"{}\"", file);
+				ScriptAdded(file);
+				break;
+			case filewatch::Event::removed:
+				TE_TRACE("Script removed: \"{}\"", file);
+				ScriptRemoved(file);
+				break;
+			case filewatch::Event::modified:
+				TE_TRACE("Script modified: \"{}\"", file);
+				ScriptModified(file);
+				break;
+			case filewatch::Event::renamed_old:
+				TE_TRACE("Script renamed old: \"{}\"", file);
+				break;
+			case filewatch::Event::renamed_new:
+				TE_TRACE("Script renamed new: \"{}\"", file);
+				break;
+			default:
+				TE_WARN("Script unknown event: \"{}\"", file);
+				break;
+			}
+		}
+	}
+}
+
 ModConfig UnpackagedMod::LoadConfig(const std::filesystem::path &directory)
 {
 	auto &&path = directory / modConfigFile;
@@ -112,37 +172,17 @@ void UnpackagedMod::Load()
 {
 	if (_fileWatcher)
 	{
-		_log->Warn("Mod has already loaded");
+		_log->Warn("Unpackaged mod has already loaded");
+
 		return;
 	}
 
-	_fileWatcher = std::make_unique<filewatch::FileWatch<std::string>>(_directory.generic_string(), [this](const std::filesystem::path &filePath, const filewatch::Event changeType)
+	_fileWatcher = new filewatch::FileWatch<std::string>(_directory.generic_string(), [this](const std::filesystem::path &filePath, const filewatch::Event changeType)
 	{
-		// auto &&scriptProvider = _modManager.GetScriptProvider();
-
-		std::string file = (_directory / filePath).generic_string();
-		if (IsScript(file))
+		if (_loaded)
 		{
-			_log->Trace("Script modified: \"{}\"", file);
-
-			switch (changeType)
-			{
-			case filewatch::Event::added:
-				ScriptAdded(file);
-				break;
-			case filewatch::Event::removed:
-				ScriptRemoved(file);
-				break;
-			case filewatch::Event::modified:
-				ScriptModified(file);
-				break;
-			case filewatch::Event::renamed_old:
-				break;
-			case filewatch::Event::renamed_new:
-				break;
-			default:
-				break;
-			}
+			std::lock_guard lock{_fileWatchMutex};
+			_fileWatchQueue.push(std::make_tuple(filePath, static_cast<int>(changeType)));
 		}
 	});
 

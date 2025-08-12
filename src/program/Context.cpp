@@ -49,6 +49,11 @@ IScriptEngine &Context::GetScriptEngine()
 	return *GetEngine()._scriptEngine;
 }
 
+IScriptErrors &Context::GetScriptErrors()
+{
+	return *GetEngine()._scriptErrors;
+}
+
 IScriptLoader &Context::GetScriptLoader()
 {
 	return *GetEngine()._scriptLoader;

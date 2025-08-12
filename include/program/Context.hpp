@@ -7,6 +7,7 @@ namespace tudov
 	struct ILuaAPI;
 	struct IModManager;
 	struct IScriptEngine;
+	struct IScriptErrors;
 	struct IScriptLoader;
 	struct IScriptProvider;
 	class Config;
@@ -37,6 +38,7 @@ namespace tudov
 		ILuaAPI &GetLuaAPI();
 		IModManager &GetModManager();
 		IScriptEngine &GetScriptEngine();
+		IScriptErrors &GetScriptErrors();
 		IScriptLoader &GetScriptLoader();
 		IScriptProvider &GetScriptProvider();
 		IGlobalStorageManager &GetGlobalStorageManager();
@@ -72,6 +74,11 @@ namespace tudov
 		inline const IScriptEngine &GetScriptEngine() const
 		{
 			return This()->GetScriptEngine();
+		}
+
+		inline const IScriptErrors &GetScriptErrors() const
+		{
+			return This()->GetScriptErrors();
 		}
 
 		inline const IScriptLoader &GetScriptLoader() const
@@ -183,6 +190,16 @@ namespace tudov
 		inline const IScriptEngine &GetScriptEngine() const noexcept
 		{
 			return GetContext().GetScriptEngine();
+		}
+
+		inline IScriptErrors &GetScriptErrors() noexcept
+		{
+			return GetContext().GetScriptErrors();
+		}
+
+		inline const IScriptErrors &GetScriptErrors() const noexcept
+		{
+			return GetContext().GetScriptErrors();
 		}
 
 		inline IScriptLoader &GetScriptLoader() noexcept

@@ -2,7 +2,7 @@
 
 #include "debug/DebugUtils.hpp"
 #include "mod/ModManager.hpp"
-#include "mod/ScriptError.hpp"
+#include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "mod/UnpackagedMod.hpp"

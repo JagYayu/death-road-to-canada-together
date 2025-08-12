@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <optional>
+#include <tuple>
 #include <vector>
 
 using namespace tudov;
@@ -204,11 +205,16 @@ void ModManager::UpdateScriptPending(std::string_view scriptName, TextID scriptT
 	{
 		_updateScriptsPending = std::make_unique<HotReloadScriptsMap>();
 	}
-	_updateScriptsPending->try_emplace(std::string(scriptName), scriptTextID, std::string(scriptModUID));
+	(*_updateScriptsPending)[std::string(scriptName)] = std::make_tuple(scriptTextID, std::string(scriptModUID));
 }
 
 void ModManager::Update()
 {
+	for (auto &&mod : _loadedMods)
+	{
+		mod->Update();
+	}
+
 	if (EnumFlag::HasAny(_loadState, ELoadState::LoadPending)) [[unlikely]]
 	{
 		LoadMods();

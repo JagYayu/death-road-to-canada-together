@@ -2,7 +2,7 @@
 
 #include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"
-#include "mod/ScriptError.hpp"
+#include "mod/ScriptErrors.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
@@ -16,7 +16,6 @@
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
 
-#include <algorithm>
 #include <cassert>
 #include <corecrt_terminate.h>
 #include <format>
@@ -28,6 +27,7 @@
 
 using namespace tudov;
 
+Context *ScriptLoader::Module::_parentContext = nullptr;
 std::weak_ptr<Log> ScriptLoader::Module::_parentLog = std::shared_ptr<Log>(nullptr);
 
 ScriptLoader::Module::Module()
@@ -44,6 +44,12 @@ ScriptLoader::Module::Module(ScriptID scriptID, const sol::protected_function &f
       _fullyLoaded(),
       _table()
 {
+}
+
+Context &ScriptLoader::Module::GetContext() noexcept
+{
+	assert(_parentContext != nullptr);
+	return *_parentContext;
 }
 
 Log &ScriptLoader::Module::GetLog() noexcept
@@ -77,6 +83,7 @@ const sol::table &ScriptLoader::Module::RawLoad(IScriptLoader &scriptLoader)
 	assert(_scriptID);
 
 	auto &&parent = static_cast<ScriptLoader &>(scriptLoader);
+	_parentContext = &parent._context;
 	_parentLog = parent._log;
 
 	auto &&engine = scriptLoader.GetEngine();
@@ -89,8 +96,7 @@ const sol::table &ScriptLoader::Module::RawLoad(IScriptLoader &scriptLoader)
 	if (!result.valid()) [[unlikely]]
 	{
 		sol::error err = result;
-		parent._log->Fatal("'{}': {}", scriptLoader.GetLoadingScriptName().value(), err.what());
-		abort();
+		Fatal("'{}': {}", scriptLoader.GetLoadingScriptName().value(), err.what());
 	}
 
 	if (result.get<sol::object>(1))
@@ -153,11 +159,12 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 	assert(_scriptID);
 
 	auto &&parent = static_cast<ScriptLoader &>(scriptLoader);
+	_parentContext = &parent._context;
 	_parentLog = parent._log;
 
-	auto &&engine = parent.GetEngine();
+	auto &&engine = GetEngine();
 
-	engine.SetLoadingDescription(parent.GetScriptProvider().GetScriptNameByID(_scriptID).value());
+	engine.SetLoadingDescription(GetScriptProvider().GetScriptNameByID(_scriptID).value());
 
 	auto previousScriptID = parent._loadingScript;
 	parent._loadingScript = _scriptID;
@@ -172,10 +179,10 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 	{
 		if (auto &&prevScriptID = FindPreviousInStack(parent._scriptLoopLoadStack, _scriptID); prevScriptID.has_value())
 		{
-			auto &&scriptProvider = parent.GetScriptProvider();
+			auto &&scriptProvider = GetScriptProvider();
 			auto scriptName = scriptProvider.GetScriptNameByID(_scriptID);
 			auto prevScriptName = scriptProvider.GetScriptNameByID(*prevScriptID);
-			// parent.GetScriptEngine()->ThrowError(std::format("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *scriptName, *prevScriptID, *prevScriptName));
+
 			return sol::error(std::format("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *scriptName, *prevScriptID, *prevScriptName));
 		}
 		else
@@ -201,11 +208,10 @@ const sol::table &ScriptLoader::Module::FullLoad(IScriptLoader &scriptLoader)
 		sol::error err = result;
 		auto what = std::string_view(err.what());
 
-		parent._log->Error("{}", what);
+		Error("{}", what);
 
 		auto &&scriptError = std::make_shared<ScriptError>(_scriptID, EScriptErrorType::Loadtime, what);
-		parent._scriptLoadErrors.try_emplace(_scriptID, scriptError);
-		parent._scriptLoadErrorsCache = std::nullopt;
+		GetScriptErrors().AddLoadtimeError(scriptError);
 	}
 	else
 	{
@@ -248,7 +254,7 @@ ScriptLoader::ScriptLoader(Context &context) noexcept
       _onPostHotReloadScripts(),
       _onLoadedScript(),
       _onUnloadScript(),
-      _scriptReverseDependencies()
+      _scriptReversedDependencies()
 {
 }
 
@@ -324,7 +330,7 @@ std::optional<std::string_view> ScriptLoader::GetLoadingScriptName() const noexc
 	return GetScriptProvider().GetScriptNameByID(_loadingScript);
 }
 
-void GetScriptDependenciesImpl(const std::unordered_map<ScriptID, std::unordered_set<ScriptID>> &scriptDependencies, ScriptID scriptID, std::vector<ScriptID> &sources, std::unordered_set<ScriptID> &visited)
+void GetScriptDependenciesImpl(const std::unordered_map<ScriptID, std::set<ScriptID>> &scriptDependencies, ScriptID scriptID, std::vector<ScriptID> &sources, std::unordered_set<ScriptID> &visited)
 {
 	if (visited.contains(scriptID))
 	{
@@ -347,7 +353,7 @@ std::vector<ScriptID> ScriptLoader::GetScriptDependencies(ScriptID scriptID) con
 {
 	auto &&sources = std::vector<ScriptID>();
 	auto &&visited = std::unordered_set<ScriptID>();
-	GetScriptDependenciesImpl(_scriptReverseDependencies, scriptID, sources, visited);
+	GetScriptDependenciesImpl(_scriptReversedDependencies, scriptID, sources, visited);
 	return std::move(sources);
 	// auto &&links = _scriptDependencyGraph.GetBackwardTraversal(scriptID);
 	// return links.has_value() ? links.value() : std::vector<ScriptID>();
@@ -382,7 +388,7 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 		return;
 	}
 
-	auto &&dependencies = _scriptReverseDependencies[target];
+	auto &&dependencies = _scriptReversedDependencies[target];
 	dependencies.insert(source);
 	// _scriptDependencyGraph.AddLink(from, to);
 
@@ -415,8 +421,7 @@ void ScriptLoader::LoadAllScripts()
 	}
 
 	_scriptModules.clear();
-	_scriptLoadErrors.clear();
-	_scriptLoadErrorsCache = std::nullopt;
+	GetScriptErrors().ClearCaches();
 
 	TextResources &textResources = GetGlobalResourcesCollection().GetTextResources();
 
@@ -465,7 +470,8 @@ std::shared_ptr<IScriptLoader::IModule> ScriptLoader::Load(ScriptID scriptID)
 	auto &&scriptCode = scriptProvider.GetScriptCode(scriptID);
 	if (scriptCode == nullptr) [[unlikely]]
 	{
-		TE_WARN("Attempt to load invalid script <{}>\"{}\": script code not found", scriptID, scriptName->data());
+		TE_WARN("Attempt to load invalid script <{}>\"{}\": script code not found, textID: {}",
+		        scriptID, scriptName->data(), scriptProvider.GetScriptTextID(scriptID));
 		return nullptr;
 	}
 
@@ -485,9 +491,7 @@ std::shared_ptr<ScriptLoader::Module> ScriptLoader::LoadImpl(ScriptID scriptID, 
 
 	TE_DEBUG("Loading script <{}>\"{}\" ...", scriptID, scriptName);
 
-	_scriptLoadErrors.erase(scriptID);
-	_scriptLoadErrorsCache = std::nullopt;
-	// _scriptErrorsCascaded.erase(scriptID);
+	GetScriptErrors().RemoveLoadtimeError(scriptID);
 
 	auto &&result = GetScriptEngine().LoadFunction(std::string(scriptName), scriptCode);
 	if (!result.valid())
@@ -603,13 +607,11 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 		unloadedScripts.emplace_back(dependency);
 	}
 
-	_scriptLoadErrors.erase(scriptID);
-	_scriptLoadErrorsCache = std::nullopt;
-	// _scriptErrorsCascaded.erase(scriptID);
-	// _scriptDependencyGraph.UnlinkOutgoing(scriptID);
-	_scriptReverseDependencies.erase(scriptID);
+	GetScriptErrors().RemoveLoadtimeError(scriptID);
 
-	for (auto &&[_, dependencies] : _scriptReverseDependencies)
+	_scriptReversedDependencies.erase(scriptID);
+
+	for (auto &&[_, dependencies] : _scriptReversedDependencies)
 	{
 		dependencies.erase(scriptID);
 	}
@@ -671,33 +673,15 @@ void ScriptLoader::ProcessFullLoads()
 
 bool ScriptLoader::HasAnyLoadError() const noexcept
 {
-	return !_scriptLoadErrors.empty();
+	return GetScriptErrors().HasLoadtimeError();
 }
 
 std::vector<std::shared_ptr<ScriptError>> ScriptLoader::GetLoadErrors() const noexcept
 {
-	std::vector<std::shared_ptr<ScriptError>> loadErrors{};
-	loadErrors.reserve(_scriptLoadErrors.size());
-
-	for (auto &[scriptID, error] : _scriptLoadErrors)
-	{
-		assert(error != nullptr);
-		loadErrors.emplace_back(error);
-	}
-
-	std::sort(loadErrors.begin(), loadErrors.end(), [](std::shared_ptr<ScriptError> &l, std::shared_ptr<ScriptError> &r) -> bool
-	{
-		return l->time < r->time;
-	});
-
-	return loadErrors;
+	return GetScriptErrors().GetLoadtimeErrors();
 }
 
 const std::vector<std::shared_ptr<ScriptError>> &ScriptLoader::GetLoadErrorsCached() noexcept
 {
-	if (_scriptLoadErrorsCache == std::nullopt)
-	{
-		_scriptLoadErrorsCache = GetLoadErrors();
-	}
-	return *_scriptLoadErrorsCache;
+	return GetScriptErrors().GetLoadtimeErrorsCached();
 }
