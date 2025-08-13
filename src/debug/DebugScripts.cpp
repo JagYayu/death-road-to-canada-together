@@ -24,6 +24,14 @@ std::string_view DebugScripts::GetName() noexcept
 	return Name();
 }
 
+DebugScripts::~DebugScripts() noexcept
+{
+	if (isOpeningScriptEditor && _openScriptEditorThread.joinable())
+	{
+		_openScriptEditorThread.join();
+	}
+}
+
 Log &DebugScripts::GetLog() noexcept
 {
 	return *Log::Get("DebugScripts");
@@ -163,21 +171,16 @@ void DebugScripts::UpdateAndRenderLoadtimeErrorArea(IWindow &window) noexcept
 		std::string_view scriptPath = window.GetGlobalResourcesCollection().GetTextResources().GetResourcePath(textID);
 		std::filesystem::path path = std::filesystem::current_path() / scriptPath;
 
-		static std::atomic<bool> isOpening = false;
-		if (!isOpening)
+		if (!isOpeningScriptEditor)
 		{
-			isOpening = true;
-
-			// Potential issue: undefined behaviour if `this` was destroyed.
-			// But it won't happen normally, so we just leave it for now. :)
-			SystemUtils::OpenScriptEditorAsync(path, selectedError->line, [this](const std::filesystem::path &path, std::uint32_t line)
+			_openScriptEditorThread = SystemUtils::OpenScriptEditorAsync(path, selectedError->line, [this](const std::filesystem::path &path, std::uint32_t line)
 			{
 				TE_INFO("Opened file \"{}:{}\" with script editor", path.generic_string(), line);
-				isOpening = false;
+				isOpeningScriptEditor = false;
 			}, [this](const std::filesystem::path &path, std::uint32_t line, std::exception &e)
 			{
 				TE_WARN("Could not open file \"{}:{}\" with script editor: {}", path.generic_string(), line, e.what());
-				isOpening = false;
+				isOpeningScriptEditor = false;
 			});
 		}
 	}

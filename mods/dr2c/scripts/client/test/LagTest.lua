@@ -1,5 +1,5 @@
 local function test()
-	local times = 1.5e7 -- 0, 5e6, 1.5e7
+	local times = 5e6 -- 0, 5e6, 1.5e7
 	local t = {}
 	for i = 1, times do
 		t[#t + 1] = i

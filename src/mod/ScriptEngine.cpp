@@ -55,12 +55,13 @@ void ScriptEngine::Initialize() noexcept
 	_lua.open_libraries(sol::lib::io);
 	_lua.open_libraries(sol::lib::jit);
 	_lua.open_libraries(sol::lib::math);
+	_lua.open_libraries(sol::lib::os);
 	_lua.open_libraries(sol::lib::package);
 	_lua.open_libraries(sol::lib::string);
 	_lua.open_libraries(sol::lib::table);
 	_lua.open_libraries(sol::lib::utf8);
 
-	auto &&scriptLoader = GetScriptLoader();
+	IScriptLoader &scriptLoader = GetScriptLoader();
 
 	_luaThrowModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::function>();
 
@@ -100,6 +101,19 @@ void ScriptEngine::Initialize() noexcept
 	}
 
 	GetLuaAPI().Install(_lua, _context);
+
+	constexpr const char *requiredStdModules[] = {
+	    "jit.profile",
+	    "jit.util",
+	    "string.buffer",
+	    "table.clear",
+	    "table.new",
+	};
+
+	for (const char *key : requiredStdModules)
+	{
+		_lua[key] = _lua["require"](key);
+	}
 
 	MakeReadonlyGlobal(_lua.globals());
 }
@@ -216,8 +230,8 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	auto &&luaGlobals = _lua.globals();
 	auto &&modGlobals = CreateTable();
 
-	static constexpr const char *keys[] = {
-	    // lua51
+	constexpr const char *keys[] = {
+	    // lua51 std
 	    "_VERSION",
 	    "assert",
 	    "collectgarbage",
@@ -228,6 +242,7 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	    "load",
 	    "loadstring",
 	    "math",
+	    "newproxy",
 	    "next",
 	    "pairs",
 	    "pcall",
@@ -242,33 +257,44 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	    "unpack",
 	    "utf8",
 	    "xpcall",
-	    // C++
+	    // extensions
+	    "string.buffer",
+	    "table.clear",
+	    "table.new",
+	    // C++ classes
 	    "engine",
 	    "events",
 	    "images",
 	    "vfs",
 	};
 
-	for (auto &&key : keys)
+	for (const char *key : keys)
 	{
 		assert(!modGlobals[key].valid() && "global field duplicated!");
 		modGlobals[key] = luaGlobals[key];
 	}
 
+	sol::table metatable = _lua.create_table();
+	modGlobals[sol::metatable_key] = metatable;
+	_luaMarkAsLocked(metatable);
+
 	modGlobals["_G"] = modGlobals;
 
 	_luaPostProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals);
 
-	return _modGlobals.try_emplace(modUID, modGlobals).first->second;
+	auto result = _modGlobals.try_emplace(modUID, modGlobals);
+	assert(result.second);
+	return result.first->second;
 }
 
 void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptName, std::string_view modUID, bool sandboxed, sol::protected_function &func) noexcept
 {
-	sol::environment scriptGlobals{_lua, sol::create, GetModGlobals(modUID, sandboxed)};
+	sol::table &modGlobals = GetModGlobals(modUID, sandboxed);
+	sol::environment scriptGlobals{_lua, sol::create, modGlobals};
 
 	if (!scriptGlobals.valid()) [[unlikely]]
 	{
-		_log->Error("Failed to create Lua environment!");
+		_log->Error("Failed to create script globals!");
 		return;
 	}
 
@@ -306,7 +332,7 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 		}
 	});
 
-	scriptGlobals.set_function("require", [this, scriptGlobals, scriptID](const std::string_view &targetScriptName) -> sol::object
+	scriptGlobals.set_function("require", [this, scriptGlobals, scriptID](const sol::string_view &targetScriptName) -> sol::object
 	{
 		try
 		{
@@ -333,7 +359,7 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 				return virtualModule;
 			}
 
-			IScriptEngine::ThrowError("Script module '{}' not found", targetScriptName.data());
+			IScriptEngine::ThrowError("Cannot require '{}': Script module not found", targetScriptName.data());
 		}
 		catch (const std::exception &e)
 		{
@@ -343,9 +369,15 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 		return sol::nil;
 	});
 
-	_luaPostProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed, func, scriptGlobals, _lua.globals());
+	sol::table metatable = _lua.create_table(0, 1);
+	metatable["__index"] = modGlobals;
+	scriptGlobals[sol::metatable_key] = metatable;
+
+	scriptGlobals["_G"] = scriptGlobals;
 
 	sol::set_environment(scriptGlobals, func);
+
+	_luaPostProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed, func, scriptGlobals, _lua.globals());
 }
 
 void ScriptEngine::DeinitializeScript(ScriptID scriptID, std::string_view scriptName)

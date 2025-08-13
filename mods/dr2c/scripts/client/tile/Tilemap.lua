@@ -1,5 +1,6 @@
 local CTilemap = {}
 
+--- @type integer
 local tilemapNextID
 tilemapNextID = persist("tilemapNextID", 1, function()
 	return tilemapNextID

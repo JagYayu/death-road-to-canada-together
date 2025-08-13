@@ -1,11 +1,512 @@
-local Function = require("dr2c.shared.utils.Function")
-local Table = {}
-
 local _ScriptEngine = require("#ScriptEngine")
+local Function = require("dr2c.shared.utils.Function")
+local stringBuffer = require("string.buffer")
+
+local ipairs = ipairs
+local pairs = pairs
+local remove = table.remove
+local type = type
+
+--- @class Tudov.Table
+local Table = {}
 
 Table.empty = setmetatable({}, {
 	__newindex = Function.empty,
 })
+
+if not table["clear"] then
+	Table.clear = require("table.clear")
+end
+
+if not table["new"] then
+	Table.new = require("table.new")
+end
+
+--- @generic T: table, K, V
+--- @param tbl table
+--- @return table
+local function copyFinalImpl(tbl)
+	local result = {}
+
+	for k, v in pairs(tbl) do
+		result[k] = v
+	end
+
+	return setmetatable(result, getmetatable(tbl))
+end
+
+--- @generic T: table, K, V
+--- @param tbl table
+--- @param depth number
+--- @return table
+local function copyImpl(tbl, depth)
+	local result = {}
+
+	for k, v in pairs(tbl) do
+		result[k] = v
+
+		if type(v) == "table" then
+			if depth > 0 then
+				result[k] = copyImpl(v, depth - 1)
+			else
+				result[k] = copyFinalImpl(v)
+			end
+		end
+	end
+
+	return setmetatable(result, getmetatable(tbl))
+end
+
+--- @generic T : table
+--- @param tbl T
+--- @param depth number? default: math.huge
+--- @return T
+function Table.copy(tbl, depth)
+	depth = depth or math.huge
+
+	return depth > 0 and copyImpl(tbl, depth) or copyFinalImpl(tbl)
+end
+
+--- Similar to `Utility.copy`, but much faster.
+--- However, serializing a table which contains functions, userdata or a nested table are not supported.
+--- It won't preserve metatables for tables either.
+--- @generic T : table
+--- @param tbl T
+--- @return T
+function Table.fastCopy(tbl)
+	if type(tbl) ~= "table" then
+		error("Type mismatch", 2)
+	end
+
+	tbl = stringBuffer.decode(stringBuffer.encode(tbl))
+
+	if type(tbl) ~= "table" then
+		error("Failed to fast copy", 2)
+	end
+
+	return tbl
+end
+
+local flattenImpl
+do
+	local function flattenImplInsert(t, v, d)
+		t[#t + 1] = type(v) == "table" and flattenImpl(v, d - 1) or v
+	end
+
+	flattenImpl = function(tbl, depth)
+		if depth <= 0 then
+			return tbl
+		end
+
+		local res = {}
+		for k, v in pairs(tbl) do
+			flattenImplInsert(res, k, depth)
+			flattenImplInsert(res, v, depth)
+		end
+		return res
+	end
+end
+
+--- Returns a list of the table’s key-value pairs. Example: { b = 42, a = 51, c = 12 } => { "b", 42, "a", 51, "c", 12 }
+--- @generic TKey, TValue
+--- @param tbl table<TKey, TValue>
+--- @param depth integer? @default: math.huge
+--- @return (TKey | TValue)[]
+function Table.flatten(tbl, depth)
+	return flattenImpl(tbl, depth or math.huge)
+end
+
+--- @param tbl any[]
+--- @return integer[]
+function Table.getIndexList(tbl)
+	local keyList = {}
+
+	for k in ipairs(tbl) do
+		keyList[#keyList + 1] = k
+	end
+
+	return keyList
+end
+
+--- @generic T
+--- @param tbl table<T, any>
+--- @return T[]
+function Table.getKeyList(tbl)
+	local keyList = {}
+
+	for k in pairs(tbl) do
+		keyList[#keyList + 1] = k
+	end
+
+	return keyList
+end
+
+--- @generic T
+--- @param tbl table<any, T>
+--- @return T[]
+function Table.getValueList(tbl)
+	local valueList = {}
+
+	for _, v in pairs(tbl) do
+		valueList[#valueList + 1] = v
+	end
+
+	return valueList
+end
+
+--- @generic K, V
+--- @param tbl table<K, V>
+--- @return K[], V[]
+function Table.getKeyValueLists(tbl)
+	local keyList = {}
+	local valueList = {}
+
+	for k, v in pairs(tbl) do
+		local i = #keyList + 1
+
+		keyList[i] = k
+		valueList[i] = v
+	end
+
+	return keyList, valueList
+end
+
+--- @generic T
+--- @param list T[]
+--- @param value T
+--- @return integer? pos
+function Table.listFastRemoveFirst(list, value)
+	for pos, val in ipairs(list) do
+		if val == value then
+			list[pos] = remove(list, #list)
+			return pos
+		end
+	end
+end
+
+--- @generic T
+--- @param list T[]
+--- @param func fun(value: T, index: integer): boolean
+--- @return integer? pos
+function Table.listFastRemoveFirstIf(list, func)
+	for pos, val in ipairs(list) do
+		if func(val, pos) then
+			list[pos] = remove(list, #list)
+			return pos
+		end
+	end
+end
+
+--- @generic T
+--- @param list T[]
+--- @param value T
+function Table.listRemoveFirst(list, value)
+	for pos, val in ipairs(list) do
+		if val == value then
+			return remove(list, pos)
+		end
+	end
+end
+
+--- @generic T
+--- @param list T[]
+--- @param func fun(value: T, index: integer): boolean
+function Table.listRemoveFirstIf(list, func)
+	for pos, val in ipairs(list) do
+		if func(val, pos) then
+			return remove(list, pos)
+		end
+	end
+end
+
+--- @generic T
+--- @param list T[]
+--- @return T[]
+function Table.listRemoveDuplicates(list)
+	local size = #list
+
+	if size ~= 0 then
+		local seen = {}
+		local target = 1
+
+		for i = 1, size do
+			if not seen[list[i]] then
+				seen[list[i]] = true
+				list[target] = list[i]
+				target = target + 1
+			end
+		end
+
+		for i = target, size do
+			list[i] = nil
+		end
+	end
+
+	return list
+end
+
+--- @generic T
+--- @param list T[]
+--- @param func fun(value: T, index: integer): boolean
+--- @return T[] list
+function Table.listRemoveIf(list, func)
+	local l, r = 1, 1
+
+	while #list >= r do
+		if func(list[r], r) then
+			list[r] = nil
+		else
+			if l ~= r then
+				list[l] = list[r]
+				list[r] = nil
+			end
+
+			l = l + 1
+		end
+
+		r = r + 1
+	end
+
+	return list
+end
+
+function Table.reverse(list)
+	local len = #list
+
+	for i = 1, math.floor(len / 2) do
+		list[len - i + 1] = list[i]
+		list[i] = list[len - i + 1]
+	end
+
+	return list
+end
+
+function Table.reversedPairs(list)
+	return function(li, i)
+		i = i - 1
+		if li[i] then
+			return i, li[i]
+		end
+	end, list, #list + 1
+end
+
+--- @generic T : table, K, V, U
+--- @param tbl T
+--- @param sort fun(comp: (fun(a: T, b: T): boolean)?)?
+--- @param comp (fun(a: T, b: T): boolean)?
+--- @return fun(table: table<K, V>, index?: K): K, V
+--- @return T
+function Table.sortedPairs(tbl, sort, comp)
+	local keyList = Table.getKeyList(tbl)
+
+	sort = sort or table.sort
+	sort(keyList, comp)
+
+	local idx = 0
+	return function(list)
+		idx = idx + 1
+
+		return list[idx], tbl[list[idx]]
+	end, keyList
+end
+
+--- @generic T
+--- @param list T[]
+--- @return table<T, number>
+--- @nodiscard
+function Table.invertIndexValues(list)
+	local tbl = Table.new(0, #list)
+
+	for index, value in ipairs(list) do
+		tbl[value] = index
+	end
+
+	return tbl
+end
+
+local function mergeImpl(dest, src, depth)
+	if depth > 0 and type(src) == "table" and type(dest) == "table" then
+		for key, val in pairs(src) do
+			dest[key] = mergeImpl(dest[key], val, depth - 1)
+		end
+
+		return dest
+	end
+
+	return Table.copy(src)
+end
+
+--- @generic T : table
+--- @param dest T
+--- @param src table
+--- @param depth number? default: 1
+--- @return T tbl
+function Table.merge(dest, src, depth)
+	return mergeImpl(dest, src, depth or 1)
+end
+
+function Table.mergeDefaults(dest, src)
+	for k, v in pairs(src) do
+		if dest[k] == nil then
+			dest[k] = v
+		end
+	end
+
+	return dest
+end
+
+--- @generic T : table
+--- @param dest T
+--- @param src table
+--- @return T
+function Table.mergeExists(dest, src)
+	for k, v in pairs(src) do
+		if dest[k] ~= nil then
+			dest[k] = v
+		end
+	end
+
+	return dest
+end
+
+--- @generic T
+--- @param list T[]
+--- @param items T[]
+--- @return T[] list
+function Table.append(list, items)
+	local len = #list
+
+	for idx, val in ipairs(items) do
+		list[len + idx] = val
+	end
+
+	return list
+end
+
+--- @generic TK, TV
+--- @param tbl table<TK, TV>
+--- @param val TV
+--- @return TK? key
+--- @return TV? value
+--- @nodiscard
+local function findImpl(tbl, val, pairsFunc)
+	for k, v in pairsFunc(tbl) do
+		if v == val then
+			return k, v
+		end
+	end
+end
+
+--- @generic TK, TV
+--- @param tbl table<TK, TV>
+--- @param value TV
+--- @return TK? key
+--- @return TV? value
+--- @nodiscard
+function Table.find(tbl, value, pairsFunc)
+	return findImpl(tbl, value, pairsFunc or pairs)
+end
+
+--- @generic T
+--- @param list T[]
+--- @param value T
+--- @return integer? index
+--- @return T? value
+--- @nodiscard
+function Table.listFindFirst(list, value)
+	return findImpl(list, value, ipairs)
+end
+
+--- @generic K, V, Arg...
+--- @param tbl table<K, V>
+--- @param func fun(value: V, key: K, ...: Arg...): boolean
+--- @return K? key
+--- @return V? value
+--- @nodiscard
+local function findFirstIfImpl(tbl, func, funcPairs, ...)
+	for k, v in funcPairs(tbl) do
+		if func(v, k, ...) then
+			return k, v
+		end
+	end
+end
+
+--- @generic TK, TV
+--- @param tbl table<TK, TV>
+--- @param func fun(value: TV, key: TK): boolean
+--- @param ... any
+--- @return TK? key
+--- @return TV? value
+--- @nodiscard
+function Table.findFirstIf(tbl, func, pairsFunc, ...)
+	return findFirstIfImpl(tbl, func, pairsFunc or pairs, ...)
+end
+
+--- @generic T
+--- @param l T[]
+--- @param r T[]
+--- @return T[]
+--- @nodiscard
+function Table.listConcat(l, r)
+	local ll = #l
+	for i = 1, #r do
+		l[ll + i] = r[i]
+	end
+	return l
+end
+
+--- @generic T, Arg...
+--- @param list table<integer, T>
+--- @param func fun(value: T, index: integer, ...: Arg...): boolean
+--- @param ... Arg...
+--- @return integer? index
+--- @return T? value
+--- @nodiscard
+function Table.listFindFirstIf(list, func, ...)
+	return findFirstIfImpl(list, func, ipairs, ...)
+end
+
+--- @warn This function removes table's hash part.
+--- @generic T
+--- @param list T[]
+--- @return T[]
+function Table.listShrinkToFit(list, length)
+	local l = list
+
+	list = Table.new(#l, 0)
+	for i = 1, length do
+		list[i] = l[i]
+	end
+
+	return list
+end
+
+--- @generic T
+--- @param list T[]
+--- @return { [T]: integer }
+function Table.listToSet(list)
+	local set = {}
+
+	for i = 1, #list do
+		set[list[i]] = i
+	end
+
+	return set
+end
+
+assert(type(_G.newproxy) == "function", "`_G.newproxy` is not a function!")
+
+--- @generic T : table
+--- @param table T
+--- @param metatable metatable
+--- @return T
+function Table.setProxyMetatable(table, metatable)
+	local instance = newproxy(true)
+	--- @diagnostic disable-next-line: invisible
+	getmetatable(instance).__gc = metatable.__gc
+	metatable[instance] = true
+	return setmetatable(table, metatable)
+end
 
 --- Lock a table's metatable, which can no longer be accessed by `getmetatable` functions in sandboxed scripts.
 --- @param tbl table
@@ -51,6 +552,7 @@ function Table.readonly(tbl)
 	return tableToReadonly(tbl, {})
 end
 
+--- TODO
 --- @param l table
 --- @param r table
 function Table.deepEquals(l, r) end

@@ -127,8 +127,8 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "setScaleLerpFactor", &RenderTarget::SetScaleLerpFactor,
 	            "setCameraTargetPosition", &RenderTarget::SetCameraTargetPosition,
 	            "setCameraTargetScale", &RenderTarget::SetCameraTargetScale,
-				"snapCameraPosition", &RenderTarget::SnapCameraPosition,
-				"snapCameraScale", &RenderTarget::SnapCameraScale,
+	            "snapCameraPosition", &RenderTarget::SnapCameraPosition,
+	            "snapCameraScale", &RenderTarget::SnapCameraScale,
 	            "update", &RenderTarget::Update);
 
 	// TE_USERTYPE(GlobalResourcesCollection);
@@ -153,7 +153,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 
 	lua.set_function("getModConfig", [this, &context](std::string_view modUID) -> ModConfig *
 	{
-		std::weak_ptr<Mod> &&mod = context.GetModManager().FindLoadedMod(modUID);
-		return mod.expired() ? nullptr : &mod.lock()->GetConfig();
+		std::shared_ptr<Mod> &&mod = context.GetModManager().FindLoadedMod(modUID);
+		return mod == nullptr ? nullptr : &mod->GetConfig();
 	});
 }

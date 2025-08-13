@@ -2,7 +2,9 @@
 
 #include "DebugElement.hpp"
 
+#include <atomic>
 #include <memory>
+#include <thread>
 
 namespace tudov
 {
@@ -20,13 +22,15 @@ namespace tudov
 		std::weak_ptr<IWindow> window;
 
 	  protected:
+	  	std::atomic<bool> isOpeningScriptEditor = false;
+		std::thread _openScriptEditorThread;
 		std::size_t _selectedIndex = -1;
 		bool _autoScroll = true;
 		char _filterText[128];
 
 	  public:
 		explicit DebugScripts() noexcept = default;
-		~DebugScripts() noexcept = default;
+		~DebugScripts() noexcept;
 
 		Log &GetLog() noexcept override;
 

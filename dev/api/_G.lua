@@ -1,6 +1,8 @@
 --- @meta
 error("this is a lua library module")
 
+--- @alias NotNil number | string | boolean | table | function | thread | userdata
+
 --- @alias Serializable boolean | number | string | table<Serializable, Serializable>
 
 --- @class FRect
@@ -11,8 +13,32 @@ error("this is a lua library module")
 
 --- @class ImageID : integer
 
+--- *Mod Scope*
 --- Insert prefix of current script's namespace at the start of `str`.
 --- e.g. `N_("HelloWorld")` --> `"dr2c_HelloWorld"`
 --- @param str string
 --- @return string
 function N_(str) end
+
+--- *Mod Scope*
+--- @generic T : NotNil
+--- @param key string
+--- @param defaultValue T
+--- @param getter fun(): T
+--- @return T
+function persist(key, defaultValue, getter) end
+
+--- *Mod Scope*
+mod = nil
+
+--- *Script Scope*
+--- Current script's internal id.
+--- e.g. 32
+--- @type integer
+_scriptID = nil
+
+--- *Script Scope*
+--- Current script's name.
+--- e.g. "dr2c.client.test.Test"
+--- @type string
+_scriptName = nil
