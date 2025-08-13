@@ -1,9 +1,12 @@
 #include "data/VirtualFileSystem.hpp"
 
 #include "data/PathType.hpp"
+#include "resource/ResourceType.hpp"
 #include "util/EnumFlag.hpp"
 #include "util/LogMicros.hpp"
 
+#include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <stdexcept>
@@ -11,42 +14,77 @@
 
 using namespace tudov;
 
+// region VirtualFileSystem::List
+
+bool VirtualFileSystem::ListEntry::operator<(const ListEntry &r) const noexcept
+{
+	if (isDirectory != r.isDirectory)
+	{
+		return isDirectory > r.isDirectory;
+	}
+	return path < r.path;
+}
+
+// endregion
+
+VirtualFileSystem::CommonNode::CommonNode() noexcept
+    : date(std::chrono::system_clock::now())
+{
+}
+
+VirtualFileSystem::DirectoryNode::DirectoryNode(const std::map<std::string, Node> &children) noexcept
+    : children(children),
+      CommonNode()
+{
+}
+
+VirtualFileSystem::FileNode::FileNode(const std::vector<std::byte> &bytes, EResourceType resourceType) noexcept
+    : bytes(bytes),
+      resourceType(resourceType),
+      CommonNode()
+{
+}
+
+// region VirtualFileSystem
+
+VirtualFileSystem::VirtualFileSystem() noexcept
+    : _rootNode()
+{
+}
+
 Log &VirtualFileSystem::GetLog() noexcept
 {
 	return *Log::Get("VirtualFileSystem");
 }
 
-DelegateEvent<const std::filesystem::path &> &VirtualFileSystem::GetOnMountDirectory() noexcept
+VirtualFileSystem::MountDirectoryEvent &VirtualFileSystem::GetOnMountDirectory() noexcept
 {
 	return _onMountDirectory;
 }
 
-DelegateEvent<const std::filesystem::path &> &VirtualFileSystem::GetOnDismountDirectory() noexcept
+VirtualFileSystem::DismountDirectoryEvent &VirtualFileSystem::GetOnDismountDirectory() noexcept
 {
 	return _onDismountDirectory;
 }
 
-DelegateEvent<const std::filesystem::path &, const std::vector<std::byte> &> &VirtualFileSystem::GetOnMountFile() noexcept
+VirtualFileSystem::MountFileEvent &VirtualFileSystem::GetOnMountFile() noexcept
 {
 	return _onMountFile;
 }
 
-DelegateEvent<const std::filesystem::path &> &VirtualFileSystem::GetOnDismountFile() noexcept
+VirtualFileSystem::DismountFileEvent &VirtualFileSystem::GetOnDismountFile() noexcept
 {
 	return _onDismountFile;
 }
 
-DelegateEvent<const std::filesystem::path &, const std::vector<std::byte> &, const std::vector<std::byte> &> &VirtualFileSystem::GetOnRemountFile() noexcept
+VirtualFileSystem::RemountFileEvent &VirtualFileSystem::GetOnRemountFile() noexcept
 {
 	return _onRemountFile;
 }
 
 void VirtualFileSystem::MountDirectory(const std::filesystem::path &path) noexcept
 {
-	if (CanDebug())
-	{
-		Debug("Mount directory \"{}\"", path.generic_string());
-	}
+	TE_DEBUG("Mount directory \"{}\"", path.generic_string());
 
 	DirectoryNode *currentDirectory = &std::get<DirectoryNode>(_rootNode);
 
@@ -66,10 +104,7 @@ void VirtualFileSystem::MountDirectory(const std::filesystem::path &path) noexce
 
 void VirtualFileSystem::MountFile(const std::filesystem::path &path, std::vector<std::byte> bytes) noexcept
 {
-	if (CanDebug())
-	{
-		Debug("Mount file \"{}\"", path.generic_string());
-	}
+	TE_DEBUG("Mount file \"{}\"", path.generic_string());
 
 	DirectoryNode *currentDirectory = &std::get<DirectoryNode>(_rootNode);
 
@@ -77,9 +112,11 @@ void VirtualFileSystem::MountFile(const std::filesystem::path &path, std::vector
 	{
 		auto partStr = part.generic_string();
 
-		if (part.has_extension())
+		if (part.has_extension()) // TODO or this is the last part, then we assume it is a file ... right?
 		{
-			currentDirectory->children.emplace(partStr, FileNode{bytes});
+			EResourceType resourceType = EResourceType::Unknown;
+			_onMountFile.Invoke(path, bytes, resourceType);
+			currentDirectory->children.emplace(partStr, FileNode(bytes, resourceType));
 
 			break;
 		}
@@ -88,21 +125,16 @@ void VirtualFileSystem::MountFile(const std::filesystem::path &path, std::vector
 
 		if (children.find(partStr) == children.end())
 		{
-			children.emplace(partStr, DirectoryNode{});
+			children.emplace(partStr, DirectoryNode());
 		}
 
 		currentDirectory = &std::get<DirectoryNode>(children[partStr]);
 	}
-
-	_onMountFile.Invoke(path, bytes);
 }
 
 bool VirtualFileSystem::DismountDirectory(const std::filesystem::path &path) noexcept
 {
-	if (CanDebug())
-	{
-		Debug("Dismount directory \"{}\"", path.generic_string());
-	}
+	TE_DEBUG("Dismount directory \"{}\"", path.generic_string());
 
 	DirectoryNode *currentDirectory = &std::get<DirectoryNode>(_rootNode);
 	std::vector<std::string> parts;
@@ -115,30 +147,26 @@ bool VirtualFileSystem::DismountDirectory(const std::filesystem::path &path) noe
 	auto &children = currentDirectory->children;
 	for (const auto &part : parts)
 	{
-		if (children.find(part) != children.end())
-		{
-			currentDirectory = &std::get<DirectoryNode>(children[part]);
-		}
-		else
+		if (children.find(part) == children.end())
 		{
 			return false;
 		}
+
+		currentDirectory = &std::get<DirectoryNode>(children[part]);
 	}
 
-	bool result = children.erase(parts.back());
-	if (result)
+	if (children.erase(parts.back()))
 	{
 		_onDismountDirectory.Invoke(path);
+
+		return true;
 	}
-	return result;
+	return false;
 }
 
 bool VirtualFileSystem::DismountFile(const std::filesystem::path &path) noexcept
 {
-	if (CanDebug())
-	{
-		Debug("Dismount file \"{}\"", path.generic_string());
-	}
+	TE_DEBUG("Dismount file \"{}\"", path.generic_string());
 
 	DirectoryNode *currentDirectory = &std::get<DirectoryNode>(_rootNode);
 
@@ -172,12 +200,6 @@ bool VirtualFileSystem::DismountFile(const std::filesystem::path &path) noexcept
 	}
 
 	return false;
-	// bool result = currentDirectory->children.erase(path.filename().generic_string());
-	// if (result)
-	// {
-	// 	_onDismountFile.Invoke(path);
-	// }
-	// return result;
 }
 
 bool VirtualFileSystem::RemountFile(const std::filesystem::path &path, const std::vector<std::byte> &bytes) noexcept
@@ -189,13 +211,16 @@ bool VirtualFileSystem::RemountFile(const std::filesystem::path &path, const std
 	{
 		auto &fileNode = std::get<FileNode>(*node);
 		auto &oldBytes = fileNode.bytes;
-		fileNode.bytes = bytes;
 
-		_onRemountFile.Invoke(path, bytes, oldBytes);
+		EResourceType resourceType = EResourceType::Unknown;
+		_onRemountFile.Invoke(path, bytes, oldBytes, resourceType);
+
+		fileNode.bytes = bytes;
+		fileNode.resourceType = resourceType;
+
 		return true;
 	}
 
-	// MountFile(path, bytes);
 	return false;
 }
 
@@ -224,9 +249,31 @@ EPathType VirtualFileSystem::GetPathType(const std::filesystem::path &path) noex
 	return EPathType::None;
 }
 
-std::span<std::byte> VirtualFileSystem::GetFileBytes(const std::filesystem::path &path)
+std::chrono::time_point<std::chrono::system_clock> VirtualFileSystem::GetPathDateModified(const std::filesystem::path &path)
 {
-	Node *node = FindNode(path);
+	const auto *node = FindNode(path);
+	if (!node)
+	{
+		throw std::runtime_error("path not found");
+	}
+
+	if (std::holds_alternative<DirectoryNode>(*node))
+	{
+		return std::get<DirectoryNode>(*node).date;
+	}
+	else if (std::holds_alternative<FileNode>(*node))
+	{
+		return std::get<FileNode>(*node).date;
+	}
+	else [[unlikely]]
+	{
+		throw std::runtime_error("Invalid node");
+	}
+}
+
+std::span<std::byte> VirtualFileSystem::GetFileBytes(const std::filesystem::path &file)
+{
+	Node *node = FindNode(file);
 	if (node == nullptr) [[unlikely]]
 	{
 		throw std::runtime_error("file not found");
@@ -240,11 +287,27 @@ std::span<std::byte> VirtualFileSystem::GetFileBytes(const std::filesystem::path
 	return std::get<FileNode>(*node).bytes;
 }
 
-std::vector<std::string_view> VirtualFileSystem::List(const std::filesystem::path &directory, ListOption options)
+EResourceType VirtualFileSystem::GetFileResourceType(const std::filesystem::path &file)
 {
-	DirectoryNode *directoryNode;
+	Node *node = FindNode(file);
+	if (node == nullptr) [[unlikely]]
 	{
-		Node *node = FindNode(directory);
+		throw std::runtime_error("file not found");
+	}
+
+	if (!std::holds_alternative<FileNode>(*node)) [[unlikely]]
+	{
+		throw std::runtime_error("path is not file");
+	}
+
+	return std::get<FileNode>(*node).resourceType;
+}
+
+std::vector<VirtualFileSystem::ListEntry> VirtualFileSystem::List(const std::filesystem::path &directory, ListOption options) const
+{
+	const DirectoryNode *directoryNode;
+	{
+		const Node *node = FindNode(directory);
 		if (node == nullptr)
 		{
 			throw std::runtime_error("directory not found");
@@ -257,24 +320,15 @@ std::vector<std::string_view> VirtualFileSystem::List(const std::filesystem::pat
 		directoryNode = &std::get<DirectoryNode>(*node);
 	}
 
-	std::vector<std::string_view> result{};
+	std::vector<ListEntry> result{};
 
-	for (const auto &[path, child] : directoryNode->children)
+	if (EnumFlag::HasAny(options, ListOption::FullPath))
 	{
-		if (std::holds_alternative<FileNode>(child))
-		{
-			if (EnumFlag::HasAny(options, ListOption::File))
-			{
-				result.push_back(path);
-			}
-		}
-		else if (std::holds_alternative<DirectoryNode>(child))
-		{
-			if (EnumFlag::HasAny(options, ListOption::Directory))
-			{
-				result.push_back(path);
-			}
-		}
+		CollectListEntries(result, directory, directoryNode, options, 255);
+	}
+	else
+	{
+		CollectListEntries(result, "", directoryNode, options, 255);
 	}
 
 	if (EnumFlag::HasAny(options, ListOption::Sorted))
@@ -283,6 +337,35 @@ std::vector<std::string_view> VirtualFileSystem::List(const std::filesystem::pat
 	}
 
 	return result;
+}
+
+void VirtualFileSystem::CollectListEntries(std::vector<ListEntry> &entries, const std::filesystem::path &directory, const DirectoryNode *directoryNode, ListOption options, std::uint32_t depth) const noexcept
+{
+	for (const auto &[relativePath, child] : directoryNode->children)
+	{
+		std::filesystem::path path = directory / relativePath;
+
+		if (std::holds_alternative<FileNode>(child))
+		{
+			if (EnumFlag::HasAny(options, ListOption::File))
+			{
+				entries.emplace_back(path.generic_string(), false);
+			}
+		}
+		else if (std::holds_alternative<DirectoryNode>(child))
+		{
+			if (EnumFlag::HasAny(options, ListOption::Directory))
+			{
+				entries.emplace_back(path.generic_string(), true);
+			}
+
+			if (EnumFlag::HasAny(options, ListOption::Recursed) && depth != 0)
+			{
+				const DirectoryNode *childDirectoryNode = &std::get<DirectoryNode>(child);
+				CollectListEntries(entries, path, childDirectoryNode, options, depth - 1);
+			}
+		}
+	}
 }
 
 VirtualFileSystem::Node *VirtualFileSystem::FindNode(const std::filesystem::path &path) noexcept
@@ -309,3 +392,5 @@ VirtualFileSystem::Node *VirtualFileSystem::FindNode(const std::filesystem::path
 
 	return currentNode;
 }
+
+// endregion VirtualFileSystem

@@ -49,7 +49,6 @@ void DebugLog::UpdateAndRender(IWindow &window) noexcept
 
 			ImGui::TableNextRow();
 
-			// 第一列：Logger 名称
 			ImGui::TableSetColumnIndex(0);
 			ImGui::Text("%s", it->first.c_str());
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DebugElement.hpp"
+#include "DebugFileSystem.hpp"
 #include "util/Scopes.hpp"
 
 #include <memory>
@@ -50,6 +51,7 @@ namespace tudov
 
 	  public:
 		std::shared_ptr<DebugConsole> console;
+		std::shared_ptr<DebugFileSystem> fileSystem;
 		std::shared_ptr<DebugLog> log;
 		std::shared_ptr<DebugProfiler> profiler;
 		std::shared_ptr<DebugScripts> scripts;

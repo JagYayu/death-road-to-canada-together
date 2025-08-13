@@ -20,17 +20,20 @@ EResourceType GlobalResourcesCollection::PathExtensionToResourceType(const std::
 }
 
 GlobalResourcesCollection::GlobalResourcesCollection(Context &context) noexcept
-    : _context(context),
-      _binariesResources(std::make_shared<BinariesResources>()),
-      _fontResources(std::make_shared<FontResources>()),
-      _imageResources(std::make_shared<ImageResources>()),
-      _textResources(std::make_shared<TextResources>())
+    : _context(context)
 {
+	_binariesResources = std::make_shared<BinariesResources>();
+	_fontResources = std::make_shared<FontResources>();
+	_imageResources = std::make_shared<ImageResources>();
+	_textResources = std::make_shared<TextResources>();
+
+	using Base = Resources<IResource>;
+
 	_resourcesList = {
-	    std::dynamic_pointer_cast<Resources<IResource>>(_binariesResources),
-	    std::dynamic_pointer_cast<Resources<IResource>>(_fontResources),
-	    std::dynamic_pointer_cast<Resources<IResource>>(_imageResources),
-	    std::dynamic_pointer_cast<Resources<IResource>>(_textResources),
+	    std::dynamic_pointer_cast<Base>(_binariesResources),
+	    std::dynamic_pointer_cast<Base>(_textResources),
+	    std::dynamic_pointer_cast<Base>(_fontResources),
+	    std::dynamic_pointer_cast<Base>(_imageResources),
 	};
 }
 
@@ -48,17 +51,19 @@ void GlobalResourcesCollection::Initialize() noexcept
 {
 	auto &vfs = GetVirtualFileSystem();
 
-	_handlerIDOnVFSMountFile = vfs.GetOnMountFile() += [this](const std::filesystem::path &path, const std::vector<std::byte> &bytes)
+	_handlerIDOnVFSMountFile = vfs.GetOnMountFile() += [this](const std::filesystem::path &path, const std::vector<std::byte> &bytes, EResourceType &resourceType)
 	{
-		LoadResource(path, bytes);
+		auto [type, _] = LoadResource(path, bytes);
+		resourceType = type;
 	};
 	_handlerIDOnVFSDismountFile = vfs.GetOnDismountFile() += [this](const std::filesystem::path &path)
 	{
 		UnloadResource(path);
 	};
-	_handlerIDOnVFSRemountFile = vfs.GetOnRemountFile() += [this](const std::filesystem::path &path, const std::vector<std::byte> &bytes, const std::vector<std::byte> &)
+	_handlerIDOnVFSRemountFile = vfs.GetOnRemountFile() += [this](const std::filesystem::path &path, const std::vector<std::byte> &bytes, const std::vector<std::byte> &, EResourceType &resourceType)
 	{
-		ReloadResource(path, bytes);
+		auto [type, _, _1] = ReloadResource(path, bytes);
+		resourceType = type;
 	};
 }
 

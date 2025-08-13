@@ -1,7 +1,6 @@
 #pragma once
 
 #include "RuntimeEvent.hpp"
-#include "util/Definitions.hpp"
 
 namespace tudov
 {
@@ -27,8 +26,9 @@ namespace tudov
 
 		// Network events.
 
-		/*
-		 * Client observer. Invoke when a client connected to current server.
+		/**
+		 * Client observer.
+		 * Invoke when a client connected to current server.
 		 */
 		[[nodiscard]] virtual RuntimeEvent &ClientConnect() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ClientDisconnect() noexcept = 0;
@@ -36,6 +36,14 @@ namespace tudov
 		[[nodiscard]] virtual RuntimeEvent &ServerConnect() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ServerDisconnect() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ServerMessage() noexcept = 0;
+
+		// Debug events.
+
+		[[nodiscard]] virtual RuntimeEvent &DebugCommand() noexcept = 0;
+		/**
+		 * Generate snapshot tables from lua modules to inspect data and memory.
+		 */
+		[[nodiscard]] virtual RuntimeEvent &DebugSnapshot() noexcept = 0;
 
 		// Other events.
 	};
@@ -54,6 +62,8 @@ namespace tudov
 		TRuntimeEvent _clientConnect;
 		TRuntimeEvent _clientDisconnect;
 		TRuntimeEvent _clientMessage;
+		TRuntimeEvent _debugCommand;
+		TRuntimeEvent _debugSnapshot;
 		TRuntimeEvent _keyDown;
 		TRuntimeEvent _keyUp;
 		TRuntimeEvent _mouseMove;
@@ -73,6 +83,8 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &ClientConnect() noexcept override;
 		[[nodiscard]] RuntimeEvent &ClientDisconnect() noexcept override;
 		[[nodiscard]] RuntimeEvent &ClientMessage() noexcept override;
+		[[nodiscard]] RuntimeEvent &DebugCommand() noexcept override;
+		[[nodiscard]] RuntimeEvent &DebugSnapshot() noexcept override;
 		[[nodiscard]] RuntimeEvent &KeyDown() noexcept override;
 		[[nodiscard]] RuntimeEvent &KeyUp() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseMove() noexcept override;

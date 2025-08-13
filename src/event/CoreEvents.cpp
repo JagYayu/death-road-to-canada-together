@@ -15,6 +15,8 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 	TE_CORE_EVENTS_GEN_INIT(_clientConnect, "ClientConnect");
 	TE_CORE_EVENTS_GEN_INIT(_clientDisconnect, "ClientDisconnect");
 	TE_CORE_EVENTS_GEN_INIT(_clientMessage, "ClientMessage");
+	TE_CORE_EVENTS_GEN_INIT(_debugCommand, "DebugCommand");
+	TE_CORE_EVENTS_GEN_INIT(_debugSnapshot, "DebugSnapshot");
 	TE_CORE_EVENTS_GEN_INIT(_keyDown, "KeyDown");
 	TE_CORE_EVENTS_GEN_INIT(_keyUp, "KeyUp");
 	TE_CORE_EVENTS_GEN_INIT(_mouseMove, "MouseMove");
@@ -39,6 +41,8 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 TUDOV_CORE_EVENTS_GEN_GETTER(ClientConnect, _clientConnect);
 TUDOV_CORE_EVENTS_GEN_GETTER(ClientDisconnect, _clientDisconnect);
 TUDOV_CORE_EVENTS_GEN_GETTER(ClientMessage, _clientMessage);
+TUDOV_CORE_EVENTS_GEN_GETTER(DebugCommand, _debugCommand);
+TUDOV_CORE_EVENTS_GEN_GETTER(DebugSnapshot, _debugSnapshot);
 TUDOV_CORE_EVENTS_GEN_GETTER(KeyDown, _keyDown);
 TUDOV_CORE_EVENTS_GEN_GETTER(KeyUp, _keyUp);
 TUDOV_CORE_EVENTS_GEN_GETTER(MouseMove, _mouseMove);

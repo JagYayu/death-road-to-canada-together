@@ -45,10 +45,10 @@ Log &ScriptProvider::GetLog() noexcept
 void ScriptProvider::Initialize() noexcept
 {
 	constexpr decltype(auto) directory = "app/lua";
-	std::vector<std::string_view> luaFilePaths = GetVirtualFileSystem().List(directory, VirtualFileSystem::ListOption::File);
-	auto textResources = GetGlobalResourcesCollection().GetTextResources();
+	std::vector<VirtualFileSystem::ListEntry> luaFilePaths = GetVirtualFileSystem().List(directory, VirtualFileSystem::ListOption::File);
+	TextResources &textResources = GetGlobalResourcesCollection().GetTextResources();
 
-	for (auto &&relativePath : luaFilePaths)
+	for (auto &&[relativePath, isDirectory] : luaFilePaths)
 	{
 		auto &&fullPath = (std::filesystem::path(directory) / relativePath).generic_string();
 		TextID textID = textResources.GetResourceID(fullPath);

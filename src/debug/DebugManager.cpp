@@ -1,6 +1,7 @@
 #include "debug/DebugManager.hpp"
 
 #include "debug/DebugConsole.hpp"
+#include "debug/DebugFileSystem.hpp"
 #include "debug/DebugLog.hpp"
 #include "debug/DebugProfiler.hpp"
 #include "debug/DebugScripts.hpp"
@@ -14,6 +15,7 @@ using namespace tudov;
 
 DebugManager::DebugManager() noexcept
     : console(std::make_shared<DebugConsole>()),
+      fileSystem(std::make_shared<DebugFileSystem>()),
       log(std::make_shared<DebugLog>()),
       profiler(std::make_shared<DebugProfiler>()),
       scripts(std::make_shared<DebugScripts>()),
@@ -22,6 +24,7 @@ DebugManager::DebugManager() noexcept
 {
 	_elements = {
 	    console,
+	    fileSystem,
 	    log,
 	    profiler,
 	    scripts,
@@ -79,16 +82,20 @@ void DebugManager::UpdateAndRender(IWindow &window) noexcept
 			{
 				ImGui::PushID(i);
 
-				auto &&name = _elements[i]->GetName();
+				std::shared_ptr<IDebugElement> &element = _elements[i];
+				std::string_view name = element->GetName();
+
 				if (ImGui::Button(name.data()))
 				{
 					if (_shownElements.contains(name))
 					{
 						_shownElements.erase(name);
+						element->OnClosed(window);
 					}
 					else
 					{
 						_shownElements.emplace(name);
+						element->OnOpened(window);
 					}
 				}
 				ImGui::SameLine();

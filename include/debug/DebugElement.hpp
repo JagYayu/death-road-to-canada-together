@@ -8,7 +8,24 @@ namespace tudov
 	{
 		virtual ~IDebugElement() noexcept = default;
 
+		/**
+		 * Get the debug element's name, this will display on top bar.
+		 */
 		virtual std::string_view GetName() noexcept = 0;
+
+		/**
+		 * Invoke when this debug window is opened by user.
+		 */
+		virtual void OnOpened(IWindow &window) noexcept {};
+
+		/**
+		 * Invoke when this debug window is opened by user.
+		 */
+		virtual void OnClosed(IWindow &window) noexcept {};
+
+		/**
+		 * Update and render the debug window.
+		 */
 		virtual void UpdateAndRender(IWindow &window) noexcept = 0;
 	};
 } // namespace tudov

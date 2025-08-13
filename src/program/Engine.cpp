@@ -23,6 +23,7 @@
 #include "resource/TextResources.hpp"
 #include "scripts/GameScripts.hpp"
 #include "util/Log.hpp"
+#include "util/LogMicros.hpp"
 #include "util/MicrosImpl.hpp"
 #include "util/StringUtils.hpp"
 
@@ -155,7 +156,7 @@ void Engine::Initialize() noexcept
 	    _scriptErrors,
 	};
 
-	Debug("Initializing engine ...");
+	TE_DEBUG("{}", "Initializing engine ...");
 	{
 		_config->Load();
 		_windowManager->InitializeMainWindow();
@@ -169,7 +170,7 @@ void Engine::Initialize() noexcept
 
 		PostInitialization();
 	}
-	Debug("Initialized engine");
+	TE_DEBUG("{}", "Initialized engine");
 }
 
 void Engine::PostInitialization() noexcept
@@ -288,7 +289,7 @@ void Engine::Deinitialize() noexcept
 		_loadingThread.join();
 	}
 
-	Debug("Deinitializing engine ...");
+	TE_DEBUG("{}", "Deinitializing engine ...");
 	{
 		_modManager->UnloadMods();
 
@@ -299,14 +300,14 @@ void Engine::Deinitialize() noexcept
 
 		_state = EState::Deinitialized;
 	}
-	Debug("Deinitialized engine");
+	TE_DEBUG("{}", "Deinitialized engine");
 }
 
 void Engine::Quit()
 {
 	if (_state == EState::Initialized)
 	{
-		Debug("Engine is pending quit!");
+		TE_DEBUG("{}", "Engine is pending quit!");
 
 		_state = EState::Quit;
 		_windowManager->CloseWindows();
@@ -319,7 +320,7 @@ void Engine::InitializeMainWindow() noexcept
 
 void Engine::InitializeResources() noexcept
 {
-	Debug("Mounting resource files");
+	TE_DEBUG("{}", "Mounting resource files");
 
 	auto &&renderBackend = _config->GetRenderBackend();
 
@@ -344,7 +345,7 @@ void Engine::InitializeResources() noexcept
 	{
 		if (!std::filesystem::exists(mountDirectory.data()) || !std::filesystem::is_directory(mountDirectory.data()))
 		{
-			Warn("Invalid directory for mounting resources: {}", mountDirectory.data());
+			TE_WARN("Invalid directory for mounting resources: {}", mountDirectory.data());
 			continue;
 		}
 
@@ -366,7 +367,7 @@ void Engine::InitializeResources() noexcept
 			auto imageID = imageResources.Load(filePath, ReadFileToBytes(filePath));
 			if (!imageID) [[unlikely]]
 			{
-				Error("Image ID of \"{}\" is 0!", filePath);
+				TE_ERROR("Image ID of \"{}\" is 0!", filePath);
 				continue;
 			}
 
@@ -380,10 +381,13 @@ void Engine::InitializeResources() noexcept
 		}
 	}
 
-	Debug("Mounted all resource files");
-	for (auto [fileType, count] : fileCounts)
+	TE_DEBUG("{}", "Mounted all resource files");
+	if (CanInfo())
 	{
-		Info("{}: {}", ResourceTypeToStringView(fileType).data(), count);
+		for (auto [fileType, count] : fileCounts)
+		{
+			Info("{}: {}", ResourceType::ToStringView(fileType).data(), count);
+		}
 	}
 }
 
