@@ -1,9 +1,9 @@
 #pragma once
 
+#include "TextureManager.hpp"
 #include "VSyncMode.hpp"
 #include "mod/LuaAPI.hpp"
 #include "program/Context.hpp"
-#include "resource/TextureResources.hpp"
 #include "sol/forward.hpp"
 #include "util/Definitions.hpp"
 #include "util/Log.hpp"
@@ -14,7 +14,6 @@
 #include <cstdint>
 #include <memory>
 #include <stack>
-#include <vector>
 
 struct SDL_GPUGraphicsPipeline;
 struct SDL_GPUShader;
@@ -75,7 +74,7 @@ namespace tudov
 		SDL_Renderer *_sdlRenderer;
 		std::stack<std::shared_ptr<RenderTarget>> _renderTargets;
 		// Manage image textures.
-		TextureResources _textureManager;
+		TextureManager _textureManager;
 		std::unordered_map<ImageID, TextureID> _imageTextureMap;
 		std::unordered_map<SDL_Texture *, std::shared_ptr<Texture>> _heldTextures;
 		SDL_Texture *_sdlTextureMain;

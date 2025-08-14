@@ -165,7 +165,7 @@ namespace tudov
 		virtual bool HasAnyLoadError() const noexcept = 0;
 
 		virtual std::vector<std::shared_ptr<ScriptError>> GetLoadErrors() const noexcept = 0;
-		virtual const std::vector<std::shared_ptr<ScriptError>> &GetLoadErrorsCached() noexcept = 0;
+		virtual const std::vector<std::shared_ptr<ScriptError>> &GetLoadErrorsCached() const noexcept = 0;
 
 		inline const DelegateEvent<> &GetOnPreLoadAllScripts() const noexcept
 		{
@@ -280,10 +280,6 @@ namespace tudov
 		explicit ScriptLoader(Context &context) noexcept;
 		~ScriptLoader() noexcept override;
 
-	  private:
-		std::shared_ptr<Module> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
-		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
-
 	  public:
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;
@@ -318,6 +314,10 @@ namespace tudov
 		[[deprecated("Use `GetScriptErrors().GetLoadtimeErrors()` instead")]]
 		std::vector<std::shared_ptr<ScriptError>> GetLoadErrors() const noexcept override;
 		[[deprecated("Use `GetScriptErrors().GetLoadtimeErrorsCached()` instead")]]
-		const std::vector<std::shared_ptr<ScriptError>> &GetLoadErrorsCached() noexcept override;
+		const std::vector<std::shared_ptr<ScriptError>> &GetLoadErrorsCached() const noexcept override;
+
+	  private:
+		std::shared_ptr<Module> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
+		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
 	};
 } // namespace tudov

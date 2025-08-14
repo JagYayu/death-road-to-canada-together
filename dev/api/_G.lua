@@ -29,7 +29,19 @@ function N_(str) end
 function persist(key, defaultValue, getter) end
 
 --- *Mod Scope*
-mod = nil
+--- You can also assess this value via `modConfig`.
+--- @type string
+modNamespace = nil
+
+--- *Mod Scope*
+--- You can also assess this value via `modConfig`.
+--- @type boolean
+modSandboxed = nil
+
+--- *Mod Scope*
+--- You can also assess this value via `modConfig`.
+--- @type string
+modUID = nil
 
 --- *Script Scope*
 --- Current script's internal id.

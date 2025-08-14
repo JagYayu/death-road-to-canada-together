@@ -14,13 +14,9 @@ Table.empty = setmetatable({}, {
 	__newindex = Function.empty,
 })
 
-if not table["clear"] then
-	Table.clear = require("table.clear")
-end
+Table.clear = require("table.clear")
 
-if not table["new"] then
-	Table.new = require("table.new")
-end
+Table.new = require("table.new")
 
 --- @generic T: table, K, V
 --- @param tbl table
@@ -57,6 +53,7 @@ local function copyImpl(tbl, depth)
 	return setmetatable(result, getmetatable(tbl))
 end
 
+--- Fully copy a table.
 --- @generic T : table
 --- @param tbl T
 --- @param depth number? default: math.huge
@@ -67,7 +64,7 @@ function Table.copy(tbl, depth)
 	return depth > 0 and copyImpl(tbl, depth) or copyFinalImpl(tbl)
 end
 
---- Similar to `Utility.copy`, but much faster.
+--- Similar to `Utility.copy`, but is much faster.
 --- However, serializing a table which contains functions, userdata or a nested table are not supported.
 --- It won't preserve metatables for tables either.
 --- @generic T : table
@@ -89,31 +86,51 @@ end
 
 local flattenImpl
 do
-	local function flattenImplInsert(t, v, d)
-		t[#t + 1] = type(v) == "table" and flattenImpl(v, d - 1) or v
+	local function flattenImplInsert(t, v, d, pf)
+		t[#t + 1] = type(v) == "table" and flattenImpl(v, d - 1, pf) or v
 	end
 
-	flattenImpl = function(tbl, depth)
-		if depth <= 0 then
-			return tbl
+	flattenImpl = function(t, d, pf)
+		if d <= 0 then
+			return t
 		end
 
 		local res = {}
-		for k, v in pairs(tbl) do
-			flattenImplInsert(res, k, depth)
-			flattenImplInsert(res, v, depth)
+		for k, v in pf(t) do
+			flattenImplInsert(res, k, d, pf)
+			flattenImplInsert(res, v, d, pf)
 		end
 		return res
 	end
 end
 
---- Returns a list of the table’s key-value pairs. Example: { b = 42, a = 51, c = 12 } => { "b", 42, "a", 51, "c", 12 }
+--- Returns a list of the table’s key-value pairs.
+--- e.g. { b = 42, a = 51, c = 12 } => { "b", 42, "a", 51, "c", 12 }
+--- Use `Table.flattenPairs` to quickly iterate returned table.
 --- @generic TKey, TValue
 --- @param tbl table<TKey, TValue>
 --- @param depth integer? @default: math.huge
 --- @return (TKey | TValue)[]
-function Table.flatten(tbl, depth)
-	return flattenImpl(tbl, depth or math.huge)
+function Table.flatten(tbl, depth, pairsFunc)
+	return flattenImpl(tbl, tonumber(depth) or 1, type(pairsFunc) == "function" and pairsFunc or Table.sortedPairs)
+end
+
+--- @generic T : table
+--- @param flattened T
+--- @return fun(state: T, index: integer)
+--- @return T state
+--- @return integer index
+function Table.flattenPairs(flattened)
+	local function it(state, index)
+		index = index + 2
+		local value = state[index]
+
+		if value ~= nil then
+			return index, state[index - 1], value
+		end
+	end
+
+	return it, flattened, 0
 end
 
 --- @param tbl any[]

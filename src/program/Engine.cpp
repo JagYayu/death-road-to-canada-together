@@ -7,6 +7,7 @@
 #include "debug/Debug.hpp"
 #include "debug/DebugConsole.hpp"
 #include "debug/DebugManager.hpp"
+#include "i18n/Localization.hpp"
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptErrors.hpp"
@@ -51,7 +52,8 @@ Engine::Engine() noexcept
       _framerate(0),
       _luaAPI(std::make_shared<LuaAPI>()),
       _globalStorageManager(std::make_shared<GlobalStorageManager>()),
-      _virtualFileSystem(std::make_shared<VirtualFileSystem>())
+      _virtualFileSystem(std::make_shared<VirtualFileSystem>()),
+      _localization(std::make_shared<Localization>())
 {
 	context = Context(this);
 
@@ -203,8 +205,7 @@ bool Engine::Tick() noexcept
 
 	if (DebugSingleThread)
 	{
-		_modManager->Update();
-		_eventManager->GetCoreEvents().TickLoad().Invoke();
+		ProcessLoad();
 	}
 	else
 	{
@@ -225,22 +226,10 @@ bool Engine::Tick() noexcept
 
 		if (_loadingState.load() != ELoadingState::InProgress)
 		{
-			if (!_scriptLoader->HasAnyLoadError())
-			{
-				_eventManager->GetCoreEvents().TickUpdate().Invoke();
-			}
-
-			for (auto &&event : _sdlEvents)
-			{
-				HandleEvent(*event);
-				delete event;
-			}
-			_sdlEvents.clear();
-
-			_windowManager->HandleEvents();
+			ProcessTick();
 		}
 
-		_windowManager->Render();
+		ProcessRender();
 	}
 
 	std::uint64_t endNS = SDL_GetTicksNS();
@@ -252,6 +241,34 @@ bool Engine::Tick() noexcept
 	}
 
 	return true;
+}
+
+void Engine::ProcessLoad() noexcept
+{
+	_modManager->Update();
+	_eventManager->GetCoreEvents().TickLoad().Invoke();
+}
+
+void Engine::ProcessTick() noexcept
+{
+	if (!_scriptLoader->HasAnyLoadError())
+	{
+		_eventManager->GetCoreEvents().TickUpdate().Invoke();
+	}
+
+	for (auto &&event : _sdlEvents)
+	{
+		HandleEvent(*event);
+		delete event;
+	}
+	_sdlEvents.clear();
+
+	_windowManager->HandleEvents();
+}
+
+void Engine::ProcessRender() noexcept
+{
+	_windowManager->Render();
 }
 
 void Engine::HandleEvent(SDL_Event &event) noexcept
@@ -274,7 +291,10 @@ void Engine::Event(void *event) noexcept
 		return;
 	}
 
-	_sdlEvents.emplace_back(new SDL_Event(*sdlEvent));
+	if (_sdlEvents.size() < 999)
+	{
+		_sdlEvents.emplace_back(new SDL_Event(*sdlEvent));
+	}
 }
 
 void Engine::Deinitialize() noexcept

@@ -133,9 +133,9 @@ namespace tudov
 		{
 			return CanOutput(EVerbosity::Error);
 		}
-		TE_FORCEINLINE bool CanFatal() const noexcept
+		TE_FORCEINLINE constexpr bool CanFatal() const noexcept
 		{
-			return CanOutput(EVerbosity::Fatal);
+			return true;
 		}
 
 		template <typename... Args>
@@ -213,7 +213,7 @@ namespace tudov
 		{
 			return GetLog().CanError();
 		}
-		TE_FORCEINLINE bool CanFatal() const
+		TE_FORCEINLINE constexpr bool CanFatal() const
 		{
 			return GetLog().CanFatal();
 		}

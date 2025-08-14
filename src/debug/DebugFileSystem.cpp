@@ -2,6 +2,8 @@
 
 #include "data/PathType.hpp"
 #include "data/VirtualFileSystem.hpp"
+#include "i18n/BuiltinTexts.hpp"
+#include "i18n/Localization.hpp"
 #include "util/EnumFlag.hpp"
 
 #include "imgui.h"
@@ -43,17 +45,19 @@ void DebugFileSystem::OnClosed(IWindow &window) noexcept
 
 void DebugFileSystem::UpdateAndRender(IWindow &window) noexcept
 {
-	VirtualFileSystem &vfs = window.GetVirtualFileSystem();
+	ILocalization &localization = window.GetLocalization();
+	VirtualFileSystem &virtualFileSystem = window.GetVirtualFileSystem();
+
 	// apply refresh, update current directory's entries.
 	if (_refresh) [[unlikely]]
 	{
 		_refresh = false;
-		Refresh(vfs);
+		Refresh(virtualFileSystem);
 	}
 
 	std::float_t scale = window.GetGUIScale();
 
-	ImGui::Begin("File System");
+	ImGui::Begin(localization.GetText(BuiltinTexts::Debug_FileSystem_Title).data());
 
 	ImGui::PushItemWidth(-80 * scale);
 	if (ImGui::InputText("##Path", _browsePath.data(), _browsePath.size(), ImGuiInputTextFlags_EnterReturnsTrue))

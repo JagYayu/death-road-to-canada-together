@@ -25,6 +25,7 @@ namespace tudov
 	struct IGraphicDevice;
 	struct IAssetsManager;
 	struct IWindow;
+	struct ILocalization;
 	class Context;
 	class Log;
 	class GlobalResourcesCollection;
@@ -105,6 +106,7 @@ namespace tudov
 		std::shared_ptr<ILuaAPI> _luaAPI;
 		std::shared_ptr<IGlobalStorageManager> _globalStorageManager;
 		std::shared_ptr<VirtualFileSystem> _virtualFileSystem;
+		std::shared_ptr<ILocalization> _localization;
 
 		std::shared_ptr<GlobalResourcesCollection> _globalResourcesCollection;
 		std::shared_ptr<IAssetsManager> _assetsManager;
@@ -124,14 +126,6 @@ namespace tudov
 	  public:
 		explicit Engine() noexcept;
 		~Engine() noexcept override;
-
-	  private:
-		void BackgroundLoadingThread() noexcept;
-		bool ShouldQuit() noexcept;
-		void InitializeMainWindow() noexcept;
-		void InitializeResources() noexcept;
-		void PostInitialization() noexcept;
-		void HandleEvent(SDL_Event &event) noexcept;
 
 	  public:
 		void Initialize() noexcept override;
@@ -165,6 +159,19 @@ namespace tudov
 		LoadingInfo GetLoadingInfo() noexcept;
 		void SetLoadingInfo(const LoadingInfoArgs &loadingInfo) noexcept;
 
+	  private:
+		void BackgroundLoadingThread() noexcept;
+		bool ShouldQuit() noexcept;
+		void InitializeMainWindow() noexcept;
+		void InitializeResources() noexcept;
+		void PostInitialization() noexcept;
+		void HandleEvent(SDL_Event &event) noexcept;
+
+		void ProcessLoad() noexcept;
+		void ProcessTick() noexcept;
+		void ProcessRender() noexcept;
+
+	  public:
 		// Inline implementations.
 
 		inline const LoadingInfo GetLoadingInfo() const noexcept

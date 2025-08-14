@@ -86,24 +86,24 @@ std::vector<std::shared_ptr<ScriptError>> ScriptErrors::GetRuntimeErrors() const
 	return _scriptRuntimeErrors;
 }
 
-const std::vector<std::shared_ptr<ScriptError>> &ScriptErrors::GetLoadtimeErrorsCached() noexcept
+const std::vector<std::shared_ptr<ScriptError>> &ScriptErrors::GetLoadtimeErrorsCached() const noexcept
 {
-	if (_scriptLoadtimeErrorCached == std::nullopt) [[unlikely]]
+	if (_scriptLoadtimeErrorCache == std::nullopt) [[unlikely]]
 	{
-		_scriptLoadtimeErrorCached = GetLoadtimeErrors();
+		_scriptLoadtimeErrorCache = GetLoadtimeErrors();
 	}
 
-	return *_scriptLoadtimeErrorCached;
+	return *_scriptLoadtimeErrorCache;
 }
 
-const std::vector<std::shared_ptr<ScriptError>> &ScriptErrors::GetRuntimeErrorsCached() noexcept
+const std::vector<std::shared_ptr<ScriptError>> &ScriptErrors::GetRuntimeErrorsCached() const noexcept
 {
 	return _scriptRuntimeErrors;
 }
 
 void ScriptErrors::ClearCaches() noexcept
 {
-	_scriptLoadtimeErrorCached = std::nullopt;
+	_scriptLoadtimeErrorCache = std::nullopt;
 }
 
 void ScriptErrors::AddLoadtimeError(const std::shared_ptr<ScriptError> &scriptError)

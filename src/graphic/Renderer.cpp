@@ -1,5 +1,5 @@
 #include "graphic/Renderer.hpp"
-#include "SDL3/SDL_error.h"
+#include "data/VirtualFileSystem.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/VSyncMode.hpp"
 #include "program/Engine.hpp"
@@ -7,6 +7,7 @@
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/ImageResources.hpp"
 
+#include "SDL3/SDL_error.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
@@ -106,14 +107,15 @@ std::shared_ptr<Texture> Renderer::GetOrCreateImageTexture(ImageID imageID)
 		}
 
 		std::string_view path = imageResources.GetResourcePath(imageID);
-		textureID = _textureManager.Load(path, *this);
-		assert(textureID);
-		_imageTextureMap[imageID] = textureID;
 
-		_textureManager.GetResource(textureID)->Initialize(*image);
+		auto [texture, id] = _textureManager.LoadTexture(*this);
+		texture->Initialize(*image);
+		textureID = id;
+
+		_imageTextureMap[imageID] = textureID;
 	}
 
-	return _textureManager.GetResource(textureID);
+	return _textureManager.GetTexture(textureID);
 }
 
 bool Renderer::ReleaseTexture(const std::shared_ptr<Texture> &texture) noexcept

@@ -12,7 +12,7 @@
 namespace tudov
 {
 	class Mod;
-	class TextResource;
+	class Text;
 
 	struct IScriptProvider : public IEngineComponent
 	{
@@ -40,7 +40,7 @@ namespace tudov
 		virtual bool RemoveScript(ScriptID scriptID) noexcept = 0;
 		virtual std::size_t RemoveScriptsBy(std::string_view modUID) noexcept = 0;
 		virtual TextID GetScriptTextID(ScriptID scriptID) const noexcept = 0;
-		virtual std::shared_ptr<TextResource> GetScriptCode(ScriptID scriptID) const noexcept = 0;
+		virtual std::shared_ptr<Text> GetScriptCode(ScriptID scriptID) const noexcept = 0;
 		/*
 		 * Return an empty string if script id not exists.
 		 */
@@ -64,7 +64,7 @@ namespace tudov
 			return RemoveScript(GetScriptIDByName(scriptName));
 		}
 
-		inline std::shared_ptr<TextResource> GetScriptCode(std::string_view scriptName) const noexcept
+		inline std::shared_ptr<Text> GetScriptCode(std::string_view scriptName) const noexcept
 		{
 			return GetScriptCode(GetScriptIDByName(scriptName));
 		}
@@ -115,7 +115,7 @@ namespace tudov
 		bool RemoveScript(ScriptID scriptID) noexcept override;
 		std::size_t RemoveScriptsBy(std::string_view modUID) noexcept override;
 		TextID GetScriptTextID(ScriptID scriptID) const noexcept override;
-		std::shared_ptr<TextResource> GetScriptCode(ScriptID scriptID) const noexcept override;
+		std::shared_ptr<Text> GetScriptCode(ScriptID scriptID) const noexcept override;
 		std::string_view GetScriptModUID(ScriptID scriptID) noexcept override;
 
 		std::unordered_map<ScriptID, Entry>::const_iterator begin() const override;

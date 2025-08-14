@@ -151,9 +151,9 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	lua["fonts"] = collection.GetFontResources();
 	lua["images"] = collection.GetImageResources();
 
-	lua.set_function("getModConfig", [this, &context](std::string_view modUID) -> ModConfig *
+	lua.set_function("getModConfig", [this, &context](sol::string_view modUID) -> ModConfig *
 	{
-		std::shared_ptr<Mod> &&mod = context.GetModManager().FindLoadedMod(modUID);
+		std::shared_ptr<Mod> mod = context.GetModManager().FindLoadedMod(modUID);
 		return mod == nullptr ? nullptr : &mod->GetConfig();
 	});
 }

@@ -1,15 +1,14 @@
 #pragma once
 
 #include "Resources.hpp"
-#include "Text.hpp"
-#include "util/Definitions.hpp"
+#include "misc/Text.hpp"
 
 #include <string_view>
 
 namespace tudov
 {
 	template <>
-	inline Resources<TextResource>::Resources() noexcept
+	inline Resources<Text>::Resources() noexcept
 	    : _log(Log::Get("TextResources"))
 	{
 	}
@@ -17,7 +16,7 @@ namespace tudov
 	class LuaAPI;
 	class ScriptEngine;
 
-	class TextResources : public Resources<TextResource>
+	class TextResources : public Resources<Text>
 	{
 		friend LuaAPI;
 

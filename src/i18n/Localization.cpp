@@ -1,63 +1,77 @@
 #include "i18n/Localization.hpp"
+
+#include "i18n/BuiltinTexts.hpp"
 #include "i18n/Language.hpp"
-#include "i18n/Translation.hpp"
+#include "i18n/TranslationPack.hpp"
 #include "util/Utils.hpp"
 
 #include <cassert>
-#include <cstddef>
 
 using namespace tudov;
+
+ELanguage ILocalization::GetDefaultLanguage() const noexcept
+{
+	return ELanguage::English;
+}
 
 Localization::Localization() noexcept
     : _log(Log::Get("Localization"))
 {
 }
 
-Language ILocalization::GetDefaultLanguage() noexcept
+Log &Localization::GetLog() noexcept
 {
-	return ELanguage::English;
+	return *_log;
 }
 
-Language Localization::GetLanguage() noexcept
+Language Localization::GetFirstLanguage() const noexcept
 {
-	return _language;
-}
-
-std::vector<std::weak_ptr<Translation>> Localization::GetTranslations() noexcept
-{
-	return FromSharedToWeak<Translation>(_translations);
-}
-
-std::optional<std::string_view> Localization::GetText(std::string_view key, std::variant<Language, std::nullptr_t> lang) noexcept
-{
-	const Language &language = std::holds_alternative<std::nullptr_t>(lang) ? _language : std::get<Language>(lang);
-
-	auto &&it = _language2translationsCaches.find(language);
-	if (it == _language2translationsCaches.end()) [[unlikely]]
+	if (_languageOrders.empty())
 	{
-		it = _language2translationsCaches.try_emplace(language, std::vector<std::weak_ptr<Translation>>()).first;
+		return GetDefaultLanguage();
+	}
 
-		for (auto &&translation : _translations)
+	return _languageOrders[0];
+}
+
+std::vector<Language> Localization::GetLanguageOrders() const noexcept
+{
+	return _languageOrders;
+}
+
+std::vector<std::weak_ptr<TranslationPack>> Localization::GetTranslationPacks() const noexcept
+{
+	return FromSharedToWeak<TranslationPack>(_translationPacks);
+}
+
+std::string_view Localization::GetText(std::string_view key) const noexcept
+{
+	auto it = _caches.find(key.data());
+	if (it != _caches.end()) [[likely]]
+	{
+		return it->second;
+	}
+
+	std::string_view text = GetTextUncached(key);
+	_caches[std::string(key)] = text;
+	return text;
+}
+
+std::string_view Localization::GetTextUncached(std::string_view key) const noexcept
+{
+	for (const auto &pack : _translationPacks)
+	{
+		if (pack->translation.HasTextKey(key))
 		{
-			if (translation->GetLanguage() == language)
+			for (const auto &lang : _languageOrders)
 			{
-				it->second.emplace_back(translation);
+				if (pack->translation.HasLanguage(lang))
+				{
+					return pack->translation.GetText(lang, key);
+				}
 			}
 		}
 	}
 
-	for (auto &&translation : it->second)
-	{
-		if (translation.expired()) [[unlikely]]
-		{
-			_log->Warn("Got a expired weak ptr of translation, did you forgot to clear cache?");
-			continue;
-		}
-
-		if (auto &&text = translation.lock()->GetText(key); !text->empty())
-		{
-			return *text;
-		}
-	}
-	return std::nullopt;
+	return BuiltinTexts::GetFallbackText(key);
 }

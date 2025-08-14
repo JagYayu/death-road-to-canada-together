@@ -15,11 +15,14 @@ namespace tudov
 	class Image : public IResource
 	{
 	  private:
+		std::string_view _path;
 		impl::SDL_Surface *_sdlSurface;
 
 	  public:
-		explicit Image(const std::vector<std::byte> &bytes);
+		explicit Image(std::string_view path, const std::vector<std::byte> &bytes);
 		~Image() noexcept;
+
+		std::string_view GetFilePath() const noexcept override;
 
 		bool IsValid() noexcept;
 		void Initialize(std::string_view memory) noexcept;

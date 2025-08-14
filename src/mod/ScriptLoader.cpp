@@ -1,12 +1,12 @@
 #include "mod/ScriptLoader.hpp"
 
+#include "misc/Text.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
-#include "resource/Text.hpp"
 #include "util/Definitions.hpp"
 #include "util/LogMicros.hpp"
 #include "util/StringUtils.hpp"
@@ -90,9 +90,9 @@ const sol::table &ScriptLoader::Module::RawLoad(IScriptLoader &scriptLoader)
 
 	engine.SetLoadingDescription(scriptLoader.GetScriptProvider().GetScriptNameByID(_scriptID).value());
 
-	auto previousLoadingScript = parent._loadingScript;
+	ScriptID previousLoadingScript = parent._loadingScript;
 	parent._loadingScript = _scriptID;
-	auto &&result = _func();
+	sol::protected_function_result result = _func();
 	if (!result.valid()) [[unlikely]]
 	{
 		sol::error err = result;
@@ -428,7 +428,7 @@ void ScriptLoader::LoadAllScripts()
 	auto &&count = scriptProvider.GetCount();
 	for (auto &&[scriptID, entry] : scriptProvider)
 	{
-		std::shared_ptr<TextResource> code = textResources.GetResource(entry.textID);
+		std::shared_ptr<Text> code = textResources.GetResource(entry.textID);
 		assert(code != nullptr);
 		LoadImpl(scriptID, entry.name, code->View(), entry.modUID);
 	}
@@ -681,7 +681,7 @@ std::vector<std::shared_ptr<ScriptError>> ScriptLoader::GetLoadErrors() const no
 	return GetScriptErrors().GetLoadtimeErrors();
 }
 
-const std::vector<std::shared_ptr<ScriptError>> &ScriptLoader::GetLoadErrorsCached() noexcept
+const std::vector<std::shared_ptr<ScriptError>> &ScriptLoader::GetLoadErrorsCached() const noexcept
 {
 	return GetScriptErrors().GetLoadtimeErrorsCached();
 }

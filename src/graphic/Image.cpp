@@ -10,7 +10,8 @@
 
 using namespace tudov;
 
-Image::Image(const std::vector<std::byte> &bytes)
+Image::Image(std::string_view path, const std::vector<std::byte> &bytes)
+    : _path(path)
 {
 	SDL_IOStream *io = SDL_IOFromConstMem(bytes.data(), bytes.size());
 	if (!io) [[unlikely]]
@@ -31,6 +32,11 @@ Image::~Image() noexcept
 	{
 		SDL_DestroySurface(static_cast<SDL_Surface *>(_sdlSurface));
 	}
+}
+
+std::string_view Image::GetFilePath() const noexcept
+{
+	return _path;
 }
 
 bool Image::IsValid() noexcept

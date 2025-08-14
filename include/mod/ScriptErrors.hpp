@@ -38,8 +38,8 @@ namespace tudov
 		virtual std::vector<std::shared_ptr<ScriptError>> GetLoadtimeErrors() const noexcept = 0;
 		virtual std::vector<std::shared_ptr<ScriptError>> GetRuntimeErrors() const noexcept = 0;
 
-		virtual const std::vector<std::shared_ptr<ScriptError>> &GetLoadtimeErrorsCached() noexcept = 0;
-		virtual const std::vector<std::shared_ptr<ScriptError>> &GetRuntimeErrorsCached() noexcept = 0;
+		virtual const std::vector<std::shared_ptr<ScriptError>> &GetLoadtimeErrorsCached() const noexcept = 0;
+		virtual const std::vector<std::shared_ptr<ScriptError>> &GetRuntimeErrorsCached() const noexcept = 0;
 
 		virtual void ClearCaches() noexcept = 0;
 
@@ -59,8 +59,9 @@ namespace tudov
 		Context &_context;
 		std::unordered_map<ScriptID, std::shared_ptr<ScriptError>> _scriptLoadtimeErrors;
 		// std::unordered_map<ScriptID, std::shared_ptr<ScriptError>> _scriptLoadErrorsCache;
-		std::optional<std::vector<std::shared_ptr<ScriptError>>> _scriptLoadtimeErrorCached;
 		std::vector<std::shared_ptr<ScriptError>> _scriptRuntimeErrors;
+
+		mutable std::optional<std::vector<std::shared_ptr<ScriptError>>> _scriptLoadtimeErrorCache;
 
 	  public:
 		explicit ScriptErrors(Context &context) noexcept;
@@ -74,8 +75,8 @@ namespace tudov
 		std::vector<std::shared_ptr<ScriptError>> GetLoadtimeErrors() const noexcept override;
 		std::vector<std::shared_ptr<ScriptError>> GetRuntimeErrors() const noexcept override;
 
-		const std::vector<std::shared_ptr<ScriptError>> &GetLoadtimeErrorsCached() noexcept override;
-		const std::vector<std::shared_ptr<ScriptError>> &GetRuntimeErrorsCached() noexcept override;
+		const std::vector<std::shared_ptr<ScriptError>> &GetLoadtimeErrorsCached() const noexcept override;
+		const std::vector<std::shared_ptr<ScriptError>> &GetRuntimeErrorsCached() const noexcept override;
 
 		void ClearCaches() noexcept override;
 

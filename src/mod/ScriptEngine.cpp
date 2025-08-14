@@ -4,7 +4,9 @@
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptProvider.hpp"
+#include "sol/protected_function_result.hpp"
 #include "util/Definitions.hpp"
+#include "util/LogMicros.hpp"
 #include "util/Utils.hpp"
 
 #include "sol/environment.hpp"
@@ -84,11 +86,12 @@ void ScriptEngine::Initialize() noexcept
 		if (engineModule != nullptr)
 		{
 			auto &&scriptEngineModule = engineModule->GetTable();
-			scriptEngineModule.raw_get<sol::function>("initialize")();
 
-			_luaMarkAsLocked = scriptEngineModule.raw_get<sol::function>("markAsLocked");
-			_luaPostProcessModGlobals = scriptEngineModule.raw_get<sol::function>("postProcessModGlobals");
-			_luaPostProcessScriptGlobals = scriptEngineModule.raw_get<sol::function>("postProcessScriptGlobals");
+			scriptEngineModule.get<sol::function>("initialize")();
+
+			_luaMarkAsLocked = scriptEngineModule.get<sol::function>("markAsLocked");
+			_luaPostProcessModGlobals = scriptEngineModule.get<sol::function>("postProcessModGlobals");
+			_luaPostProcessScriptGlobals = scriptEngineModule.get<sol::function>("postProcessScriptGlobals");
 
 			AssertLuaValue(_luaMarkAsLocked, "#ScriptEngine.markAsLocked");
 			AssertLuaValue(_luaPostProcessModGlobals, "#ScriptEngine.postProcessModGlobals");
@@ -103,6 +106,7 @@ void ScriptEngine::Initialize() noexcept
 	GetLuaAPI().Install(_lua, _context);
 
 	constexpr const char *requiredStdModules[] = {
+	    "ffi",
 	    "jit.profile",
 	    "jit.util",
 	    "string.buffer",
@@ -129,7 +133,7 @@ void ScriptEngine::AssertLuaValue(sol::object value, std::string_view name) noex
 void ScriptEngine::Deinitialize() noexcept
 {
 	_persistVariables.clear();
-	_lua.collect_garbage();
+	CollectGarbage();
 }
 
 sol::state_view &ScriptEngine::GetState()
@@ -175,7 +179,7 @@ int ScriptEngine::ThrowError(std::string_view message) noexcept
 	return lua_error(_lua);
 }
 
-sol::object MakeReadonlyGlobalImpl(sol::state &lua, sol::object obj, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited, const sol::function &newindex, const sol::function mark)
+sol::object ScriptEngine::MakeReadonlyGlobalImpl(sol::object obj, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited) noexcept
 {
 	if (obj.get_type() != sol::type::table)
 	{
@@ -195,20 +199,26 @@ sol::object MakeReadonlyGlobalImpl(sol::state &lua, sol::object obj, std::unorde
 		return obj;
 	}
 
-	sol::table &&proxy = lua.create_table();
-	sol::table &&metatable = lua.create_table(0, 2);
+	sol::table &&proxy = _lua.create_table();
+	sol::table &&metatable = _lua.create_table(0, 2);
 
 	proxy[sol::metatable_key] = metatable;
 	visited[table] = proxy;
 
 	for (auto &&[key, value] : table)
 	{
-		table[key] = MakeReadonlyGlobalImpl(lua, value, visited, newindex, mark);
+		table[key] = MakeReadonlyGlobalImpl(value, visited);
 	}
 
 	metatable["__index"] = table;
-	metatable["__newindex"] = newindex;
-	mark(metatable);
+	metatable["__newindex"] = _luaThrowModifyReadonlyGlobalError;
+
+	sol::protected_function_result result = _luaMarkAsLocked(metatable);
+	if (!result.valid()) [[unlikely]]
+	{
+		sol::error error = result;
+		TE_FATAL("Error while mark locked table: {}", error.what());
+	}
 
 	return proxy;
 }
@@ -217,7 +227,7 @@ sol::object ScriptEngine::MakeReadonlyGlobal(sol::object obj)
 {
 	Initialize();
 	std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> visited{};
-	return MakeReadonlyGlobalImpl(_lua, obj, visited, _luaThrowModifyReadonlyGlobalError, _luaMarkAsLocked);
+	return MakeReadonlyGlobalImpl(obj, visited);
 }
 
 sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed) noexcept
@@ -280,7 +290,14 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 
 	modGlobals["_G"] = modGlobals;
 
-	_luaPostProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals);
+	{
+		sol::protected_function_result postProcessResult = _luaPostProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals);
+		if (!postProcessResult.valid()) [[unlikely]]
+		{
+			sol::error error = postProcessResult;
+			TE_FATAL("Error while post process mod globals: {}", error.what());
+		}
+	}
 
 	auto result = _modGlobals.try_emplace(modUID, modGlobals);
 	assert(result.second);
@@ -377,7 +394,12 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 
 	sol::set_environment(scriptGlobals, func);
 
-	_luaPostProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed, func, scriptGlobals, _lua.globals());
+	sol::protected_function_result result = _luaPostProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed, func, scriptGlobals, _lua.globals());
+	if (!result.valid()) [[unlikely]]
+	{
+		sol::error error = result;
+		TE_FATAL("Error while post process script globals: {}", error.what());
+	}
 }
 
 void ScriptEngine::DeinitializeScript(ScriptID scriptID, std::string_view scriptName)

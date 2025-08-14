@@ -37,7 +37,7 @@ bool ReadonlyGlobalStorage::CanWrite() noexcept
 // 	return *Log::Get(TE_NAMEOF(ReadonlyGlobalStorage));
 // }
 
-EGlobalStorageLocation ReadonlyGlobalStorage::GetLocation() const noexcept
+constexpr EGlobalStorageLocation ReadonlyGlobalStorage::GetLocation() const noexcept
 {
 	return EGlobalStorageLocation::Readonly;
 }

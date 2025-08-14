@@ -1,6 +1,6 @@
 #pragma once
 
-#include <CircularBuffer.hpp>
+#include "CircularBuffer.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -28,6 +28,7 @@ namespace tudov
 		using PerfEntries = CircularBuffer<PerfEntry, EntrySize>;
 
 	  private:
+		std::int32_t _eventScopeCounter;
 		PerfEntries _perfEntries;
 		TClock _time;
 		size_t _memory;
@@ -36,8 +37,8 @@ namespace tudov
 	  public:
 		explicit EventProfiler() noexcept;
 
-		void BeginEvent(IScriptEngine &scriptEngine) noexcept;
-		void EndEvent(IScriptEngine &scriptEngine) noexcept;
+		void BeginEvent(IScriptEngine &scriptEngine);
+		void EndEvent(IScriptEngine &scriptEngine);
 
 		void TraceHandler(IScriptEngine &scriptEngine, std::string_view handlerName) noexcept;
 		void EndHandler(IScriptEngine &scriptEngine, std::string_view handlerName) noexcept;

@@ -8,9 +8,10 @@
 #include "program/EngineComponent.hpp"
 #include "util/Definitions.hpp"
 
-#include <sol/sol.hpp>
+#include "sol/error.hpp"
 
 #include <memory>
+#include <variant>
 
 namespace tudov
 {
@@ -27,6 +28,7 @@ namespace tudov
 		[[nodiscard]] virtual bool IsValidEventID(EventID eventID) const noexcept = 0;
 		virtual void ClearInvalidScriptEvents() noexcept = 0;
 
+		[[nodiscard]] virtual std::size_t GetRuntimeEventsCount() const noexcept = 0;
 		[[nodiscard]] virtual std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator BeginRuntimeEvents() const = 0;
 		[[nodiscard]] virtual std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator EndRuntimeEvents() const = 0;
 
@@ -41,7 +43,7 @@ namespace tudov
 		friend class CoreEvents;
 		friend class LuaAPI;
 
-		private:
+	  private:
 		static ILuaAPI::TInstallation rendererLuaAPIInstallation;
 
 	  protected:
@@ -92,6 +94,7 @@ namespace tudov
 		[[nodiscard]] bool IsValidEventID(EventID eventID) const noexcept override;
 		void ClearInvalidScriptEvents() noexcept override;
 
+		[[nodiscard]] std::size_t GetRuntimeEventsCount() const noexcept override;
 		[[nodiscard]] std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator BeginRuntimeEvents() const override;
 		[[nodiscard]] std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator EndRuntimeEvents() const override;
 	};

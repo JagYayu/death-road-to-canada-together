@@ -79,7 +79,7 @@ namespace tudov
 		std::vector<EventHandler>::const_iterator BeginHandlers() const noexcept;
 		std::vector<EventHandler>::const_iterator EndHandlers() const noexcept;
 
-		std::optional<std::reference_wrapper<RuntimeEvent::Profile>> GetProfile() const noexcept;
+		[[nodiscard]] RuntimeEvent::Profile *GetProfile() const noexcept;
 		void EnableProfiler(bool traceHandlers) noexcept;
 		void DisableProfiler() noexcept;
 

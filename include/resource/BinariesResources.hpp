@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Resources.hpp"
-#include "resource/Binaries.hpp"
+#include "misc/Binaries.hpp"
 
 namespace tudov
 {

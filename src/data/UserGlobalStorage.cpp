@@ -36,7 +36,7 @@ bool UserGlobalStorage::CanWrite() noexcept
 	return true;
 }
 
-EGlobalStorageLocation UserGlobalStorage::GetLocation() const noexcept
+constexpr EGlobalStorageLocation UserGlobalStorage::GetLocation() const noexcept
 {
 	return EGlobalStorageLocation::User;
 }

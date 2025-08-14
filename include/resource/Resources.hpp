@@ -152,7 +152,7 @@ namespace tudov
 			std::shared_ptr<TResource> resource;
 			try
 			{
-				resource = std::static_pointer_cast<TResource>(std::make_shared<TDerived>(std::forward<Args>(args)...));
+				resource = std::static_pointer_cast<TResource>(std::make_shared<TDerived>(path, std::forward<Args>(args)...));
 			}
 			catch (const std::exception &e)
 			{

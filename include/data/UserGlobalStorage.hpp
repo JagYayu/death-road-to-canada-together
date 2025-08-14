@@ -25,6 +25,6 @@ namespace tudov
 		bool CanRead() noexcept override;
 		bool CanWrite() noexcept override;
 
-		EGlobalStorageLocation GetLocation() const noexcept override;
+		constexpr EGlobalStorageLocation GetLocation() const noexcept override;
 	};
 } // namespace tudov

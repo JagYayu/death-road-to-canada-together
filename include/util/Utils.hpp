@@ -8,6 +8,7 @@
 #include "sol/table.hpp"
 #include "sol/types.hpp"
 
+#include <array>
 #include <format>
 
 namespace tudov
@@ -40,6 +41,17 @@ namespace tudov
 
 	template <typename T, size_t N>
 	inline T Average(const T (&data)[N])
+	{
+		T sum{};
+		for (auto i = 0; i < N; ++i)
+		{
+			sum += data[i];
+		}
+		return sum / N;
+	}
+
+	template <typename T, size_t N>
+	inline T Average(const std::array<T, N> &data)
 	{
 		T sum{};
 		for (auto i = 0; i < N; ++i)

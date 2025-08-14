@@ -1,8 +1,83 @@
+local ffi = require("ffi")
+local jit_util = require("jit.util")
+
 local type = type
 
-local function initialize()
-	--
+--- @class dr2c.Utility
+local Utility = {}
+
+local estimateMemoryValueSize = (jit.arch == "x64" or jit.arch == "arm64") and 16 or 8
+local estimateMemoryTableStructSize = 40
+local estimateMemoryThreadSize = (function()
+	collectgarbage()
+	local before = collectgarbage("count") * 1024 -- kilo bytes
+	local co = coroutine.create(function() end)
+	collectgarbage()
+	local after = collectgarbage("count") * 1024
+	return after - before
+end)()
+local estimateMemoryDefaultExtraArgs = {
+	getFunctionMemory = function(func)
+		return 0
+	end,
+	getUserdataMemory = function(userdata)
+		return 0
+	end,
+}
+
+local function estimateMemorySizeImpl(value, extraArgs, visitedTables)
+	local type_ = type(value)
+	if type_ == "boolean" or type_ == "number" then
+		return estimateMemoryValueSize
+	elseif type_ == "string" then
+		return estimateMemoryValueSize + #value
+	elseif type_ == "function" then
+		return estimateMemoryValueSize + extraArgs.getFunctionMemory(value)
+	elseif type_ == "userdata" then
+		return estimateMemoryValueSize + extraArgs.getUserdataMemory(value)
+	elseif type_ == "thread" then
+		return estimateMemoryValueSize + estimateMemoryThreadSize
+	elseif type_ == "cdata" then
+		local ok, size = pcall(ffi.sizeof, value)
+		if ok then
+			return estimateMemoryValueSize + size
+		else
+			return estimateMemoryValueSize
+		end
+	elseif type_ == "table" then
+		if visitedTables[value] then
+			return 0
+		else
+			visitedTables[value] = true
+		end
+
+		local array_size = jit_util.tablen(value)
+		local hash_size = jit_util.tablekeys(value)
+
+		local size = estimateMemoryTableStructSize
+		size = size + array_size * estimateMemoryValueSize
+		size = size + hash_size * estimateMemoryValueSize * 2
+
+		for k, v in pairs(value) do
+			size = size + estimateMemorySizeImpl(k, extraArgs, visitedTables)
+			size = size + estimateMemorySizeImpl(v, extraArgs, visitedTables)
+		end
+
+		return size
+	else
+		return 0
+	end
 end
+
+local function estimateMemorySize(value, extraArgs)
+	if type(extraArgs) ~= "table" then
+		extraArgs = estimateMemoryDefaultExtraArgs
+	end
+
+	estimateMemorySizeImpl(value, extraArgs)
+end
+
+local function initialize() end
 
 local lockedTables = setmetatable({}, { __mode = "k" })
 
@@ -20,13 +95,15 @@ end
 --- @param modGlobals table
 --- @param luaGlobals table
 local function postProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals)
-	modGlobals.mod = luaGlobals.getModConfig(modUID)
+	local modNamespace = luaGlobals.getModConfig(modUID).namespace
+
+	modGlobals.modNamespace = modNamespace
+	modGlobals.modSandboxed = sandboxed
+	modGlobals.modUID = modUID
 
 	function modGlobals.N_(str)
-		return ("%s_%s"):format(modGlobals.mod.namespace, str)
+		return ("%s_%s"):format(modNamespace, str)
 	end
-
-	assert(modGlobals.N_ == nil)
 
 	if sandboxed then
 		local getmetatable = luaGlobals.getmetatable
@@ -74,6 +151,7 @@ local function postProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed,
 end
 
 return {
+	estimateMemorySize = estimateMemorySize,
 	initialize = initialize,
 	markAsLocked = markAsLocked,
 	postProcessModGlobals = postProcessModGlobals,

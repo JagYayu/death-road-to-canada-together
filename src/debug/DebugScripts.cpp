@@ -1,11 +1,10 @@
 #include "debug/DebugScripts.hpp"
 
 #include "debug/DebugUtils.hpp"
-#include "mod/ModManager.hpp"
+#include "i18n/Localization.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptProvider.hpp"
-#include "mod/UnpackagedMod.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "util/LogMicros.hpp"
 #include "util/SystemUtils.hpp"
@@ -44,26 +43,38 @@ void DebugScripts::UpdateAndRender(IWindow &window) noexcept
 	bool p_open = true;
 
 	ImGui::SetNextWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
-	if (!ImGui::Begin("Scripts", &p_open))
+	if (ImGui::Begin("Scripts", &p_open))
 	{
+		if (ImGui::Button("Errors"))
+		{
+			//
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Provided"))
+		{
+			//
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Loaded"))
+		{
+			//
+		}
+
+		ImGui::Separator();
+
+		ImGui::InputText("Script name filter", _filterText, IM_ARRAYSIZE(_filterText));
+
+		if (window.GetScriptLoader().HasAnyLoadError())
+		{
+			UpdateAndRenderLoadtimeErrorArea(window);
+		}
+		else
+		{
+			UpdateAndRenderRuntimeErrorArea(window);
+		}
+
 		ImGui::End();
-		return;
 	}
-
-	ImGui::InputText("Script name filter", _filterText, IM_ARRAYSIZE(_filterText));
-
-	ImGui::Separator();
-
-	if (window.GetScriptLoader().HasAnyLoadError())
-	{
-		UpdateAndRenderLoadtimeErrorArea(window);
-	}
-	else
-	{
-		UpdateAndRenderRuntimeErrorArea(window);
-	}
-
-	ImGui::End();
 }
 
 void DebugScripts::UpdateAndRenderLoadtimeErrorArea(IWindow &window) noexcept
@@ -75,6 +86,7 @@ void DebugScripts::UpdateAndRenderLoadtimeErrorArea(IWindow &window) noexcept
 		return;
 	}
 
+	ILocalization &localization = window.GetLocalization();
 	IScriptProvider &scriptProvider = window.GetScriptProvider();
 
 	auto &errors = window.GetScriptLoader().GetLoadErrorsCached();

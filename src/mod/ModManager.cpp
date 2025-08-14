@@ -205,7 +205,8 @@ void ModManager::UpdateScriptPending(std::string_view scriptName, TextID scriptT
 	{
 		_updateScriptsPending = std::make_unique<HotReloadScriptsMap>();
 	}
-	(*_updateScriptsPending)[std::string(scriptName)] = std::make_tuple(scriptTextID, std::string(scriptModUID));
+
+	(*_updateScriptsPending)[std::string(scriptName)] = std::make_tuple(scriptTextID, scriptModUID);
 }
 
 void ModManager::Update()

@@ -69,7 +69,8 @@ namespace tudov
 		};
 
 	  protected:
-		using HotReloadScriptsMap = std::unordered_map<std::string, std::tuple<TextID, std::string>>;
+		//                                             scriptName              textID  modUID
+		using HotReloadScriptsMap = std::unordered_map<std::string, std::tuple<TextID, std::string_view>>;
 
 	  private:
 		std::shared_ptr<Log> _log;

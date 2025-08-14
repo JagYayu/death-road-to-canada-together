@@ -6,6 +6,8 @@
 -- function SpriteRenderer.test()
 -- end
 
+print(_G)
+
 local renderTarget
 local drawOnce = true
 

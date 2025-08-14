@@ -10,6 +10,7 @@ namespace tudov
 	struct IScriptErrors;
 	struct IScriptLoader;
 	struct IScriptProvider;
+	struct ILocalization;
 	class Config;
 	class Engine;
 	class MainArgs;
@@ -42,6 +43,7 @@ namespace tudov
 		IScriptLoader &GetScriptLoader();
 		IScriptProvider &GetScriptProvider();
 		IGlobalStorageManager &GetGlobalStorageManager();
+		ILocalization &GetLocalization();
 		GlobalResourcesCollection &GetGlobalResourcesCollection();
 		VirtualFileSystem &GetVirtualFileSystem();
 		WindowManager &GetWindowManager();
@@ -94,6 +96,11 @@ namespace tudov
 		inline const IGlobalStorageManager &GetGlobalStorageManager() const
 		{
 			return This()->GetGlobalStorageManager();
+		}
+
+		inline const ILocalization &GetLocalization() const
+		{
+			return This()->GetLocalization();
 		}
 
 		inline const GlobalResourcesCollection &GetGlobalResourcesCollection() const
@@ -225,6 +232,16 @@ namespace tudov
 		inline IGlobalStorageManager &GetGlobalStorageManager() noexcept
 		{
 			return GetContext().GetGlobalStorageManager();
+		}
+
+		ILocalization &GetLocalization() noexcept
+		{
+			return GetContext().GetLocalization();
+		}
+
+		const ILocalization &GetLocalization() const noexcept
+		{
+			return GetContext().GetLocalization();
 		}
 
 		inline const IGlobalStorageManager &GetGlobalStorageManager() const noexcept

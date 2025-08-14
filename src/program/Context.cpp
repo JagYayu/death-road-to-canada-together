@@ -1,4 +1,5 @@
 #include "program/Context.hpp"
+#include "i18n/Localization.hpp"
 #include "program/Engine.hpp"
 
 #include "resource/GlobalResourcesCollection.hpp"
@@ -67,6 +68,11 @@ IScriptProvider &Context::GetScriptProvider()
 IGlobalStorageManager &Context::GetGlobalStorageManager()
 {
 	return *GetEngine()._globalStorageManager;
+}
+
+ILocalization &Context::GetLocalization()
+{
+	return *GetEngine()._localization;
 }
 
 GlobalResourcesCollection &Context::GetGlobalResourcesCollection()

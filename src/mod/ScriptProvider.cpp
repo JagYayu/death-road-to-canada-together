@@ -3,10 +3,14 @@
 #include "data/VirtualFileSystem.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "util/Definitions.hpp"
+#include "util/EnumFlag.hpp"
+#include "util/LogMicros.hpp"
 #include "util/StringUtils.hpp"
 
 #include <cassert>
+#include <stdexcept>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
 using namespace tudov;
@@ -45,12 +49,48 @@ Log &ScriptProvider::GetLog() noexcept
 void ScriptProvider::Initialize() noexcept
 {
 	constexpr decltype(auto) directory = "app/lua";
-	std::vector<VirtualFileSystem::ListEntry> luaFilePaths = GetVirtualFileSystem().List(directory, VirtualFileSystem::ListOption::File);
+
+	auto entries = GetVirtualFileSystem().List(directory, EnumFlag::BitOr(
+	                                                          VirtualFileSystem::ListOption::File,
+	                                                          VirtualFileSystem::ListOption::Recursed,
+	                                                          VirtualFileSystem::ListOption::Sorted));
 	TextResources &textResources = GetGlobalResourcesCollection().GetTextResources();
 
-	for (auto &&[relativePath, isDirectory] : luaFilePaths)
+	std::unordered_set<std::string_view> excludedScripts = {
+	    "jit/bc.lua",
+	    "jit/bcsave.lua",
+	    "jit/dis_arm.lua",
+	    "jit/dis_arm64.lua",
+	    "jit/dis_arm64be.lua",
+	    "jit/dis_mips.lua",
+	    "jit/dis_mips64.lua",
+	    "jit/dis_mips64el.lua",
+	    "jit/dis_mips64r6.lua",
+	    "jit/dis_mips64r6el.lua",
+	    "jit/dis_mipsel.lua",
+	    "jit/dis_ppc.lua",
+	    "jit/dis_x64.lua",
+	    "jit/dis_x86.lua",
+	    "jit/dump.lua",
+	    "jit/p.lua",
+	    "jit/v.lua",
+	    "jit/zone.lua",
+	};
+
+	for (auto &&[relativePath, isDirectory] : entries)
 	{
-		auto &&fullPath = (std::filesystem::path(directory) / relativePath).generic_string();
+		if (excludedScripts.contains(relativePath))
+		{
+			continue;
+		}
+
+		std::filesystem::path relative = relativePath;
+		if (relative.extension() != ".lua")
+		{
+			continue;
+		}
+
+		auto &&fullPath = (directory / relative).generic_string();
 		TextID textID = textResources.GetResourceID(fullPath);
 
 		if (textID != 0) [[likely]]
@@ -62,7 +102,7 @@ void ScriptProvider::Initialize() noexcept
 		}
 		else [[unlikely]]
 		{
-			Warn("lua file was found in VFS, but not in TextResource! path: \"{}\"", relativePath);
+			Warn("lua file was found in VFS, but not in Text! path: \"{}\"", relativePath);
 		}
 	}
 }
@@ -83,13 +123,19 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, TextID scrip
 		}
 	}
 
-	// std::shared_ptr<TextResource> scriptCode = GetGlobalResourcesCollection().GetTextResources().GetResource(scriptTextID);
-
 	++_latestScriptID;
 	ScriptID scriptID = _latestScriptID;
-	std::string &name = _scriptID2Entry.try_emplace(scriptID, std::string(scriptName), scriptTextID, modUID).first->second.name;
+
+	auto result = _scriptID2Entry.try_emplace(scriptID, std::string(scriptName), scriptTextID, modUID);
+	if (!result.second) [[unlikely]]
+	{
+		throw std::runtime_error("Failed to add script");
+	}
+
+	const std::string &name = result.first->second.name;
 	Trace("Add script <{}>\"{}\"", scriptID, name);
 	_scriptName2ID.emplace(name, scriptID);
+
 	return scriptID;
 }
 
@@ -198,7 +244,7 @@ TextID ScriptProvider::GetScriptTextID(ScriptID scriptID) const noexcept
 	return it->second.textID;
 }
 
-std::shared_ptr<TextResource> ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
+std::shared_ptr<Text> ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
 {
 	auto &&it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())

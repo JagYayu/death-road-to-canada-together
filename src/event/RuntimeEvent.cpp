@@ -42,13 +42,13 @@ std::vector<EventHandler>::const_iterator RuntimeEvent::EndHandlers() const noex
 	return _handlers.end();
 }
 
-std::optional<std::reference_wrapper<RuntimeEvent::Profile>> RuntimeEvent::GetProfile() const noexcept
+RuntimeEvent::Profile *RuntimeEvent::GetProfile() const noexcept
 {
 	if (_profile)
 	{
-		return *_profile;
+		return _profile.get();
 	}
-	return std::nullopt;
+	return nullptr;
 }
 
 void RuntimeEvent::EnableProfiler(bool traceHandlers) noexcept
@@ -171,11 +171,13 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 		++_invocationTrackID;
 	}
 
+	IScriptEngine &scriptEngine = eventManager.GetScriptEngine();
+
 	bool anyKey = key.IsAny();
 
 	if (profile)
 	{
-		profile->eventProfiler.BeginEvent(eventManager.GetScriptEngine());
+		profile->eventProfiler.BeginEvent(scriptEngine);
 	}
 
 	if (EnumFlag::HasAny(options, EInvocation::CacheHandlers))
@@ -214,34 +216,34 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 
 		if (anyKey)
 		{
-			for (auto &&handler : *cache)
+			for (EventHandler *handler : *cache)
 			{
 				PCallHandler(_log, *handler, e);
 			}
 		}
 		else
 		{
-			for (auto &&handler : *cache)
+			for (EventHandler *handler : *cache)
 			{
 				PCallHandler(_log, *handler, e, key);
 			}
 		}
 	}
-	else // !EnumFlag::HasAny(options, EInvocation::CacheHandlers)
+	else // * !EnumFlag::HasAny(options, EInvocation::CacheHandlers)
 	{
 		if (anyKey)
 		{
 			if (_profile && _profile->traceHandlers)
 			{
-				for (auto &&handler : _handlers)
+				for (EventHandler &handler : _handlers)
 				{
 					PCallHandler(_log, handler, e);
-					_profile->eventProfiler.TraceHandler(eventManager.GetScriptEngine(), handler.name);
+					_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
 				}
 			}
 			else
 			{
-				for (auto &&handler : _handlers)
+				for (EventHandler &handler : _handlers)
 				{
 					PCallHandler(_log, handler, e, key);
 				}
@@ -251,18 +253,18 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 		{
 			if (_profile && _profile->traceHandlers)
 			{
-				for (auto &&handler : _handlers)
+				for (EventHandler &handler : _handlers)
 				{
 					if (handler.key.Match(key))
 					{
 						PCallHandler(_log, handler, e);
-						_profile->eventProfiler.TraceHandler(eventManager.GetScriptEngine(), handler.name);
+						_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
 					}
 				}
 			}
 			else
 			{
-				for (auto &&handler : _handlers)
+				for (EventHandler &handler : _handlers)
 				{
 					if (handler.key.Match(key))
 					{
@@ -275,7 +277,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 
 	if (profile)
 	{
-		profile->eventProfiler.EndEvent(eventManager.GetScriptEngine());
+		profile->eventProfiler.EndEvent(scriptEngine);
 	}
 }
 

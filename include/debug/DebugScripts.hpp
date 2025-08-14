@@ -12,6 +12,15 @@ namespace tudov
 
 	class DebugScripts : public IDebugElement, public ILogProvider
 	{
+	  protected:
+		enum class EPage
+		{
+			Errors,
+			Provided,
+			Loaded,
+			Inspect,
+		};
+
 	  public:
 		inline static constexpr std::string_view Name() noexcept
 		{
@@ -22,7 +31,7 @@ namespace tudov
 		std::weak_ptr<IWindow> window;
 
 	  protected:
-	  	std::atomic<bool> isOpeningScriptEditor = false;
+		std::atomic<bool> isOpeningScriptEditor = false;
 		std::thread _openScriptEditorThread;
 		std::size_t _selectedIndex = -1;
 		bool _autoScroll = true;

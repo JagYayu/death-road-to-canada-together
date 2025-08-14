@@ -2,6 +2,7 @@
 
 #include "util/Micros.hpp"
 
+#include <cstdint>
 #include <json.hpp>
 
 namespace tudov
@@ -14,6 +15,17 @@ namespace tudov
 		Image,
 		Audio,
 		Font,
+	};
+
+	enum class EResourceTypeUsage : std::uint16_t
+	{
+		All = static_cast<std::underlying_type_t<EResourceType>>(-1),
+		None = 0,
+		Binary = 1 << (static_cast<std::underlying_type_t<EResourceType>>(EResourceType::Binary) - 1),
+		Text = 1 << (static_cast<std::underlying_type_t<EResourceType>>(EResourceType::Text) - 1),
+		Image = 1 << (static_cast<std::underlying_type_t<EResourceType>>(EResourceType::Image) - 1),
+		Audio = 1 << (static_cast<std::underlying_type_t<EResourceType>>(EResourceType::Audio) - 1),
+		Font = 1 << (static_cast<std::underlying_type_t<EResourceType>>(EResourceType::Font) - 1),
 	};
 
 	struct ResourceType
@@ -34,6 +46,7 @@ namespace tudov
 				return "Audio";
 			case EResourceType::Font:
 				return "Font";
+			case EResourceType::Unknown:
 			default:
 				return "Unknown";
 			}
@@ -46,6 +59,7 @@ namespace tudov
 	};
 
 	NLOHMANN_JSON_SERIALIZE_ENUM(EResourceType, {
+	                                                {EResourceType::Unknown, "Unknown"},
 	                                                {EResourceType::Binary, "Binary"},
 	                                                {EResourceType::Text, "Text"},
 	                                                {EResourceType::Image, "Image"},

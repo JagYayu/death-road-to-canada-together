@@ -7,6 +7,7 @@
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "program/Context.hpp"
+#include "sol/error.hpp"
 #include "util/Definitions.hpp"
 #include "util/Utils.hpp"
 
@@ -19,6 +20,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string_view>
+#include <variant>
 
 using namespace tudov;
 
@@ -609,6 +611,11 @@ std::optional<std::reference_wrapper<AbstractEvent>> EventManager::TryGetRegistr
 		}
 	}
 	return std::nullopt;
+}
+
+std::size_t EventManager::GetRuntimeEventsCount() const noexcept
+{
+	return _runtimeEvents.size();
 }
 
 std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator EventManager::BeginRuntimeEvents() const

@@ -102,7 +102,7 @@ void VirtualFileSystem::MountDirectory(const std::filesystem::path &path) noexce
 	}
 }
 
-void VirtualFileSystem::MountFile(const std::filesystem::path &path, std::vector<std::byte> bytes) noexcept
+void VirtualFileSystem::MountFile(const std::filesystem::path &path, const std::vector<std::byte> &bytes) noexcept
 {
 	TE_DEBUG("Mount file \"{}\"", path.generic_string());
 
@@ -114,9 +114,14 @@ void VirtualFileSystem::MountFile(const std::filesystem::path &path, std::vector
 
 		if (part.has_extension()) // TODO or this is the last part, then we assume it is a file ... right?
 		{
-			EResourceType resourceType = EResourceType::Unknown;
-			_onMountFile.Invoke(path, bytes, resourceType);
-			currentDirectory->children.emplace(partStr, FileNode(bytes, resourceType));
+			auto result = currentDirectory->children.emplace(partStr, FileNode(bytes, EResourceType::Unknown));
+			if (!result.second) [[unlikely]]
+			{
+				TE_FATAL("{}", "Failed to add child node");
+			}
+
+			auto &node = std::get<FileNode>(result.first->second);
+			_onMountFile.Invoke(path, node.bytes, node.resourceType);
 
 			break;
 		}
@@ -211,12 +216,10 @@ bool VirtualFileSystem::RemountFile(const std::filesystem::path &path, const std
 	{
 		auto &fileNode = std::get<FileNode>(*node);
 		auto &oldBytes = fileNode.bytes;
-
-		EResourceType resourceType = EResourceType::Unknown;
-		_onRemountFile.Invoke(path, bytes, oldBytes, resourceType);
-
 		fileNode.bytes = bytes;
-		fileNode.resourceType = resourceType;
+		fileNode.resourceType = EResourceType::Unknown;
+
+		_onRemountFile.Invoke(path, fileNode.bytes, oldBytes, fileNode.resourceType);
 
 		return true;
 	}

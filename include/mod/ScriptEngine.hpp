@@ -6,6 +6,7 @@
 
 #include "sol/load_result.hpp"
 #include "sol/state.hpp"
+#include "util/Utils.hpp"
 
 #include <format>
 #include <memory>
@@ -120,5 +121,6 @@ namespace tudov
 
 	  private:
 		void AssertLuaValue(sol::object value, std::string_view name) noexcept;
+		sol::object MakeReadonlyGlobalImpl(sol::object obj, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited) noexcept;
 	};
 } // namespace tudov

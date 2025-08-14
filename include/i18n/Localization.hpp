@@ -1,43 +1,68 @@
 #pragma once
 
 #include "Language.hpp"
-#include "program/EngineComponent.hpp"
+#include "TranslationPack.hpp"
 #include "util/Log.hpp"
 
-#include <cstddef>
+#include <cassert>
+#include <format>
 #include <memory>
 #include <string_view>
 #include <unordered_map>
-#include <variant>
 #include <vector>
 
 namespace tudov
 {
 	class Translation;
 
-	struct ILocalization : public IEngineComponent
+	struct ILocalization
 	{
-		virtual Language GetLanguage() noexcept = 0;
-		virtual std::vector<std::weak_ptr<Translation>> GetTranslations() noexcept = 0;
-		virtual std::optional<std::string_view> GetText(std::string_view key, std::variant<Language, std::nullptr_t> lang) noexcept = 0;
+		virtual ~ILocalization() noexcept = default;
 
-		virtual Language GetDefaultLanguage() noexcept;
+		virtual ELanguage GetDefaultLanguage() const noexcept;
+
+		virtual Language GetFirstLanguage() const noexcept = 0;
+		virtual std::vector<Language> GetLanguageOrders() const noexcept = 0;
+		virtual std::vector<std::weak_ptr<TranslationPack>> GetTranslationPacks() const noexcept = 0;
+		virtual std::string_view GetText(std::string_view key) const noexcept = 0;
+
+		template <typename... TArgs>
+		std::string GetFormattedText(std::string_view key, TArgs &&...args) const noexcept
+		{
+			auto format = GetText(key);
+			try
+			{
+				return std::vformat(format, std::make_format_args(std::forward<TArgs>(args)...));
+			}
+			catch (...)
+			{
+				return std::string(format);
+			}
+		}
 	};
 
 	class Localization : public ILocalization, public ILogProvider
 	{
 	  private:
 		std::shared_ptr<Log> _log;
-		Language _language;
-		std::vector<std::shared_ptr<Translation>> _translations;
-		std::unordered_map<Language, std::vector<std::weak_ptr<Translation>>> _language2translationsCaches;
+		std::vector<Language> _languageOrders;
+		std::vector<std::shared_ptr<TranslationPack>> _translationPacks;
+
+		mutable std::unordered_map<std::string, std::string_view> _caches;
 
 	  public:
 		explicit Localization() noexcept;
-		virtual ~Localization() noexcept = default;
+		~Localization() noexcept override = default;
 
-		Language GetLanguage() noexcept override;
-		std::vector<std::weak_ptr<Translation>> GetTranslations() noexcept override;
-		std::optional<std::string_view> GetText(std::string_view key, std::variant<Language, std::nullptr_t> lang) noexcept override;
+		Log &GetLog() noexcept override;
+
+		Language GetFirstLanguage() const noexcept override;
+		std::vector<Language> GetLanguageOrders() const noexcept override;
+		std::vector<std::weak_ptr<TranslationPack>> GetTranslationPacks() const noexcept override;
+		bool HasTextKey(std::string_view key) const noexcept;
+		std::string_view GetText(std::string_view key) const noexcept override;
+
+	  private:
+		std::string_view GetTextUncached(std::string_view key) const noexcept;
 	};
 } // namespace tudov
