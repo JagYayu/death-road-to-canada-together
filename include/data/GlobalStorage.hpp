@@ -16,7 +16,7 @@ namespace tudov
 	/**
 	 * Abstract Class
 	 */
-	class GlobalStorage : public IStorage, public ILogProvider
+	class GlobalStorage : public IStorage, private ILogProvider
 	{
 	  protected:
 		IGlobalStorageManager &_globalStorageManager;

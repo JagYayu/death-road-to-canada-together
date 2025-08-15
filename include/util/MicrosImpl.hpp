@@ -1,5 +1,16 @@
+/**
+ * @file MicrosImpl.hpp
+ * @author JagYayu
+ * @brief Micros for project implementation files.
+ * @version 1.0
+ * @date 2025-08-15
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #ifdef TE_MICROS_IMPL_HPP
-#error "MicrosImpl.hpp" file should be include in ".cpp" file without duplication.
+#	error "MicrosImpl.hpp" file should be include in ".cpp" file without duplication.
 #endif
 #define TE_MICROS_IMPL_HPP
 

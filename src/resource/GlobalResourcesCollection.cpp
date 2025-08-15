@@ -47,108 +47,46 @@ Log &GlobalResourcesCollection::GetLog() noexcept
 	return *Log::Get("GlobalResourcesCollection");
 }
 
-void GlobalResourcesCollection::Initialize() noexcept
+void GlobalResourcesCollection::PreInitialize() noexcept
 {
-	auto &vfs = GetVirtualFileSystem();
+	auto &virtualFileSystem = GetVirtualFileSystem();
 
-	_handlerIDOnVFSMountFile = vfs.GetOnMountFile() += [this](const std::filesystem::path &path, const std::vector<std::byte> &bytes, EResourceType &resourceType)
+	_handlerIDOnVFSMountFile = virtualFileSystem.GetOnMountFile() += [this](const std::filesystem::path &path, const std::vector<std::byte> &bytes, EResourceType &resourceType)
 	{
 		auto [type, _] = LoadResource(path, bytes);
 		resourceType = type;
 	};
-	_handlerIDOnVFSDismountFile = vfs.GetOnDismountFile() += [this](const std::filesystem::path &path)
+	_handlerIDOnVFSDismountFile = virtualFileSystem.GetOnDismountFile() += [this](const std::filesystem::path &path)
 	{
 		UnloadResource(path);
 	};
-	_handlerIDOnVFSRemountFile = vfs.GetOnRemountFile() += [this](const std::filesystem::path &path, const std::vector<std::byte> &bytes, const std::vector<std::byte> &, EResourceType &resourceType)
+	_handlerIDOnVFSRemountFile = virtualFileSystem.GetOnRemountFile() += [this](const std::filesystem::path &path, const std::vector<std::byte> &bytes, const std::vector<std::byte> &, EResourceType &resourceType)
 	{
 		auto [type, _, _1] = ReloadResource(path, bytes);
 		resourceType = type;
 	};
 }
 
-void GlobalResourcesCollection::Deinitialize() noexcept
+void GlobalResourcesCollection::Initialize() noexcept
 {
-	auto &vfs = GetVirtualFileSystem();
-
-	vfs.GetOnMountFile() -= _handlerIDOnVFSMountFile;
-	vfs.GetOnDismountFile() -= _handlerIDOnVFSDismountFile;
-	vfs.GetOnRemountFile() -= _handlerIDOnVFSRemountFile;
 }
 
-// EHierarchyElement GlobalResourcesCollection::Check(const Path &path) noexcept
-// {
-// 	for (const auto &resources : _resourcesList)
-// 	{
-// 		EHierarchyElement result = resources->Check(path);
-// 		if (result != EHierarchyElement::None)
-// 		{
-// 			return result;
-// 		}
-// 	}
-// 	return EHierarchyElement::None;
-// }
+void GlobalResourcesCollection::Deinitialize() noexcept
+{
+}
 
-// bool GlobalResourcesCollection::IsData(const Path &path) noexcept
-// {
-// 	for (const auto &resources : _resourcesList)
-// 	{
-// 		if (resources->IsData(path))
-// 		{
-// 			return true;
-// 		}
-// 	}
-// 	return false;
-// }
+void GlobalResourcesCollection::PostDeinitialize() noexcept
+{
+	auto &virtualFileSystem = GetVirtualFileSystem();
 
-// bool GlobalResourcesCollection::IsDirectory(const Path &path) noexcept
-// {
-// 	for (const auto &resources : _resourcesList)
-// 	{
-// 		if (resources->IsDirectory(path))
-// 		{
-// 			return true;
-// 		}
-// 	}
-// 	return false;
-// }
+	virtualFileSystem.GetOnMountFile() -= _handlerIDOnVFSMountFile;
+	virtualFileSystem.GetOnDismountFile() -= _handlerIDOnVFSDismountFile;
+	virtualFileSystem.GetOnRemountFile() -= _handlerIDOnVFSRemountFile;
 
-// bool GlobalResourcesCollection::IsNone(const Path &path) noexcept
-// {
-// 	for (const auto &resources : _resourcesList)
-// 	{
-// 		if (resources->IsNone(path))
-// 		{
-// 			return true;
-// 		}
-// 	}
-// 	return false;
-// }
-
-// IResource &GlobalResourcesCollection::Get(const Path &dataPath)
-// {
-// 	for (const auto &resources : _resourcesList)
-// 	{
-// 		if (resources->IsData(dataPath))
-// 		{
-// 			return resources->Get(dataPath);
-// 		}
-// 	}
-// 	throw std::runtime_error("resource not found");
-// }
-
-// EHierarchyIterationResult GlobalResourcesCollection::Foreach(const Path &directory, const IterationCallback &callback, void *callbackArgs)
-// {
-// 	for (const auto &resources : _resourcesList)
-// 	{
-// 		EHierarchyIterationResult result = resources->Foreach(directory, callback);
-// 		if (result != EHierarchyIterationResult::Continue)
-// 		{
-// 			return result;
-// 		}
-// 	}
-// 	return EHierarchyIterationResult::Continue;
-// }
+	_handlerIDOnVFSMountFile = 0;
+	_handlerIDOnVFSDismountFile = 0;
+	_handlerIDOnVFSRemountFile = 0;
+}
 
 BinariesResources &GlobalResourcesCollection::GetBinariesResources() noexcept
 {
@@ -217,7 +155,6 @@ inline EResourceType GlobalResourcesCollection::UnloadResource(const std::filesy
 	{
 	case EResourceType::Text:
 		_textResources->Unload(path.generic_string());
-		break;
 		break;
 	case EResourceType::Image:
 		_imageResources->Unload(path.generic_string());

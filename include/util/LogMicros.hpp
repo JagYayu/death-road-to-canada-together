@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/Log.hpp"
+#include "util/Log.hpp" // IWYU pragma: keep
 
 #define TE_G_LOG(Name, Verb, Format, ...)                       \
 	if (auto &&log = ::tudov::Log::Get(Name); log->Can##Verb()) \

@@ -6,8 +6,6 @@
 -- function SpriteRenderer.test()
 -- end
 
-print(_G)
-
 local renderTarget
 local drawOnce = true
 
@@ -57,6 +55,8 @@ events:add(N_("RenderGame"), function(e)
 			height,
 		},
 	})
+
+	-- local a = "" + 2
 end, N_("renderSprites"))
 
 -- return SpriteRenderer

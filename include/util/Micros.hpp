@@ -1,3 +1,14 @@
+/**
+ * @file Micros.hpp
+ * @author JagYayu
+ * @brief Micros for project header files.
+ * @version 1.0
+ * @date 2025-08-15
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #pragma once
 
 #ifdef _MSC_VER
@@ -23,28 +34,3 @@
 #define TE_STATIC_CLASS(Class)          \
 	explicit Class() noexcept = delete; \
 	~Class() noexcept = delete
-
-#define TE_ENUM_FLAG_OPERATORS(E) static_assert(false, "Depreciated, use functions in `EnumFlag.hpp` to operate bits instead.")
-// inline E operator|(E a, E b)                                      \
-// {                                                                 \
-// 	using T = std::underlying_type_t<E>;                          \
-// 	return static_cast<E>(static_cast<T>(a) | static_cast<T>(b)); \
-// }                                                                 \
-// inline E operator&(E a, E b)                                      \
-// {                                                                 \
-// 	using T = std::underlying_type_t<E>;                          \
-// 	return static_cast<E>(static_cast<T>(a) & static_cast<T>(b)); \
-// }                                                                 \
-// inline E operator~(E a)                                           \
-// {                                                                 \
-// 	using T = std::underlying_type_t<E>;                          \
-// 	return static_cast<E>(~static_cast<T>(a));                    \
-// }                                                                 \
-// inline E &operator|=(E &a, E b)                                   \
-// {                                                                 \
-// 	return a = a | b;                                             \
-// }                                                                 \
-// inline E &operator&=(E &a, E b)                                   \
-// {                                                                 \
-// 	return a = a & b;                                             \
-// }

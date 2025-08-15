@@ -26,7 +26,6 @@
 #include "util/Log.hpp"
 #include "util/LogMicros.hpp"
 #include "util/MicrosImpl.hpp"
-#include "util/StringUtils.hpp"
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_timer.h"
@@ -162,15 +161,20 @@ void Engine::Initialize() noexcept
 	{
 		_config->Load();
 		_windowManager->InitializeMainWindow();
-		InitializeMainWindow();
-		InitializeResources();
 
-		for (auto &&it = _components.begin(); it != _components.end(); ++it)
+		for (auto it = _components.begin(); it != _components.end(); ++it)
 		{
-			it->get()->Initialize();
+			(*it)->PreInitialize();
+		}
+
+		for (auto it = _components.begin(); it != _components.end(); ++it)
+		{
+			(*it)->Initialize();
 		}
 
 		PostInitialization();
+
+		_state = EState::Initialized;
 	}
 	TE_DEBUG("{}", "Initialized engine");
 }
@@ -183,7 +187,6 @@ void Engine::PostInitialization() noexcept
 	_previousTick = SDL_GetTicksNS();
 	_beginTick = SDL_GetTicksNS();
 	_framerate = 0;
-	_state = EState::Initialized;
 }
 
 bool Engine::Tick() noexcept
@@ -251,7 +254,7 @@ void Engine::ProcessLoad() noexcept
 
 void Engine::ProcessTick() noexcept
 {
-	if (!_scriptLoader->HasAnyLoadError())
+	if (!_scriptErrors->HasLoadtimeError())
 	{
 		_eventManager->GetCoreEvents().TickUpdate().Invoke();
 	}
@@ -311,16 +314,26 @@ void Engine::Deinitialize() noexcept
 
 	TE_DEBUG("{}", "Deinitializing engine ...");
 	{
-		_modManager->UnloadMods();
+		PreDeinitialization();
 
-		for (auto &&it = _components.rbegin(); it != _components.rend(); ++it)
+		for (auto it = _components.rbegin(); it != _components.rend(); ++it)
 		{
-			it->get()->Deinitialize();
+			(*it)->Deinitialize();
+		}
+
+		for (auto it = _components.rbegin(); it != _components.rend(); ++it)
+		{
+			(*it)->PostDeinitialize();
 		}
 
 		_state = EState::Deinitialized;
 	}
 	TE_DEBUG("{}", "Deinitialized engine");
+}
+
+void Engine::PreDeinitialization() noexcept
+{
+	_modManager->UnloadMods();
 }
 
 void Engine::Quit()
@@ -340,75 +353,6 @@ void Engine::InitializeMainWindow() noexcept
 
 void Engine::InitializeResources() noexcept
 {
-	TE_DEBUG("{}", "Mounting resource files");
-
-	auto &&renderBackend = _config->GetRenderBackend();
-
-	// auto &&loadTexture = [this, renderBackend]() {
-	// 	switch (renderBackend) {
-	// 		textureManager.Load<>(file, window.renderer, std::string_view(data))
-	// 	}
-	// };
-
-	std::unordered_map<EResourceType, std::uint32_t> fileCounts{};
-
-	std::vector<std::regex> mountBitmapPatterns{};
-	for (auto &&pattern : _config->GetMountBitmaps())
-	{
-		mountBitmapPatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
-	}
-
-	auto &imageResources = _globalResourcesCollection->GetImageResources();
-
-	auto &&mountDirectories = _config->GetMountFiles();
-	for (auto &&mountDirectory : _config->GetMountDirectories())
-	{
-		if (!std::filesystem::exists(mountDirectory.data()) || !std::filesystem::is_directory(mountDirectory.data()))
-		{
-			TE_WARN("Invalid directory for mounting resources: {}", mountDirectory.data());
-			continue;
-		}
-
-		for (auto &entry : std::filesystem::recursive_directory_iterator(mountDirectory))
-		{
-			if (!entry.is_regular_file())
-			{
-				continue;
-			}
-
-			auto &&path = entry.path();
-			auto &&it = mountDirectories.find(path.extension().generic_string());
-			if (it == mountDirectories.end())
-			{
-				continue;
-			}
-
-			auto &&filePath = path.generic_string();
-			auto imageID = imageResources.Load(filePath, ReadFileToBytes(filePath));
-			if (!imageID) [[unlikely]]
-			{
-				TE_ERROR("Image ID of \"{}\" is 0!", filePath);
-				continue;
-			}
-
-			// auto &&image = imageResources.GetResource(imageID);
-			// auto &&fileMemory = ReadFileToString(filePath, true);
-			// image->Initialize(fileMemory);
-			// if (image->IsValid())
-			// {
-			// 	fileCounts.try_emplace(it->second, 0).first->second++;
-			// }
-		}
-	}
-
-	TE_DEBUG("{}", "Mounted all resource files");
-	if (CanInfo())
-	{
-		for (auto [fileType, count] : fileCounts)
-		{
-			Info("{}: {}", ResourceType::ToStringView(fileType).data(), count);
-		}
-	}
 }
 
 Log &Engine::GetLog() noexcept

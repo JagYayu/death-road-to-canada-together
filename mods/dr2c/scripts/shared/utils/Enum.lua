@@ -1,3 +1,4 @@
+--- @class dr2c.Enum
 local Enum = {}
 
 local enumerations = {}
@@ -44,5 +45,9 @@ end
 function Enum.extend() end
 
 function Enum.getAll() end
+
+events:add("DebugSnapshot", function(e)
+	e.enumerations = enumerations
+end, nil, nil, scriptName)
 
 return Enum

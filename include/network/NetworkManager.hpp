@@ -12,7 +12,7 @@
 
 namespace tudov
 {
-	struct INetworkManager : public IEngineComponent, public ILogProvider
+	struct INetworkManager : public IEngineComponent, private ILogProvider
 	{
 		static constexpr std::int32_t DefaultUID = 0;
 

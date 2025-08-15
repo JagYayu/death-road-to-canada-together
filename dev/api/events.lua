@@ -3,6 +3,8 @@ error("this is a lua library module")
 
 --- @diagnostic disable: duplicate-doc-alias
 --- @alias Tudov.EventManager.EventName string
+--- @alias Tudov.EventManager.EventName "DebugCommand"
+--- @alias Tudov.EventManager.EventName "DebugSnapshot"
 --- @alias Tudov.EventManager.EventName "KeyDown"
 --- @alias Tudov.EventManager.EventName "KeyUp"
 --- @alias Tudov.EventManager.EventName "MouseButtonDown"

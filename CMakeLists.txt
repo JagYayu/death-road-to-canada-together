@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.21...3.28)
 
 project(tudov
-    VERSION 0.1.0
+    VERSION 1.0
     LANGUAGES CXX
-    DESCRIPTION "Death Road To Canada"
+    DESCRIPTION "Tudov Engine - Death Road to Canada Together"
 )
 
 set(CMAKE_CXX_STANDARD 20)

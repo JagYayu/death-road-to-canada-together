@@ -1,5 +1,6 @@
 #include "data/Constants.hpp"
 #include "graphic/GUI.hpp"
+#include "program/CrashReporter.hpp"
 #include "program/Engine.hpp"
 #include "program/Tudov.hpp"
 #include "test/TestGPURendering.hpp"
@@ -82,10 +83,13 @@ void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority
 
 bool CommonInit(int argc, char **argv) noexcept
 {
-	auto log = *Log::Get("Main");
+	CrashReporter::InitializeCrashReporter();
+
+	const Log &log = *Log::Get("Main");
 
 	log.Info("Application initializing ...");
 
+	// Logging application constants.
 	log.Debug("AppName = {}", Constants::AppName);
 	log.Debug("AppOrganization = {}", Constants::AppOrganization);
 	log.Debug("DataConfigFile = {}", Constants::DataConfigFile);
@@ -104,6 +108,7 @@ bool CommonInit(int argc, char **argv) noexcept
 
 	Tudov::InitMainArgs(argc, argv);
 
+	// Initialize SDL3.
 	SDL_SetLogOutputFunction(SDLLogOutputCallback, nullptr);
 	if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS | SDL_INIT_SENSOR | SDL_INIT_CAMERA)) [[unlikely]]
 	{

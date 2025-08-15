@@ -1,5 +1,7 @@
 #pragma once
 
+#include "util/Definitions.hpp"
+
 #include <functional>
 
 namespace tudov
@@ -12,7 +14,7 @@ namespace tudov
 	{
 	  public:
 		using HandlerType = std::function<void(Args...)>;
-		using HandlerID = size_t;
+		using HandlerID = DelegateEventHandlerID;
 
 	  private:
 		std::vector<std::pair<HandlerID, HandlerType>> _handlers;

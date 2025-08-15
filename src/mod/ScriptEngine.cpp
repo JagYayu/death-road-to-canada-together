@@ -3,8 +3,8 @@
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
+#include "mod/ScriptModule.hpp"
 #include "mod/ScriptProvider.hpp"
-#include "sol/protected_function_result.hpp"
 #include "util/Definitions.hpp"
 #include "util/LogMicros.hpp"
 #include "util/Utils.hpp"
@@ -12,6 +12,7 @@
 #include "sol/environment.hpp"
 #include "sol/forward.hpp"
 #include "sol/load_result.hpp"
+#include "sol/protected_function_result.hpp"
 #include "sol/string_view.hpp"
 #include "sol/table.hpp"
 #include "sol/types.hpp"
@@ -19,6 +20,7 @@
 
 #include <cassert>
 #include <corecrt_terminate.h>
+#include <stdexcept>
 #include <unordered_map>
 
 using namespace tudov;
@@ -39,6 +41,20 @@ Log &ScriptEngine::GetLog() noexcept
 Context &ScriptEngine::GetContext() noexcept
 {
 	return _context;
+}
+
+void ScriptEngine::PreInitialize() noexcept
+{
+	IScriptLoader &scriptLoader = GetScriptLoader();
+
+	scriptLoader.GetOnUnloadScript() += [this](ScriptID scriptID, std::string_view scriptName) -> void
+	{
+		DeinitializeScript(scriptID, scriptName);
+	};
+}
+
+void ScriptEngine::PostDeinitialize() noexcept
+{
 }
 
 void ScriptEngine::Initialize() noexcept
@@ -171,6 +187,23 @@ sol::table ScriptEngine::CreateTable(uint32_t arr, uint32_t hash) noexcept
 sol::load_result ScriptEngine::LoadFunction(const std::string &name, std::string_view code)
 {
 	return _lua.load(code, name, sol::load_mode::any);
+}
+
+std::string ScriptEngine::Inspect(sol::object obj)
+{
+	if (!obj.valid()) [[unlikely]]
+	{
+		throw std::runtime_error("Must be a valid lua value!");
+	}
+
+	sol::protected_function_result result = _luaInspect(obj);
+	if (!result.valid()) [[unlikely]]
+	{
+		sol::error err = result;
+		TE_FATAL("Failed to inspect table: {}", err.what());
+	}
+
+	return std::string(result.get<sol::string_view>());
 }
 
 int ScriptEngine::ThrowError(std::string_view message) noexcept
@@ -353,24 +386,32 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 	{
 		try
 		{
-			auto &&scriptProvider = GetScriptProvider();
-			auto targetScriptID = scriptProvider.GetScriptIDByName(targetScriptName);
+			IScriptProvider &scriptProvider = GetScriptProvider();
+
+			ScriptID targetScriptID = scriptProvider.GetScriptIDByName(targetScriptName);
 			if (targetScriptID)
 			{
-				auto &&scriptLoader = GetScriptLoader();
+				IScriptLoader &scriptLoader = GetScriptLoader();
+
+				if (!scriptLoader.IsScriptValid(scriptID)) [[unlikely]]
+				{
+					IScriptEngine::ThrowError("Cannot require '{}': Target module is invalid (probably loadtime error)", targetScriptName.data());
+					return sol::nil;
+				}
+
 				if (!scriptProvider.IsStaticScript(targetScriptID))
 				{
 					scriptLoader.AddReverseDependency(scriptID, targetScriptID);
 				}
 
-				auto &&targetModule = scriptLoader.Load(targetScriptID);
+				const std::shared_ptr<IScriptModule> &targetModule = scriptLoader.Load(targetScriptID);
 				if (targetModule)
 				{
 					return targetModule->LazyLoad(scriptLoader);
 				}
 			}
 
-			auto &&virtualModule = scriptGlobals[targetScriptName];
+			const auto &virtualModule = scriptGlobals[targetScriptName];
 			if (virtualModule.valid())
 			{
 				return virtualModule;

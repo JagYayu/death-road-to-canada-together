@@ -1,4 +1,6 @@
 #include "util/Log.hpp"
+#include "util/EnumFlag.hpp"
+#include "util/LogVerbosity.hpp"
 #include "util/Utils.hpp"
 
 #include "json.hpp"
@@ -8,6 +10,8 @@
 #include <format>
 #include <fstream>
 #include <memory>
+#include <optional>
+#include <tuple>
 #include <type_traits>
 
 using namespace tudov;
@@ -16,9 +20,9 @@ static constexpr decltype(auto) defaultModule = "Log";
 static uint32_t logCount = 0;
 static std::unique_ptr<std::thread> logWorker = nullptr;
 
-Log::EVerbosity Log::_globalVerbosities = tudov::Log::EVerbosity::All;
-std::unordered_map<std::string, Log::EVerbosity> Log::_verbosities{};
-std::unordered_map<std::string, Log::EVerbosity> Log::_verbositiesOverrides{};
+ELogVerbosity Log::_globalVerbosities = ELogVerbosity::All;
+std::unordered_map<std::string, ELogVerbosity> Log::_verbosities{};
+std::unordered_map<std::string, ELogVerbosity> Log::_verbositiesOverrides{};
 std::unordered_map<std::string, std::shared_ptr<Log>> Log::_logInstances{};
 std::queue<Log::Entry> Log::_queue;
 std::mutex Log::_mutex;
@@ -100,20 +104,20 @@ void Log::Exit() noexcept
 	}
 }
 
-std::optional<Log::EVerbosity> Log::GetVerbosity(const std::string &module) noexcept
+std::optional<ELogVerbosity> Log::GetVerbosity(std::string_view module) noexcept
 {
-	if (auto &&it = _verbositiesOverrides.find(module); it != _verbositiesOverrides.end())
+	if (auto &&it = _verbositiesOverrides.find(module.data()); it != _verbositiesOverrides.end())
 	{
 		return it->second;
 	}
 	return std::nullopt;
 }
 
-bool Log::SetVerbosity(const std::string &module, EVerbosity verb) noexcept
+bool Log::SetVerbosity(std::string_view module, ELogVerbosity flags) noexcept
 {
-	if (auto &&it = _verbositiesOverrides.find(module); it != _verbositiesOverrides.end())
+	if (auto &&it = _verbositiesOverrides.find(module.data()); it != _verbositiesOverrides.end())
 	{
-		it->second = verb;
+		it->second = flags;
 		return true;
 	}
 	return false;
@@ -130,7 +134,7 @@ void Log::UpdateVerbosities(const void *jsonConfig)
 
 	if (auto &&global = config["global"]; global.is_number_integer())
 	{
-		_globalVerbosities = EVerbosity(global.get<std::underlying_type<EVerbosity>::type>());
+		_globalVerbosities = ELogVerbosity(global.get<std::underlying_type<ELogVerbosity>::type>());
 	}
 
 	if (auto &&module = config["module"]; module.is_object())
@@ -139,13 +143,13 @@ void Log::UpdateVerbosities(const void *jsonConfig)
 		{
 			if (value.is_number_integer())
 			{
-				_verbosities[key] = EVerbosity(value.get<std::underlying_type<EVerbosity>::type>());
+				_verbosities[key] = ELogVerbosity(value.get<std::underlying_type<ELogVerbosity>::type>());
 			}
 		}
 	}
 }
 
-std::optional<Log::EVerbosity> Log::GetVerbosityOverride(const std::string &module) noexcept
+std::optional<ELogVerbosity> Log::GetVerbosityOverride(const std::string &module) noexcept
 {
 	auto &&it = _verbositiesOverrides.find("key");
 	if (it != _verbositiesOverrides.end())
@@ -155,9 +159,9 @@ std::optional<Log::EVerbosity> Log::GetVerbosityOverride(const std::string &modu
 	return std::nullopt;
 }
 
-void Log::SetVerbosityOverride(const std::string &module, EVerbosity verb) noexcept
+void Log::SetVerbosityOverride(std::string_view module, ELogVerbosity flags) noexcept
 {
-	_verbositiesOverrides[module] = verb;
+	_verbositiesOverrides[module.data()] = flags;
 }
 
 std::size_t Log::CountLogs() noexcept
@@ -180,12 +184,12 @@ std::size_t Log::CountVerbosities() noexcept
 	return _verbosities.size();
 }
 
-std::unordered_map<std::string, Log::EVerbosity>::const_iterator Log::BeginVerbosities() noexcept
+std::unordered_map<std::string, ELogVerbosity>::const_iterator Log::BeginVerbosities() noexcept
 {
 	return _verbosities.cbegin();
 }
 
-std::unordered_map<std::string, Log::EVerbosity>::const_iterator Log::EndVerbosities() noexcept
+std::unordered_map<std::string, ELogVerbosity>::const_iterator Log::EndVerbosities() noexcept
 {
 	return _verbosities.cend();
 }
@@ -195,18 +199,18 @@ std::size_t Log::CountVerbositiesOverrides() noexcept
 	return _verbositiesOverrides.size();
 }
 
-std::unordered_map<std::string, Log::EVerbosity>::const_iterator Log::BeginVerbositiesOverrides() noexcept
+std::unordered_map<std::string, ELogVerbosity>::const_iterator Log::BeginVerbositiesOverrides() noexcept
 {
 	return _verbositiesOverrides.cbegin();
 }
 
-std::unordered_map<std::string, Log::EVerbosity>::const_iterator Log::EndVerbositiesOverrides() noexcept
+std::unordered_map<std::string, ELogVerbosity>::const_iterator Log::EndVerbositiesOverrides() noexcept
 {
 	return _verbositiesOverrides.cbegin();
 }
 
-Log::Log(const std::string &module) noexcept
-    : _module(module)
+Log::Log(std::string_view module) noexcept
+    : _module(std::string(module))
 {
 	if (logCount == 0 && logWorker == nullptr)
 	{
@@ -223,7 +227,7 @@ Log::~Log() noexcept
 	assert(logCount >= 0);
 }
 
-void Log::Process()
+void Log::Process() noexcept
 {
 	auto &&pred = []
 	{
@@ -233,7 +237,8 @@ void Log::Process()
 	std::filesystem::create_directories("logs");
 	std::ofstream logFile{
 	    std::format("logs/{:%Y_%m_%d_%H_%M}.log", std::chrono::system_clock::now()),
-	    std::ios::app};
+	    std::ios::app,
+	};
 
 	while (!_exit)
 	{
@@ -246,19 +251,47 @@ void Log::Process()
 			_queue.pop();
 			lock.unlock();
 
-			auto &&msg = std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}", entry.time, entry.module, entry.verbosity, entry.message);
-			std::cout << msg << std::endl;
-			logFile << msg << '\n';
-			logFile.flush();
+			std::string message = std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}", entry.time, entry.module, entry.verbosity, entry.message);
+
+			PrintToConsole(message, entry);
+			logFile << message << std::endl;
 
 			lock.lock();
 		}
 	}
 }
 
-bool Log::CanOutput(Log::EVerbosity verb) const noexcept
+void Log::PrintToConsole(std::string_view message, const Entry &entry) noexcept
 {
-	return true;
+	std::string_view color;
+	if (entry.verbosity == VerbTrace)
+		color = "\033[38;5;246m";
+	else if (entry.verbosity == VerbDebug)
+		color = "\033[38;5;39m";
+	else if (entry.verbosity == VerbInfo)
+		color = "\033[38;5;34m";
+	else if (entry.verbosity == VerbWarn)
+		color = "\033[38;5;220m";
+	else if (entry.verbosity == VerbError)
+		color = "\033[38;5;196m";
+	else if (entry.verbosity == VerbFatal)
+		color = "\033[37;41;1m";
+	else
+		color = "";
+
+	if (color != "")
+	{
+		std::cout << color << message << "\033[0m" << std::endl;
+	}
+	else
+	{
+		std::cout << message << std::endl;
+	}
+}
+
+bool Log::CanOutput(ELogVerbosity flag) const noexcept
+{
+	return EnumFlag::HasAll(GetVerbosity(), flag);
 }
 
 void Log::Output(std::string_view verb, std::string_view str) const noexcept

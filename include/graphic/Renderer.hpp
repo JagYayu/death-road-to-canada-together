@@ -63,7 +63,7 @@ namespace tudov
 	class Window;
 	class RenderTarget;
 
-	class Renderer : public IRenderer, public IContextProvider
+	class Renderer : public IRenderer, public IContextProvider, ILogProvider
 	{
 		friend class LuaAPI;
 		friend RenderTarget;
@@ -83,6 +83,8 @@ namespace tudov
 	  public:
 		explicit Renderer(Window &window) noexcept;
 		~Renderer() noexcept = default;
+
+		Log & GetLog()noexcept override;
 
 		void InitializeRenderer() noexcept override;
 		void DeinitializeRenderer() noexcept override;

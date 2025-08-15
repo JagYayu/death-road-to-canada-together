@@ -46,6 +46,8 @@ namespace tudov
 
 		virtual void DeinitializeScript(ScriptID scriptID, std::string_view scriptName) = 0;
 
+		virtual std::string Inspect(sol::object obj) = 0;
+
 		/*
 		 * @warning This is a dangerous function.
 		 */
@@ -64,7 +66,7 @@ namespace tudov
 	class Log;
 	class ScriptError;
 
-	class ScriptEngine : public IScriptEngine, public ILogProvider
+	class ScriptEngine : public IScriptEngine, private ILogProvider
 	{
 	  private:
 		struct PersistVariable
@@ -90,14 +92,18 @@ namespace tudov
 
 		std::vector<std::shared_ptr<ScriptError>> _scriptRuntimeErrors;
 
+		DelegateEventHandlerID _handlerIDUnloadScript = 0;
+
 	  public:
 		explicit ScriptEngine(Context &context) noexcept;
 		~ScriptEngine() noexcept = default;
 
 	  public:
 		Log &GetLog() noexcept override;
-
 		Context &GetContext() noexcept override;
+
+		void PreInitialize() noexcept override;
+		void PostDeinitialize() noexcept override;
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
 
@@ -110,6 +116,7 @@ namespace tudov
 		sol::load_result LoadFunction(const std::string &name, std::string_view code) override;
 		void InitializeScript(ScriptID scriptID, std::string_view scriptName, std::string_view modUID, bool sandboxed, sol::protected_function &func) noexcept override;
 		void DeinitializeScript(ScriptID scriptID, std::string_view scriptName) override;
+		std::string Inspect(sol::object obj) override;
 		std::int32_t ThrowError(std::string_view message) noexcept override;
 
 		void SetReadonlyGlobal(const std::string_view &key, sol::object value);

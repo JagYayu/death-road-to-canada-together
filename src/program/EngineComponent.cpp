@@ -2,14 +2,22 @@
 
 using namespace tudov;
 
-void IEngineComponent ::Initialize() noexcept
+void IEngineComponent::PreInitialize() noexcept
 {
 }
 
-void IEngineComponent ::Deinitialize() noexcept
+void IEngineComponent::Initialize() noexcept
 {
 }
 
-void IEngineComponent ::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
+void IEngineComponent::Deinitialize() noexcept
+{
+}
+
+void IEngineComponent::PostDeinitialize() noexcept
+{
+}
+
+void IEngineComponent::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
 {
 }

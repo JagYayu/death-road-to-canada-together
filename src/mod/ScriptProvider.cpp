@@ -271,12 +271,17 @@ std::string_view ScriptProvider::GetScriptModUID(ScriptID scriptID) noexcept
 	return it->second.modUID;
 }
 
-ScriptProvider::TScriptID2Entry::const_iterator ScriptProvider::begin() const
+std::size_t ScriptProvider::GetEntriesSize() const
+{
+	return _scriptID2Entry.size();
+}
+
+ScriptProvider::TScriptID2Entry::const_iterator ScriptProvider::BeginEntries() const
 {
 	return _scriptID2Entry.begin();
 }
 
-ScriptProvider::TScriptID2Entry::const_iterator ScriptProvider::end() const
+ScriptProvider::TScriptID2Entry::const_iterator ScriptProvider::EndEntries() const
 {
 	return _scriptID2Entry.end();
 }

@@ -50,16 +50,16 @@ decltype(auto) GetMainWindowFromContext(Context &context)
 
 void LuaAPI::Install(sol::state &lua, Context &context)
 {
-	TE_ENUM(Log::EVerbosity,
+	TE_ENUM(ELogVerbosity,
 	        {
-	            {"All", Log::EVerbosity::All},
-	            {"None", Log::EVerbosity::None},
-	            {"Error", Log::EVerbosity::Error},
-	            {"Warn", Log::EVerbosity::Warn},
-	            {"Info", Log::EVerbosity::Info},
-	            {"Debug", Log::EVerbosity::Debug},
-	            {"Trace", Log::EVerbosity::Trace},
-	            {"Fatal", Log::EVerbosity::Fatal},
+	            {"All", ELogVerbosity::All},
+	            {"None", ELogVerbosity::None},
+	            {"Error", ELogVerbosity::Error},
+	            {"Warn", ELogVerbosity::Warn},
+	            {"Info", ELogVerbosity::Info},
+	            {"Debug", ELogVerbosity::Debug},
+	            {"Trace", ELogVerbosity::Trace},
+	            {"Fatal", ELogVerbosity::Fatal},
 	        });
 
 	TE_USERTYPE(Engine,
@@ -76,14 +76,14 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "getPath", &ImageResources::LuaGetPath);
 
 	TE_USERTYPE(Log,
-	            // "Verbosity_All", Log::EVerbosity::All,
-	            // "Verbosity_None", Log::EVerbosity::None,
-	            // "Verbosity_Error", Log::EVerbosity::Error,
-	            // "Verbosity_Warn", Log::EVerbosity::Warn,
-	            // "Verbosity_Info", Log::EVerbosity::Info,
-	            // "Verbosity_Debug", Log::EVerbosity::Debug,
-	            // "Verbosity_Trace", Log::EVerbosity::Trace,
-	            // "Verbosity_Fatal", Log::EVerbosity::Fatal,
+	            // "Verbosity_All", ELogVerbosity::All,
+	            // "Verbosity_None", ELogVerbosity::None,
+	            // "Verbosity_Error", ELogVerbosity::Error,
+	            // "Verbosity_Warn", ELogVerbosity::Warn,
+	            // "Verbosity_Info", ELogVerbosity::Info,
+	            // "Verbosity_Debug", ELogVerbosity::Debug,
+	            // "Verbosity_Trace", ELogVerbosity::Trace,
+	            // "Verbosity_Fatal", ELogVerbosity::Fatal,
 	            "canOutput", &Log::CanOutput,
 	            "output", &Log::Output);
 

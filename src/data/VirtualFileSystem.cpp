@@ -6,11 +6,14 @@
 #include "util/LogMicros.hpp"
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <stdexcept>
 #include <variant>
+#include <vector>
 
 using namespace tudov;
 
@@ -102,7 +105,19 @@ void VirtualFileSystem::MountDirectory(const std::filesystem::path &path) noexce
 	}
 }
 
-void VirtualFileSystem::MountFile(const std::filesystem::path &path, const std::vector<std::byte> &bytes) noexcept
+void VirtualFileSystem::MountFile(const std::filesystem::path &path) noexcept
+{
+	std::basic_ifstream<std::byte> stream{path.generic_string(), std::ios::binary};
+	if (!stream)
+	{
+		TE_ERROR("Failed to mount file \"{}\": failed to open in file stream", path.generic_string());
+	}
+
+	std::vector<std::byte> bytes{std::istreambuf_iterator<std::byte>(stream), std::istreambuf_iterator<std::byte>()};
+	MountFile(path, bytes);
+}
+
+void VirtualFileSystem::MountFile(const std::filesystem::path &path, std::span<const std::byte> bytes) noexcept
 {
 	TE_DEBUG("Mount file \"{}\"", path.generic_string());
 
@@ -114,10 +129,14 @@ void VirtualFileSystem::MountFile(const std::filesystem::path &path, const std::
 
 		if (part.has_extension()) // TODO or this is the last part, then we assume it is a file ... right?
 		{
-			auto result = currentDirectory->children.emplace(partStr, FileNode(bytes, EResourceType::Unknown));
+			FileNode fileNode{
+			    std::vector<std::byte>(bytes.begin(), bytes.end()),
+			    EResourceType::Unknown,
+			};
+			auto result = currentDirectory->children.emplace(partStr, fileNode);
 			if (!result.second) [[unlikely]]
 			{
-				TE_FATAL("{}", "Failed to add child node");
+				TE_FATAL("Failed to add child node \"{}\"", partStr);
 			}
 
 			auto &node = std::get<FileNode>(result.first->second);

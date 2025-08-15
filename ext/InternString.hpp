@@ -4,7 +4,7 @@
  * @file    InternString.hpp
  * @brief   Thread-safe string interning library for unified management and reuse of identical strings
  * @author  JagYayu
- * @version 1.0.0
+ * @version 1.0
  * @license WTFPL
  * @git     https://github.com/JagYayu/InternString
  * @details

@@ -21,13 +21,13 @@ std::string_view DebugLog::GetName() noexcept
 void DebugLog::UpdateAndRender(IWindow &window) noexcept
 {
 	static auto TableLogFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
-	static auto VerbosityLevels = std::vector<std::tuple<Log::EVerbosity, std::string_view>>{
-	    {Log::EVerbosity::Trace, "Trace"},
-	    {Log::EVerbosity::Debug, "Debug"},
-	    {Log::EVerbosity::Info, "Info"},
-	    {Log::EVerbosity::Warn, "Warn"},
-	    {Log::EVerbosity::Error, "Error"},
-	    {Log::EVerbosity::All, "Toggle All"},
+	static auto VerbosityLevels = std::vector<std::tuple<ELogVerbosity, std::string_view>>{
+	    {ELogVerbosity::Trace, "Trace"},
+	    {ELogVerbosity::Debug, "Debug"},
+	    {ELogVerbosity::Info, "Info"},
+	    {ELogVerbosity::Warn, "Warn"},
+	    {ELogVerbosity::Error, "Error"},
+	    {ELogVerbosity::All, "Toggle All"},
 	};
 
 	if (ImGui::BeginTable("Log", VerbosityLevels.size() + 1, TableLogFlags))
@@ -45,7 +45,7 @@ void DebugLog::UpdateAndRender(IWindow &window) noexcept
 			++id;
 
 			const std::string &module = it->first;
-			Log::EVerbosity verbosities = it->second->GetVerbosity();
+			ELogVerbosity verbosities = it->second->GetVerbosity();
 
 			ImGui::TableNextRow();
 
@@ -62,12 +62,12 @@ void DebugLog::UpdateAndRender(IWindow &window) noexcept
 				{
 					if (ImGui::Button("On"))
 					{
-						Log::SetVerbosity(module, Log::EVerbosity::All);
+						Log::SetVerbosity(module, ELogVerbosity::All);
 					}
 					ImGui::SameLine();
 					if (ImGui::Button("Off"))
 					{
-						Log::SetVerbosity(module, Log::EVerbosity::None);
+						Log::SetVerbosity(module, ELogVerbosity::None);
 					}
 				}
 				else

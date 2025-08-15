@@ -1,9 +1,11 @@
 #include "debug/DebugScripts.hpp"
 
 #include "debug/DebugUtils.hpp"
+#include "event/EventManager.hpp"
 #include "i18n/Localization.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
+#include "mod/ScriptModule.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "util/LogMicros.hpp"
@@ -42,66 +44,78 @@ void DebugScripts::UpdateAndRender(IWindow &window) noexcept
 
 	bool p_open = true;
 
-	ImGui::SetNextWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(800 * scale, 600 * scale), ImGuiCond_FirstUseEver);
 	if (ImGui::Begin("Scripts", &p_open))
 	{
-		if (ImGui::Button("Errors"))
-		{
-			//
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Provided"))
-		{
-			//
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Loaded"))
-		{
-			//
-		}
-
-		ImGui::Separator();
-
 		ImGui::InputText("Script name filter", _filterText, IM_ARRAYSIZE(_filterText));
 
-		if (window.GetScriptLoader().HasAnyLoadError())
+		if (ImGui::BeginTabBar("PagesTab"))
 		{
-			UpdateAndRenderLoadtimeErrorArea(window);
-		}
-		else
-		{
-			UpdateAndRenderRuntimeErrorArea(window);
+			if (ImGui::BeginTabItem("Errors"))
+			{
+				IScriptErrors &scriptErrors = window.GetScriptErrors();
+				if (scriptErrors.HasLoadtimeError())
+				{
+					ErrorsArea errorsArea{
+					    "LoadErrors",
+					    "Loadtime Errors",
+					    scriptErrors.GetLoadtimeErrorsCached(),
+					    _filterText,
+					};
+					UpdateAndRenderErrorsArea(window, errorsArea);
+				}
+				else if (scriptErrors.HasRuntimeError())
+				{
+					ErrorsArea errorsArea{
+					    "RuntimeErrors",
+					    "Runtime Errors",
+					    scriptErrors.GetRuntimeErrorsCached(),
+					    _filterText,
+					};
+					UpdateAndRenderErrorsArea(window, errorsArea);
+				}
+				else
+				{
+					ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "No script errors");
+				}
+
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Loaded"))
+			{
+				UpdateAndRenderLoadedScripts(window);
+
+				ImGui::EndTabItem();
+			}
+
+			ImGui::EndTabBar();
 		}
 
 		ImGui::End();
 	}
 }
 
-void DebugScripts::UpdateAndRenderLoadtimeErrorArea(IWindow &window) noexcept
+void DebugScripts::UpdateAndRenderErrorsArea(IWindow &window, const ErrorsArea &errorsArea) noexcept
 {
-	if (!window.GetScriptLoader().HasAnyLoadError())
-	{
-		ImGui::TextColored(ImVec4(0, 1, 0, 1), "Load Errors (0)");
-
-		return;
-	}
-
 	ILocalization &localization = window.GetLocalization();
 	IScriptProvider &scriptProvider = window.GetScriptProvider();
 
-	auto &errors = window.GetScriptLoader().GetLoadErrorsCached();
+	auto &errors = errorsArea.errors;
 
-	ImGui::TextColored(ImVec4(1, 0, 0, 1), "Load Errors (%zu)", errors.size());
+	ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s: %zu", errorsArea.name.data(), errors.size());
 
-	if (ImGui::BeginChild("LoadErrors", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), true))
+	if (ImGui::BeginChild(errorsArea.id.data(), ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), true))
 	{
 		std::float_t scale = window.GetGUIScale();
 
-		ImGui::Columns(3, "loadErrorColumns");
-		ImGui::SetColumnWidth(0, 200 * scale);
-		ImGui::SetColumnWidth(1, 50 * scale);
-		ImGui::SetColumnWidth(2, ImGui::GetWindowWidth() - 250 * scale);
+		ImGui::Columns(4, "loadErrorColumns");
+		ImGui::SetColumnWidth(0, 100 * scale);
+		ImGui::SetColumnWidth(1, 200 * scale);
+		ImGui::SetColumnWidth(2, 50 * scale);
+		ImGui::SetColumnWidth(3, ImGui::GetWindowWidth() - 300 * scale);
 
+		ImGui::Text("Time");
+		ImGui::NextColumn();
 		ImGui::Text("Script");
 		ImGui::NextColumn();
 		ImGui::Text("Line");
@@ -113,9 +127,14 @@ void DebugScripts::UpdateAndRenderLoadtimeErrorArea(IWindow &window) noexcept
 
 		for (std::size_t index = 0; index < errors.size(); ++index)
 		{
+			ImGui::PushID(index);
+
 			auto &error = errors[index];
 
-			std::string_view scriptName = scriptProvider.GetScriptNameByID(error->scriptID).value_or("");
+			ImGui::Text("%s", std::format("{:%H:%M:%S}", error->time).data());
+			ImGui::NextColumn();
+
+			std::string_view scriptName = scriptProvider.GetScriptNameByID(error->scriptID).value_or("$UNKNOWN$");
 			if (_filterText[0] != '\0' && scriptName.find(_filterText) == std::string::npos)
 			{
 				continue;
@@ -126,7 +145,7 @@ void DebugScripts::UpdateAndRenderLoadtimeErrorArea(IWindow &window) noexcept
 			ImGui::Text("%d", error->line);
 			ImGui::NextColumn();
 
-			bool selected = _selectedIndex == index;
+			bool selected = _selectedLoadtimeErrorIndex == index;
 			std::size_t labelEndline = -1;
 			char *label = error->message.data();
 
@@ -150,7 +169,7 @@ void DebugScripts::UpdateAndRenderLoadtimeErrorArea(IWindow &window) noexcept
 
 			if (ImGui::Selectable(label, selected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				_selectedIndex = selected ? -1 : index;
+				_selectedLoadtimeErrorIndex = selected ? -1 : index;
 			}
 
 			if (!selected && labelEndline != -1)
@@ -159,16 +178,16 @@ void DebugScripts::UpdateAndRenderLoadtimeErrorArea(IWindow &window) noexcept
 			}
 
 			ImGui::NextColumn();
-		}
 
-		ImGui::Columns(1);
+			ImGui::PopID();
+		}
 	}
 	ImGui::EndChild();
 
 	ScriptError *selectedError = nullptr;
-	if (_selectedIndex >= 0 && _selectedIndex < errors.size())
+	if (_selectedLoadtimeErrorIndex >= 0 && _selectedLoadtimeErrorIndex < errors.size())
 	{
-		auto &error = errors.at(_selectedIndex);
+		auto &error = errors.at(_selectedLoadtimeErrorIndex);
 		if (error != nullptr)
 		{
 			selectedError = error.get();
@@ -178,13 +197,11 @@ void DebugScripts::UpdateAndRenderLoadtimeErrorArea(IWindow &window) noexcept
 	if (ImGui::Button("Open script editor") && selectedError != nullptr && SystemUtils::IsScriptEditorAvailable())
 	{
 		TextID textID = scriptProvider.GetScriptTextID(selectedError->scriptID);
-		assert(textID != 0);
-
-		std::string_view scriptPath = window.GetGlobalResourcesCollection().GetTextResources().GetResourcePath(textID);
-		std::filesystem::path path = std::filesystem::current_path() / scriptPath;
-
-		if (!isOpeningScriptEditor)
+		if (textID != 0 && !isOpeningScriptEditor)
 		{
+			std::string_view scriptPath = window.GetGlobalResourcesCollection().GetTextResources().GetResourcePath(textID);
+			std::filesystem::path path = std::filesystem::current_path() / scriptPath;
+
 			_openScriptEditorThread = SystemUtils::OpenScriptEditorAsync(path, selectedError->line, [this](const std::filesystem::path &path, std::uint32_t line)
 			{
 				TE_INFO("Opened file \"{}:{}\" with script editor", path.generic_string(), line);
@@ -212,6 +229,107 @@ void DebugScripts::UpdateAndRenderLoadtimeErrorArea(IWindow &window) noexcept
 	}
 }
 
-void DebugScripts::UpdateAndRenderRuntimeErrorArea(IWindow &window) noexcept
+void DebugScripts::UpdateAndRenderProvidedScripts(IWindow &window) noexcept
 {
+}
+
+void DebugScripts::UpdateAndRenderLoadedScripts(IWindow &window) noexcept
+{
+	IScriptProvider &scriptProvider = window.GetScriptProvider();
+	IScriptLoader &scriptLoader = window.GetScriptLoader();
+	RuntimeEvent &eventDebugSnapshot = window.GetEventManager().GetCoreEvents().DebugSnapshot();
+
+	ImGui::Columns(3, "ScriptColumns", true);
+	// ImGui::SetColumnWidth(0, 100 * scale);
+	// ImGui::SetColumnWidth(1, 200 * scale);
+	// ImGui::SetColumnWidth(3, ImGui::GetWindowWidth() - 300 * scale);
+
+	// Column headers
+	ImGui::Text("Script");
+	ImGui::NextColumn();
+	ImGui::Text("Status");
+	ImGui::NextColumn();
+	ImGui::Text("Actions");
+	ImGui::NextColumn();
+
+	ImGui::Separator();
+
+	// Cache some styles for performance
+	constexpr ImVec4 successColor{0.0f, 1.0f, 0.0f, 1.0f};
+	constexpr ImVec4 errorColor{1.0f, 0.0f, 0.0f, 1.0f};
+	constexpr ImVec4 warningColor{1.0f, 1.0f, 0.0f, 1.0f};
+
+	// Use clipper for large lists to improve performance
+	ImGuiListClipper clipper{};
+	clipper.Begin(static_cast<int>(scriptProvider.GetEntriesSize()));
+
+	while (clipper.Step())
+	{
+		auto it = scriptProvider.begin();
+		std::advance(it, clipper.DisplayStart);
+
+		for (std::size_t index = clipper.DisplayStart; index < clipper.DisplayEnd && it != scriptProvider.end(); ++index, ++it)
+		{
+			auto &[scriptID, entry] = *it;
+
+			// Column 1: Script Name
+			ImGui::TextUnformatted(entry.name.c_str());
+			ImGui::NextColumn();
+
+			// Column 2: Load Status
+			if (scriptLoader.IsScriptFullyLoaded(scriptID))
+			{
+				ImGui::TextColored(successColor, "Fully loaded");
+			}
+			else if (scriptLoader.IsScriptLazyLoaded(scriptID))
+			{
+				ImGui::TextColored(warningColor, "Lazy loaded");
+			}
+			else if (scriptLoader.IsScriptValid(scriptID))
+			{
+				ImGui::TextColored(errorColor, "Load error");
+			}
+			else if (!scriptLoader.IsScriptExists(scriptID))
+			{
+				ImGui::TextColored(warningColor, "Not exist");
+			}
+			else
+			{
+				ImGui::TextColored(warningColor, "Unknown state");
+			}
+
+			ImGui::NextColumn();
+
+			if (ImGui::Button(std::format("Module##{}", scriptID).data()))
+			{
+				IScriptEngine &scriptEngine = window.GetScriptEngine();
+
+				sol::table moduleTable = scriptLoader.Load(scriptID)->GetTable();
+				std::string text = scriptEngine.Inspect(moduleTable);
+
+				SystemUtils::CopyToClipboard(text);
+
+				TE_DEBUG("Inspect script module <{}>\"{}\"", scriptID, entry.name);
+				TE_INFO("{}", text);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button(std::format("Snapshot##{}", scriptID).data()))
+			{
+				IScriptEngine &scriptEngine = window.GetScriptEngine();
+
+				sol::table moduleSnapshot = scriptEngine.CreateTable();
+				eventDebugSnapshot.Invoke(moduleSnapshot, entry.name.data(), RuntimeEvent::EInvocation::None);
+				std::string text = scriptEngine.Inspect(moduleSnapshot);
+
+				SystemUtils::CopyToClipboard(text);
+
+				TE_DEBUG("Inspect script snapshot <{}>\"{}\"", scriptID, entry.name);
+				TE_INFO("{}", text);
+			}
+
+			ImGui::NextColumn();
+		}
+	}
+
+	ImGui::Columns(1); // Reset columns
 }

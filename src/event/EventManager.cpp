@@ -9,6 +9,7 @@
 #include "program/Context.hpp"
 #include "sol/error.hpp"
 #include "util/Definitions.hpp"
+#include "util/LogMicros.hpp"
 #include "util/Utils.hpp"
 
 #include "sol/string_view.hpp"
@@ -140,12 +141,17 @@ Context &EventManager::GetContext() noexcept
 	return _context;
 }
 
+Log &EventManager::GetLog() noexcept
+{
+	return *_log;
+}
+
 ICoreEvents &EventManager::GetCoreEvents() noexcept
 {
 	return *_coreEvents;
 }
 
-void EventManager::Initialize() noexcept
+void EventManager::PreInitialize() noexcept
 {
 	auto &&scriptLoader = GetScriptLoader();
 
@@ -197,7 +203,7 @@ void EventManager::Initialize() noexcept
 		OnScriptsLoaded();
 	};
 
-	_onUnloadScriptHandlerID = scriptLoader.GetOnUnloadScript() += [this](ScriptID scriptID)
+	_onUnloadScriptHandlerID = scriptLoader.GetOnUnloadScript() += [this](ScriptID scriptID, std::string_view scriptName)
 	{
 		assert(scriptID && "invalid script id!");
 
@@ -205,8 +211,9 @@ void EventManager::Initialize() noexcept
 		{
 			if (it->second->GetScriptID() == scriptID)
 			{
-				auto eventID = it->second->GetID();
-				_log->Trace("Remove event <{}>\"{}\" from script <{}>", eventID, _eventID2Name[eventID], scriptID);
+				EventID eventID = it->second->GetID();
+				_log->Trace("Remove event <{}>\"{}\" from script <{}>\"{}\"", eventID, _eventID2Name[eventID], scriptID, scriptName);
+
 				DeallocEventID(it->first);
 				it = _runtimeEvents.erase(it);
 			}
@@ -224,7 +231,15 @@ void EventManager::Initialize() noexcept
 	};
 }
 
+void EventManager::Initialize() noexcept
+{
+}
+
 void EventManager::Deinitialize() noexcept
+{
+}
+
+void EventManager::PostDeinitialize() noexcept
 {
 	auto &&scriptLoader = GetScriptLoader();
 
@@ -233,6 +248,12 @@ void EventManager::Deinitialize() noexcept
 	scriptLoader.GetOnPreHotReloadScripts() -= _onPreHotReloadScriptsHandlerID;
 	scriptLoader.GetOnPostHotReloadScripts() -= _onPreHotReloadScriptsHandlerID;
 	scriptLoader.GetOnUnloadScript() -= _onUnloadScriptHandlerID;
+
+	_onPreLoadAllScriptsHandlerID = 0;
+	_onPostLoadAllScriptsHandlerID = 0;
+	_onPreHotReloadScriptsHandlerID = 0;
+	_onPreHotReloadScriptsHandlerID = 0;
+	_onUnloadScriptHandlerID = 0;
 }
 
 void EventManager::InstallToScriptEngine(IScriptEngine &scriptEngine)
@@ -243,7 +264,7 @@ void EventManager::UninstallFromScriptEngine(IScriptEngine &scriptEngine)
 {
 }
 
-void EventManager::LuaAdd(const sol::object &event, const sol::object &func, const sol::object &name, const sol::object &order, const sol::object &key, const sol::object &sequence)
+void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name, sol::object order, sol::object key, sol::object sequence)
 {
 	try
 	{
@@ -364,7 +385,7 @@ void EventManager::LuaAdd(const sol::object &event, const sol::object &func, con
 	}
 }
 
-EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders, const sol::object &keys)
+EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object keys)
 {
 	try
 	{
@@ -471,7 +492,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 			return false;
 		}
 
-		_log->Trace("Constructed loadtime event <{}>\"{}\" from script <{}>", eventID, eventName, scriptID);
+		TE_TRACE("Constructed loadtime event <{}>\"{}\" from script <{}>", eventID, eventName, scriptID);
 		return eventID;
 	}
 	catch (const std::exception &e)
@@ -481,7 +502,7 @@ EventID EventManager::LuaNew(const sol::object &event, const sol::object &orders
 	}
 }
 
-void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, const sol::object &key, const sol::object &uncached)
+void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object key)
 {
 	try
 	{
@@ -513,8 +534,8 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 		else
 		{
 			scriptEngine.ThrowError("Bad argument #1 to 'event': expected EventID or string");
+
 			return;
-			// return sol::error("Bad argument #1 to 'event': expected EventID or string");
 		}
 
 		EventHandleKey k;
@@ -527,16 +548,9 @@ void EventManager::LuaInvoke(const sol::object &event, const sol::object &args, 
 			k.value = key.as<std::string>();
 		}
 
-		assert(eventInstance);
+		assert(eventInstance != nullptr);
 
-		if (!uncached.valid() || uncached.is<bool>() && !uncached.as<bool>()) [[unlikely]]
-		{
-			eventInstance->InvokeUncached(args, k);
-		}
-		else [[likely]]
-		{
-			eventInstance->Invoke(args, k);
-		}
+		eventInstance->Invoke(args, k);
 	}
 	catch (const std::exception &e)
 	{

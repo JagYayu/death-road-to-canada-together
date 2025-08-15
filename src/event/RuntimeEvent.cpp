@@ -1,9 +1,11 @@
 #include "event/RuntimeEvent.hpp"
+
 #include "event/AbstractEvent.hpp"
 #include "event/CoreEventsData.hpp"
 #include "event/EventHandler.hpp"
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
+#include "mod/ScriptErrors.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "util/Definitions.hpp"
 #include "util/EnumFlag.hpp"
@@ -139,8 +141,14 @@ std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 	return _handlers;
 }
 
+struct PCallHandlerObject
+{
+	const std::shared_ptr<Log> &log;
+	IEventManager &eventManager;
+};
+
 template <typename... TArgs>
-TE_FORCEINLINE void PCallHandler(std::shared_ptr<Log> &log, EventHandler &handler, TArgs &&...args)
+TE_FORCEINLINE void PCallHandler(const PCallHandlerObject &obj, EventHandler &handler, TArgs &&...args) noexcept
 {
 	try
 	{
@@ -148,7 +156,12 @@ TE_FORCEINLINE void PCallHandler(std::shared_ptr<Log> &log, EventHandler &handle
 	}
 	catch (std::exception &e)
 	{
-		log->Error("{}", e.what());
+		obj.log->Error("{}", e.what());
+
+		if (handler.scriptID != 0)
+		{
+			obj.eventManager.GetScriptErrors().AddRuntimeError(handler.scriptID, e.what());
+		}
 	}
 }
 
@@ -164,7 +177,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 		profile = nullptr;
 	}
 
-	TInvocationTrackID trackID;
+	InvocationTrackID trackID;
 	if (EnumFlag::HasAny(options, EInvocation::TrackProgression))
 	{
 		trackID = _invocationTrackID;
@@ -172,6 +185,10 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 	}
 
 	IScriptEngine &scriptEngine = eventManager.GetScriptEngine();
+	PCallHandlerObject obj{
+	    _log,
+	    eventManager,
+	};
 
 	bool anyKey = key.IsAny();
 
@@ -182,13 +199,13 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 
 	if (EnumFlag::HasAny(options, EInvocation::CacheHandlers))
 	{
-		TInvocationCache *cache;
+		InvocationCache *cache;
 
 		if (anyKey)
 		{
 			if (!_invocationCache.has_value()) [[unlikely]]
 			{
-				_invocationCache = TInvocationCache();
+				_invocationCache = InvocationCache();
 
 				for (auto &&handler : GetSortedHandlers())
 				{
@@ -204,7 +221,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 		}
 		else [[unlikely]]
 		{
-			cache = &_invocationCaches.try_emplace(key, TInvocationCache()).first->second;
+			cache = &_invocationCaches.try_emplace(key, InvocationCache()).first->second;
 			for (auto &&handler : GetSortedHandlers())
 			{
 				if (handler.key.Match(key))
@@ -218,14 +235,14 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 		{
 			for (EventHandler *handler : *cache)
 			{
-				PCallHandler(_log, *handler, e);
+				PCallHandler(obj, *handler, e);
 			}
 		}
 		else
 		{
 			for (EventHandler *handler : *cache)
 			{
-				PCallHandler(_log, *handler, e, key);
+				PCallHandler(obj, *handler, e, key);
 			}
 		}
 	}
@@ -237,7 +254,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 			{
 				for (EventHandler &handler : _handlers)
 				{
-					PCallHandler(_log, handler, e);
+					PCallHandler(obj, handler, e);
 					_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
 				}
 			}
@@ -245,7 +262,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 			{
 				for (EventHandler &handler : _handlers)
 				{
-					PCallHandler(_log, handler, e, key);
+					PCallHandler(obj, handler, e, key);
 				}
 			}
 		}
@@ -257,7 +274,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 				{
 					if (handler.key.Match(key))
 					{
-						PCallHandler(_log, handler, e);
+						PCallHandler(obj, handler, e);
 						_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
 					}
 				}
@@ -268,7 +285,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 				{
 					if (handler.key.Match(key))
 					{
-						PCallHandler(_log, handler, e, key);
+						PCallHandler(obj, handler, e, key);
 					}
 				}
 			}

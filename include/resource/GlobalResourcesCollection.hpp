@@ -23,7 +23,7 @@ namespace tudov
 	 * Manage all kinds of game resources.
 	 * Automatically monitor VFS, load/unload/update resources when VFS has any event triggered.
 	 */
-	class GlobalResourcesCollection : public IEngineComponent, public ILogProvider
+	class GlobalResourcesCollection : public IEngineComponent, private ILogProvider
 	{
 	  protected:
 		Context &_context;
@@ -34,9 +34,9 @@ namespace tudov
 		std::shared_ptr<TextResources> _textResources;
 		std::vector<std::shared_ptr<Resources<IResource>>> _resourcesList;
 
-		DelegateEvent<const std::filesystem::path &, const std::vector<std::byte> &>::HandlerID _handlerIDOnVFSMountFile;
-		DelegateEvent<const std::filesystem::path &>::HandlerID _handlerIDOnVFSDismountFile;
-		DelegateEvent<const std::filesystem::path &, const std::vector<std::byte> &, const std::vector<std::byte> &>::HandlerID _handlerIDOnVFSRemountFile;
+		DelegateEventHandlerID _handlerIDOnVFSMountFile = 0;
+		DelegateEventHandlerID _handlerIDOnVFSDismountFile = 0;
+		DelegateEventHandlerID _handlerIDOnVFSRemountFile = 0;
 
 	  public:
 		static EResourceType PathExtensionToResourceType(const std::filesystem::path &path) noexcept;
@@ -47,8 +47,10 @@ namespace tudov
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;
 
+		void PreInitialize() noexcept override;
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
+		void PostDeinitialize() noexcept override;
 
 		BinariesResources &GetBinariesResources() noexcept;
 

@@ -47,10 +47,10 @@ modUID = nil
 --- Current script's internal id.
 --- e.g. 32
 --- @type integer
-_scriptID = nil
+scriptID = nil
 
 --- *Script Scope*
 --- Current script's name.
 --- e.g. "dr2c.client.test.Test"
 --- @type string
-_scriptName = nil
+scriptName = nil

@@ -35,7 +35,7 @@ namespace tudov
 	/**
 	 * @brief Tudov game engine
 	 */
-	class Engine : public Application, public IDebugProvider, public ILogProvider
+	class Engine : public Application, public IDebugProvider, private ILogProvider
 	{
 		friend Context;
 
@@ -165,6 +165,7 @@ namespace tudov
 		void InitializeMainWindow() noexcept;
 		void InitializeResources() noexcept;
 		void PostInitialization() noexcept;
+		void PreDeinitialization() noexcept;
 		void HandleEvent(SDL_Event &event) noexcept;
 
 		void ProcessLoad() noexcept;

@@ -41,7 +41,7 @@ namespace tudov
 		}
 	};
 
-	class Localization : public ILocalization, public ILogProvider
+	class Localization : public ILocalization, private ILogProvider
 	{
 	  private:
 		std::shared_ptr<Log> _log;

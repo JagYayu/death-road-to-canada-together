@@ -1,4 +1,13 @@
-
+/**
+ * @file ScriptLoader.hpp
+ * @author JagYayu
+ * @brief Lua Script Loader
+ * @version 1.0
+ * @date 2025-08-15
+ *
+ * @copyright Copyright (c) 2025
+ *
+ */
 
 #pragma once
 
@@ -23,6 +32,8 @@ namespace tudov
 {
 	class ScriptEngine;
 	class ScriptError;
+	struct IScriptModule;
+	class ScriptModule;
 
 	/**
 	 * Manage script's modules / functions.
@@ -31,42 +42,6 @@ namespace tudov
 	 */
 	struct IScriptLoader : public IEngineComponent
 	{
-		/**
-		 * @brief A wrapper of script's module.
-		 */
-		struct IModule
-		{
-			/**
-			 * Check if current script module is lazy loaded, which has a already been a wrapper of module's return table.
-			 */
-			virtual bool IsLazyLoaded() const = 0;
-
-			/**
-			 * Check if current script module is fully loaded (or raw loaded).
-			 */
-			virtual bool IsFullyLoaded() const = 0;
-
-			/**
-			 * Get wrapper table. Note: its not the original returned table.
-			 */
-			virtual const sol::table &GetTable() = 0;
-
-			/**
-			 * Raw load means no sandbox, no environment overriding, just load this script from pure globals.
-			 */
-			virtual const sol::table &RawLoad(IScriptLoader &scriptLoader) = 0;
-
-			/**
-			 * TODO
-			 */
-			virtual const sol::table &LazyLoad(IScriptLoader &scriptLoader) = 0;
-
-			/**
-			 * TODO
-			 */
-			virtual const sol::table &FullLoad(IScriptLoader &scriptLoader) = 0;
-		};
-
 		virtual ~IScriptLoader() noexcept = default;
 
 		virtual DelegateEvent<> &GetOnPreLoadAllScripts() noexcept = 0;
@@ -80,11 +55,15 @@ namespace tudov
 		/*
 		 * Should be called right after a script was `RawLoaded` or `LazyLoaded`.
 		 */
-		virtual DelegateEvent<ScriptID> &GetOnLoadedScript() = 0;
+		virtual DelegateEvent<ScriptID, std::string_view> &GetOnLoadedScript() = 0;
 		/*
 		 * Should be called before a script was unloaded.
 		 */
-		virtual DelegateEvent<ScriptID> &GetOnUnloadScript() = 0;
+		virtual DelegateEvent<ScriptID, std::string_view> &GetOnUnloadScript() = 0;
+		/*
+		 * Should be called right after a script was failed to `RawLoaded` or `LazyLoaded`.
+		 */
+		virtual DelegateEvent<ScriptID, std::string_view, std::string_view> &GetOnFailedLoadScript() = 0;
 
 		/**
 		 * Check if the script module with specific id exists.
@@ -92,6 +71,8 @@ namespace tudov
 		 * @return true or false
 		 */
 		virtual bool IsScriptExists(ScriptID scriptID) noexcept = 0;
+
+		virtual bool IsScriptValid(ScriptID scriptID) noexcept = 0;
 
 		virtual bool IsScriptLazyLoaded(ScriptID scriptID) noexcept = 0;
 
@@ -127,12 +108,12 @@ namespace tudov
 		/**
 		 * Try load script's module, do nothing if already loaded.
 		 */
-		virtual std::shared_ptr<IScriptLoader::IModule> Load(ScriptID scriptID) = 0;
+		virtual std::shared_ptr<IScriptModule> Load(ScriptID scriptID) = 0;
 
 		/**
 		 * Similar to `Load`, try parse `scriptName` to `scriptID`.
 		 */
-		virtual std::shared_ptr<IScriptLoader::IModule> Load(std::string_view scriptName) = 0;
+		virtual std::shared_ptr<IScriptModule> Load(std::string_view scriptName) = 0;
 
 		/**
 		 * Try unload script's module, it also unload all scripts that depend on it, so it returns a vector of script ids.
@@ -159,14 +140,6 @@ namespace tudov
 		 */
 		virtual void ProcessFullLoads() = 0;
 
-		/**
-		 * Check if any script has load-time errors.
-		 */
-		virtual bool HasAnyLoadError() const noexcept = 0;
-
-		virtual std::vector<std::shared_ptr<ScriptError>> GetLoadErrors() const noexcept = 0;
-		virtual const std::vector<std::shared_ptr<ScriptError>> &GetLoadErrorsCached() const noexcept = 0;
-
 		inline const DelegateEvent<> &GetOnPreLoadAllScripts() const noexcept
 		{
 			return const_cast<IScriptLoader *>(this)->GetOnPreLoadAllScripts();
@@ -187,27 +160,37 @@ namespace tudov
 			return const_cast<IScriptLoader *>(this)->GetOnPostHotReloadScripts();
 		}
 
-		inline const DelegateEvent<ScriptID> &GetOnLoadedScript() const noexcept
+		inline const DelegateEvent<ScriptID, std::string_view> &GetOnLoadedScript() const noexcept
 		{
 			return const_cast<IScriptLoader *>(this)->GetOnLoadedScript();
 		}
 
-		inline const DelegateEvent<ScriptID> &GetOnUnloadScript() const noexcept
+		inline const DelegateEvent<ScriptID, std::string_view> &GetOnUnloadScript() const noexcept
 		{
 			return const_cast<IScriptLoader *>(this)->GetOnUnloadScript();
 		}
 
-		inline bool Exists(std::string_view scriptName) noexcept
+		inline const DelegateEvent<ScriptID, std::string_view, std::string_view> &GetOnFailedLoadScript() const noexcept
+		{
+			return const_cast<IScriptLoader *>(this)->GetOnFailedLoadScript();
+		}
+
+		inline bool IsScriptExists(std::string_view scriptName) noexcept
 		{
 			return IsScriptExists(GetScriptIDByName(scriptName));
 		}
 
-		inline bool IsLazyLoaded(std::string_view scriptName) noexcept
+		inline bool IsScriptValid(std::string_view scriptName) noexcept
+		{
+			return IsScriptValid(GetScriptIDByName(scriptName));
+		}
+
+		inline bool IsScriptLazyLoaded(std::string_view scriptName) noexcept
 		{
 			return IsScriptLazyLoaded(GetScriptIDByName(scriptName));
 		}
 
-		inline bool IsFullyLoaded(std::string_view scriptName) noexcept
+		inline bool IsScriptFullyLoaded(std::string_view scriptName) noexcept
 		{
 			return IsScriptFullyLoaded(GetScriptIDByName(scriptName));
 		}
@@ -217,48 +200,21 @@ namespace tudov
 			return UnloadScript(GetScriptIDByName(scriptName));
 		}
 
-	  private:
+	  protected:
 		TE_FORCEINLINE ScriptID GetScriptIDByName(std::string_view scriptName)
 		{
 			return GetScriptProvider().GetScriptIDByName(scriptName);
 		}
 	};
 
-	class ScriptLoader : public IScriptLoader, public ILogProvider
+	class ScriptLoader : public IScriptLoader, private ILogProvider
 	{
-	  private:
-		struct Module : public IModule, public IContextProvider, public ILogProvider
-		{
-		  protected:
-			static Context *_parentContext;
-			static std::weak_ptr<Log> _parentLog;
-
-		  protected:
-			ScriptID _scriptID;
-			sol::protected_function _func;
-			bool _fullyLoaded;
-			sol::table _table;
-
-		  public:
-			explicit Module();
-			explicit Module(ScriptID scriptID, const sol::protected_function &func);
-
-			Context &GetContext() noexcept override;
-			Log &GetLog() noexcept override;
-
-			bool IsLazyLoaded() const override;
-			bool IsFullyLoaded() const override;
-
-			const sol::table &GetTable() override;
-			const sol::table &RawLoad(IScriptLoader &scriptLoader) override;
-			const sol::table &LazyLoad(IScriptLoader &scriptLoader) override;
-			const sol::table &FullLoad(IScriptLoader &scriptLoader) override;
-		};
+		friend ScriptModule;
 
 	  protected:
 		Context &_context;
 		std::shared_ptr<Log> _log;
-		std::unordered_map<ScriptID, std::shared_ptr<Module>> _scriptModules;
+		std::unordered_map<ScriptID, std::shared_ptr<ScriptModule>> _scriptModules;
 		std::unordered_map<ScriptID, std::set<ScriptID>> _scriptReversedDependencies;
 
 		// Set this value when a script module is doing whatever loads.
@@ -273,8 +229,9 @@ namespace tudov
 		DelegateEvent<> _onPostLoadAllScripts;
 		DelegateEvent<const std::vector<ScriptID> &> _onPreHotReloadScripts;
 		DelegateEvent<const std::vector<ScriptID> &> _onPostHotReloadScripts;
-		DelegateEvent<ScriptID> _onLoadedScript;
-		DelegateEvent<ScriptID> _onUnloadScript;
+		DelegateEvent<ScriptID, std::string_view> _onLoadedScript;
+		DelegateEvent<ScriptID, std::string_view> _onUnloadScript;
+		DelegateEvent<ScriptID, std::string_view, std::string_view> _onFailedLoadScript;
 
 	  public:
 		explicit ScriptLoader(Context &context) noexcept;
@@ -288,10 +245,12 @@ namespace tudov
 		DelegateEvent<> &GetOnPostLoadAllScripts() noexcept override;
 		DelegateEvent<const std::vector<ScriptID> &> &GetOnPreHotReloadScripts() noexcept override;
 		DelegateEvent<const std::vector<ScriptID> &> &GetOnPostHotReloadScripts() noexcept override;
-		DelegateEvent<ScriptID> &GetOnLoadedScript() noexcept override;
-		DelegateEvent<ScriptID> &GetOnUnloadScript() noexcept override;
+		DelegateEvent<ScriptID, std::string_view> &GetOnLoadedScript() noexcept override;
+		DelegateEvent<ScriptID, std::string_view> &GetOnUnloadScript() noexcept override;
+		DelegateEvent<ScriptID, std::string_view, std::string_view> &GetOnFailedLoadScript() noexcept override;
 
 		bool IsScriptExists(ScriptID scriptID) noexcept override;
+		bool IsScriptValid(ScriptID scriptID) noexcept override;
 		bool IsScriptLazyLoaded(ScriptID scriptID) noexcept override;
 		bool IsScriptFullyLoaded(ScriptID scriptID) noexcept override;
 		ScriptID GetLoadingScriptID() const noexcept override;
@@ -301,23 +260,19 @@ namespace tudov
 
 		void LoadAllScripts() override;
 		void UnloadAllScripts() override;
-		std::shared_ptr<IScriptLoader::IModule> Load(ScriptID scriptID) override;
-		std::shared_ptr<IScriptLoader::IModule> Load(std::string_view scriptName) override;
+		std::shared_ptr<IScriptModule> Load(ScriptID scriptID) override;
+		std::shared_ptr<IScriptModule> Load(std::string_view scriptName) override;
 		std::vector<ScriptID> UnloadScript(ScriptID scriptID) override;
 		std::vector<ScriptID> UnloadScriptsBy(std::string_view namespace_) override;
 		std::vector<ScriptID> UnloadInvalidScripts() override;
 		void HotReloadScripts(const std::vector<ScriptID> &scriptIDs) override;
 		void ProcessFullLoads() override;
 
-		[[deprecated("Use `GetScriptErrors().HasLoadtimeError()` instead")]]
-		bool HasAnyLoadError() const noexcept override;
-		[[deprecated("Use `GetScriptErrors().GetLoadtimeErrors()` instead")]]
-		std::vector<std::shared_ptr<ScriptError>> GetLoadErrors() const noexcept override;
-		[[deprecated("Use `GetScriptErrors().GetLoadtimeErrorsCached()` instead")]]
-		const std::vector<std::shared_ptr<ScriptError>> &GetLoadErrorsCached() const noexcept override;
+	  protected:
+		std::shared_ptr<ScriptModule> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
+		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
 
 	  private:
-		std::shared_ptr<Module> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
-		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
+		// void LuaAddReverseDependency(sol::object source, sol::object target)
 	};
 } // namespace tudov

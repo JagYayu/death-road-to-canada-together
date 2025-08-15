@@ -46,8 +46,9 @@ namespace tudov
 		 */
 		virtual std::string_view GetScriptModUID(ScriptID scriptID) noexcept = 0;
 
-		virtual TScriptID2Entry::const_iterator begin() const = 0;
-		virtual TScriptID2Entry::const_iterator end() const = 0;
+		virtual std::size_t GetEntriesSize() const = 0;
+		virtual TScriptID2Entry::const_iterator BeginEntries() const = 0;
+		virtual TScriptID2Entry::const_iterator EndEntries() const = 0;
 
 		inline bool IsStaticScript(ScriptID scriptID) const noexcept
 		{
@@ -73,11 +74,20 @@ namespace tudov
 		{
 			return GetScriptModUID(GetScriptIDByName(scriptName));
 		}
+
+		inline decltype(auto) begin() const
+		{
+			return BeginEntries();
+		}
+		inline decltype(auto) end() const
+		{
+			return EndEntries();
+		}
 	};
 
 	class Log;
 
-	class ScriptProvider : public IScriptProvider, public ILogProvider
+	class ScriptProvider : public IScriptProvider, private ILogProvider
 	{
 	  public:
 		using ScriptID = std::uint64_t;
@@ -118,7 +128,8 @@ namespace tudov
 		std::shared_ptr<Text> GetScriptCode(ScriptID scriptID) const noexcept override;
 		std::string_view GetScriptModUID(ScriptID scriptID) noexcept override;
 
-		std::unordered_map<ScriptID, Entry>::const_iterator begin() const override;
-		std::unordered_map<ScriptID, Entry>::const_iterator end() const override;
+		std::size_t GetEntriesSize() const override;
+		std::unordered_map<ScriptID, Entry>::const_iterator BeginEntries() const override;
+		std::unordered_map<ScriptID, Entry>::const_iterator EndEntries() const override;
 	};
 } // namespace tudov

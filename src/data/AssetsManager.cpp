@@ -1,5 +1,6 @@
 #include "data/AssetsManager.hpp"
 
+#include "data/Config.hpp"
 #include "data/Constants.hpp"
 #include "data/GlobalStorage.hpp"
 #include "data/GlobalStorageLocation.hpp"
@@ -12,6 +13,8 @@
 #include "util/FileChangeType.hpp"
 
 #include "FileWatch.hpp"
+#include "util/LogMicros.hpp"
+#include "util/StringUtils.hpp"
 
 #include <filesystem>
 #include <memory>
@@ -58,9 +61,8 @@ DelegateEvent<const std::filesystem::path &, EFileChangeType> &AssetsManager::Ge
 void AssetsManager::Initialize() noexcept
 {
 	LoadAssetsFromPackageFiles();
-#ifdef WIN32
 	LoadAssetsFromDeveloperDirectory();
-#endif
+	LoadAssetsFromExternalDirectories();
 }
 
 void AssetsManager::LoadAssetsFromPackageFiles() noexcept
@@ -103,7 +105,7 @@ std::vector<std::vector<std::byte>> AssetsManager::CollectPackageFileBytes() noe
 
 void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 {
-	Info("Loading assets from developer directory");
+	TE_DEBUG("{}", "Loading assets from developer directory");
 
 	GlobalStorage &applicationGlobalStorage = GetGlobalStorageManager().GetApplicationStorage();
 	if (!applicationGlobalStorage.CanRead())
@@ -117,8 +119,8 @@ void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 	{
 		if (path.has_extension())
 		{
-			auto fileFillPath = directory / path;
-			auto resourcePath = Constants::DataVirtualStorageRootApp / std::filesystem::relative(fileFillPath, Constants::DataDeveloperAssetsDirectory);
+			std::filesystem::path fileFillPath = directory / path;
+			std::filesystem::path resourcePath = Constants::DataVirtualStorageRootApp / std::filesystem::relative(fileFillPath, Constants::DataDeveloperAssetsDirectory);
 			auto &&bytes = applicationGlobalStorage.ReadFileToBytes(fileFillPath);
 
 			auto path = resourcePath.generic_string();
@@ -138,7 +140,7 @@ void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 	{
 		try
 		{
-			auto absolutePath = GlobalStorageLocation::GetPath(EGlobalStorageLocation::Application) / Constants::DataDeveloperAssetsDirectory;
+			std::filesystem::path absolutePath = GlobalStorageLocation::GetPath(EGlobalStorageLocation::Application) / Constants::DataDeveloperAssetsDirectory;
 			_developerDirectoryWatch = new DeveloperDirectoryWatch(absolutePath.generic_string(), [this](std::string_view path, const filewatch::Event changeType)
 			{
 				auto filePath = Constants::DataDeveloperAssetsDirectory / std::filesystem::path(path);
@@ -155,25 +157,97 @@ void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 void AssetsManager::DeveloperDirectoryWatchCallback(const std::filesystem::path &filePath, EFileChangeType type)
 {
 	auto fileExtension = filePath.extension();
-
-	std::string file = filePath.generic_string();
-	Debug("File in developer directory changed, file: \"{}\", type: {}", file, static_cast<int>(type));
-
-	_developerFilesTrigger.Invoke(filePath, std::move(type));
-
-	auto &applicationGlobalStorage = GetGlobalStorageManager().GetApplicationStorage();
-	auto &globalResourcesCollection = GetGlobalResourcesCollection();
-	auto bytes = applicationGlobalStorage.ReadFileToBytes(file);
-
-	switch (type)
+	if (fileExtension.has_extension())
 	{
-	case EFileChangeType::Added:
-	case EFileChangeType::Removed:
-	case EFileChangeType::Modified:
-		globalResourcesCollection.ReloadResource(filePath, bytes);
-	case EFileChangeType::RenamedOld:
-	case EFileChangeType::RenamedNew:
-		break;
+		std::string file = filePath.generic_string();
+		Debug("File in developer directory changed, file: \"{}\", type: {}", file, static_cast<int>(type));
+
+		_developerFilesTrigger.Invoke(filePath, std::move(type));
+
+		GlobalStorage &applicationGlobalStorage = GetGlobalStorageManager().GetApplicationStorage();
+		GlobalResourcesCollection &globalResourcesCollection = GetGlobalResourcesCollection();
+		std::vector<std::byte> bytes = applicationGlobalStorage.ReadFileToBytes(file);
+
+		switch (type)
+		{
+		case EFileChangeType::Added:
+		case EFileChangeType::Removed:
+		case EFileChangeType::Modified:
+			globalResourcesCollection.ReloadResource(filePath, bytes);
+		case EFileChangeType::RenamedOld:
+		case EFileChangeType::RenamedNew:
+			break;
+		}
+	}
+}
+
+void AssetsManager::LoadAssetsFromExternalDirectories() noexcept
+{
+	TE_DEBUG("{}", "Loading assets from external directories...");
+
+	const Config &config = GetConfig();
+
+	std::vector<std::string> externalDirectories = config.GetMountDirectories();
+
+	if (CanTrace())
+	{
+		for (const std::string &directory : externalDirectories)
+		{
+			Trace("{}", directory);
+		}
+	}
+
+	auto &&renderBackend = config.GetRenderBackend();
+
+	// auto &&loadTexture = [this, renderBackend]() {
+	// 	switch (renderBackend) {
+	// 		textureManager.Load<>(file, window.renderer, std::string_view(data))
+	// 	}
+	// };
+
+	std::unordered_map<EResourceType, std::uint32_t> fileCounts{};
+
+	std::vector<std::regex> mountBitmapPatterns{};
+	for (auto &&pattern : config.GetMountBitmaps())
+	{
+		mountBitmapPatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
+	}
+
+	auto &&mountDirectories = config.GetMountFiles();
+	for (auto &&mountDirectory : externalDirectories)
+	{
+		if (!std::filesystem::exists(mountDirectory.data()) || !std::filesystem::is_directory(mountDirectory.data()))
+		{
+			TE_WARN("Invalid directory for external assets: {}", mountDirectory.data());
+
+			continue;
+		}
+
+		for (auto &entry : std::filesystem::recursive_directory_iterator(mountDirectory))
+		{
+			if (!entry.is_regular_file())
+			{
+				continue;
+			}
+
+			auto &&path = entry.path();
+			auto &&it = mountDirectories.find(path.extension().generic_string());
+			if (it == mountDirectories.end())
+			{
+				continue;
+			}
+
+			GetVirtualFileSystem().MountFile(path);
+		}
+	}
+
+	TE_DEBUG("{}", "Loaded assets from external directories");
+	if (CanTrace())
+	{
+		for (auto [fileType, count] : fileCounts)
+		{
+			Trace("{}: {}", ResourceType::ToStringView(fileType).data(), count);
+		}
 	}
 }
 

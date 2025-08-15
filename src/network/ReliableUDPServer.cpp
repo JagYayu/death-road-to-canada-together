@@ -99,7 +99,7 @@ bool ReliableUDPServer::Update() noexcept
 			// /* 存储任何客户端信息 */
 			// event.peer->data = "Client information";
 
-			// // 可以在这里立即发送欢迎消息
+			// 可以在这里立即发送欢迎消息
 			// const char *welcomeMsg = "Welcome to the server!";
 			// ENetPacket *packet = enet_packet_create(welcomeMsg,
 			//                                         strlen(welcomeMsg) + 1,

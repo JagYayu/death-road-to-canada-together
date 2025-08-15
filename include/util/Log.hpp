@@ -1,5 +1,6 @@
 #pragma once
 
+#include "LogVerbosity.hpp"
 #include "Micros.hpp"
 #include "program/Tudov.hpp"
 
@@ -30,19 +31,6 @@ namespace tudov
 			std::string message;
 		};
 
-	  public:
-		enum class EVerbosity : std::int8_t
-		{
-			All = -1,
-			None = 0,
-			Fatal = 1 << 0,
-			Error = 1 << 1,
-			Warn = 1 << 2,
-			Info = 1 << 3,
-			Debug = 1 << 4,
-			Trace = 1 << 5,
-		};
-
 	  private:
 		static constexpr decltype(auto) VerbTrace = "Trace";
 		static constexpr decltype(auto) VerbInfo = "Info";
@@ -52,9 +40,9 @@ namespace tudov
 		static constexpr decltype(auto) VerbFatal = "Fatal";
 
 	  private:
-		static EVerbosity _globalVerbosities;
-		static std::unordered_map<std::string, EVerbosity> _verbosities;
-		static std::unordered_map<std::string, EVerbosity> _verbositiesOverrides;
+		static ELogVerbosity _globalVerbosities;
+		static std::unordered_map<std::string, ELogVerbosity> _verbosities;
+		static std::unordered_map<std::string, ELogVerbosity> _verbositiesOverrides;
 		static std::unordered_map<std::string, std::shared_ptr<Log>> _logInstances;
 		static std::queue<Entry> _queue;
 		static std::mutex _mutex;
@@ -62,7 +50,8 @@ namespace tudov
 		static std::atomic<bool> _exit;
 
 	  private:
-		static void Process();
+		static void Process() noexcept;
+		static void PrintToConsole(std::string_view message, const Entry &entry) noexcept;
 		static void OutputImpl(std::string_view module, std::string_view verb, std::string_view str);
 
 	  public:
@@ -79,59 +68,58 @@ namespace tudov
 		 * Otherwise, use `Exit()` instead.
 		 */
 		static void Exit() noexcept;
-		static std::optional<EVerbosity> GetVerbosity(const std::string &module) noexcept;
-		static bool SetVerbosity(const std::string &module, EVerbosity verb) noexcept;
+		static std::optional<ELogVerbosity> GetVerbosity(std::string_view module) noexcept;
+		static bool SetVerbosity(std::string_view module, ELogVerbosity flags) noexcept;
 		static void UpdateVerbosities(const void *jsonConfig);
-		static std::optional<EVerbosity> GetVerbosityOverride(const std::string &module) noexcept;
-		static void SetVerbosityOverride(const std::string &module, EVerbosity verb) noexcept;
+		static std::optional<ELogVerbosity> GetVerbosityOverride(const std::string &module) noexcept;
+		static void SetVerbosityOverride(std::string_view module, ELogVerbosity flags) noexcept;
 
 		static std::size_t CountLogs() noexcept;
 		static std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator BeginLogs() noexcept;
 		static std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator EndLogs() noexcept;
 		static std::size_t CountVerbosities() noexcept;
-		static std::unordered_map<std::string, EVerbosity>::const_iterator BeginVerbosities() noexcept;
-		static std::unordered_map<std::string, EVerbosity>::const_iterator EndVerbosities() noexcept;
+		static std::unordered_map<std::string, ELogVerbosity>::const_iterator BeginVerbosities() noexcept;
+		static std::unordered_map<std::string, ELogVerbosity>::const_iterator EndVerbosities() noexcept;
 		static std::size_t CountVerbositiesOverrides() noexcept;
-		static std::unordered_map<std::string, EVerbosity>::const_iterator BeginVerbositiesOverrides() noexcept;
-		static std::unordered_map<std::string, EVerbosity>::const_iterator EndVerbositiesOverrides() noexcept;
+		static std::unordered_map<std::string, ELogVerbosity>::const_iterator BeginVerbositiesOverrides() noexcept;
+		static std::unordered_map<std::string, ELogVerbosity>::const_iterator EndVerbositiesOverrides() noexcept;
 
 	  private:
 		std::string _module;
 
-		bool CanOutput(EVerbosity verb) const noexcept;
+		bool CanOutput(ELogVerbosity flag) const noexcept;
 		void Output(std::string_view verb, std::string_view str) const noexcept;
 
 	  public:
-		explicit Log(const std::string &module) noexcept;
+		explicit Log(std::string_view module) noexcept;
 		~Log() noexcept;
 
-		const std::string &GetModule() const;
+		std::string_view GetModule() const;
 
-		TE_FORCEINLINE EVerbosity GetVerbosity() const noexcept
+		TE_FORCEINLINE ELogVerbosity GetVerbosity() const noexcept
 		{
-			auto &&verb = GetVerbosity(_module);
-			return verb.has_value() ? verb.value() : Log::EVerbosity::None;
+			return GetVerbosity(_module).value_or(ELogVerbosity::None);
 		}
 
 		TE_FORCEINLINE bool CanTrace() const noexcept
 		{
-			return CanOutput(EVerbosity::Trace);
+			return CanOutput(ELogVerbosity::Trace);
 		}
 		TE_FORCEINLINE bool CanInfo() const noexcept
 		{
-			return CanOutput(EVerbosity::Info);
+			return CanOutput(ELogVerbosity::Info);
 		}
 		TE_FORCEINLINE bool CanDebug() const noexcept
 		{
-			return CanOutput(EVerbosity::Debug);
+			return CanOutput(ELogVerbosity::Debug);
 		}
 		TE_FORCEINLINE bool CanWarn() const noexcept
 		{
-			return CanOutput(EVerbosity::Warn);
+			return CanOutput(ELogVerbosity::Warn);
 		}
 		TE_FORCEINLINE bool CanError() const noexcept
 		{
-			return CanOutput(EVerbosity::Error);
+			return CanOutput(ELogVerbosity::Error);
 		}
 		TE_FORCEINLINE constexpr bool CanFatal() const noexcept
 		{
@@ -139,27 +127,27 @@ namespace tudov
 		}
 
 		template <typename... Args>
-		TE_FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args) noexcept
+		TE_FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args) const noexcept
 		{
 			Output(VerbTrace, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args) noexcept
+		TE_FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args) const noexcept
 		{
 			Output(VerbDebug, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args) noexcept
+		TE_FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args) const noexcept
 		{
 			Output(VerbInfo, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args) noexcept
+		TE_FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args) const noexcept
 		{
 			Output(VerbWarn, std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args) noexcept
+		TE_FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args) const noexcept
 		{
 			Output(VerbError, std::format(fmt, std::forward<Args>(args)...));
 		}
@@ -167,7 +155,7 @@ namespace tudov
 		 * @warning This function will terminate the program.
 		 */
 		template <typename... Args>
-		TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) noexcept
+		TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) const noexcept
 		{
 			auto &&str = std::format(fmt, std::forward<Args>(args)...);
 			Output(VerbFatal, str);
@@ -188,63 +176,63 @@ namespace tudov
 
 		const std::string &GetModule() const;
 
-		TE_FORCEINLINE Log::EVerbosity GetVerbosity() const
+		TE_FORCEINLINE ELogVerbosity GetVerbosity() const
 		{
 			return GetLog().GetVerbosity();
 		}
 
-		TE_FORCEINLINE bool CanTrace() const
+		TE_FORCEINLINE bool CanTrace() const noexcept
 		{
 			return GetLog().CanTrace();
 		}
-		TE_FORCEINLINE bool CanInfo() const
+		TE_FORCEINLINE bool CanInfo() const noexcept
 		{
 			return GetLog().CanInfo();
 		}
-		TE_FORCEINLINE bool CanDebug() const
+		TE_FORCEINLINE bool CanDebug() const noexcept
 		{
 			return GetLog().CanDebug();
 		}
-		TE_FORCEINLINE bool CanWarn() const
+		TE_FORCEINLINE bool CanWarn() const noexcept
 		{
 			return GetLog().CanWarn();
 		}
-		TE_FORCEINLINE bool CanError() const
+		TE_FORCEINLINE bool CanError() const noexcept
 		{
 			return GetLog().CanError();
 		}
-		TE_FORCEINLINE constexpr bool CanFatal() const
+		TE_FORCEINLINE constexpr bool CanFatal() const noexcept
 		{
-			return GetLog().CanFatal();
+			return true;
 		}
 
 		template <typename... Args>
-		TE_FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args) const
 		{
 			GetLog().Trace(fmt, std::forward<Args>(args)...);
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args) const
 		{
 			GetLog().Debug(fmt, std::forward<Args>(args)...);
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args) const
 		{
 			GetLog().Info(fmt, std::forward<Args>(args)...);
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args) const
 		{
 			GetLog().Warn(fmt, std::forward<Args>(args)...);
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args) const
 		{
 			GetLog().Error(fmt, std::forward<Args>(args)...);
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args)
+		TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) const
 		{
 			GetLog().Fatal(fmt, std::forward<Args>(args)...);
 		}

@@ -152,7 +152,7 @@ void Config::Load() noexcept
 	}
 }
 
-std::vector<std::string> Config::GetMountBitmaps() noexcept
+std::vector<std::string> Config::GetMountBitmaps() const noexcept
 {
 	auto &&mount = GetMount(_config);
 	auto &&bitmaps = mount[keyBitmaps];
@@ -164,7 +164,7 @@ std::vector<std::string> Config::GetMountBitmaps() noexcept
 	return bitmaps;
 }
 
-std::vector<std::string> Config::GetMountDirectories() noexcept
+std::vector<std::string> Config::GetMountDirectories() const noexcept
 {
 	auto &&mount = GetMount(_config);
 	auto &&directories = mount[keyDirectories];
@@ -176,7 +176,7 @@ std::vector<std::string> Config::GetMountDirectories() noexcept
 	return directories;
 }
 
-std::unordered_map<std::string, EResourceType> Config::GetMountFiles() noexcept
+std::unordered_map<std::string, EResourceType> Config::GetMountFiles() const noexcept
 {
 	auto &&mount = GetMount(_config);
 	auto &&files = mount[keyFiles];
@@ -188,7 +188,7 @@ std::unordered_map<std::string, EResourceType> Config::GetMountFiles() noexcept
 	return files;
 }
 
-bool Config::GetRenderBackend() noexcept
+bool Config::GetRenderBackend() const noexcept
 {
 	// auto &&renderBackend = _config[keyRenderBackend];
 	// if (!renderBackend.is_string())
@@ -200,7 +200,7 @@ bool Config::GetRenderBackend() noexcept
 	return false;
 }
 
-std::uint32_t Config::GetWindowFramelimit() noexcept
+std::uint32_t Config::GetWindowFramelimit() const noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&framelimit = window[keyFramelimit];
@@ -212,7 +212,7 @@ std::uint32_t Config::GetWindowFramelimit() noexcept
 	return framelimit;
 }
 
-std::string_view Config::GetWindowTitle() noexcept
+std::string_view Config::GetWindowTitle() const noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&title = window[keyTitle];
@@ -224,7 +224,7 @@ std::string_view Config::GetWindowTitle() noexcept
 	return title;
 }
 
-std::uint32_t Config::GetWindowWidth() noexcept
+std::uint32_t Config::GetWindowWidth() const noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&width = window[keyWidth];
@@ -236,7 +236,7 @@ std::uint32_t Config::GetWindowWidth() noexcept
 	return width;
 }
 
-std::uint32_t Config::GetWindowHeight() noexcept
+std::uint32_t Config::GetWindowHeight() const noexcept
 {
 	auto &&window = GetWindow(_config);
 	auto &&height = window[keyHeight];

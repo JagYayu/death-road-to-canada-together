@@ -31,7 +31,7 @@ namespace tudov
 	enum class EFileChangeType;
 	class GlobalStorage;
 
-	class AssetsManager : public IAssetsManager, public ILogProvider
+	class AssetsManager : public IAssetsManager, private ILogProvider
 	{
 	  protected:
 		Context &_context;
@@ -62,6 +62,7 @@ namespace tudov
 	  private:
 		void LoadAssetsFromPackageFiles() noexcept;
 		void LoadAssetsFromDeveloperDirectory() noexcept;
+		void LoadAssetsFromExternalDirectories() noexcept;
 		void DeveloperDirectoryWatchCallback(const std::filesystem::path &filePath, EFileChangeType type);
 		std::vector<std::vector<std::byte>> CollectPackageFileBytes() noexcept;
 	};

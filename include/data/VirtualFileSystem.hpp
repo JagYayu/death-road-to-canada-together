@@ -18,7 +18,7 @@ namespace tudov
 {
 	enum class EPathType;
 
-	class VirtualFileSystem : public ILogProvider
+	class VirtualFileSystem : private ILogProvider
 	{
 	  public:
 		using MountDirectoryEvent = DelegateEvent<const std::filesystem::path &>;
@@ -94,7 +94,8 @@ namespace tudov
 		RemountFileEvent &GetOnRemountFile() noexcept;
 
 		void MountDirectory(const std::filesystem::path &path) noexcept;
-		void MountFile(const std::filesystem::path &path, const std::vector<std::byte> &bytes) noexcept;
+		void MountFile(const std::filesystem::path &path) noexcept;
+		void MountFile(const std::filesystem::path &path, std::span<const std::byte> bytes) noexcept;
 		bool DismountDirectory(const std::filesystem::path &path) noexcept;
 		bool DismountFile(const std::filesystem::path &path) noexcept;
 		bool RemountFile(const std::filesystem::path &path, const std::vector<std::byte> &bytes) noexcept;

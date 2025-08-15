@@ -21,16 +21,18 @@ namespace tudov
 
 	class RuntimeEvent : public AbstractEvent
 	{
-		using TInvocationCache = std::vector<EventHandler *>;
-		using TInvocationTrackID = std::uint32_t;
+		using InvocationCache = std::vector<EventHandler *>;
+		using InvocationTrackID = std::uint32_t;
 
 	  public:
 		enum class EInvocation
 		{
-			Default = 0,
+			None = 0,
 			CacheHandlers = 1 << 0,
 			NoProfiler = 1 << 1,
 			TrackProgression = 1 << 2,
+
+			Default = CacheHandlers,
 		};
 
 	  private:
@@ -55,12 +57,12 @@ namespace tudov
 		std::shared_ptr<Log> _log;
 		std::shared_ptr<Profile> _profile;
 		bool _handlersSortedCache;
-		std::optional<TInvocationCache> _invocationCache;
-		std::unordered_map<EventHandleKey, TInvocationCache, EventHandleKey::Hash, EventHandleKey::Equal> _invocationCaches;
+		std::optional<InvocationCache> _invocationCache;
+		std::unordered_map<EventHandleKey, InvocationCache, EventHandleKey::Hash, EventHandleKey::Equal> _invocationCaches;
 		std::vector<std::string> _orders;
 		std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> _keys;
 		std::vector<EventHandler> _handlers;
-		TInvocationTrackID _invocationTrackID;
+		InvocationTrackID _invocationTrackID;
 
 	  public:
 		explicit RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = {""}, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys = {}, ScriptID scriptID = false);
@@ -90,7 +92,7 @@ namespace tudov
 
 		void Invoke(IScriptEngine &scriptEngine, CoreEventData *data, const EventHandleKey &key = {}, EInvocation options = EInvocation::Default);
 
-		TInvocationTrackID GetNextInvocationID() noexcept;
+		InvocationTrackID GetNextInvocationID() noexcept;
 
 		void ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider);
 		void ClearSpecificScriptHandlers(const IScriptProvider &scriptProvider, ScriptID scriptID);

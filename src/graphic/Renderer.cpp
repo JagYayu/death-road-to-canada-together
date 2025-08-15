@@ -1,11 +1,12 @@
 #include "graphic/Renderer.hpp"
-#include "data/VirtualFileSystem.hpp"
+
 #include "graphic/RenderTarget.hpp"
 #include "graphic/VSyncMode.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/ImageResources.hpp"
+#include "util/LogMicros.hpp"
 
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_pixels.h"
@@ -34,6 +35,11 @@ Renderer::Renderer(Window &window) noexcept
 	}
 }
 
+Log &Renderer::GetLog() noexcept
+{
+	return *_log;
+}
+
 void Renderer::InitializeRenderer() noexcept
 {
 	if (_sdlRenderer) [[unlikely]]
@@ -43,7 +49,7 @@ void Renderer::InitializeRenderer() noexcept
 	}
 
 	_sdlRenderer = SDL_CreateRenderer(_window.GetSDLWindowHandle(), nullptr);
-	if (!_sdlRenderer)
+	if (_sdlRenderer != nullptr)
 	{
 		auto [width, height] = _window.GetSize();
 		_sdlTextureMain = SDL_CreateTexture(_sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
@@ -51,7 +57,7 @@ void Renderer::InitializeRenderer() noexcept
 	}
 	else
 	{
-		_log->Error("Failed to create SDL3 Renderer");
+		TE_ERROR("{}", "Failed to create SDL3 Renderer");
 	}
 }
 

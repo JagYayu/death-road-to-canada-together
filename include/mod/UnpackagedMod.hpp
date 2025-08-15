@@ -16,7 +16,7 @@ namespace tudov
 		virtual std::filesystem::path GetDirectory() noexcept = 0;
 	};
 
-	class UnpackagedMod : public Mod, public IUnpackagedMod, public IContextProvider, public ILogProvider
+	class UnpackagedMod : public Mod, public IUnpackagedMod, public IContextProvider, private ILogProvider
 	{
 	  private:
 		std::shared_ptr<Log> _log;

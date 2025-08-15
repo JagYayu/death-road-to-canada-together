@@ -38,7 +38,7 @@ namespace tudov
 		}
 	};
 
-	class EventManager : public IEventManager
+	class EventManager : public IEventManager, private ILogProvider
 	{
 		friend class CoreEvents;
 		friend class LuaAPI;
@@ -58,32 +58,23 @@ namespace tudov
 		std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>> _runtimeEvents;
 		std::vector<std::shared_ptr<RuntimeEvent>> _staticEvents;
 
-		DelegateEvent<>::HandlerID _onPreLoadAllScriptsHandlerID;
-		DelegateEvent<>::HandlerID _onPostLoadAllScriptsHandlerID;
-		DelegateEvent<ScriptID>::HandlerID _onPreHotReloadScriptsHandlerID;
-		DelegateEvent<ScriptID>::HandlerID _onPostHotReloadScriptsHandlerID;
-		DelegateEvent<ScriptID>::HandlerID _onUnloadScriptHandlerID;
+		DelegateEventHandlerID _onPreLoadAllScriptsHandlerID = 0;
+		DelegateEventHandlerID _onPostLoadAllScriptsHandlerID = 0;
+		DelegateEventHandlerID _onPreHotReloadScriptsHandlerID = 0;
+		DelegateEventHandlerID _onPostHotReloadScriptsHandlerID = 0;
+		DelegateEventHandlerID _onUnloadScriptHandlerID = 0;
 
 	  public:
 		explicit EventManager(Context &context) noexcept;
 		~EventManager() noexcept override;
 
-	  private:
-		[[nodiscard]] EventID AllocEventID(std::string_view eventName) noexcept;
-		void DeallocEventID(EventID eventID) noexcept;
-		void OnScriptsLoaded();
-		[[nodiscard]] std::optional<std::reference_wrapper<AbstractEvent>> TryGetRegistryEvent(EventID eventID);
-
-		void LuaAdd(const sol::object &event, const sol::object &func, const sol::object &name, const sol::object &order, const sol::object &key, const sol::object &sequence);
-		EventID LuaNew(const sol::object &event, const sol::object &orders, const sol::object &keys);
-		void LuaInvoke(const sol::object &event, const sol::object &args, const sol::object &key, const sol::object &uncached);
-
 	  public:
-		// void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept override;
-
 		Context &GetContext() noexcept override;
+		Log &GetLog() noexcept override;
+		void PreInitialize() noexcept override;
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
+		void PostDeinitialize() noexcept override;
 
 		ICoreEvents &GetCoreEvents() noexcept override;
 		void InstallToScriptEngine(IScriptEngine &scriptEngine);
@@ -97,5 +88,15 @@ namespace tudov
 		[[nodiscard]] std::size_t GetRuntimeEventsCount() const noexcept override;
 		[[nodiscard]] std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator BeginRuntimeEvents() const override;
 		[[nodiscard]] std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator EndRuntimeEvents() const override;
+
+	  private:
+		[[nodiscard]] EventID AllocEventID(std::string_view eventName) noexcept;
+		void DeallocEventID(EventID eventID) noexcept;
+		void OnScriptsLoaded();
+		[[nodiscard]] std::optional<std::reference_wrapper<AbstractEvent>> TryGetRegistryEvent(EventID eventID);
+
+		void LuaAdd(sol::object event, sol::object func, sol::object name, sol::object order, sol::object key, sol::object sequence);
+		EventID LuaNew(sol::object event, sol::object orders, sol::object keys);
+		void LuaInvoke(sol::object event, sol::object args, sol::object key);
 	};
 } // namespace tudov

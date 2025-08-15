@@ -10,7 +10,7 @@ namespace tudov
 {
 	class IWindow;
 
-	class DebugScripts : public IDebugElement, public ILogProvider
+	class DebugScripts : public IDebugElement, private ILogProvider
 	{
 	  protected:
 		enum class EPage
@@ -18,7 +18,16 @@ namespace tudov
 			Errors,
 			Provided,
 			Loaded,
-			Inspect,
+
+			Default = Errors,
+		};
+
+		struct ErrorsArea
+		{
+			std::string_view id;
+			std::string_view name;
+			const std::vector<std::shared_ptr<ScriptError>> &errors;
+			std::string_view filter;
 		};
 
 	  public:
@@ -33,9 +42,11 @@ namespace tudov
 	  protected:
 		std::atomic<bool> isOpeningScriptEditor = false;
 		std::thread _openScriptEditorThread;
-		std::size_t _selectedIndex = -1;
+		std::size_t _selectedLoadtimeErrorIndex = -1;
+		std::size_t _selectedRuntimeErrorIndex = -1;
 		bool _autoScroll = true;
 		char _filterText[128];
+		EPage _page = DebugScripts::EPage::Default;
 
 	  public:
 		explicit DebugScripts() noexcept = default;
@@ -47,7 +58,8 @@ namespace tudov
 		void UpdateAndRender(IWindow &window) noexcept override;
 
 	  private:
-		void UpdateAndRenderLoadtimeErrorArea(IWindow &window) noexcept;
-		void UpdateAndRenderRuntimeErrorArea(IWindow &window) noexcept;
+		void UpdateAndRenderErrorsArea(IWindow &window, const ErrorsArea &errorsArea) noexcept;
+		void UpdateAndRenderProvidedScripts(IWindow &window) noexcept;
+		void UpdateAndRenderLoadedScripts(IWindow &window) noexcept;
 	};
 } // namespace tudov

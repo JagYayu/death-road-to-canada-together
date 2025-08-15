@@ -2,22 +2,21 @@
 
 #include "program/EngineComponent.hpp"
 #include "util/Definitions.hpp"
+#include "util/Micros.hpp"
 
 #include <chrono>
 #include <cstdint>
+#include <deque>
+#include <memory>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace tudov
 {
-	enum class EScriptErrorType : std::uint8_t
-	{
-		Loadtime = 0,
-		Runtime,
-	};
-
 	struct ScriptError
 	{
 		std::chrono::time_point<std::chrono::system_clock> time;
@@ -27,7 +26,8 @@ namespace tudov
 
 		static std::uint32_t ExtractLuaErrorLine(std::string_view message);
 
-		explicit ScriptError(ScriptID scriptID, EScriptErrorType type, std::string_view message) noexcept;
+		explicit ScriptError(ScriptID scriptID, std::string_view message) noexcept;
+		~ScriptError() noexcept = default;
 	};
 
 	struct IScriptErrors : public IEngineComponent
@@ -51,6 +51,19 @@ namespace tudov
 
 		virtual void ClearLoadtimeErrors() noexcept = 0;
 		virtual void ClearRuntimeErrors() noexcept = 0;
+
+		template <typename... TArgs>
+		    requires(!(std::same_as<std::shared_ptr<ScriptError>, std::decay_t<TArgs>> || ...))
+		TE_FORCEINLINE void AddLoadtimeError(TArgs &&...args)
+		{
+			AddLoadtimeError(std::make_shared<ScriptError>(std::forward<TArgs>(args)...));
+		}
+		template <typename... TArgs>
+		    requires(!(std::same_as<std::shared_ptr<ScriptError>, std::decay_t<TArgs>> || ...))
+		TE_FORCEINLINE void AddRuntimeError(TArgs &&...args)
+		{
+			AddRuntimeError(std::make_shared<ScriptError>(std::forward<TArgs>(args)...));
+		}
 	};
 
 	class ScriptErrors : public IScriptErrors
@@ -58,16 +71,23 @@ namespace tudov
 	  protected:
 		Context &_context;
 		std::unordered_map<ScriptID, std::shared_ptr<ScriptError>> _scriptLoadtimeErrors;
-		// std::unordered_map<ScriptID, std::shared_ptr<ScriptError>> _scriptLoadErrorsCache;
-		std::vector<std::shared_ptr<ScriptError>> _scriptRuntimeErrors;
+		std::deque<std::shared_ptr<ScriptError>> _scriptRuntimeErrors;
+
+		DelegateEventHandlerID _handlerIDOnPreLoadAllScripts = 0;
+		DelegateEventHandlerID _handlerIDOnUnloadScript = 0;
+		DelegateEventHandlerID _handlerIDOnFailedLoadScript = 0;
 
 		mutable std::optional<std::vector<std::shared_ptr<ScriptError>>> _scriptLoadtimeErrorCache;
+		mutable std::optional<std::vector<std::shared_ptr<ScriptError>>> _scriptRuntimeErrorsCached;
 
 	  public:
 		explicit ScriptErrors(Context &context) noexcept;
 		~ScriptErrors() noexcept override = default;
 
 		Context &GetContext() noexcept override;
+
+		void PreInitialize() noexcept override;
+		void PostDeinitialize() noexcept override;
 
 		bool HasLoadtimeError() const noexcept override;
 		bool HasRuntimeError() const noexcept override;

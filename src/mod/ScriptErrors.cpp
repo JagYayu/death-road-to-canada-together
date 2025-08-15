@@ -1,6 +1,10 @@
 #include "mod/ScriptErrors.hpp"
 
+#include "mod/ScriptLoader.hpp"
+
+#include <algorithm>
 #include <cassert>
+#include <memory>
 #include <optional>
 #include <regex>
 
@@ -34,7 +38,7 @@ std::uint32_t ScriptError::ExtractLuaErrorLine(std::string_view error)
 	return 0;
 }
 
-ScriptError::ScriptError(ScriptID scriptID, EScriptErrorType type, std::string_view message) noexcept
+ScriptError::ScriptError(ScriptID scriptID, std::string_view message) noexcept
     : time(std::chrono::system_clock::now()),
       scriptID(scriptID),
       line(ScriptError::ExtractLuaErrorLine(message)),
@@ -52,6 +56,39 @@ Context &ScriptErrors::GetContext() noexcept
 	return _context;
 }
 
+void ScriptErrors::PreInitialize() noexcept
+{
+	IScriptLoader &scriptLoader = GetScriptLoader();
+
+	_handlerIDOnPreLoadAllScripts = scriptLoader.GetOnPreLoadAllScripts() += [this]() -> void
+	{
+		ClearCaches();
+	};
+
+	_handlerIDOnUnloadScript = scriptLoader.GetOnUnloadScript() += [this](ScriptID scriptID, std::string_view scriptName) -> void
+	{
+		RemoveLoadtimeError(scriptID);
+	};
+
+	_handlerIDOnFailedLoadScript = scriptLoader.GetOnFailedLoadScript() += [this](ScriptID scriptID, std::string_view scriptName, std::string_view error) -> void
+	{
+		AddLoadtimeError(std::make_shared<ScriptError>(scriptID, error));
+	};
+}
+
+void ScriptErrors::PostDeinitialize() noexcept
+{
+	IScriptLoader &scriptLoader = GetScriptLoader();
+
+	scriptLoader.GetOnPreLoadAllScripts() -= _handlerIDOnPreLoadAllScripts;
+	scriptLoader.GetOnUnloadScript() -= _handlerIDOnUnloadScript;
+	scriptLoader.GetOnFailedLoadScript() -= _handlerIDOnFailedLoadScript;
+
+	_handlerIDOnPreLoadAllScripts = 0;
+	_handlerIDOnUnloadScript = 0;
+	_handlerIDOnFailedLoadScript = 0;
+}
+
 bool ScriptErrors::HasLoadtimeError() const noexcept
 {
 	return !_scriptLoadtimeErrors.empty();
@@ -59,7 +96,7 @@ bool ScriptErrors::HasLoadtimeError() const noexcept
 
 bool ScriptErrors::HasRuntimeError() const noexcept
 {
-	return !_scriptRuntimeErrors.empty();
+	return !GetRuntimeErrorsCached().empty();
 }
 
 std::vector<std::shared_ptr<ScriptError>> ScriptErrors::GetLoadtimeErrors() const noexcept
@@ -83,7 +120,7 @@ std::vector<std::shared_ptr<ScriptError>> ScriptErrors::GetLoadtimeErrors() cons
 
 std::vector<std::shared_ptr<ScriptError>> ScriptErrors::GetRuntimeErrors() const noexcept
 {
-	return _scriptRuntimeErrors;
+	return GetRuntimeErrorsCached();
 }
 
 const std::vector<std::shared_ptr<ScriptError>> &ScriptErrors::GetLoadtimeErrorsCached() const noexcept
@@ -98,12 +135,32 @@ const std::vector<std::shared_ptr<ScriptError>> &ScriptErrors::GetLoadtimeErrors
 
 const std::vector<std::shared_ptr<ScriptError>> &ScriptErrors::GetRuntimeErrorsCached() const noexcept
 {
-	return _scriptRuntimeErrors;
+	if (_scriptRuntimeErrorsCached == std::nullopt) [[unlikely]]
+	{
+		_scriptRuntimeErrorsCached = std::make_optional<std::vector<std::shared_ptr<ScriptError>>>();
+
+		const IScriptProvider &scriptProvider = GetScriptProvider();
+		for (const auto &scriptError : _scriptRuntimeErrors)
+		{
+			if (scriptProvider.IsValidScript(scriptError->scriptID))
+			{
+				_scriptRuntimeErrorsCached->emplace_back(scriptError);
+			}
+		}
+
+		std::sort(_scriptRuntimeErrorsCached->begin(), _scriptRuntimeErrorsCached->end(), [](const std::shared_ptr<ScriptError> &l, const std::shared_ptr<ScriptError> &r) -> bool
+		{
+			return l->time > r->time;
+		});
+	}
+
+	return *_scriptRuntimeErrorsCached;
 }
 
 void ScriptErrors::ClearCaches() noexcept
 {
 	_scriptLoadtimeErrorCache = std::nullopt;
+	_scriptRuntimeErrorsCached = std::nullopt;
 }
 
 void ScriptErrors::AddLoadtimeError(const std::shared_ptr<ScriptError> &scriptError)
@@ -114,7 +171,7 @@ void ScriptErrors::AddLoadtimeError(const std::shared_ptr<ScriptError> &scriptEr
 
 void ScriptErrors::AddRuntimeError(const std::shared_ptr<ScriptError> &scriptError)
 {
-	_scriptRuntimeErrors.emplace_back(scriptError);
+	_scriptRuntimeErrors.push_back(scriptError);
 	ClearCaches();
 }
 
