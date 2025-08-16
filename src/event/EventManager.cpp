@@ -1,4 +1,16 @@
+/**
+ * @file event/EventManager.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "event/EventManager.hpp"
+
 #include "event/AbstractEvent.hpp"
 #include "event/CoreEvents.hpp"
 #include "event/LoadtimeEvent.hpp"
@@ -7,12 +19,10 @@
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "program/Context.hpp"
-#include "sol/error.hpp"
 #include "util/Definitions.hpp"
 #include "util/LogMicros.hpp"
 #include "util/Utils.hpp"
 
-#include "sol/string_view.hpp"
 #include "sol/types.hpp"
 #include <sol/forward.hpp>
 
@@ -81,7 +91,7 @@ void EventManager::OnScriptsLoaded()
 			}
 
 			auto &&scriptProvider = GetScriptProvider();
-			_log->Error("{}, source script: <{}>\"{}\"", msg, scriptID, scriptProvider.GetScriptNameByID(scriptID)->data());
+			TE_ERROR("{}, source script: <{}>\"{}\"", msg, scriptID, scriptProvider.GetScriptNameByID(scriptID)->data());
 			continue;
 		}
 
@@ -90,11 +100,11 @@ void EventManager::OnScriptsLoaded()
 			auto &&runtimeEvent = std::make_shared<RuntimeEvent>(loadtimeEvent->ToRuntime());
 			if (eventID != runtimeEvent->GetID())
 			{
-				_log->Error("Converted runtime event has different id to previous loadtime event! Expected <{}> but got <{}>", eventID, runtimeEvent->GetID());
+				TE_ERROR("Converted runtime event has different id to previous loadtime event! Expected <{}> but got <{}>", eventID, runtimeEvent->GetID());
 			}
 			else
 			{
-				_log->Trace("Loadtime event converted to a runtime event <{}>\"{}\"", eventID, GetEventNameByID(eventID)->data());
+				TE_TRACE("Loadtime event converted to a runtime event <{}>\"{}\"", eventID, GetEventNameByID(eventID)->data());
 				assert(_runtimeEvents.try_emplace(eventID, runtimeEvent).second);
 			}
 		}
@@ -103,12 +113,12 @@ void EventManager::OnScriptsLoaded()
 			auto &&eventName = _eventID2Name[eventID];
 			auto scriptID = loadtimeEvent->GetScriptID();
 			auto scriptName = scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
-			_log->Error("Attempt to add handlers to non-exist event <{}>\"{}\", source script <{}>\"{}\"", eventID, eventName, scriptID, scriptName);
+			TE_ERROR("Attempt to add handlers to non-exist event <{}>\"{}\", source script <{}>\"{}\"", eventID, eventName, scriptID, scriptName);
 		}
 	}
 
 	_loadtimeEvents.clear();
-	_log->Trace("Cleared loadtime events");
+	TE_TRACE("{}", "Cleared loadtime events");
 
 	auto &&scriptLoader = GetScriptLoader();
 
@@ -212,7 +222,7 @@ void EventManager::PreInitialize() noexcept
 			if (it->second->GetScriptID() == scriptID)
 			{
 				EventID eventID = it->second->GetID();
-				_log->Trace("Remove event <{}>\"{}\" from script <{}>\"{}\"", eventID, _eventID2Name[eventID], scriptID, scriptName);
+				TE_TRACE("Remove event <{}>\"{}\" from script <{}>\"{}\"", eventID, _eventID2Name[eventID], scriptID, scriptName);
 
 				DeallocEventID(it->first);
 				it = _runtimeEvents.erase(it);
@@ -364,7 +374,7 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		if (!registryEvent.has_value())
 		{
 			auto &&loadtimeEvent = std::make_shared<LoadtimeEvent>(*this, eventID, scriptID);
-			_log->Trace("Script <{}> added handler to loadtime event <{}>\"{}\"", scriptID, eventID, eventName);
+			TE_TRACE("Script <{}> added handler to loadtime event <{}>\"{}\"", scriptID, eventID, eventName);
 			registryEvent = *(_loadtimeEvents.try_emplace(eventID, loadtimeEvent).first->second);
 		}
 
@@ -406,7 +416,7 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 			if (!eventID)
 			{
 				eventID = AllocEventID(eventName);
-				_log->Trace("Script <{}> alloc event <{}>\"{}\"", scriptID, eventID, eventName);
+				TE_TRACE("Script <{}> alloc event <{}>\"{}\"", scriptID, eventID, eventName);
 			}
 		}
 		else
@@ -594,7 +604,7 @@ void EventManager::ClearInvalidScriptEvents() noexcept
 		if (scriptID && !scriptProvider.IsValidScript(scriptID))
 		{
 			DeallocEventID(it->first);
-			_log->Trace("Clear invalid event <{}>, script <{}>", it->first, scriptID);
+			TE_TRACE("Clear invalid event <{}>, script <{}>", it->first, scriptID);
 			it = _runtimeEvents.erase(it);
 		}
 		else

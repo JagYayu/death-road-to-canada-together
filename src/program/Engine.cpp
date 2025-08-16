@@ -1,3 +1,14 @@
+/**
+ * @file program/Engine.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "program/Engine.hpp"
 
 #include "data/AssetsManager.hpp"
@@ -43,8 +54,7 @@ static constexpr bool DebugSingleThread = false;
 using namespace tudov;
 
 Engine::Engine() noexcept
-    : _config(std::make_shared<Config>()),
-      _log(Log::Get("Engine")),
+    : _log(Log::Get("Engine")),
       _state(EState::None),
       _beginTick(0),
       _previousTick(0),
@@ -159,7 +169,6 @@ void Engine::Initialize() noexcept
 
 	TE_DEBUG("{}", "Initializing engine ...");
 	{
-		_config->Load();
 		_windowManager->InitializeMainWindow();
 
 		for (auto it = _components.begin(); it != _components.end(); ++it)
@@ -236,8 +245,8 @@ bool Engine::Tick() noexcept
 	}
 
 	std::uint64_t endNS = SDL_GetTicksNS();
-	auto limit = 1'000'000'000ull / uint64_t(_config->GetWindowFramelimit());
-	auto elapsed = endNS - beginNS;
+	std::uint64_t limit = 1'000'000'000ull / uint64_t(Tudov::GetConfig().GetWindowFramelimit());
+	std::uint64_t elapsed = endNS - beginNS;
 	if (elapsed < limit)
 	{
 		SDL_DelayPrecise(limit - elapsed);

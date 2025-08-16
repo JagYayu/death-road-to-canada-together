@@ -1,3 +1,14 @@
+/**
+ * @file util/Log.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "util/Log.hpp"
 #include "util/EnumFlag.hpp"
 #include "util/LogVerbosity.hpp"
@@ -31,7 +42,8 @@ std::atomic<bool> Log::_exit = false;
 
 std::shared_ptr<Log> Log::Get(std::string_view module) noexcept
 {
-	// * If Error occurred here, are you attempt to call `Log::Get` in static initialization?
+	// ! If an error was occurred here, It must be an attempt to call after the logging system is quitted.
+	// ! Are you attempt to call `Log::Get` in static initialization?
 
 	auto &&str = std::string(module);
 	auto &&it = _logInstances.find(str);
@@ -68,7 +80,7 @@ void Log::CleanupExpired() noexcept
 
 void Log::Quit() noexcept
 {
-	OutputImpl(defaultModule, VerbDebug, "Logging system quitting");
+	OutputImpl(defaultModule, VerbDebug, "Logging system is quitting");
 
 	CleanupExpired();
 

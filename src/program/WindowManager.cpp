@@ -1,11 +1,23 @@
+/**
+ * @file program/WindowManager.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "program/WindowManager.hpp"
 
-#include "SDL3/SDL_events.h"
 #include "data/Config.hpp"
 #include "debug/DebugManager.hpp"
 #include "program/MainWindow.hpp"
 #include "util/Log.hpp"
 #include "util/MicrosImpl.hpp"
+
+#include "SDL3/SDL_events.h"
 
 #include <algorithm>
 #include <stdexcept>

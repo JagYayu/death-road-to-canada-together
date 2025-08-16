@@ -1,5 +1,17 @@
+/**
+ * @file program/Tudov.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "program/Tudov.hpp"
 
+#include "data/Config.hpp"
 #include "program/Application.hpp"
 #include "program/Engine.hpp"
 #include "program/MainArgs.hpp"
@@ -9,6 +21,7 @@
 
 #include <Windows.h>
 #include <libloaderapi.h>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <winbase.h>
@@ -76,6 +89,23 @@ void Tudov::ReleaseApplication() noexcept
 	{
 		_engine = nullptr;
 	}
+}
+
+static std::unique_ptr<Config> _config;
+
+Config &Tudov::GetConfig() noexcept
+{
+	if (_config == nullptr) [[unlikely]]
+	{
+		FatalError("Attempt to get config before initialization");
+	}
+
+	return *_config;
+}
+
+void Tudov::InitConfig() noexcept
+{
+	_config = std::make_unique<Config>();
 }
 
 static MainArgs _mainArgs = MainArgs();

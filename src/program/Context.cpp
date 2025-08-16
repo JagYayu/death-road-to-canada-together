@@ -1,7 +1,18 @@
+/**
+ * @file program/Context.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "program/Context.hpp"
+
 #include "i18n/Localization.hpp"
 #include "program/Engine.hpp"
-
 #include "resource/GlobalResourcesCollection.hpp"
 #include "util/MicrosImpl.hpp"
 
@@ -27,7 +38,7 @@ Engine &Context::GetEngine()
 
 Config &Context::GetConfig()
 {
-	return *GetEngine()._config;
+	return Tudov::GetConfig();
 }
 
 IEventManager &Context::GetEventManager()

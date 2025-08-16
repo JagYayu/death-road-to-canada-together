@@ -1,3 +1,14 @@
+/**
+ * @file program/MainWindow.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "program/MainWindow.hpp"
 
 #include "debug/DebugManager.hpp"
@@ -15,7 +26,6 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
 
-#include <algorithm>
 #include <memory>
 #include <numbers>
 

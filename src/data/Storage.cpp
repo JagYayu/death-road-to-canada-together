@@ -1,34 +1,14 @@
+/**
+ * @file data/Storage.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "data/Storage.hpp"
 
-#include "data/HierarchyIterationResult.hpp"
-
-#include <filesystem>
-
 using namespace tudov;
-
-// EHierarchyIterationResult IStorage::ForeachDirectoryRecursed(const std::filesystem::path &directory, const EnumerationCallbackFunction<> &callback, std::uint32_t maxDepth, void *callbackArgs) noexcept
-// {
-// 	if (maxDepth == 0)
-// 	{
-// 		return EHierarchyIterationResult::Success;
-// 	}
-
-// 	auto &&callbackRecursed = [this, &callback, maxDepth](const std::filesystem::path &path, const std::filesystem::path &directory, void *args) -> EHierarchyIterationResult
-// 	{
-// 		if (!path.has_extension())
-// 		{
-// 			EHierarchyIterationResult result = ForeachDirectoryRecursed(directory / path, callback, maxDepth - 1, args);
-// 			switch (result)
-// 			{
-// 			case EHierarchyIterationResult::Continue:
-// 				break;
-// 			default:
-// 				return result;
-// 			}
-// 		}
-
-// 		return callback(path, directory, args);
-// 	};
-
-// 	return ForeachDirectory(directory, callbackRecursed, callbackArgs);
-// }

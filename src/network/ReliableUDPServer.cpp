@@ -1,8 +1,19 @@
+/**
+ * @file network/ReliableUDPServer.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "network/ReliableUDPServer.hpp"
+
 #include "event/CoreEvents.hpp"
 #include "event/EventManager.hpp"
 #include "network/SocketType.hpp"
-
 
 #include "enet/enet.h"
 

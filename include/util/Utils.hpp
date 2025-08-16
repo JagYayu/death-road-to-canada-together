@@ -1,10 +1,20 @@
+/**
+ * @file util/Utils.hpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #pragma once
 
 #include "Log.hpp"
 #include "Scopes.hpp"
 
 #include "json.hpp"
-
 #include "sol/table.hpp"
 #include "sol/types.hpp"
 

@@ -1,3 +1,15 @@
+/**
+ * @file program/Main.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
+#include "data/Config.hpp"
 #include "data/Constants.hpp"
 #include "graphic/GUI.hpp"
 #include "program/CrashReporter.hpp"
@@ -5,6 +17,7 @@
 #include "program/Tudov.hpp"
 #include "test/TestGPURendering.hpp"
 #include "util/Log.hpp"
+#include "util/LogMicros.hpp"
 
 #define SDL_MAIN_USE_CALLBACKS
 
@@ -22,31 +35,22 @@ const char *CategoryToCStr(int category) noexcept
 	{
 	case SDL_LOG_CATEGORY_APPLICATION:
 		return "Application";
-		break;
 	case SDL_LOG_CATEGORY_ERROR:
 		return "Error";
-		break;
 	case SDL_LOG_CATEGORY_ASSERT:
 		return "Assert";
-		break;
 	case SDL_LOG_CATEGORY_SYSTEM:
 		return "System";
-		break;
 	case SDL_LOG_CATEGORY_AUDIO:
 		return "Audio";
-		break;
 	case SDL_LOG_CATEGORY_VIDEO:
 		return "Video";
-		break;
 	case SDL_LOG_CATEGORY_RENDER:
 		return "Render";
-		break;
 	case SDL_LOG_CATEGORY_INPUT:
 		return "Input";
-		break;
 	case SDL_LOG_CATEGORY_TEST:
 		return "Test";
-		break;
 	case SDL_LOG_CATEGORY_GPU:
 		return "Gpu";
 	default:
@@ -56,25 +60,25 @@ const char *CategoryToCStr(int category) noexcept
 
 void SDLLogOutputCallback(void *userdata, int category, SDL_LogPriority priority, const char *message) noexcept
 {
-	auto &&log = Log::Get(std::string("@SDL.") + CategoryToCStr(category));
+	const std::shared_ptr<Log> &TE_L_log = Log::Get(std::string("@SDL.") + CategoryToCStr(category));
 	switch (priority)
 	{
 	case SDL_LOG_PRIORITY_TRACE:
 	case SDL_LOG_PRIORITY_VERBOSE:
-		log->Trace("{}", message);
+		TE_L_TRACE("{}", message);
 	case SDL_LOG_PRIORITY_DEBUG:
-		log->Debug("{}", message);
+		TE_L_DEBUG("{}", message);
 		break;
 	case SDL_LOG_PRIORITY_INFO:
-		log->Info("{}", message);
+		TE_L_INFO("{}", message);
 		break;
 	case SDL_LOG_PRIORITY_WARN:
-		log->Warn("{}", message);
+		TE_L_WARN("{}", message);
 		break;
 	case SDL_LOG_PRIORITY_ERROR:
-		log->Error("{}", message);
+		TE_L_ERROR("{}", message);
 	case SDL_LOG_PRIORITY_CRITICAL:
-		log->Fatal("{}", message);
+		TE_L_FATAL("{}", message);
 		break;
 	default:
 		break;
@@ -85,26 +89,29 @@ bool CommonInit(int argc, char **argv) noexcept
 {
 	CrashReporter::InitializeCrashReporter();
 
-	const Log &log = *Log::Get("Main");
+	// This will also initialize Logging system.
+	const std::shared_ptr<Log> &TE_L_log = Log::Get("Main");
 
-	log.Info("Application initializing ...");
+	Tudov::InitConfig();
+
+	TE_L_INFO("{}", "Application initializing ...");
 
 	// Logging application constants.
-	log.Debug("AppName = {}", Constants::AppName);
-	log.Debug("AppOrganization = {}", Constants::AppOrganization);
-	log.Debug("DataConfigFile = {}", Constants::DataConfigFile);
-	log.Debug("DataUserDirectoryPrefix = {}", Constants::DataUserDirectoryPrefix);
-	log.Debug("DataDeveloperAssetsDirectory = {}", Constants::DataDeveloperAssetsDirectory);
-	log.Debug("DataVirtualStorageRootApp = {}", Constants::DataVirtualStorageRootApp);
-	log.Debug("DataVirtualStorageRootMods = {}", Constants::DataVirtualStorageRootMods);
-	log.Debug("DataVirtualStorageRootUser = {}", Constants::DataVirtualStorageRootUser);
-	log.Debug("NetworkChannelsLimit = {}", Constants::NetworkChannelsLimit);
-	log.Debug("NetworkServerMaximumClients = {}", Constants::NetworkServerMaximumClients);
-	log.Debug("NetworkServerPassword = {}", Constants::NetworkServerPassword);
-	log.Debug("NetworkServerTitle = {}", Constants::NetworkServerTitle);
-	log.Debug("WindowTitle = {}", Constants::WindowTitle);
-	log.Debug("WindowWidth = {}", Constants::WindowWidth);
-	log.Debug("WindowHeight = {}", Constants::WindowHeight);
+	TE_L_INFO("AppName = {}", Constants::AppName);
+	TE_L_INFO("AppOrganization = {}", Constants::AppOrganization);
+	TE_L_INFO("DataConfigFile = {}", Constants::DataConfigFile);
+	TE_L_INFO("DataUserDirectoryPrefix = {}", Constants::DataUserDirectoryPrefix);
+	TE_L_INFO("DataDeveloperAssetsDirectory = {}", Constants::DataDeveloperAssetsDirectory);
+	TE_L_INFO("DataVirtualStorageRootApp = {}", Constants::DataVirtualStorageRootApp);
+	TE_L_INFO("DataVirtualStorageRootMods = {}", Constants::DataVirtualStorageRootMods);
+	TE_L_INFO("DataVirtualStorageRootUser = {}", Constants::DataVirtualStorageRootUser);
+	TE_L_INFO("NetworkChannelsLimit = {}", Constants::NetworkChannelsLimit);
+	TE_L_INFO("NetworkServerMaximumClients = {}", Constants::NetworkServerMaximumClients);
+	TE_L_INFO("NetworkServerPassword = {}", Constants::NetworkServerPassword);
+	TE_L_INFO("NetworkServerTitle = {}", Constants::NetworkServerTitle);
+	TE_L_INFO("WindowTitle = {}", Constants::WindowTitle);
+	TE_L_INFO("WindowWidth = {}", Constants::WindowWidth);
+	TE_L_INFO("WindowHeight = {}", Constants::WindowHeight);
 
 	Tudov::InitMainArgs(argc, argv);
 
@@ -112,9 +119,9 @@ bool CommonInit(int argc, char **argv) noexcept
 	SDL_SetLogOutputFunction(SDLLogOutputCallback, nullptr);
 	if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS | SDL_INIT_SENSOR | SDL_INIT_CAMERA)) [[unlikely]]
 	{
-		log.Fatal("SDL3 failed to initialize", SDL_GetError());
+		TE_L_FATAL("SDL3 failed to initialize", SDL_GetError());
 	}
-	log.Info("SDL3 initialized");
+	TE_L_INFO("{}", "SDL3 initialized");
 
 	return false;
 }
@@ -123,8 +130,13 @@ void CommonQuit(SDL_AppResult result) noexcept
 {
 	GUI::Quit();
 
-	Log::GetInstance().Info("Application quit, result code: {}", std::int32_t(result));
-	Log::Quit();
+	Tudov::GetConfig().Save();
+
+	{ // Quit logging system.
+		const Log *TE_L_log = &Log::GetInstance();
+		TE_L_INFO("Application quit, result code: {}", std::int32_t(result));
+		Log::Quit();
+	}
 }
 
 #ifdef TE_TEST_GPU_RENDERING

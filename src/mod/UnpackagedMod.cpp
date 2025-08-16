@@ -1,3 +1,14 @@
+/**
+ * @file mod/UnpackagedMod.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "mod/UnpackagedMod.hpp"
 
 #include "data/VirtualFileSystem.hpp"
@@ -172,7 +183,7 @@ void UnpackagedMod::Load()
 {
 	if (_fileWatcher)
 	{
-		_log->Warn("Unpackaged mod has already loaded");
+		TE_WARN("{}", "Unpackaged mod has already loaded");
 
 		return;
 	}
@@ -189,13 +200,13 @@ void UnpackagedMod::Load()
 	auto &&namespace_ = IUnpackagedMod::GetNamespace();
 	if (namespace_.empty())
 	{
-		_log->Debug("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.generic_string(), std::string_view(namespace_));
+		TE_DEBUG("Cannot load unpacked mod at \"{}\", invalid namespace \"{}\"", _directory.generic_string(), std::string_view(namespace_));
 		return;
 	}
 
 	auto &&dir = _directory.generic_string();
 
-	_log->Debug("Loading unpacked mod from \"{}\" ...", dir);
+	TE_DEBUG("Loading unpacked mod from \"{}\" ...", dir);
 
 	UpdateFileMatchPatterns();
 
@@ -221,7 +232,7 @@ void UnpackagedMod::Load()
 		// }
 	}
 
-	_log->Debug("Loaded unpacked mod from \"{}\"", dir);
+	TE_DEBUG("Loaded unpacked mod from \"{}\"", dir);
 
 	_loaded = true;
 }
@@ -289,13 +300,13 @@ void UnpackagedMod::Unload()
 {
 	if (!_loaded)
 	{
-		_log->Warn("Mod has not been loaded");
+		TE_WARN("{}", "Mod has not been loaded");
 		return;
 	}
 
 	auto &&dir = _directory.generic_string();
 
-	_log->Debug("Unloading unpackaged mod from \"{}\"", dir);
+	TE_DEBUG("Unloading unpackaged mod from \"{}\"", dir);
 
 	{
 		auto &modUID = Mod::GetConfig().uniqueID;
@@ -310,5 +321,5 @@ void UnpackagedMod::Unload()
 	}
 	_fonts.clear();
 
-	_log->Debug("Unloaded unpackaged mod \"{}\"", dir);
+	TE_DEBUG("Unloaded unpackaged mod \"{}\"", dir);
 }

@@ -1,3 +1,14 @@
+/**
+ * @file data/AssetsManager.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "data/AssetsManager.hpp"
 
 #include "data/Config.hpp"
@@ -124,7 +135,7 @@ void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 			auto &&bytes = applicationGlobalStorage.ReadFileToBytes(fileFillPath);
 
 			auto path = resourcePath.generic_string();
-			Trace("\"{}\", {} bytes", path, bytes.size());
+			TE_TRACE("\"{}\", {} bytes", path, bytes.size());
 			assets.emplace_back(path, bytes);
 		}
 

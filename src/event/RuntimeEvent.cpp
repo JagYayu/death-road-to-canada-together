@@ -1,3 +1,14 @@
+/**
+ * @file event/RuntimeEvent.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "event/RuntimeEvent.hpp"
 
 #include "event/AbstractEvent.hpp"
@@ -9,6 +20,7 @@
 #include "mod/ScriptProvider.hpp"
 #include "util/Definitions.hpp"
 #include "util/EnumFlag.hpp"
+#include "util/LogMicros.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -32,6 +44,11 @@ RuntimeEvent::RuntimeEvent(IEventManager &eventManager, EventID eventID, const s
 
 RuntimeEvent::~RuntimeEvent() noexcept
 {
+}
+
+Log &RuntimeEvent::GetLog() noexcept
+{
+	return *_log;
 }
 
 std::vector<EventHandler>::const_iterator RuntimeEvent::BeginHandlers() const noexcept
@@ -320,7 +337,7 @@ void RuntimeEvent::ClearCaches()
 	_handlersSortedCache = false;
 	_invocationCache = std::nullopt;
 	_invocationCaches.clear();
-	_log->Trace("Runtime event <{}> cleared caches", _id);
+	TE_TRACE("Runtime event <{}> cleared caches", _id);
 }
 
 void RuntimeEvent::ClearScriptHandlersImpl(std::function<bool(const EventHandler &)> pred)

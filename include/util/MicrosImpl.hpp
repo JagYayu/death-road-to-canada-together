@@ -1,9 +1,9 @@
 /**
- * @file MicrosImpl.hpp
+ * @file util/MicrosImpl.hpp
  * @author JagYayu
  * @brief Micros for project implementation files.
  * @version 1.0
- * @date 2025-08-15
+ * @date 2025
  *
  * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
  *

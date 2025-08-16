@@ -1,3 +1,14 @@
+/**
+ * @file i18n/Localization.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "i18n/Localization.hpp"
 
 #include "i18n/BuiltinTexts.hpp"

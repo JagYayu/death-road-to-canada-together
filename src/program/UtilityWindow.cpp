@@ -1,7 +1,19 @@
+/**
+ * @file program/UtilityWindow.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "program/UtilityWindow.hpp"
 
-#include "SDL3/SDL_video.h"
 #include "event/EventHandleKey.hpp"
+
+#include "SDL3/SDL_video.h"
 
 #include <memory>
 #include <string_view>

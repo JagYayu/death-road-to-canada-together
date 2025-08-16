@@ -1,3 +1,14 @@
+/**
+ * @file mod/ScriptLoader.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "mod/ScriptLoader.hpp"
 
 #include "misc/Text.hpp"
@@ -184,12 +195,9 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 	dependencies.insert(source);
 	// _scriptDependencyGraph.AddLink(from, to);
 
-	if (_log->CanTrace())
-	{
-		_log->Trace("Link scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
-		            source, scriptProvider.GetScriptNameByID(source)->data(),
-		            target, scriptProvider.GetScriptNameByID(target)->data());
-	}
+	TE_TRACE("Link scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
+	         source, scriptProvider.GetScriptNameByID(source)->data(),
+	         target, scriptProvider.GetScriptNameByID(target)->data());
 }
 
 void ScriptLoader::LoadAllScripts()
@@ -293,7 +301,7 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 		if (GetScriptProvider().IsStaticScript(scriptName))
 		{
 			scriptModule->RawLoad(*this);
-			_log->Trace("Raw loaded script <{}>\"{}\"", scriptID, scriptName);
+			TE_TRACE("Raw loaded script <{}>\"{}\"", scriptID, scriptName);
 		}
 		else
 		{
@@ -308,7 +316,7 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 			}
 
 			GetScriptEngine().InitializeScript(scriptID, scriptName, modUID, sandboxed, function);
-			_log->Trace("Lazy loaded script <{}>\"{}\"", scriptID, scriptName);
+			TE_TRACE("Lazy loaded script <{}>\"{}\"", scriptID, scriptName);
 		}
 
 		_onLoadedScript(scriptID, scriptName);
@@ -389,11 +397,11 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 		return;
 	}
 
-	_log->Trace("Unloading script <{}>\"{}\" ...", scriptID, scriptName->data());
+	TE_TRACE("Unloading script <{}>\"{}\" ...", scriptID, scriptName->data());
 
 	if (!_scriptModules.erase(scriptID))
 	{
-		_log->Trace("Already unloaded");
+		TE_TRACE("{}", "Already unloaded");
 		return;
 	}
 
@@ -412,7 +420,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 		dependencies.erase(scriptID);
 	}
 
-	_log->Trace("Unloaded");
+	TE_TRACE("{}", "Unloaded");
 }
 
 void ScriptLoader::HotReloadScripts(const std::vector<ScriptID> &scriptIDs)
@@ -460,7 +468,7 @@ void ScriptLoader::ProcessFullLoads()
 		if (!module->IsFullyLoaded())
 		{
 			module->FullLoad(*this);
-			_log->Trace("Fully loaded script \"{}\"", GetScriptProvider().GetScriptNameByID(scriptID).value());
+			TE_TRACE("Fully loaded script \"{}\"", GetScriptProvider().GetScriptNameByID(scriptID).value());
 		}
 	}
 

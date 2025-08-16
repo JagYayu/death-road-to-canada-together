@@ -1,3 +1,14 @@
+/**
+ * @file mod/ModManager.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "mod/ModManager.hpp"
 
 #include "Debug/DebugManager.hpp"
@@ -12,6 +23,7 @@
 #include "program/Engine.hpp"
 #include "util/Definitions.hpp"
 #include "util/EnumFlag.hpp"
+#include "util/LogMicros.hpp"
 #include "util/Version.hpp"
 
 #include <memory>
@@ -37,6 +49,11 @@ ModManager::~ModManager() noexcept
 Context &ModManager::GetContext() noexcept
 {
 	return _context;
+}
+
+Log &ModManager::GetLog() noexcept
+{
+	return *_log;
 }
 
 void ModManager::Initialize() noexcept
@@ -88,7 +105,7 @@ void ModManager::LoadMods()
 	}
 	EnumFlag::Mask(_loadState, ELoadState::Loading);
 
-	_log->Debug("Loading all required mods ...");
+	TE_DEBUG("{}", "Loading all required mods ...");
 
 	if (!_requiredMods.empty())
 	{
@@ -97,7 +114,7 @@ void ModManager::LoadMods()
 
 	if (IsNoModMatch())
 	{
-		_log->Debug("Loaded all required mods: no required mod specified");
+		TE_DEBUG("{}", "Loaded all required mods: no required mod specified");
 		return;
 	}
 
@@ -137,7 +154,7 @@ void ModManager::LoadMods()
 
 	GetScriptLoader().LoadAllScripts();
 
-	_log->Debug("Loaded all required mods");
+	TE_DEBUG("{}", "Loaded all required mods");
 
 	EnumFlag::Unmask(_loadState, ELoadState::Loading);
 }
@@ -155,7 +172,7 @@ void ModManager::UnloadMods()
 	}
 	EnumFlag::Mask(_loadState, ELoadState::Unloading);
 
-	_log->Debug("Unloading all loaded mods ...");
+	TE_DEBUG("{}", "Unloading all loaded mods ...");
 
 	GetScriptLoader().UnloadAllScripts();
 
@@ -165,7 +182,7 @@ void ModManager::UnloadMods()
 	}
 	_loadedMods.clear();
 
-	_log->Debug("Unloaded all loaded mods");
+	TE_DEBUG("{}", "Unloaded all loaded mods");
 
 	EnumFlag::Unmask(_loadState, ELoadState::Unloading);
 }
@@ -258,7 +275,7 @@ void ModManager::UpdateScripts() noexcept
 
 			if (!scriptProvider.RemoveScript(scriptID)) [[unlikely]]
 			{
-				_log->Warn("Attempt to remove non-exist script id", scriptID);
+				TE_WARN("Attempt to remove non-exist script id", scriptID);
 			}
 
 			scriptID = scriptProvider.AddScript(scriptName, scriptTextID, scriptModUID);
@@ -270,7 +287,7 @@ void ModManager::UpdateScripts() noexcept
 
 			if (!scriptProvider.RemoveScript(scriptID)) [[unlikely]]
 			{
-				_log->Warn("Attempt to remove non-exist script id", scriptID);
+				TE_WARN("Attempt to remove non-exist script id", scriptID);
 			}
 		}
 	}

@@ -1,3 +1,14 @@
+/**
+ * @file event/RuntimeEvent.hpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #pragma once
 
 #include "AbstractEvent.hpp"
@@ -19,7 +30,7 @@ namespace tudov
 	struct IScriptEngine;
 	struct IScriptProvider;
 
-	class RuntimeEvent : public AbstractEvent
+	class RuntimeEvent : public AbstractEvent, private ILogProvider
 	{
 		using InvocationCache = std::vector<EventHandler *>;
 		using InvocationTrackID = std::uint32_t;
@@ -68,16 +79,9 @@ namespace tudov
 		explicit RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = {""}, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys = {}, ScriptID scriptID = false);
 		~RuntimeEvent() noexcept override;
 
-	  private:
-		void ClearCaches();
-		void ClearScriptHandlersImpl(std::function<bool(const EventHandler &)> pred);
-
-		void InvokeFunction() noexcept;
-
-	  protected:
-		std::vector<EventHandler> &GetSortedHandlers();
-
 	  public:
+		Log &GetLog() noexcept override;
+
 		std::vector<EventHandler>::const_iterator BeginHandlers() const noexcept;
 		std::vector<EventHandler>::const_iterator EndHandlers() const noexcept;
 
@@ -97,5 +101,14 @@ namespace tudov
 		void ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider);
 		void ClearSpecificScriptHandlers(const IScriptProvider &scriptProvider, ScriptID scriptID);
 		void ClearScriptsHandlers();
+
+	  protected:
+		std::vector<EventHandler> &GetSortedHandlers();
+
+	  private:
+		void ClearCaches();
+		void ClearScriptHandlersImpl(std::function<bool(const EventHandler &)> pred);
+
+		void InvokeFunction() noexcept;
 	};
 } // namespace tudov

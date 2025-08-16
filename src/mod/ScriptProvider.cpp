@@ -1,3 +1,14 @@
+/**
+ * @file mod/ScriptProvider.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "mod/ScriptProvider.hpp"
 
 #include "data/VirtualFileSystem.hpp"
@@ -11,7 +22,6 @@
 #include <stdexcept>
 #include <string_view>
 #include <unordered_set>
-#include <vector>
 
 using namespace tudov;
 
@@ -102,7 +112,7 @@ void ScriptProvider::Initialize() noexcept
 		}
 		else [[unlikely]]
 		{
-			Warn("lua file was found in VFS, but not in Text! path: \"{}\"", relativePath);
+			TE_WARN("lua file was found in VFS, but not in Text! path: \"{}\"", relativePath);
 		}
 	}
 }
@@ -118,7 +128,7 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, TextID scrip
 		auto &&it = _scriptName2ID.find(scriptName);
 		if (it != _scriptName2ID.end())
 		{
-			Warn("Attempt to alloc script id for existed script name: {}", scriptName);
+			TE_WARN("Attempt to alloc script id for existed script name: {}", scriptName);
 			return it->second;
 		}
 	}
@@ -133,7 +143,7 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, TextID scrip
 	}
 
 	const std::string &name = result.first->second.name;
-	Trace("Add script <{}>\"{}\"", scriptID, name);
+	TE_TRACE("Add script <{}>\"{}\"", scriptID, name);
 	_scriptName2ID.emplace(name, scriptID);
 
 	return scriptID;
@@ -187,13 +197,13 @@ ScriptID ScriptProvider::AddScript(std::string_view scriptName, TextID scriptTex
 {
 	if (scriptName.starts_with(scriptNamespace))
 	{
-		Info("Attempt to add static script");
+		TE_INFO("{}", "Attempt to add static script");
 		return false;
 	}
 
 	if (_scriptName2ID.contains(scriptName))
 	{
-		Info("Script has already been added: {}", scriptName);
+		TE_INFO("Script has already been added: {}", scriptName);
 	}
 
 	return AddScriptImpl(scriptName, scriptTextID, scriptModUID);
@@ -215,7 +225,7 @@ bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 	{
 		return false;
 	}
-	Trace("Remove script <{}>\"{}\"", scriptID, it->second.name);
+	TE_TRACE("Remove script <{}>\"{}\"", scriptID, it->second.name);
 	_scriptName2ID.erase(it->second.name);
 	_scriptID2Entry.erase(it);
 	return true;

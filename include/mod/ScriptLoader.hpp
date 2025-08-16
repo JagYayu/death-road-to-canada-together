@@ -1,9 +1,9 @@
 /**
- * @file ScriptLoader.hpp
+ * @file mod/ScriptLoader.hpp
  * @author JagYayu
  * @brief Lua Script Loader
  * @version 1.0
- * @date 2025-08-15
+ * @date 2025
  *
  * @copyright Copyright (c) 2025
  *

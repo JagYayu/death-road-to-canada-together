@@ -1,9 +1,21 @@
+/**
+ * @file resource/TestGPURendering.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "test/TestGPURendering.hpp"
 
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_storage.h"
+
 #include "util/Log.hpp"
 #include <cstdint>
 #include <cstring>

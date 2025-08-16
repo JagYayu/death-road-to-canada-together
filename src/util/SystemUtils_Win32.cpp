@@ -1,3 +1,14 @@
+/**
+ * @file util/SystemUtils_Win32.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #ifdef _WIN32
 
 #	include "util/SystemUtils.hpp"

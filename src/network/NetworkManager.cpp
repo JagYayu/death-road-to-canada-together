@@ -1,3 +1,14 @@
+/**
+ * @file network/NetworkManager.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "network/NetworkManager.hpp"
 
 #include "network/LocalClient.hpp"

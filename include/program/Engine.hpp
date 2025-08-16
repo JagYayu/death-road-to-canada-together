@@ -1,3 +1,14 @@
+/**
+ * @file program/Engine.hpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #pragma once
 
 #include "Application.hpp"
@@ -101,7 +112,6 @@ namespace tudov
 		LoadingInfo _loadingInfo;
 		std::mutex _loadingInfoMutex;
 
-		std::shared_ptr<Config> _config;
 		std::shared_ptr<Log> _log;
 		std::shared_ptr<ILuaAPI> _luaAPI;
 		std::shared_ptr<IGlobalStorageManager> _globalStorageManager;

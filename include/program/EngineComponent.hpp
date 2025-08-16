@@ -1,9 +1,9 @@
 /**
- * @file EngineComponent.hpp
+ * @file program/EngineComponent.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
- * @date 2025-08-15
+ * @date 2025
  *
  * @copyright Copyright (c) 2025
  *

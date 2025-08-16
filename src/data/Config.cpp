@@ -1,9 +1,21 @@
+/**
+ * @file data/Config.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "data/Config.hpp"
 
 #include "data/Constants.hpp"
 #include "util/Log.hpp"
 
 #include "SDL3/SDL_properties.h"
+#include "util/LogMicros.hpp"
 #include <json.hpp>
 
 #include <fstream>
@@ -100,7 +112,6 @@ Config::Config() noexcept
 
 Config::~Config() noexcept
 {
-	Save();
 	delete _fileWatcher;
 }
 
@@ -114,16 +125,16 @@ void Config::Save() noexcept
 		{
 			out << _config.dump(1, '\t');
 			out.close();
-			Trace("Config file saved: \"{}\"", f);
+			TE_TRACE("Config file saved: \"{}\"", f);
 		}
 		else
 		{
-			Error("Failed to open config file for writing: \"{}\"", f);
+			TE_ERROR("Failed to open config file for writing: \"{}\"", f);
 		}
 	}
 	catch (const std::exception &e)
 	{
-		Error("Exception occurred while saving config file: {}", e.what());
+		TE_ERROR("Exception occurred while saving config file: {}", e.what());
 	}
 }
 
@@ -148,7 +159,7 @@ void Config::Load() noexcept
 	}
 	catch (const std::exception &e)
 	{
-		Error("Exception occurred while loading config file: {}", e.what());
+		TE_ERROR("Exception occurred while loading config file: {}", e.what());
 	}
 }
 

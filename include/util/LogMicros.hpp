@@ -1,6 +1,19 @@
+/**
+ * @file util/LogMicros.hpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #pragma once
 
 #include "util/Log.hpp" // IWYU pragma: keep
+
+// region Global Logging
 
 #define TE_G_LOG(Name, Verb, Format, ...)                       \
 	if (auto &&log = ::tudov::Log::Get(Name); log->Can##Verb()) \
@@ -13,6 +26,25 @@
 #define TE_G_ERROR(Name, Format, ...) TE_G_LOG(Name, Error, Format, __VA_ARGS__)
 #define TE_G_FATAL(Name, Format, ...) TE_G_LOG(Name, Fatal, Format, __VA_ARGS__)
 
+// endregion
+
+// region Local Logging
+
+#define TE_L_LOG(Name, Verb, Format, ...) \
+	if (TE_L_log->Can##Verb())            \
+	TE_L_log->Verb(Format, __VA_ARGS__)
+
+#define TE_L_TRACE(Format, ...) TE_L_LOG(Name, Trace, Format, __VA_ARGS__)
+#define TE_L_DEBUG(Format, ...) TE_L_LOG(Name, Debug, Format, __VA_ARGS__)
+#define TE_L_INFO(Format, ...)  TE_L_LOG(Name, Info, Format, __VA_ARGS__)
+#define TE_L_WARN(Format, ...)  TE_L_LOG(Name, Warn, Format, __VA_ARGS__)
+#define TE_L_ERROR(Format, ...) TE_L_LOG(Name, Error, Format, __VA_ARGS__)
+#define TE_L_FATAL(Format, ...) TE_L_LOG(Name, Fatal, Format, __VA_ARGS__)
+
+// endregion
+
+// region Class Logging
+
 #define TE_LOG(Verb, Format, ...) \
 	if (this->Can##Verb())        \
 	this->Verb(Format, __VA_ARGS__)
@@ -23,3 +55,5 @@
 #define TE_WARN(Format, ...)  TE_LOG(Warn, Format, __VA_ARGS__)
 #define TE_ERROR(Format, ...) TE_LOG(Error, Format, __VA_ARGS__)
 #define TE_FATAL(Format, ...) TE_LOG(Fatal, Format, __VA_ARGS__)
+
+// endregion

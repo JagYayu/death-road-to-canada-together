@@ -1,3 +1,14 @@
+/**
+ * @file program/Context.hpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #pragma once
 
 namespace tudov
@@ -34,6 +45,7 @@ namespace tudov
 
 	  public:
 		Engine &GetEngine();
+		[[depreciated("Use `Tudov::GetConfig` instead")]]
 		Config &GetConfig();
 		IEventManager &GetEventManager();
 		ILuaAPI &GetLuaAPI();

@@ -1,4 +1,16 @@
+/**
+ * @file event/CoreEvents.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "event/CoreEvents.hpp"
+
 #include "event/EventManager.hpp"
 #include "util/MicrosImpl.hpp"
 

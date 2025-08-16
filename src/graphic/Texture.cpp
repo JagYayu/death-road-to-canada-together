@@ -1,5 +1,16 @@
+/**
+ * @file graphic/Texture.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "graphic/Texture.hpp"
-#include "SDL3/SDL_gpu.h"
+
 #include "graphic/Image.hpp"
 #include "graphic/Renderer.hpp"
 #include "util/Micros.hpp"

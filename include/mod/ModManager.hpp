@@ -1,3 +1,14 @@
+/**
+ * @file mod/ModManager.hpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #pragma once
 
 #include "Mod.hpp"
@@ -47,7 +58,7 @@ namespace tudov
 	class LuaAPI;
 	class UnpackagedMod;
 
-	class ModManager : public IModManager, public IDebugProvider
+	class ModManager : public IModManager, public IDebugProvider, private ILogProvider
 	{
 		friend LuaAPI;
 
@@ -91,6 +102,8 @@ namespace tudov
 
 	  public:
 		Context &GetContext() noexcept override;
+		Log &GetLog() noexcept override;
+
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
 

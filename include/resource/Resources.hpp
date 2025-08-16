@@ -1,7 +1,19 @@
+/**
+ * @file resource/Resources.hpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #pragma once
 
 #include "util/Definitions.hpp"
 #include "util/Log.hpp"
+#include "util/LogMicros.hpp"
 
 #include <stdexcept>
 #include <unordered_map>
@@ -9,7 +21,7 @@
 namespace tudov
 {
 	template <typename TResource>
-	class Resources
+	class Resources : private ILogProvider
 	{
 	  public:
 		struct Entry
@@ -35,88 +47,10 @@ namespace tudov
 		}
 
 	  public:
-		// inline EHierarchyElement Check(const Path &path) noexcept override
-		// {
-		// 	if (IsData(path))
-		// 		return EHierarchyElement::Data;
-		// 	if (IsDirectory(path))
-		// 		return EHierarchyElement::Directory;
-		// 	return EHierarchyElement::None;
-		// }
-
-		// inline bool IsData(const Path &path) noexcept override
-		// {
-		// 	std::string pathStr = path.generic_string();
-		// 	auto &&it = _path2ID.find(pathStr.data());
-		// 	return it != _path2ID.end();
-		// }
-
-		// inline bool IsDirectory(const Path &path) noexcept override
-		// {
-		// 	std::string pathStr = path.generic_string();
-		// 	auto &&it = std::find_if(_path2ID.begin(), _path2ID.end(), [&pathStr](const auto &entry)
-		// 	{
-		// 		auto &&[itSub, _] = std::mismatch(pathStr.begin(), pathStr.end(), entry.first.begin(), entry.first.end());
-		// 		return itSub == pathStr.end();
-		// 	});
-		// 	return it != _path2ID.end();
-		// }
-
-		// inline bool IsNone(const Path &path) noexcept override
-		// {
-		// 	return !(IsNone(path) || IsDirectory(path));
-		// }
-
-		// TResource &Get(const Path &dataPath) override
-		// {
-		// 	std::string pathStr = dataPath.generic_string();
-		// 	ResourceID id = GetResourceID(pathStr.data());
-		// 	if (id == 0)
-		// 	{
-		// 		throw std::runtime_error("Resource not found");
-		// 	}
-
-		// 	return *GetResource(id);
-		// }
-
-		// inline EHierarchyIterationResult Foreach(const Path &directory, const IHierarchy<TResource &>::IterationCallback &callback, void *callbackArgs = nullptr) override
-		// {
-		// 	std::string prefix = directory.generic_string();
-		// 	auto [lower, upper] = _path2ID.equal_range(prefix);
-
-		// 	while (lower != _path2ID.end() && lower->first.starts_with(prefix))
-		// 	{
-		// 		auto path = Path(lower->first);
-		// 		ResourceID id = lower->second;
-		// 		const Entry &entry = _id2Entry.at(id);
-		// 		EHierarchyIterationResult result = callback(path, directory, callbackArgs);
-
-		// 		if (result != EHierarchyIterationResult::Continue)
-		// 		{
-		// 			return result;
-		// 		}
-		// 		++lower;
-		// 	}
-
-		// 	return EHierarchyIterationResult::Continue;
-		// }
-
-		// inline std::vector<std::reference_wrapper<const Entry>> ListResources(const std::filesystem::path &path) const
-		// {
-		// 	std::vector<std::reference_wrapper<const Entry>> resources{};
-		// 	std::string prefix = path.generic_string();
-		// 	auto [lower, upper] = _path2ID.equal_range(prefix);
-
-		// 	while (lower != _path2ID.end() && lower->first.starts_with(prefix))
-		// 	{
-		// 		ResourceID id = lower->second;
-		// 		const Entry &entry = _id2Entry.at(id);
-		// 		resources.emplace_back(std::reference_wrapper<const Entry>(entry));
-		// 		++lower;
-		// 	}
-
-		// 	return resources;
-		// }
+		Log &GetLog() noexcept override
+		{
+			return *_log;
+		};
 
 		inline std::shared_ptr<TResource> GetResource(ResourceID id) const noexcept
 		{
@@ -156,7 +90,7 @@ namespace tudov
 			}
 			catch (const std::exception &e)
 			{
-				_log->Error("Exception occurred while loading \"{}\": {}", path, e.what());
+				TE_ERROR("Exception occurred while loading \"{}\": {}", path, e.what());
 			}
 
 			Entry entry{
@@ -166,7 +100,7 @@ namespace tudov
 			auto &&result = _id2Entry.try_emplace(id, entry);
 			_path2ID[std::string_view(result.first->second.path)] = id;
 
-			_log->Trace("Loaded resource <{}>\"{}\"", id, path);
+			TE_TRACE("Loaded resource <{}>\"{}\"", id, path);
 
 			return id;
 		}
@@ -176,11 +110,11 @@ namespace tudov
 			auto &&it = _id2Entry.find(id);
 			if (it == _id2Entry.end())
 			{
-				_log->Warn("Attempt to unload invalid resource <{}>", id);
+				TE_WARN("Attempt to unload invalid resource <{}>", id);
 				return;
 			}
 
-			_log->Trace("Unloaded resource <{}>\"{}\"", id, it->second.path);
+			TE_TRACE("Unloaded resource <{}>\"{}\"", id, it->second.path);
 
 			_path2ID.erase(std::string_view(it->second.path));
 			_id2Entry.erase(it);

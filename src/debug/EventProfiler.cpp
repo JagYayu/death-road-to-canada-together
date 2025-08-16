@@ -1,7 +1,18 @@
+/**
+ * @file debug/EventProfiler.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #include "debug/EventProfiler.hpp"
+
 #include "mod/ScriptEngine.hpp"
 
-#include "util/Definitions.hpp"
 #include <chrono>
 
 using namespace tudov;
