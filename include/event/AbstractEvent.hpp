@@ -33,8 +33,19 @@ namespace tudov
 		virtual ~AbstractEvent() noexcept;
 
 	  public:
+		/**
+		 * Check if this event is valid.
+		 */
 		void IsValid() const noexcept;
+
+		/**
+		 * Get the event's id.
+		 */
 		EventID GetID() const noexcept;
+
+		/**
+		 * Get the event's creator script id, 0 if it is a builtin event.
+		 */
 		ScriptID GetScriptID() const noexcept;
 
 		virtual void Add(const AddHandlerArgs &args) = 0;

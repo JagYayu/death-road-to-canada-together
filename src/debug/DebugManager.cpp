@@ -86,8 +86,9 @@ void DebugManager::UpdateAndRender(IWindow &window) noexcept
 	if (ImGui::BeginMainMenuBar())
 	{
 		std::float_t scale = window.GetDisplayScale();
+		std::float_t height = 48 * scale;
 
-		if (ImGui::BeginChild("##DebugManager", ImVec2(0, 48 * scale), false, ImGuiWindowFlags_HorizontalScrollbar))
+		if (ImGui::BeginChild("##DebugManager", ImVec2(0, height), false, ImGuiWindowFlags_HorizontalScrollbar))
 		{
 			for (size_t i = 0; i < _elements.size(); ++i)
 			{
@@ -109,6 +110,7 @@ void DebugManager::UpdateAndRender(IWindow &window) noexcept
 						element->OnOpened(window);
 					}
 				}
+
 				ImGui::SameLine();
 
 				ImGui::PopID();

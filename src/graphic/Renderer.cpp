@@ -74,7 +74,6 @@ void Renderer::InitializeRenderer() noexcept
 
 void Renderer::DeinitializeRenderer() noexcept
 {
-	_sdlRenderer = SDL_CreateRenderer(_window.GetSDLWindowHandle(), nullptr);
 	if (_sdlRenderer) [[likely]]
 	{
 		SDL_DestroyRenderer(_sdlRenderer);

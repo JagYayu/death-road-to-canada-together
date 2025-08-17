@@ -116,22 +116,34 @@ void Log::Exit() noexcept
 	}
 }
 
-std::optional<ELogVerbosity> Log::GetVerbosity(std::string_view module) noexcept
+ELogVerbosity Log::GetVerbosities(std::string_view module) noexcept
 {
-	if (auto &&it = _verbositiesOverrides.find(module.data()); it != _verbositiesOverrides.end())
 	{
-		return it->second;
+		auto verbs = GetVerbositiesOverride(module.data());
+		if (verbs.has_value())
+		{
+			return verbs.value();
+		}
 	}
-	return std::nullopt;
+
+	{
+		if (auto &&it = _verbositiesOverrides.find(module.data()); it != _verbositiesOverrides.end())
+		{
+			return it->second;
+		}
+	}
+
+	return _globalVerbosities;
 }
 
-bool Log::SetVerbosity(std::string_view module, ELogVerbosity flags) noexcept
+bool Log::SetVerbosities(std::string_view module, ELogVerbosity flags) noexcept
 {
 	if (auto &&it = _verbositiesOverrides.find(module.data()); it != _verbositiesOverrides.end())
 	{
 		it->second = flags;
 		return true;
 	}
+
 	return false;
 }
 
@@ -161,7 +173,7 @@ void Log::UpdateVerbosities(const void *jsonConfig)
 	}
 }
 
-std::optional<ELogVerbosity> Log::GetVerbosityOverride(const std::string &module) noexcept
+std::optional<ELogVerbosity> Log::GetVerbositiesOverride(const std::string &module) noexcept
 {
 	auto &&it = _verbositiesOverrides.find("key");
 	if (it != _verbositiesOverrides.end())
@@ -171,9 +183,14 @@ std::optional<ELogVerbosity> Log::GetVerbosityOverride(const std::string &module
 	return std::nullopt;
 }
 
-void Log::SetVerbosityOverride(std::string_view module, ELogVerbosity flags) noexcept
+void Log::SetVerbositiesOverride(std::string_view module, ELogVerbosity flags) noexcept
 {
 	_verbositiesOverrides[module.data()] = flags;
+}
+
+bool Log::RemoveVerbositiesOverride(std::string_view module) noexcept
+{
+	return _verbositiesOverrides.erase(module.data());
 }
 
 std::size_t Log::CountLogs() noexcept
@@ -263,7 +280,11 @@ void Log::Process() noexcept
 			_queue.pop();
 			lock.unlock();
 
-			std::string message = std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}", entry.time, entry.module, entry.verbosity, entry.message);
+			std::string message = std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}",
+			                                  std::chrono::zoned_time(std::chrono::current_zone(), entry.time),
+			                                  entry.module,
+			                                  entry.verbosity,
+			                                  entry.message);
 
 			PrintToConsole(message, entry);
 			logFile << message << std::endl;
@@ -303,7 +324,7 @@ void Log::PrintToConsole(std::string_view message, const Entry &entry) noexcept
 
 bool Log::CanOutput(ELogVerbosity flag) const noexcept
 {
-	return EnumFlag::HasAll(GetVerbosity(), flag);
+	return EnumFlag::HasAll(GetVerbosities(), flag);
 }
 
 void Log::Output(std::string_view verb, std::string_view str) const noexcept
@@ -315,6 +336,7 @@ void Log::OutputImpl(std::string_view module, std::string_view verb, std::string
 {
 	{
 		std::lock_guard<std::mutex> lock{_mutex};
+
 		_queue.push(Entry{
 		    .time = std::chrono::system_clock::now(),
 		    .verbosity = verb,
@@ -322,5 +344,6 @@ void Log::OutputImpl(std::string_view module, std::string_view verb, std::string
 		    .message = std::string(str),
 		});
 	}
+
 	_cv.notify_one();
 }

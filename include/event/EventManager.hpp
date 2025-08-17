@@ -12,17 +12,15 @@
 #pragma once
 
 #include "CoreEvents.hpp"
-#include "DelegateEvent.hpp"
 #include "LoadtimeEvent.hpp"
 #include "RuntimeEvent.hpp"
 #include "mod/LuaAPI.hpp"
 #include "program/EngineComponent.hpp"
+#include "sol/forward.hpp"
 #include "util/Definitions.hpp"
 
-#include "sol/error.hpp"
-
 #include <memory>
-#include <variant>
+#include <optional>
 
 namespace tudov
 {
@@ -108,6 +106,8 @@ namespace tudov
 
 		void LuaAdd(sol::object event, sol::object func, sol::object name, sol::object order, sol::object key, sol::object sequence);
 		EventID LuaNew(sol::object event, sol::object orders, sol::object keys);
-		void LuaInvoke(sol::object event, sol::object args, sol::object key);
+		void LuaInvoke(sol::object event, sol::object args, sol::object key, sol::object options);
+
+		std::optional<ScriptID> TryBuildEvent(EventID eventID, ScriptID scriptID, std::vector<std::string> orders, std::vector<EventHandleKey> keys) noexcept;
 	};
 } // namespace tudov

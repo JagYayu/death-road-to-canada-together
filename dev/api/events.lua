@@ -2,33 +2,53 @@
 error("this is a lua library module")
 
 --- @diagnostic disable: duplicate-doc-alias
---- @alias Tudov.EventManager.EventName string
---- @alias Tudov.EventManager.EventName "DebugCommand"
---- @alias Tudov.EventManager.EventName "DebugSnapshot"
---- @alias Tudov.EventManager.EventName "KeyDown"
---- @alias Tudov.EventManager.EventName "KeyUp"
---- @alias Tudov.EventManager.EventName "MouseButtonDown"
---- @alias Tudov.EventManager.EventName "MouseButtonUp"
---- @alias Tudov.EventManager.EventName "MouseMove"
---- @alias Tudov.EventManager.EventName "MouseWheel"
---- @alias Tudov.EventManager.EventName "TickRender"
---- @alias Tudov.EventManager.EventName "TickUpdate"
+
+--- @alias Events.E any?
+
+--- @alias Events.Event string
+--- @alias Events.Event "DebugCommand"
+--- @alias Events.Event "DebugSnapshot"
+--- @alias Events.Event "KeyDown"
+--- @alias Events.Event "KeyUp"
+--- @alias Events.Event "MouseButtonDown"
+--- @alias Events.Event "MouseButtonUp"
+--- @alias Events.Event "MouseMove"
+--- @alias Events.Event "MouseWheel"
+--- @alias Events.Event "TickLoad"
+--- @alias Events.Event "TickRender"
+--- @alias Events.Event "TickUpdate"
+
 --- @diagnostic enable: duplicate-doc-alias
 
---- @class Tudov.EventManager
+--- @class Events.InvocationOption : integer
+
+--- @type Events.InvocationOption
+eventsOption_All = 255
+--- @type Events.InvocationOption
+eventsOption_None = 0
+--- @type Events.InvocationOption
+eventsOption_CacheHandlers = 1
+--- @type Events.InvocationOption
+eventsOption_NoProfiler = 2
+--- @type Events.InvocationOption
+eventsOption_TrackProgression = 4
+--- @type Events.InvocationOption
+eventsOption_Default = eventsOption_CacheHandlers
+
+--- @class Events
 events = {}
 
---- @alias Tudov.EventManager.Key number | string
+--- @alias Events.Key number | string
 
---- @class Tudov.EventManager.AddHandlerArgs
---- @field event Tudov.EventManager.EventName
+--- @class Events.AddHandlerArgs
+--- @field event Events.Event
 --- @field func fun(e: any)
 --- @field name string?
 --- @field order string?
 --- @field key integer?
 --- @field sequence integer?
 
---- @param event Tudov.EventManager.EventName
+--- @param event Events.Event
 --- @param func fun(e: any)
 --- @param name string?
 --- @param order string?
@@ -37,10 +57,10 @@ events = {}
 function events:add(event, func, name, order, key, sequence) end
 
 --- @param event string | integer
---- @param e any?
---- @param key Tudov.EventManager.Key?
---- @param uncached true?
-function events:invoke(event, e, key, uncached) end
+--- @param e Events.E
+--- @param key Events.Key?
+--- @param options Events.InvocationOption? @default: `_G.eventsOption_Default`
+function events:invoke(event, e, key, options) end
 
 --- @param event string
 --- @param orders string[]?

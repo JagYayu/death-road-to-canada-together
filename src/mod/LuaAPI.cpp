@@ -156,11 +156,17 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	lua["scriptEngine"] = &dynamic_cast<ScriptEngine &>(context.GetScriptEngine());
 	lua["scriptLoader"] = &dynamic_cast<ScriptLoader &>(context.GetScriptLoader());
 	lua["scriptProvider"] = &dynamic_cast<ScriptProvider &>(context.GetScriptProvider());
-
 	auto &collection = context.GetGlobalResourcesCollection();
 	lua["binaries"] = collection.GetBinariesResources();
 	lua["fonts"] = collection.GetFontResources();
 	lua["images"] = collection.GetImageResources();
+
+	lua["eventsOption_All"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::All);
+	lua["eventsOption_None"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::None);
+	lua["eventsOption_CacheHandlers"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::CacheHandlers);
+	lua["eventsOption_NoProfiler"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::NoProfiler);
+	lua["eventsOption_TrackProgression"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::TrackProgression);
+	lua["eventsOption_Default"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::Default);
 
 	lua.set_function("getModConfig", [this, &context](sol::string_view modUID) -> ModConfig *
 	{

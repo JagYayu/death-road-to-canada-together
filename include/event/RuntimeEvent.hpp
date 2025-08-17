@@ -20,7 +20,9 @@
 #include "sol/forward.hpp"
 #include "sol/types.hpp"
 
+#include <cstdint>
 #include <optional>
+#include <type_traits>
 #include <unordered_set>
 
 namespace tudov
@@ -36,8 +38,9 @@ namespace tudov
 		using InvocationTrackID = std::uint32_t;
 
 	  public:
-		enum class EInvocation
+		enum class EInvocation : std::uint8_t
 		{
+			All = static_cast<std::underlying_type_t<EInvocation>>(-1),
 			None = 0,
 			CacheHandlers = 1 << 0,
 			NoProfiler = 1 << 1,

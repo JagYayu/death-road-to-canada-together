@@ -11,6 +11,7 @@
 
 #include "mod/ScriptEngine.hpp"
 
+#include "lauxlib.h"
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
@@ -183,6 +184,16 @@ void ScriptEngine::SetReadonlyGlobal(const std::string_view &key, sol::object va
 void ScriptEngine::CollectGarbage()
 {
 	_lua.collect_garbage();
+}
+
+void ScriptEngine::SetMetatable(sol::table tbl, sol::metatable mt)
+{
+	sol::protected_function_result result = _lua["setmetatable"](tbl, mt);
+	if (!result.valid())
+	{
+		sol::error err = result;
+		throw std::runtime_error(err.what());
+	}
 }
 
 size_t ScriptEngine::GetMemory() const noexcept
@@ -457,21 +468,23 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 void ScriptEngine::DeinitializeScript(ScriptID scriptID, std::string_view scriptName)
 {
 	auto &&it = _persistVariables.find(scriptName.data());
-	if (it != _persistVariables.end())
+	if (it == _persistVariables.end())
 	{
-		for (auto &&[_, variable] : it->second)
+		return;
+	}
+
+	for (auto &&[_, variable] : it->second)
+	{
+		if (variable.getter.valid())
 		{
-			if (variable.getter.valid())
+			auto result = variable.getter();
+			if (result.valid())
 			{
-				auto result = variable.getter();
-				if (result.valid())
+				auto value = result.get<sol::object>();
+				if (value != sol::nil)
 				{
-					auto &&value = result.get<sol::object>();
-					if (value != sol::nil)
-					{
-						variable.value = value;
-						variable.getter = sol::nil;
-					}
+					variable.value = value;
+					variable.getter = sol::nil;
 				}
 			}
 		}
@@ -500,7 +513,30 @@ sol::object ScriptEngine::RegisterPersistVariable(std::string_view scriptName, s
 	return variable.value;
 }
 
-void ScriptEngine::ClearPersistVariables()
+std::unordered_map<std::string_view, sol::object> ScriptEngine::GetScriptPersistVariables(std::string_view scriptName) noexcept
+{
+	auto it = _persistVariables.find(scriptName.data());
+	if (it == _persistVariables.end())
+	{
+		return {};
+	}
+
+	std::unordered_map<std::string_view, sol::object> variables{};
+
+	for (const auto &[key, variable] : it->second)
+	{
+		variables.emplace(key, variable.value);
+	}
+
+	return variables;
+}
+
+bool ScriptEngine::ClearScriptPersistVariables(std::string_view scriptName) noexcept
+{
+	return _persistVariables.erase(scriptName.data());
+}
+
+void ScriptEngine::ClearPersistVariables() noexcept
 {
 	_persistVariables.clear();
 }

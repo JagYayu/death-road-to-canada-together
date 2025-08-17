@@ -125,6 +125,12 @@ bool ScriptLoader::IsScriptFullyLoaded(ScriptID scriptID) noexcept
 	return it == _scriptModules.end() ? false : it->second->IsFullyLoaded();
 }
 
+bool ScriptLoader::IsScriptHasError(ScriptID scriptID) noexcept
+{
+	auto it = _scriptModules.find(scriptID);
+	return it == _scriptModules.end() ? false : it->second->HasLoadError();
+}
+
 ScriptID ScriptLoader::GetLoadingScriptID() const noexcept
 {
 	return _loadingScript;
@@ -156,10 +162,10 @@ void GetScriptDependenciesImpl(const std::unordered_map<ScriptID, std::set<Scrip
 
 std::vector<ScriptID> ScriptLoader::GetScriptDependencies(ScriptID scriptID) const
 {
-	auto &&sources = std::vector<ScriptID>();
-	auto &&visited = std::unordered_set<ScriptID>();
+	std::vector<ScriptID> sources{};
+	std::unordered_set<ScriptID> visited{};
 	GetScriptDependenciesImpl(_scriptReversedDependencies, scriptID, sources, visited);
-	return std::move(sources);
+	return sources;
 }
 
 void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
@@ -355,7 +361,7 @@ std::vector<ScriptID> ScriptLoader::UnloadScript(ScriptID scriptID)
 {
 	std::vector<ScriptID> unloadedScripts{};
 	UnloadImpl(scriptID, unloadedScripts);
-	return std::move(unloadedScripts);
+	return unloadedScripts;
 }
 
 std::vector<ScriptID> ScriptLoader::UnloadScriptsBy(std::string_view modUID)
@@ -439,16 +445,20 @@ void ScriptLoader::HotReloadScripts(const std::vector<ScriptID> &scriptIDs)
 		IScriptProvider &scriptProvider = GetScriptProvider();
 		for (auto scriptID : scriptIDs)
 		{
-			auto &&scriptName = scriptProvider.GetScriptNameByID(scriptID);
-			_log->Trace("<{}>\"{}\"", scriptID, scriptName.has_value() ? scriptName->data() : "#INVALID#");
+			auto optScriptName = scriptProvider.GetScriptNameByID(scriptID);
+			_log->Trace("<{}>\"{}\"", scriptID, optScriptName.has_value() ? optScriptName->data() : "#INVALID#");
 		}
 	}
 
 	_onPreHotReloadScripts(scriptIDs);
 
-	for (auto &&additionalScriptID : scriptIDs)
+	for (auto scriptID : scriptIDs)
 	{
-		Load(additionalScriptID);
+		if (IsScriptFullyLoaded(scriptID))
+		{
+			UnloadScript(scriptID);
+		}
+		Load(scriptID);
 	}
 	ProcessFullLoads();
 

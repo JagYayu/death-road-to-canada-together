@@ -31,6 +31,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string_view>
+#include <type_traits>
 #include <variant>
 
 using namespace tudov;
@@ -455,7 +456,7 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 		if (keys.is<sol::table>())
 		{
 			keys_ = {};
-			auto &&tbl = keys.as<sol::table>();
+			auto tbl = keys.as<sol::table>();
 			for (std::size_t i = 0; i < tbl.size(); ++i)
 			{
 				if (tbl[i].is<std::double_t>())
@@ -483,22 +484,14 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 			return false;
 		}
 
-		bool dup = false;
+		std::optional<ScriptID> failed = TryBuildEvent(eventID, scriptID, orders_, keys_);
+		if (failed.has_value())
 		{
-			auto &&it = _loadtimeEvents.find(eventID);
-			if (it == _loadtimeEvents.end())
-			{
-				auto &&loadtimeEvent = std::make_shared<LoadtimeEvent>(*this, eventID, scriptID, orders_, keys_);
-				_loadtimeEvents.try_emplace(eventID, loadtimeEvent);
-			}
-			else if (!it->second->TryBuild(scriptID, orders_, keys_))
-			{
-				dup = true;
-			}
-		}
-		if (dup)
-		{
-			scriptEngine.ThrowError(std::format("Failed to new event <{}>\"{}\", already been registered", eventID, eventName));
+			ScriptID sourceScriptID = failed.has_value();
+			std::string_view scriptName = GetScriptProvider().GetScriptNameByID(sourceScriptID).value_or("$UNKNOWN");
+
+			scriptEngine.ThrowError("Failed to new event <{}>\"{}\", already been registered from script <{}>\"{}\"",
+			                        eventID, eventName, sourceScriptID, scriptName.data());
 			return false;
 		}
 
@@ -512,19 +505,54 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 	}
 }
 
-void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object key)
+std::optional<ScriptID> EventManager::TryBuildEvent(EventID eventID, ScriptID scriptID, std::vector<std::string> orders, std::vector<EventHandleKey> keys) noexcept
+{
+	{
+		auto it = _runtimeEvents.find(eventID);
+		if (it != _runtimeEvents.end())
+		{
+			return {it->second->GetScriptID()};
+		}
+	}
+
+	{
+		auto it = _loadtimeEvents.find(eventID);
+		if (it == _loadtimeEvents.end())
+		{
+			auto &&loadtimeEvent = std::make_shared<LoadtimeEvent>(*this, eventID, scriptID, orders, keys);
+			_loadtimeEvents.try_emplace(eventID, loadtimeEvent);
+
+			return std::nullopt;
+		}
+
+		const std::shared_ptr<LoadtimeEvent> &event = it->second;
+		if (!event->TryBuild(scriptID, orders, keys))
+		{
+			return {event->GetScriptID()};
+		}
+	}
+
+	return sol::nullopt;
+}
+
+void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object key, sol::object options)
 {
 	try
 	{
-		auto &&scriptEngine = GetScriptEngine();
+		IScriptEngine &scriptEngine = GetScriptEngine();
 
 		RuntimeEvent *eventInstance;
 		if (event.is<EventID>())
 		{
-			auto eventID = event.as<EventID>();
-			auto &&it = _runtimeEvents.find(eventID);
+			EventID eventID = event.as<EventID>();
+			auto it = _runtimeEvents.find(eventID);
 			if (it == _runtimeEvents.end())
 			{
+				{
+					using It = decltype(it);
+					it.It::~It();
+				}
+
 				scriptEngine.ThrowError(std::format("Runtime event <{}> not found", eventID));
 				return;
 			}
@@ -532,10 +560,15 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 		}
 		else if (event.is<std::string_view>())
 		{
-			auto eventName = event.as<std::string_view>();
-			auto &&it = _runtimeEvents.find(_eventName2ID[eventName]);
+			std::string_view eventName = event.as<std::string_view>();
+			auto it = _runtimeEvents.find(_eventName2ID[eventName]);
 			if (it == _runtimeEvents.end())
 			{
+				{
+					using It = decltype(it);
+					it.It::~It();
+				}
+
 				scriptEngine.ThrowError(std::format("Runtime event <{}> not found", eventName));
 				return;
 			}
@@ -548,19 +581,34 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 			return;
 		}
 
-		EventHandleKey k;
+		EventHandleKey key_;
 		if (key.is<double>())
 		{
-			k.value = key.as<double>();
+			key_.value = key.as<double>();
 		}
 		else if (key.is<std::string_view>())
 		{
-			k.value = key.as<std::string>();
+			key_.value = key.as<std::string>();
+		}
+
+		RuntimeEvent::EInvocation options_;
+		if (options.is<std::double_t>())
+		{
+			options_ = static_cast<RuntimeEvent::EInvocation>(options.as<std::double_t>());
+		}
+		else if (options.is<sol::nil_t>())
+		{
+			options_ = RuntimeEvent::EInvocation::Default;
+		}
+		else
+		{
+			scriptEngine.ThrowError("Bad argument #4 to 'options': expected number or nil");
+			return;
 		}
 
 		assert(eventInstance != nullptr);
 
-		eventInstance->Invoke(args, k);
+		eventInstance->Invoke(args, key_, options_);
 	}
 	catch (const std::exception &e)
 	{

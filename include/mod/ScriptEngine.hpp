@@ -49,6 +49,8 @@ namespace tudov
 
 		virtual void CollectGarbage() = 0;
 
+		virtual void SetMetatable(sol::table tbl, sol::metatable mt) = 0;
+
 		virtual sol::object MakeReadonlyGlobal(sol::object obj) = 0;
 
 		virtual sol::load_result LoadFunction(const std::string &name, std::string_view code) = 0;
@@ -59,10 +61,22 @@ namespace tudov
 
 		virtual std::string Inspect(sol::object obj) = 0;
 
-		/*
-		 * @warning This is a dangerous function.
+		/**
+		 * @warning This is a dangerous function (C longjmp), make sure you manually call necessary destructors!
 		 */
 		virtual std::int32_t ThrowError(std::string_view message) noexcept = 0;
+
+		virtual void SetReadonlyGlobal(const std::string_view &key, sol::object value) = 0;
+
+		virtual sol::table &GetModGlobals(std::string_view sandboxKey, bool sandboxed) noexcept = 0;
+
+		virtual sol::object RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter) = 0;
+
+		virtual std::unordered_map<std::string_view, sol::object> GetScriptPersistVariables(std::string_view scriptName = "") noexcept = 0;
+
+		virtual bool ClearScriptPersistVariables(std::string_view scriptName) noexcept = 0;
+
+		virtual void ClearPersistVariables() noexcept = 0;
 
 		/*
 		 * @warning This is a dangerous function.
@@ -123,19 +137,19 @@ namespace tudov
 		size_t GetMemory() const noexcept override;
 		sol::table CreateTable(std::uint32_t arr = 0, std::uint32_t hash = 0) noexcept override;
 		void CollectGarbage() override;
+		void SetMetatable(sol::table tbl, sol::metatable mt) override;
 		sol::object MakeReadonlyGlobal(sol::object obj) override;
 		sol::load_result LoadFunction(const std::string &name, std::string_view code) override;
 		void InitializeScript(ScriptID scriptID, std::string_view scriptName, std::string_view modUID, bool sandboxed, sol::protected_function &func) noexcept override;
 		void DeinitializeScript(ScriptID scriptID, std::string_view scriptName) override;
 		std::string Inspect(sol::object obj) override;
 		std::int32_t ThrowError(std::string_view message) noexcept override;
-
-		void SetReadonlyGlobal(const std::string_view &key, sol::object value);
-		sol::table &GetModGlobals(std::string_view sandboxKey, bool sandboxed) noexcept;
-		// void ResetSandboxedGlobal() noexcept;
-
-		sol::object RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter);
-		void ClearPersistVariables();
+		void SetReadonlyGlobal(const std::string_view &key, sol::object value) override;
+		sol::table &GetModGlobals(std::string_view sandboxKey, bool sandboxed) noexcept override;
+		sol::object RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter) override;
+		std::unordered_map<std::string_view, sol::object> GetScriptPersistVariables(std::string_view scriptName) noexcept override;
+		bool ClearScriptPersistVariables(std::string_view scriptName) noexcept override;
+		void ClearPersistVariables() noexcept override;
 
 	  private:
 		void AssertLuaValue(sol::object value, std::string_view name) noexcept;

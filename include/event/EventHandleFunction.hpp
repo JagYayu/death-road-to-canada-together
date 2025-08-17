@@ -37,7 +37,7 @@ namespace tudov
 				const auto &func = std::get<sol::function>(function);
 				if (func.valid())
 				{
-					auto &&result = func(obj);
+					sol::protected_function_result result = func(obj);
 					if (!result.valid()) [[unlikely]]
 					{
 						sol::error err = result;

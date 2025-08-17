@@ -56,7 +56,7 @@ void DebugLog::UpdateAndRender(IWindow &window) noexcept
 			++id;
 
 			const std::string &module = it->first;
-			ELogVerbosity verbosities = it->second->GetVerbosity();
+			ELogVerbosity verbosities = it->second->GetVerbosities();
 
 			ImGui::TableNextRow();
 
@@ -73,12 +73,12 @@ void DebugLog::UpdateAndRender(IWindow &window) noexcept
 				{
 					if (ImGui::Button("On"))
 					{
-						Log::SetVerbosity(module, ELogVerbosity::All);
+						Log::SetVerbositiesOverride(module, ELogVerbosity::All);
 					}
 					ImGui::SameLine();
 					if (ImGui::Button("Off"))
 					{
-						Log::SetVerbosity(module, ELogVerbosity::None);
+						Log::SetVerbositiesOverride(module, ELogVerbosity::None);
 					}
 				}
 				else
@@ -86,7 +86,7 @@ void DebugLog::UpdateAndRender(IWindow &window) noexcept
 					bool enabled = EnumFlag::HasAny(verbosities, verb);
 					if (ImGui::Checkbox("", &enabled))
 					{
-						Log::SetVerbosity(module, EnumFlag::BitNot(verb));
+						Log::SetVerbositiesOverride(module, EnumFlag::BitNot(verb));
 					}
 				}
 

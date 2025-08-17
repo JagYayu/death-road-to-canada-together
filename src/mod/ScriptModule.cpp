@@ -23,9 +23,10 @@ Context *ScriptModule::_parentContext = nullptr;
 std::weak_ptr<Log> ScriptModule::_parentLog = std::shared_ptr<Log>(nullptr);
 
 ScriptModule::ScriptModule()
-    : _scriptID(),
+    : _scriptID(0),
       _func(),
-      _fullyLoaded(),
+      _fullyLoaded(false),
+      _hasError(false),
       _table()
 {
 }
@@ -33,7 +34,8 @@ ScriptModule::ScriptModule()
 ScriptModule::ScriptModule(ScriptID scriptID, const sol::protected_function &func)
     : _scriptID(scriptID),
       _func(func),
-      _fullyLoaded(),
+      _fullyLoaded(false),
+      _hasError(false),
       _table()
 {
 }
@@ -63,6 +65,11 @@ bool ScriptModule::IsLazyLoaded() const
 bool ScriptModule::IsFullyLoaded() const
 {
 	return _fullyLoaded;
+}
+
+bool ScriptModule::HasLoadError() const
+{
+	return _fullyLoaded && _hasError;
 }
 
 const sol::table &ScriptModule::GetTable()
@@ -214,7 +221,7 @@ const sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 	};
 
 	parent._scriptLoopLoadStack.emplace_back(_scriptID);
-	auto &&result = _func();
+	sol::protected_function_result result = _func();
 	assert(parent._scriptLoopLoadStack.back() == _scriptID);
 	parent._scriptLoopLoadStack.pop_back();
 
@@ -222,14 +229,28 @@ const sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 	if (!result.valid()) [[unlikely]]
 	{
 		sol::error err = result;
-		auto what = std::string_view(err.what());
+		std::string_view what = err.what();
 
 		std::string_view scriptName = GetScriptProvider().GetScriptNameByID(_scriptID).value_or("");
 		TE_ERROR("Error load script module <{}>\"{}\": {}", _scriptID, scriptName, what);
 
+		// TODO use delegate event?
 		GetScriptErrors().AddLoadtimeError(_scriptID, what);
+
+		_hasError = true;
+
+		tbl = scriptEngine.CreateTable();
+		sol::table metatable = scriptEngine.CreateTable();
+		metatable["__index"] = [this, scriptName]()
+		{
+			if (_parentContext)
+			{
+				_parentContext->GetScriptEngine().ThrowError("Cascaded error occurred: <{}>\"{}\"", _scriptID, scriptName);
+			}
+		};
+		scriptEngine.SetMetatable(tbl, metatable);
 	}
-	else
+	else [[likely]]
 	{
 		if (result.get<sol::object>(1))
 		{

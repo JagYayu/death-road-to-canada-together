@@ -72,11 +72,25 @@ namespace tudov
 		 */
 		virtual bool IsScriptExists(ScriptID scriptID) noexcept = 0;
 
+		/**
+		 * @see `IScriptModule::IsValid`
+		 */
 		virtual bool IsScriptValid(ScriptID scriptID) noexcept = 0;
 
+		/**
+		 * @see `IScriptModule::IsLazyLoaded`
+		 */
 		virtual bool IsScriptLazyLoaded(ScriptID scriptID) noexcept = 0;
 
+		/**
+		 * @see `IScriptModule::IsFullyLoaded`
+		 */
 		virtual bool IsScriptFullyLoaded(ScriptID scriptID) noexcept = 0;
+
+		/**
+		 * @see `IScriptModule::HasLoadError`
+		 */
+		virtual bool IsScriptHasError(ScriptID scriptID) noexcept = 0;
 
 		/**
 		 * Get current loading script id. More preciously, is the script that in "FullLoad" (or "RawLoad"), but not in "LazyLoad" since its a wrapper process and didn't run the content of script.
@@ -91,6 +105,10 @@ namespace tudov
 		 */
 		virtual std::optional<std::string_view> GetLoadingScriptName() const noexcept = 0;
 
+		/**
+		 * Get all scripts that has dependency on it.
+		 * Result vector is unordered, exclude parameter itself.
+		 */
 		virtual std::vector<ScriptID> GetScriptDependencies(ScriptID scriptID) const = 0;
 
 		/**
@@ -117,6 +135,7 @@ namespace tudov
 
 		/**
 		 * Try unload script's module, it also unload all scripts that depend on it, so it returns a vector of script ids.
+		 * Result vector is unordered, exclude parameter itself.
 		 */
 		virtual std::vector<ScriptID> UnloadScript(ScriptID scriptID) = 0;
 
@@ -132,6 +151,8 @@ namespace tudov
 
 		/**
 		 * Hot reload a vector of scripts.
+		 * Note that this is an internal implementation of the lua script system. To ensure the correctness of overloading,
+		 * ensure that the passed vector of hot reload scripts contains all scripts that depend on them.
 		 */
 		virtual void HotReloadScripts(const std::vector<ScriptID> &scriptIDs) = 0;
 
@@ -195,7 +216,7 @@ namespace tudov
 			return IsScriptFullyLoaded(GetScriptIDByName(scriptName));
 		}
 
-		inline std::vector<ScriptID> Unload(std::string_view scriptName)
+		inline std::vector<ScriptID> UnloadScript(std::string_view scriptName)
 		{
 			return UnloadScript(GetScriptIDByName(scriptName));
 		}
@@ -253,6 +274,7 @@ namespace tudov
 		bool IsScriptValid(ScriptID scriptID) noexcept override;
 		bool IsScriptLazyLoaded(ScriptID scriptID) noexcept override;
 		bool IsScriptFullyLoaded(ScriptID scriptID) noexcept override;
+		bool IsScriptHasError(ScriptID scriptID) noexcept override;
 		ScriptID GetLoadingScriptID() const noexcept override;
 		std::optional<std::string_view> GetLoadingScriptName() const noexcept override;
 		std::vector<ScriptID> GetScriptDependencies(ScriptID scriptID) const override;

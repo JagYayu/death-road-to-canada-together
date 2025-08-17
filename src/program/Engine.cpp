@@ -44,6 +44,7 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -82,6 +83,8 @@ Engine::Engine() noexcept
 	_loadingThread = std::thread(std::bind(&Engine::BackgroundLoadingThread, this));
 }
 
+static std::atomic_int a = 0;
+
 void Engine::BackgroundLoadingThread() noexcept
 {
 	LoadingInfoArgs args{
@@ -90,12 +93,7 @@ void Engine::BackgroundLoadingThread() noexcept
 
 	while (!DebugSingleThread && !ShouldQuit())
 	{
-		if (!_loadingMutex.try_lock())
-		{
-			continue;
-		}
-		_loadingMutex.unlock();
-
+		_loadingMutex.lock();
 		if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::InProgress))
 		{
 			args.title = "Background Loading";
@@ -103,16 +101,16 @@ void Engine::BackgroundLoadingThread() noexcept
 			args.progressValue = 0.0f;
 			SetLoadingInfo(args);
 
-			_modManager->Update();
-			_eventManager->GetCoreEvents().TickLoad().Invoke();
+			ProcessLoad();
 
 			args.title = "Background Loaded";
 			args.description = "Waiting to be ended.";
 			args.progressValue = 1.0f;
 			SetLoadingInfo(args);
 
-			_loadingState.store(ELoadingState::Done, std::memory_order_release);
+			_loadingState.store(ELoadingState::Done);
 		}
+		_loadingMutex.unlock();
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
@@ -149,6 +147,7 @@ bool Engine::ShouldQuit() noexcept
 	case EState::Initialized:
 		break;
 	}
+
 	return _windowManager->IsEmpty();
 }
 
@@ -233,16 +232,12 @@ bool Engine::Tick() noexcept
 		}
 	}
 
+	if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::Locked))
 	{
-		std::lock_guard<std::mutex> lock{_loadingMutex};
-
-		if (_loadingState.load() != ELoadingState::InProgress)
-		{
-			ProcessTick();
-		}
-
-		ProcessRender();
+		ProcessTick();
+		_loadingState.store(ELoadingState::Pending);
 	}
+	ProcessRender();
 
 	std::uint64_t endNS = SDL_GetTicksNS();
 	std::uint64_t limit = 1'000'000'000ull / uint64_t(Tudov::GetConfig().GetWindowFramelimit());
@@ -275,7 +270,8 @@ void Engine::ProcessTick() noexcept
 	}
 	_sdlEvents.clear();
 
-	_windowManager->HandleEvents();
+	// ? does nothing
+	// _windowManager->HandleEvents();
 }
 
 void Engine::ProcessRender() noexcept
@@ -416,9 +412,14 @@ std::uint64_t Engine::GetTick() const noexcept
 	return SDL_GetTicksNS();
 }
 
-Engine::ELoadingState Engine::GetLoadingState() noexcept
+std::atomic<Engine::ELoadingState> &Engine::GetLoadingState() noexcept
 {
-	return _loadingState.load();
+	return _loadingState;
+}
+
+std::timed_mutex &Engine::GetLoadingMutex() noexcept
+{
+	return _loadingMutex;
 }
 
 bool Engine::IsLoadingLagged() noexcept
@@ -439,7 +440,7 @@ Engine::LoadingInfo Engine::GetLoadingInfo() noexcept
 
 void Engine::SetLoadingInfo(const LoadingInfoArgs &loadingInfo) noexcept
 {
-	if (_loadingState.load() == ELoadingState::InProgress)
+	if (true || _loadingState.load() == ELoadingState::InProgress) // TODO this is bad
 	{
 		_loadingInfoMutex.lock();
 		_loadingInfo.title = loadingInfo.title.has_value() ? loadingInfo.title.value() : _loadingInfo.title;

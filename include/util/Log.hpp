@@ -67,32 +67,53 @@ namespace tudov
 
 	  public:
 		static std::shared_ptr<Log> Get(std::string_view module) noexcept;
+
 		static Log &GetInstance() noexcept;
+
 		static void CleanupExpired() noexcept;
+
 		/**
 		 * Quit the logging system, will wait until logging thread has being finished, then call `Exit()` internally.
 		 */
 		static void Quit() noexcept;
+
 		/**
 		 * Call this function only before the program is about to exit.
 		 * e.g. Abort the program.
 		 * Otherwise, use `Exit()` instead.
 		 */
 		static void Exit() noexcept;
-		static std::optional<ELogVerbosity> GetVerbosity(std::string_view module) noexcept;
-		static bool SetVerbosity(std::string_view module, ELogVerbosity flags) noexcept;
+
+		static ELogVerbosity GetGlobalVerbosities() noexcept;
+
+		static ELogVerbosity GetVerbosities(std::string_view module) noexcept;
+
+		static bool SetVerbosities(std::string_view module, ELogVerbosity flags) noexcept;
+
 		static void UpdateVerbosities(const void *jsonConfig);
-		static std::optional<ELogVerbosity> GetVerbosityOverride(const std::string &module) noexcept;
-		static void SetVerbosityOverride(std::string_view module, ELogVerbosity flags) noexcept;
+
+		static std::optional<ELogVerbosity> GetVerbositiesOverride(const std::string &module) noexcept;
+
+		static void SetVerbositiesOverride(std::string_view module, ELogVerbosity flags) noexcept;
+
+		static bool RemoveVerbositiesOverride(std::string_view module) noexcept;
 
 		static std::size_t CountLogs() noexcept;
+
 		static std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator BeginLogs() noexcept;
+
 		static std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator EndLogs() noexcept;
+
 		static std::size_t CountVerbosities() noexcept;
+
 		static std::unordered_map<std::string, ELogVerbosity>::const_iterator BeginVerbosities() noexcept;
+
 		static std::unordered_map<std::string, ELogVerbosity>::const_iterator EndVerbosities() noexcept;
+
 		static std::size_t CountVerbositiesOverrides() noexcept;
+
 		static std::unordered_map<std::string, ELogVerbosity>::const_iterator BeginVerbositiesOverrides() noexcept;
+
 		static std::unordered_map<std::string, ELogVerbosity>::const_iterator EndVerbositiesOverrides() noexcept;
 
 	  private:
@@ -107,9 +128,9 @@ namespace tudov
 
 		std::string_view GetModule() const;
 
-		TE_FORCEINLINE ELogVerbosity GetVerbosity() const noexcept
+		TE_FORCEINLINE ELogVerbosity GetVerbosities() const noexcept
 		{
-			return GetVerbosity(_module).value_or(ELogVerbosity::None);
+			return GetVerbosities(_module);
 		}
 
 		TE_FORCEINLINE bool CanTrace() const noexcept
@@ -189,7 +210,7 @@ namespace tudov
 
 		TE_FORCEINLINE ELogVerbosity GetVerbosity() const
 		{
-			return GetLog().GetVerbosity();
+			return GetLog().GetVerbosities();
 		}
 
 		TE_FORCEINLINE bool CanTrace() const noexcept

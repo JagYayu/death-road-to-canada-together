@@ -11,6 +11,7 @@
 
 #include "program/MainWindow.hpp"
 
+#include "SDL3/SDL_timer.h"
 #include "debug/DebugManager.hpp"
 #include "event/EventHandleKey.hpp"
 #include "graphic/RenderTarget.hpp"
@@ -167,7 +168,7 @@ void MainWindow::UpdateGuiStyle() noexcept
 	_guiFontLarge = fonts->AddFontFromMemoryTTF(_guiFontMemory.data(), _guiFontMemory.size() * sizeof(char), 18.0f * scale, &config);
 	fonts->Build();
 
-	auto sdlRenderer = renderer->GetSDLRendererHandle();
+	auto *sdlRenderer = renderer->GetSDLRendererHandle();
 	ImGui_ImplSDL3_InitForSDLRenderer(_sdlWindow, sdlRenderer);
 	ImGui_ImplSDLRenderer3_Init(sdlRenderer);
 }
@@ -272,42 +273,65 @@ void MainWindow::Render() noexcept
 		return;
 	}
 
+	bool showGUIs = true;
+
 	renderer->Begin();
 
-	UpdateGuiStyle();
-
-	ImGui_ImplSDL3_NewFrame();
-	ImGui_ImplSDLRenderer3_NewFrame();
-	ImGui::NewFrame();
+	if (showGUIs)
 	{
-		auto &&engine = GetEngine();
-		if (engine.GetLoadingState() != Engine::ELoadingState::InProgress)
-		{
-			RenderPreImpl();
+		UpdateGuiStyle();
 
-			if (!_debugManager.expired())
+		ImGui_ImplSDL3_NewFrame();
+		ImGui_ImplSDLRenderer3_NewFrame();
+		ImGui::NewFrame();
+	}
+
+	Engine &engine = GetEngine();
+
+	{
+		std::atomic<Engine::ELoadingState> &loadingState = engine.GetLoadingState();
+		auto &mutex = engine.GetLoadingMutex();
+
+		if (mutex.try_lock_for(std::chrono::milliseconds(10)))
+		{
+			if (Engine::ELoadingState expected = Engine::ELoadingState::Pending; loadingState.compare_exchange_strong(expected, Engine::ELoadingState::Locked))
 			{
-				_debugManager.lock()->UpdateAndRender(*this);
+				RenderPreImpl();
+
+				if (!_debugManager.expired())
+				{
+					_debugManager.lock()->UpdateAndRender(*this);
+				}
+
+				loadingState.store(Engine::ELoadingState::Pending);
 			}
+
+			mutex.unlock();
 		}
-		else if (engine.IsLoadingLagged())
+	}
+
+	if (showGUIs)
+	{
+		if (engine.IsLoadingLagged())
 		{
 			RenderLoadingGUI(engine);
 		}
-	}
-	ImGui::EndFrame();
-	ImGui::Render();
 
-	// Process ImGui render target.
+		ImGui::EndFrame();
+		ImGui::Render();
+	}
+
 	_renderTarget->Update();
 	_renderTarget->ResizeToFit();
 
 	renderer->BeginTarget(_renderTarget);
 	renderer->Clear();
-	if (auto data = ImGui::GetDrawData(); data)
+
+	if (auto *data = ImGui::GetDrawData(); data)
 	{
 		ImGui_ImplSDLRenderer3_RenderDrawData(data, renderer->GetSDLRendererHandle());
 	}
+
 	renderer->EndTarget();
 
 	{
@@ -321,7 +345,6 @@ void MainWindow::Render() noexcept
 		renderer->IRenderer::Draw(_renderTarget->GetTexture(), dst);
 	}
 
-	// renderer->Render();
 	renderer->End();
 }
 

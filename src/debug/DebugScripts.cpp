@@ -14,6 +14,7 @@
 #include "debug/DebugUtils.hpp"
 #include "event/EventManager.hpp"
 #include "i18n/Localization.hpp"
+#include "mod/ModManager.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptModule.hpp"
@@ -27,6 +28,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <string_view>
 #include <vector>
 
 using namespace tudov;
@@ -47,6 +49,33 @@ DebugScripts::~DebugScripts() noexcept
 Log &DebugScripts::GetLog() noexcept
 {
 	return *Log::Get("DebugScripts");
+}
+
+void DebugScripts::OnOpened(IWindow &window) noexcept
+{
+	UpdateCaches(window);
+}
+
+void DebugScripts::UpdateCaches(IWindow &window) noexcept
+{
+	IScriptProvider &scriptProvider = window.GetScriptProvider();
+
+	_providedScriptsCache.reserve(scriptProvider.GetEntriesSize());
+
+	for (const auto &[scriptID, entry] : scriptProvider)
+	{
+		_providedScriptsCache.emplace_back(scriptID, entry.name);
+	}
+
+	std::sort(_providedScriptsCache.begin(), _providedScriptsCache.end(), [](const LoadedScriptEntry &l, const LoadedScriptEntry &r) -> bool
+	{
+		return l.name < r.name;
+	});
+}
+
+void DebugScripts::OnClosed(IWindow &window) noexcept
+{
+	_providedScriptsCache = {};
 }
 
 void DebugScripts::UpdateAndRender(IWindow &window) noexcept
@@ -94,7 +123,7 @@ void DebugScripts::UpdateAndRender(IWindow &window) noexcept
 			}
 			if (ImGui::BeginTabItem("Loaded"))
 			{
-				UpdateAndRenderLoadedScripts(window);
+				UpdateAndRenderProvidedScripts(window);
 
 				ImGui::EndTabItem();
 			}
@@ -242,11 +271,6 @@ void DebugScripts::UpdateAndRenderErrorsArea(IWindow &window, const ErrorsArea &
 
 void DebugScripts::UpdateAndRenderProvidedScripts(IWindow &window) noexcept
 {
-}
-
-void DebugScripts::UpdateAndRenderLoadedScripts(IWindow &window) noexcept
-{
-	IScriptProvider &scriptProvider = window.GetScriptProvider();
 	IScriptLoader &scriptLoader = window.GetScriptLoader();
 	RuntimeEvent &eventDebugSnapshot = window.GetEventManager().GetCoreEvents().DebugSnapshot();
 
@@ -272,19 +296,20 @@ void DebugScripts::UpdateAndRenderLoadedScripts(IWindow &window) noexcept
 
 	// Use clipper for large lists to improve performance
 	ImGuiListClipper clipper{};
-	clipper.Begin(static_cast<int>(scriptProvider.GetEntriesSize()));
+	clipper.Begin(static_cast<int>(_providedScriptsCache.size()));
 
 	while (clipper.Step())
 	{
-		auto it = scriptProvider.begin();
+		auto it = _providedScriptsCache.begin();
 		std::advance(it, clipper.DisplayStart);
 
-		for (std::size_t index = clipper.DisplayStart; index < clipper.DisplayEnd && it != scriptProvider.end(); ++index, ++it)
+		for (std::size_t index = clipper.DisplayStart; index < clipper.DisplayEnd && it != _providedScriptsCache.end(); ++index, ++it)
 		{
-			auto &[scriptID, entry] = *it;
+			ScriptID scriptID = it->id;
+			std::string_view scriptName = it->name;
 
 			// Column 1: Script Name
-			ImGui::TextUnformatted(entry.name.c_str());
+			ImGui::TextUnformatted(scriptName.data());
 			ImGui::NextColumn();
 
 			// Column 2: Load Status
@@ -311,31 +336,56 @@ void DebugScripts::UpdateAndRenderLoadedScripts(IWindow &window) noexcept
 
 			ImGui::NextColumn();
 
-			if (ImGui::Button(std::format("Module##{}", scriptID).data()))
+			if (ImGui::Button(std::format("Reload##{}", scriptID).data()))
 			{
-				IScriptEngine &scriptEngine = window.GetScriptEngine();
-
-				sol::table moduleTable = scriptLoader.Load(scriptID)->GetTable();
-				std::string text = scriptEngine.Inspect(moduleTable);
-
-				SystemUtils::CopyToClipboard(text);
-
-				TE_DEBUG("Inspect script module <{}>\"{}\"", scriptID, entry.name);
-				TE_INFO("{}", text);
+				std::vector<ScriptID> scriptIDs = scriptLoader.GetScriptDependencies(scriptID);
+				scriptIDs.emplace_back(scriptID);
+				scriptLoader.HotReloadScripts(scriptIDs);
 			}
+
 			ImGui::SameLine();
-			if (ImGui::Button(std::format("Snapshot##{}", scriptID).data()))
+
+			if (ImGui::Button(std::format("{}##{}", "Print", scriptID).data()))
 			{
+				TE_DEBUG("Inspect script <{}>\"{}\": 'module', 'snapshot', 'persists'", scriptID, scriptName);
+
 				IScriptEngine &scriptEngine = window.GetScriptEngine();
+				std::string clipboardText;
 
-				sol::table moduleSnapshot = scriptEngine.CreateTable();
-				eventDebugSnapshot.Invoke(moduleSnapshot, entry.name.data(), RuntimeEvent::EInvocation::None);
-				std::string text = scriptEngine.Inspect(moduleSnapshot);
+				{
+					sol::table moduleTable = scriptLoader.Load(scriptID)->GetTable();
+					std::string text = scriptEngine.Inspect(moduleTable);
 
-				SystemUtils::CopyToClipboard(text);
+					TE_INFO("{}", text);
+					clipboardText.append(text);
+				}
 
-				TE_DEBUG("Inspect script snapshot <{}>\"{}\"", scriptID, entry.name);
-				TE_INFO("{}", text);
+				clipboardText.append("\n");
+
+				{
+					sol::table snapshot = scriptEngine.CreateTable();
+					eventDebugSnapshot.Invoke(snapshot, scriptName.data(), RuntimeEvent::EInvocation::None);
+					std::string text = scriptEngine.Inspect(snapshot);
+
+					TE_INFO("{}", text);
+					clipboardText.append(text);
+				}
+
+				clipboardText.append("\n");
+
+				{
+					sol::table persistVariables = scriptEngine.CreateTable();
+					for (const auto &[key, value] : scriptEngine.GetScriptPersistVariables(scriptName))
+					{
+						persistVariables[key] = value;
+					}
+					std::string text = scriptEngine.Inspect(persistVariables);
+
+					TE_INFO("{}", text);
+					clipboardText.append(text);
+				}
+
+				SystemUtils::CopyToClipboard(clipboardText);
 			}
 
 			ImGui::NextColumn();

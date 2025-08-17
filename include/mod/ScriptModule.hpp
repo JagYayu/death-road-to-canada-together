@@ -27,7 +27,8 @@ namespace tudov
 	struct IScriptModule
 	{
 		/**
-		 * Check if current script module is valid.
+		 * Check if the script module is valid.
+		 * This only checks whether the script module's function is valid, that is, whether the code is parsed properly.
 		 */
 		virtual bool IsValid() const = 0;
 
@@ -40,6 +41,11 @@ namespace tudov
 		 * Check if current script module is fully loaded (or raw loaded).
 		 */
 		virtual bool IsFullyLoaded() const = 0;
+
+		/**
+		 * Check if the script module has load error.
+		 */
+		virtual bool HasLoadError() const = 0;
 
 		/**
 		 * Get module's wrapperred table. Note: it is not the original module table, wrapperred one instead.
@@ -72,6 +78,7 @@ namespace tudov
 		ScriptID _scriptID;
 		sol::protected_function _func;
 		bool _fullyLoaded;
+		bool _hasError;
 		sol::table _table;
 
 	  public:
@@ -84,6 +91,7 @@ namespace tudov
 		bool IsValid() const override;
 		bool IsLazyLoaded() const override;
 		bool IsFullyLoaded() const override;
+		bool HasLoadError() const override;
 
 		const sol::table &GetTable() override;
 		const sol::table &RawLoad(IScriptLoader &scriptLoader) override;

@@ -1,6 +1,8 @@
 --- @meta
 error("this is a lua library module")
 
+--- @alias N_Hint string
+
 --- @alias NotNil number | string | boolean | table | function | thread | userdata
 
 --- @alias Serializable boolean | number | string | table<Serializable, Serializable>
@@ -16,7 +18,7 @@ error("this is a lua library module")
 --- *Mod Scope*
 --- Insert prefix of current script's namespace at the start of `str`.
 --- e.g. `N_("HelloWorld")` --> `"dr2c_HelloWorld"`
---- @param str string
+--- @param str N_Hint
 --- @return string
 function N_(str) end
 

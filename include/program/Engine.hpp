@@ -53,9 +53,14 @@ namespace tudov
 	  public:
 		enum class ELoadingState
 		{
+			// Load done, set by loading thread.
 			Done,
+			// Load done, set by main thread.
 			Pending,
+			// Loading thread is loading in progress.
 			InProgress,
+			// Locked by main thread.
+			Locked,
 		};
 
 		struct LoadingInfoArgs
@@ -107,7 +112,7 @@ namespace tudov
 		std::vector<SDL_Event *> _sdlEvents;
 		std::atomic<ELoadingState> _loadingState;
 		std::thread _loadingThread;
-		std::mutex _loadingMutex;
+		std::timed_mutex _loadingMutex;
 		std::uint64_t _loadingBeginNS;
 		LoadingInfo _loadingInfo;
 		std::mutex _loadingInfoMutex;
@@ -164,7 +169,8 @@ namespace tudov
 		// Background loading info operations.
 
 		bool IsLoadingLagged() noexcept;
-		ELoadingState GetLoadingState() noexcept;
+		std::atomic<ELoadingState> &GetLoadingState() noexcept;
+		std::timed_mutex &GetLoadingMutex() noexcept;
 		std::uint64_t GetLoadingBeginTick() const noexcept;
 		LoadingInfo GetLoadingInfo() noexcept;
 		void SetLoadingInfo(const LoadingInfoArgs &loadingInfo) noexcept;
@@ -188,6 +194,11 @@ namespace tudov
 		inline const LoadingInfo GetLoadingInfo() const noexcept
 		{
 			return const_cast<Engine *>(this)->GetLoadingInfo();
+		}
+
+		inline const std::atomic<ELoadingState> &GetLoadingState() const noexcept
+		{
+			return const_cast<Engine *>(this)->GetLoadingState();
 		}
 
 		inline Engine &AddLoadingProgress(std::float_t value) noexcept
