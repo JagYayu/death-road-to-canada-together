@@ -178,7 +178,9 @@ namespace tudov
 	  private:
 		void BackgroundLoadingThread() noexcept;
 		bool ShouldQuit() noexcept;
+		[[deprecated]]
 		void InitializeMainWindow() noexcept;
+		[[deprecated]]
 		void InitializeResources() noexcept;
 		void PostInitialization() noexcept;
 		void PreDeinitialization() noexcept;

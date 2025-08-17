@@ -95,7 +95,7 @@ namespace tudov
 		explicit Renderer(Window &window) noexcept;
 		~Renderer() noexcept = default;
 
-		Log & GetLog()noexcept override;
+		Log &GetLog() noexcept override;
 
 		void InitializeRenderer() noexcept override;
 		void DeinitializeRenderer() noexcept override;
@@ -141,5 +141,13 @@ namespace tudov
 		std::tuple<std::float_t, std::float_t> LuaGetTargetSize(const std::shared_ptr<RenderTarget> &renderTarget) noexcept;
 
 		SDL_FRect ApplyTransform(const SDL_FRect &dst) noexcept;
+
+		void SDLRenderClear() noexcept;
+		void SDLRenderPresent() noexcept;
+		void SDLRenderTexture(SDL_Texture *sdlTexture, const SDL_FRect *srcRect, const SDL_FRect *dstRect) noexcept;
+		void SDLSetRenderDrawColor(std::float_t r, std::float_t g, std::float_t b, std::float_t a) noexcept;
+		void SDLSetRenderTarget(SDL_Texture *sdlTexture) noexcept;
+
+		void TryLogSDLError(bool value) noexcept;
 	};
 } // namespace tudov

@@ -50,7 +50,7 @@
 #include <thread>
 #include <vector>
 
-static constexpr bool DebugSingleThread = false;
+static constexpr bool DisableLoadingThread = false;
 
 using namespace tudov;
 
@@ -91,28 +91,31 @@ void Engine::BackgroundLoadingThread() noexcept
 	    .progressTotal = 1.0f,
 	};
 
-	while (!DebugSingleThread && !ShouldQuit())
+	while (!DisableLoadingThread && !ShouldQuit())
 	{
-		_loadingMutex.lock();
-		if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::InProgress))
+		if (_loadingMutex.try_lock())
 		{
-			args.title = "Background Loading";
-			args.description = "Please wait.";
-			args.progressValue = 0.0f;
-			SetLoadingInfo(args);
+			if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::InProgress))
+			{
+				args.title = "Background Loading";
+				args.description = "Please wait.";
+				args.progressValue = 0.0f;
+				SetLoadingInfo(args);
 
-			ProcessLoad();
+				ProcessLoad();
 
-			args.title = "Background Loaded";
-			args.description = "Waiting to be ended.";
-			args.progressValue = 1.0f;
-			SetLoadingInfo(args);
+				args.title = "Background Loaded";
+				args.description = "Waiting to be ended.";
+				args.progressValue = 1.0f;
+				SetLoadingInfo(args);
 
-			_loadingState.store(ELoadingState::Done);
+				_loadingState.store(ELoadingState::Done);
+			}
+
+			_loadingMutex.unlock();
 		}
-		_loadingMutex.unlock();
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
 }
 
@@ -214,7 +217,7 @@ bool Engine::Tick() noexcept
 		_loadingBeginNS = SDL_GetTicksNS();
 	}
 
-	if (DebugSingleThread)
+	if (DisableLoadingThread)
 	{
 		ProcessLoad();
 	}
@@ -424,7 +427,7 @@ std::timed_mutex &Engine::GetLoadingMutex() noexcept
 
 bool Engine::IsLoadingLagged() noexcept
 {
-	return (SDL_GetTicksNS() - _loadingBeginNS) > 200'000'000ull;
+	return !DisableLoadingThread && _loadingState.load() == ELoadingState::InProgress && std::chrono::nanoseconds(SDL_GetTicksNS() - _loadingBeginNS) > std::chrono::milliseconds(200);
 }
 
 std::uint64_t Engine::GetLoadingBeginTick() const noexcept
@@ -440,7 +443,7 @@ Engine::LoadingInfo Engine::GetLoadingInfo() noexcept
 
 void Engine::SetLoadingInfo(const LoadingInfoArgs &loadingInfo) noexcept
 {
-	if (true || _loadingState.load() == ELoadingState::InProgress) // TODO this is bad
+	if (_loadingState.load() == ELoadingState::InProgress) // TODO this is bad, not thread safe!
 	{
 		_loadingInfoMutex.lock();
 		_loadingInfo.title = loadingInfo.title.has_value() ? loadingInfo.title.value() : _loadingInfo.title;

@@ -55,7 +55,7 @@ void Renderer::InitializeRenderer() noexcept
 {
 	if (_sdlRenderer) [[unlikely]]
 	{
-		_log->Warn("Already initialized renderer");
+		TE_WARN("{}", "Already initialized renderer");
 		return;
 	}
 
@@ -156,11 +156,11 @@ void Renderer::SetRenderTexture(const std::shared_ptr<Texture> &texture) noexcep
 {
 	if (texture == nullptr)
 	{
-		SDL_SetRenderTarget(_sdlRenderer, _sdlTextureMain);
+		SDLSetRenderTarget(_sdlTextureMain);
 	}
 	else if (auto &&sdlTexture = texture->GetSDLTextureHandle(); sdlTexture != nullptr)
 	{
-		SDL_SetRenderTarget(_sdlRenderer, sdlTexture);
+		SDLSetRenderTarget(sdlTexture);
 	}
 }
 
@@ -418,17 +418,17 @@ void Renderer::End() noexcept
 
 	if (GetEngine().GetLoadingState() != Engine::ELoadingState::InProgress)
 	{
-		SDL_SetRenderTarget(_sdlRenderer, _sdlTextureBackground);
-		SDL_SetRenderDrawColor(_sdlRenderer, 0, 0, 0, 255);
-		SDL_RenderClear(_sdlRenderer);
-		SDL_RenderTexture(_sdlRenderer, _sdlTextureMain, nullptr, nullptr);
+		SDLSetRenderTarget(_sdlTextureBackground);
+		SDLSetRenderDrawColor(0, 0, 0, 255);
+		SDLRenderClear();
+		SDLRenderTexture(_sdlTextureMain, nullptr, nullptr);
 	}
 
-	SDL_RenderPresent(_sdlRenderer);
+	SDLRenderPresent();
 
 	if (!_renderTargets.empty())
 	{
-		_log->Warn("Render target stack is not empty!");
+		TE_WARN("{}", "Render target stack is not empty!");
 		do
 		{
 			_renderTargets.pop();
@@ -444,4 +444,37 @@ SDL_Renderer *Renderer::GetSDLRendererHandle() noexcept
 std::tuple<std::float_t, std::float_t> Renderer::LuaGetTargetSize(const std::shared_ptr<RenderTarget> &renderTarget) noexcept
 {
 	return renderTarget->_texture->GetSize();
+}
+
+void Renderer::TryLogSDLError(bool value) noexcept
+{
+	if (!value) [[unlikely]]
+	{
+		TE_WARN("{}", SDL_GetError());
+	}
+}
+
+void Renderer::SDLRenderClear() noexcept
+{
+	TryLogSDLError(SDL_RenderClear(_sdlRenderer));
+}
+
+void Renderer::SDLRenderTexture(SDL_Texture *sdlTexture, const SDL_FRect *srcRect, const SDL_FRect *dstRect) noexcept
+{
+	TryLogSDLError(SDL_RenderTexture(_sdlRenderer, sdlTexture, srcRect, dstRect));
+}
+
+void Renderer::SDLSetRenderDrawColor(std::float_t r, std::float_t g, std::float_t b, std::float_t a) noexcept
+{
+	TryLogSDLError(SDL_SetRenderDrawColor(_sdlRenderer, r, g, b, a));
+}
+
+void Renderer::SDLRenderPresent() noexcept
+{
+	TryLogSDLError(SDL_RenderPresent(_sdlRenderer));
+}
+
+void Renderer::SDLSetRenderTarget(SDL_Texture *sdlTexture) noexcept
+{
+	TryLogSDLError(SDL_SetRenderTarget(_sdlRenderer, sdlTexture));
 }
