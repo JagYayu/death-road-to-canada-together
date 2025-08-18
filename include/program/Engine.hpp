@@ -49,6 +49,7 @@ namespace tudov
 	class Engine : public Application, public IDebugProvider, private ILogProvider
 	{
 		friend Context;
+		friend LuaAPI;
 
 	  public:
 		enum class ELoadingState
@@ -174,6 +175,7 @@ namespace tudov
 		std::uint64_t GetLoadingBeginTick() const noexcept;
 		LoadingInfo GetLoadingInfo() noexcept;
 		void SetLoadingInfo(const LoadingInfoArgs &loadingInfo) noexcept;
+		void TriggerLoadPending() noexcept;
 
 	  private:
 		void BackgroundLoadingThread() noexcept;

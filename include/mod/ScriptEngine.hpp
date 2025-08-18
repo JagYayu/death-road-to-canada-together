@@ -39,6 +39,8 @@ namespace tudov
 	{
 		virtual ~IScriptEngine() noexcept = default;
 
+		// STD functions.
+
 		/**
 		 * Get total memory bytes in luaVM.
 		 * @return bytes.
@@ -50,6 +52,10 @@ namespace tudov
 		virtual void CollectGarbage() = 0;
 
 		virtual void SetMetatable(sol::table tbl, sol::metatable mt) = 0;
+
+		virtual void RawSet(sol::table tbl, sol::object key, sol::object value) = 0;
+
+		// Extended functions.
 
 		virtual sol::object MakeReadonlyGlobal(sol::object obj) = 0;
 
@@ -138,6 +144,7 @@ namespace tudov
 		sol::table CreateTable(std::uint32_t arr = 0, std::uint32_t hash = 0) noexcept override;
 		void CollectGarbage() override;
 		void SetMetatable(sol::table tbl, sol::metatable mt) override;
+		void RawSet(sol::table tbl, sol::object key, sol::object value) override;
 		sol::object MakeReadonlyGlobal(sol::object obj) override;
 		sol::load_result LoadFunction(const std::string &name, std::string_view code) override;
 		void InitializeScript(ScriptID scriptID, std::string_view scriptName, std::string_view modUID, bool sandboxed, sol::protected_function &func) noexcept override;

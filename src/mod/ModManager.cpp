@@ -162,6 +162,8 @@ void ModManager::LoadMods()
 void ModManager::LoadModsDeferred()
 {
 	EnumFlag::Mask(_loadState, ELoadState::LoadPending);
+
+	GetEngine().TriggerLoadPending();
 }
 
 void ModManager::UnloadMods()
@@ -224,6 +226,8 @@ void ModManager::UpdateScriptPending(std::string_view scriptName, TextID scriptT
 	}
 
 	(*_updateScriptsPending)[std::string(scriptName)] = std::make_tuple(scriptTextID, scriptModUID);
+
+	GetEngine().TriggerLoadPending();
 }
 
 void ModManager::Update()

@@ -14,8 +14,10 @@
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
+#include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
 #include "util/LogMicros.hpp"
+#include "util/Utils.hpp"
 
 using namespace tudov;
 
@@ -72,12 +74,12 @@ bool ScriptModule::HasLoadError() const
 	return _fullyLoaded && _hasError;
 }
 
-const sol::table &ScriptModule::GetTable()
+sol::table &ScriptModule::GetTable()
 {
 	return _table;
 }
 
-const sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
+sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 {
 	if (_fullyLoaded)
 	{
@@ -131,7 +133,7 @@ const sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 	return _table;
 }
 
-const sol::table &ScriptModule::LazyLoad(IScriptLoader &scriptLoader)
+sol::table &ScriptModule::LazyLoad(IScriptLoader &scriptLoader)
 {
 	if (!_table.valid())
 	{
@@ -154,20 +156,19 @@ const sol::table &ScriptModule::LazyLoad(IScriptLoader &scriptLoader)
 
 	_table[sol::metatable_key] = metatable;
 
-	metatable["__index"] = [this, &scriptLoader](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	metatable["__index"] = [this, &scriptLoader](const sol::this_state &ts, sol::object, sol::object key)
 	{
 		return FullLoad(scriptLoader)[key];
 	};
-	metatable["__newindex"] = [](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	metatable["__newindex"] = [this, &scriptLoader](const sol::this_state &ts, sol::object, sol::object key, sol::object value)
 	{
-		// iScriptLoader.GetScriptEngine()->ThrowError("Attempt to modify readonly table");
-		return sol::error("Attempt to modify readonly table");
+		scriptLoader.GetScriptEngine().ThrowError(std::format("Cannot override module"));
 	};
 
 	return _table;
 }
 
-const sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
+sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 {
 	if (_fullyLoaded)
 	{
@@ -187,7 +188,7 @@ const sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 	_parentContext = &parent._context;
 	_parentLog = parent._log;
 
-	auto &&engine = GetEngine();
+	Engine &engine = GetEngine();
 
 	engine.SetLoadingDescription(GetScriptProvider().GetScriptNameByID(_scriptID).value());
 
@@ -200,24 +201,24 @@ const sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 	auto &&metatable = scriptEngine.CreateTable(0, 2);
 	_table[sol::metatable_key] = metatable;
 
-	metatable["__index"] = [this, parent](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	metatable["__index"] = [this, &parent](const sol::this_state &ts, sol::object, sol::object key)
 	{
-		if (auto &&prevScriptID = FindPreviousInStack(parent._scriptLoopLoadStack, _scriptID); prevScriptID.has_value())
+		if (const auto &optPrevScriptID = FindPreviousInStack(parent._scriptLoopLoadStack, _scriptID); optPrevScriptID.has_value())
 		{
-			auto &&scriptProvider = GetScriptProvider();
-			auto scriptName = scriptProvider.GetScriptNameByID(_scriptID);
-			auto prevScriptName = scriptProvider.GetScriptNameByID(*prevScriptID);
+			IScriptProvider &scriptProvider = GetScriptProvider();
+			auto optScriptName = scriptProvider.GetScriptNameByID(_scriptID);
+			auto optPrevScriptName = scriptProvider.GetScriptNameByID(*optPrevScriptID);
 
-			return sol::error(std::format("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *scriptName, *prevScriptID, *prevScriptName));
+			parent.GetScriptEngine().ThrowError(std::format("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *optScriptName, *optPrevScriptID, *optPrevScriptName));
 		}
 		else
 		{
-			return sol::error("Attempt to access incomplete module");
+			parent.GetScriptEngine().ThrowError("Attempt to access incomplete module");
 		}
 	};
-	metatable["__newindex"] = [](const sol::this_state &ts, const sol::object &, const sol::object &key)
+	metatable["__newindex"] = [this, &parent](const sol::this_state &ts, sol::object, sol::object key, sol::object value)
 	{
-		return sol::error("Attempt to modify readonly module");
+		parent.GetScriptEngine().ThrowError(std::format("Cannot override module"));
 	};
 
 	parent._scriptLoopLoadStack.emplace_back(_scriptID);

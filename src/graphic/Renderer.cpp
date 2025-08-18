@@ -386,13 +386,18 @@ void Renderer::Render() noexcept
 
 void Renderer::Begin() noexcept
 {
+	{
+		auto state = GetEngine().GetLoadingState().load();
+		_background = state == Engine::ELoadingState::Pending || state == Engine::ELoadingState::InProgress;
+	}
+
 	SDL_SetRenderTarget(_sdlRenderer, nullptr);
 	SDL_SetRenderDrawColor(_sdlRenderer, 0, 0, 0, 255);
 	SDL_RenderClear(_sdlRenderer);
 	SDL_SetRenderTarget(_sdlRenderer, _sdlTextureMain);
 	SDL_RenderClear(_sdlRenderer);
 
-	if (GetEngine().GetLoadingState() == Engine::ELoadingState::InProgress)
+	if (_background)
 	{
 		SDL_RenderTexture(_sdlRenderer, _sdlTextureBackground, nullptr, nullptr);
 	}
@@ -400,8 +405,8 @@ void Renderer::Begin() noexcept
 
 void Renderer::End() noexcept
 {
-	SDL_SetRenderTarget(_sdlRenderer, nullptr);
-	SDL_RenderTexture(_sdlRenderer, _sdlTextureMain, nullptr, nullptr);
+	SDLSetRenderTarget(nullptr);
+	SDLRenderTexture(_sdlTextureMain, nullptr, nullptr);
 
 	// Resize textures
 	{
@@ -416,7 +421,7 @@ void Renderer::End() noexcept
 		}
 	}
 
-	if (GetEngine().GetLoadingState() != Engine::ELoadingState::InProgress)
+	if (!_background)
 	{
 		SDLSetRenderTarget(_sdlTextureBackground);
 		SDLSetRenderDrawColor(0, 0, 0, 255);

@@ -97,6 +97,8 @@ void Engine::BackgroundLoadingThread() noexcept
 		{
 			if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::InProgress))
 			{
+				_loadingMutex.unlock();
+
 				args.title = "Background Loading";
 				args.description = "Please wait.";
 				args.progressValue = 0.0f;
@@ -111,11 +113,13 @@ void Engine::BackgroundLoadingThread() noexcept
 
 				_loadingState.store(ELoadingState::Done);
 			}
-
-			_loadingMutex.unlock();
+			else
+			{
+				_loadingMutex.unlock();
+			}
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
 }
 
@@ -211,7 +215,8 @@ bool Engine::Tick() noexcept
 	_framerate = 1'000'000'000.0 / (beginNS - _previousTick);
 	_previousTick = beginNS;
 
-	if (ELoadingState expected = ELoadingState::Done; _loadingState.compare_exchange_strong(expected, ELoadingState::Pending))
+	// if (ELoadingState expected = ELoadingState::Done; _loadingState.compare_exchange_strong(expected, ELoadingState::Pending))
+	if (_loadingState.load() == ELoadingState::Done)
 	{
 		// recording background loading ticks.
 		_loadingBeginNS = SDL_GetTicksNS();
@@ -235,10 +240,11 @@ bool Engine::Tick() noexcept
 		}
 	}
 
-	if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::Locked))
+	if (ELoadingState expected = ELoadingState::Done; _loadingState.compare_exchange_strong(expected, ELoadingState::Locked))
 	{
+		_loadingState.store(ELoadingState::Done);
+
 		ProcessTick();
-		_loadingState.store(ELoadingState::Pending);
 	}
 	ProcessRender();
 
@@ -427,7 +433,8 @@ std::timed_mutex &Engine::GetLoadingMutex() noexcept
 
 bool Engine::IsLoadingLagged() noexcept
 {
-	return !DisableLoadingThread && _loadingState.load() == ELoadingState::InProgress && std::chrono::nanoseconds(SDL_GetTicksNS() - _loadingBeginNS) > std::chrono::milliseconds(200);
+	// TE_INFO("{} {}", std::chrono::nanoseconds(SDL_GetTicksNS() - _loadingBeginNS), _loadingState.load() == ELoadingState::InProgress && std::chrono::nanoseconds(SDL_GetTicksNS() - _loadingBeginNS) > std::chrono::milliseconds(1));
+	return !DisableLoadingThread && _loadingState.load() == ELoadingState::InProgress;
 }
 
 std::uint64_t Engine::GetLoadingBeginTick() const noexcept
@@ -451,5 +458,13 @@ void Engine::SetLoadingInfo(const LoadingInfoArgs &loadingInfo) noexcept
 		_loadingInfo.progressValue = loadingInfo.progressValue.has_value() ? loadingInfo.progressValue.value() : _loadingInfo.progressValue;
 		_loadingInfo.progressTotal = loadingInfo.progressTotal.has_value() ? loadingInfo.progressTotal.value() : _loadingInfo.progressTotal;
 		_loadingInfoMutex.unlock();
+	}
+}
+
+void Engine::TriggerLoadPending() noexcept
+{
+	if (_loadingState.load() != ELoadingState::InProgress)
+	{
+		_loadingState.store(ELoadingState::Pending);
 	}
 }

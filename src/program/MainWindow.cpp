@@ -19,6 +19,7 @@
 #include "imgui.h"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
+#include "util/Micros.hpp"
 #include "util/StringUtils.hpp"
 
 #include "SDL3/SDL_rect.h"
@@ -290,23 +291,22 @@ void MainWindow::Render() noexcept
 
 	{
 		std::atomic<Engine::ELoadingState> &loadingState = engine.GetLoadingState();
-		auto &mutex = engine.GetLoadingMutex();
+		auto &loadingMutex = engine.GetLoadingMutex();
 
-		if (mutex.try_lock_for(std::chrono::milliseconds(10)))
+		if (loadingMutex.try_lock_for(std::chrono::milliseconds(10)))
 		{
-			if (Engine::ELoadingState expected = Engine::ELoadingState::Pending; loadingState.compare_exchange_strong(expected, Engine::ELoadingState::Locked))
+			if (Engine::ELoadingState expected = Engine::ELoadingState::Done; loadingState.compare_exchange_strong(expected, Engine::ELoadingState::Locked))
 			{
-				RenderPreImpl();
+				loadingState.store(Engine::ELoadingState::Done);
 
+				RenderPreImpl();
 				if (!_debugManager.expired())
 				{
 					_debugManager.lock()->UpdateAndRender(*this);
 				}
-
-				loadingState.store(Engine::ELoadingState::Pending);
 			}
 
-			mutex.unlock();
+			loadingMutex.unlock();
 		}
 	}
 

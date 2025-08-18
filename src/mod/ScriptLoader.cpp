@@ -413,7 +413,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 
 	_onUnloadScript(scriptID, scriptName.value());
 
-	for (auto &&dependency : GetScriptDependencies(scriptID))
+	for (ScriptID dependency : GetScriptDependencies(scriptID))
 	{
 		UnloadScript(dependency);
 		unloadedScripts.emplace_back(dependency);
@@ -473,12 +473,19 @@ void ScriptLoader::ProcessFullLoads()
 {
 	TE_DEBUG("{}", "Processing full loads ...");
 
-	for (auto &&[scriptID, module] : _scriptModules)
+	for (auto &&[scriptID, scriptModule] : _scriptModules)
 	{
-		if (!module->IsFullyLoaded())
+		if (!scriptModule->IsFullyLoaded())
 		{
-			module->FullLoad(*this);
-			TE_TRACE("Fully loaded script \"{}\"", GetScriptProvider().GetScriptNameByID(scriptID).value());
+			try
+			{
+				scriptModule->FullLoad(*this);
+				TE_TRACE("Fully loaded script \"{}\"", GetScriptProvider().GetScriptNameByID(scriptID).value());
+			}
+			catch (std::exception &e)
+			{
+				TE_TRACE("Error full load script \"{}\": {}", GetScriptProvider().GetScriptNameByID(scriptID).value(), e.what());
+			}
 		}
 	}
 

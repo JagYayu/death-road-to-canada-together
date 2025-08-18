@@ -54,16 +54,16 @@ CECSSchema.ComponentTrait = {
 local reloadPending
 
 --- @type dr2c.ECSSchema.Components
-local componentsSchema = {}
-
---- @type dr2c.ECSSchema.Entities
-local entitiesSchema = {}
-
-persist("reloadPending", true, function()
-	return reloadPending
+local componentsSchema
+componentsSchema = persist("componentsSchema", {}, function()
+	return componentsSchema
 end)
 
--- events:add("Debug", func, name?, order?, key?, sequence?)
+--- @type dr2c.ECSSchema.Entities
+local entitiesSchema
+persist("entitiesSchema", {}, function()
+	return entitiesSchema
+end)
 
 --- @return dr2c.ECSSchema.Components @Readonly
 function CECSSchema.getComponentsSchema()
@@ -311,11 +311,22 @@ function CECSSchema.reloadImmediately()
 
 	reloadComponentsSchema(oldComponentsSchema)
 	reloadEntitiesSchema(oldEntitiesSchema)
+
+	reloadPending = false
+	engine:triggerLoadPending()
 end
 
 function CECSSchema.reload()
 	reloadPending = true
+	engine:triggerLoadPending()
 end
--- CECSSchema.reload()
+
+CECSSchema.reload()
+
+events:add(N_("ContentLoad"), function(e)
+	if reloadPending then
+		CECSSchema.reloadImmediately()
+	end
+end, "loadECSSchema", "ECS")
 
 return CECSSchema

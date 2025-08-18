@@ -90,6 +90,7 @@ namespace tudov
 		std::unordered_map<SDL_Texture *, std::shared_ptr<Texture>> _heldTextures;
 		SDL_Texture *_sdlTextureMain;
 		SDL_Texture *_sdlTextureBackground;
+		bool _background;
 
 	  public:
 		explicit Renderer(Window &window) noexcept;

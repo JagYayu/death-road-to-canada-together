@@ -541,6 +541,12 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 	{
 		IScriptEngine &scriptEngine = GetScriptEngine();
 
+		if (GetScriptLoader().GetLoadingScriptID() != 0) [[unlikely]]
+		{
+			scriptEngine.ThrowError("Attempt to invoke event at script load time");
+			return;
+		}
+
 		RuntimeEvent *eventInstance;
 		if (event.is<EventID>())
 		{

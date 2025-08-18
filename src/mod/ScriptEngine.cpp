@@ -11,12 +11,12 @@
 
 #include "mod/ScriptEngine.hpp"
 
-#include "lauxlib.h"
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptModule.hpp"
 #include "mod/ScriptProvider.hpp"
+#include "sol/trampoline.hpp"
 #include "util/Definitions.hpp"
 #include "util/LogMicros.hpp"
 #include "util/Utils.hpp"
@@ -32,7 +32,6 @@
 
 #include <cassert>
 #include <corecrt_terminate.h>
-#include <stdexcept>
 #include <unordered_map>
 
 using namespace tudov;
@@ -69,6 +68,11 @@ void ScriptEngine::PostDeinitialize() noexcept
 {
 }
 
+int ExceptionHandler(lua_State *L, sol::optional<const std::exception &> aa, std::string_view b)
+{
+	return 0;
+}
+
 void ScriptEngine::Initialize() noexcept
 {
 	if (_luaInit)
@@ -76,6 +80,8 @@ void ScriptEngine::Initialize() noexcept
 		return;
 	}
 	_luaInit = true;
+
+	set_default_exception_handler(_lua, ExceptionHandler);
 
 	_lua.open_libraries(sol::lib::base);
 	_lua.open_libraries(sol::lib::bit32);
@@ -188,11 +194,21 @@ void ScriptEngine::CollectGarbage()
 
 void ScriptEngine::SetMetatable(sol::table tbl, sol::metatable mt)
 {
-	sol::protected_function_result result = _lua["setmetatable"](tbl, mt);
-	if (!result.valid())
+	sol::protected_function_result result = _lua.globals()["setmetatable"](tbl, mt);
+	if (!result.valid()) [[unlikely]]
 	{
 		sol::error err = result;
-		throw std::runtime_error(err.what());
+		throw err;
+	}
+}
+
+void ScriptEngine::RawSet(sol::table tbl, sol::object key, sol::object value)
+{
+	sol::protected_function_result result = _lua.globals()["rawset"](tbl, key, value);
+	if (!result.valid()) [[unlikely]]
+	{
+		sol::error err = result;
+		throw err;
 	}
 }
 
@@ -215,7 +231,7 @@ std::string ScriptEngine::Inspect(sol::object obj)
 {
 	if (!obj.valid()) [[unlikely]]
 	{
-		throw std::runtime_error("Must be a valid lua value!");
+		throw sol::error("Must be a valid lua value!");
 	}
 
 	sol::protected_function_result result = _luaInspect(obj);

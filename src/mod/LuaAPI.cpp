@@ -75,7 +75,8 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 
 	TE_USERTYPE(Engine,
 	            "mainWindow", GetMainWindowFromContext(context),
-	            "quit", &Engine::Quit);
+	            "quit", &Engine::Quit,
+	            "triggerLoadPending", &Engine::TriggerLoadPending);
 
 	TE_USERTYPE(EventManager,
 	            "add", &EventManager::LuaAdd,

@@ -16,6 +16,7 @@
 #include "mod/ModConfig.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
+#include "program/Engine.hpp"
 #include "resource/FontResources.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/TextResources.hpp"
@@ -194,6 +195,8 @@ void UnpackagedMod::Load()
 		{
 			std::lock_guard lock{_fileWatchMutex};
 			_fileWatchQueue.push(std::make_tuple(filePath, static_cast<int>(changeType)));
+
+			_modManager.GetEngine().GetLoadingState().store(Engine::ELoadingState::Pending);
 		}
 	});
 

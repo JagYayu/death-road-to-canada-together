@@ -29,6 +29,9 @@ std::string_view DebugLog::GetName() noexcept
 	return Name();
 }
 
+// todo 添加功能：
+// todo 日志浏览器，打开日志目录，删除所有日志
+
 void DebugLog::UpdateAndRender(IWindow &window) noexcept
 {
 	static auto TableLogFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;

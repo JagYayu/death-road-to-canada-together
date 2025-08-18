@@ -50,22 +50,27 @@ namespace tudov
 		/**
 		 * Get module's wrapperred table. Note: it is not the original module table, wrapperred one instead.
 		 */
-		virtual const sol::table &GetTable() = 0;
+		virtual sol::table &GetTable() = 0;
 
 		/**
 		 * Raw load means no sandbox, no environment overriding, just load this script from pure globals.
 		 */
-		virtual const sol::table &RawLoad(IScriptLoader &scriptLoader) = 0;
+		virtual sol::table &RawLoad(IScriptLoader &scriptLoader) = 0;
 
 		/**
 		 * TODO
 		 */
-		virtual const sol::table &LazyLoad(IScriptLoader &scriptLoader) = 0;
+		virtual sol::table &LazyLoad(IScriptLoader &scriptLoader) = 0;
 
 		/**
 		 * TODO
 		 */
-		virtual const sol::table &FullLoad(IScriptLoader &scriptLoader) = 0;
+		virtual sol::table &FullLoad(IScriptLoader &scriptLoader) = 0;
+
+		TE_FORCEINLINE const sol::table &GetTable() const
+		{
+			return const_cast<IScriptModule *>(this)->GetTable();
+		}
 	};
 
 	struct ScriptModule : public IScriptModule, public IContextProvider, private ILogProvider
@@ -93,9 +98,9 @@ namespace tudov
 		bool IsFullyLoaded() const override;
 		bool HasLoadError() const override;
 
-		const sol::table &GetTable() override;
-		const sol::table &RawLoad(IScriptLoader &scriptLoader) override;
-		const sol::table &LazyLoad(IScriptLoader &scriptLoader) override;
-		const sol::table &FullLoad(IScriptLoader &scriptLoader) override;
+		sol::table &GetTable() override;
+		sol::table &RawLoad(IScriptLoader &scriptLoader) override;
+		sol::table &LazyLoad(IScriptLoader &scriptLoader) override;
+		sol::table &FullLoad(IScriptLoader &scriptLoader) override;
 	};
 } // namespace tudov

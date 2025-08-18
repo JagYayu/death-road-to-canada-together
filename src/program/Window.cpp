@@ -108,7 +108,7 @@ bool Window::RenderPreImpl() noexcept
 		return false;
 	}
 
-	auto &&args = GetScriptEngine().CreateTable(0, 1);
+	auto &&args = GetScriptEngine().CreateTable(0, 3);
 	auto &&key = GetKey();
 	args["isMain"] = GetContext().GetWindowManager().GetMainWindow().get() == this;
 	args["key"] = &key;
