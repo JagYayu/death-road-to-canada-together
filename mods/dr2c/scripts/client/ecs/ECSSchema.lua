@@ -2,7 +2,6 @@
 --- @class dr2c.EntityTypeID : integer
 --- @class dr2c.ComponentType : string
 --- @class dr2c.ComponentTypeID : integer
---- @class dr2c.ComponentTrait : integer
 
 --- @alias dr2c.ECSSchema.Fields  table<Serializable, Serializable>
 
@@ -44,6 +43,7 @@ local stringBuffer = require("string.buffer")
 --- @class dr2c.ECSSchema
 local CECSSchema = {}
 
+--- @enum dr2c.ComponentTrait
 CECSSchema.ComponentTrait = {
 	Constant = 0,
 	Mutable = 1,
@@ -191,6 +191,7 @@ local eventEntitySchemaLoadEntities = events:new(N_("EntitySchemaLoadEntities"),
 
 local function reloadComponentsSchema(oldComponentsSchema)
 	--- @class dr2c.E.EntitySchemaLoadComponents
+	--- @field new table<string, { fields: table, trait: dr2c.ComponentTrait, [...]: any }>
 	--- @field dependencies table?
 	local e = {
 		new = {},
@@ -200,7 +201,9 @@ local function reloadComponentsSchema(oldComponentsSchema)
 
 	events:invoke(eventEntitySchemaLoadComponents, e, nil, eventsOption_None)
 
-	for componentTypeID, componentType, entry in GTable.sortedPairs(newComponentsSchema) do
+	for state, componentType, entry in GTable.sortedPairs(newComponentsSchema) do
+		local componentTypeID = state[2]
+
 		local componentFields
 		if type(entry.fields) == "table" then
 			componentFields = entry.fields
@@ -231,10 +234,11 @@ local function processEntityComponents(entityComponents)
 
 	local mergeDepth = entityComponents.mergeDepth
 
-	--- @param index integer
 	--- @param componentType dr2c.ComponentType
 	--- @param componentFields dr2c.Component
-	for index, componentType, componentFields in GTable.sortedPairs(entityComponents.components) do
+	for state, componentType, componentFields in GTable.sortedPairs(entityComponents.components) do
+		local index = state[2]
+
 		local componentSchema = componentsSchema[componentType]
 		if not componentSchema then
 			error("Invalid component " .. componentType, 3)
@@ -281,8 +285,8 @@ local function reloadEntitiesSchema(oldEntitiesSchema)
 
 	events:invoke(eventEntitySchemaLoadEntities, e, nil, eventsOption_None)
 
-	for entityTypeID, entityType, entityComponents in GTable.sortedPairs(newEntitiesSchema) do
-		entityTypeID = entityTypeID + 1
+	for state, entityType, entityComponents in GTable.sortedPairs(newEntitiesSchema) do
+		local entityTypeID = state[2]
 
 		local components, componentsSerializable, componentsMutable, componentsConstant, componentsShared =
 			processEntityComponents(entityComponents)
@@ -304,6 +308,8 @@ local function reloadEntitiesSchema(oldEntitiesSchema)
 end
 
 function CECSSchema.reloadImmediately()
+	engine:triggerLoadPending()
+
 	local oldComponentsSchema = componentsSchema
 	local oldEntitiesSchema = entitiesSchema
 	componentsSchema = {}
@@ -313,12 +319,12 @@ function CECSSchema.reloadImmediately()
 	reloadEntitiesSchema(oldEntitiesSchema)
 
 	reloadPending = false
-	engine:triggerLoadPending()
+
+	print("ECS Schema reloaded")
 end
 
 function CECSSchema.reload()
 	reloadPending = true
-	engine:triggerLoadPending()
 end
 
 CECSSchema.reload()

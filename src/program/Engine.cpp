@@ -98,6 +98,7 @@ void Engine::BackgroundLoadingThread() noexcept
 			if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::InProgress))
 			{
 				_loadingMutex.unlock();
+				TE_TRACE("{}", "Process background loading");
 
 				args.title = "Background Loading";
 				args.description = "Please wait.";
@@ -119,8 +120,10 @@ void Engine::BackgroundLoadingThread() noexcept
 			}
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
+
+	TE_DEBUG("{}", "Background loading thread exit");
 }
 
 Engine::~Engine() noexcept

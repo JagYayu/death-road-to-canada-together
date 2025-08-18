@@ -12,14 +12,16 @@
 #pragma once
 
 #include "AddHandlerArgs.hpp"
+#include "program/Context.hpp"
 #include "util/Definitions.hpp"
 
 namespace tudov
 {
 	struct IEventManager;
 	class RuntimeEvent;
+	class Context;
 
-	class AbstractEvent
+	class AbstractEvent : public IContextProvider
 	{
 	  protected:
 		EventID _id;
@@ -33,6 +35,8 @@ namespace tudov
 		virtual ~AbstractEvent() noexcept;
 
 	  public:
+		Context &GetContext() noexcept override;
+
 		/**
 		 * Check if this event is valid.
 		 */

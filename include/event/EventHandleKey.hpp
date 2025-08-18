@@ -14,6 +14,7 @@
 #include "util/Scopes.hpp"
 
 #include <cmath>
+#include <format>
 #include <string>
 #include <type_traits>
 #include <variant>
@@ -52,16 +53,6 @@ namespace tudov
 			return value == other.value;
 		}
 
-		inline bool IsAny() const noexcept
-		{
-			return std::holds_alternative<std::nullptr_t>(value);
-		}
-
-		inline bool Match(const EventHandleKey &key) const noexcept
-		{
-			return IsAny() || value == key.value;
-		}
-
 		inline EventHandleKey() noexcept
 		    : value(nullptr)
 		{
@@ -94,5 +85,31 @@ namespace tudov
 		}
 
 		~EventHandleKey() noexcept = default;
+
+		inline bool IsAny() const noexcept
+		{
+			return std::holds_alternative<std::nullptr_t>(value);
+		}
+
+		inline bool Match(const EventHandleKey &key) const noexcept
+		{
+			return IsAny() || value == key.value;
+		}
+
+		inline std::string ToString() const noexcept
+		{
+			if (std::holds_alternative<std::double_t>(value))
+			{
+				return std::to_string(std::get<std::double_t>(value));
+			}
+			else if (std::holds_alternative<std::string>(value))
+			{
+				return std::format("\"{}\"", std::get<std::string>(value));
+			}
+			else
+			{
+				return "null";
+			}
+		}
 	};
 } // namespace tudov

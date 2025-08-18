@@ -11,22 +11,21 @@
 
 #pragma once
 
-#include "EventHandler.hpp"
+#include "EventHandleKey.hpp"
+#include "event/EventHandleFunction.hpp"
 #include "util/Definitions.hpp"
 
 namespace tudov
 {
 	struct AddHandlerArgs
 	{
-		using Function = EventHandleFunction;
-		using Key = EventHandleKey;
-
 		EventID eventID;
 		ScriptID scriptID;
-		Function function;
+		EventHandleFunction function;
 		std::optional<std::string> name;
 		std::optional<std::string> order;
-		std::optional<Key> key;
+		std::optional<EventHandleKey> key;
 		std::optional<std::double_t> sequence;
+		std::string stacktrace;
 	};
 } // namespace tudov

@@ -47,8 +47,6 @@ namespace tudov
 
 	  public:
 		Engine &GetEngine();
-		[[deprecated("Use `Tudov::GetConfig` instead")]]
-		Config &GetConfig();
 		IEventManager &GetEventManager();
 		ILuaAPI &GetLuaAPI();
 		IModManager &GetModManager();
@@ -65,11 +63,6 @@ namespace tudov
 		TE_FORCEINLINE const Engine &GetEngine() const
 		{
 			return const_cast<Context *>(this)->GetEngine();
-		}
-
-		TE_FORCEINLINE const Config &GetConfig() const
-		{
-			return const_cast<Context *>(this)->GetConfig();
 		}
 
 		TE_FORCEINLINE const IEventManager &GetEventManager() const
@@ -161,16 +154,6 @@ namespace tudov
 		TE_FORCEINLINE const Engine &GetEngine() const noexcept
 		{
 			return GetContext().GetEngine();
-		}
-
-		TE_FORCEINLINE Config &GetConfig() noexcept
-		{
-			return GetContext().GetConfig();
-		}
-
-		TE_FORCEINLINE const Config &GetConfig() const noexcept
-		{
-			return GetContext().GetConfig();
 		}
 
 		TE_FORCEINLINE IEventManager &GetEventManager() noexcept

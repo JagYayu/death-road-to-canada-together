@@ -10,6 +10,7 @@
  */
 
 #include "event/AbstractEvent.hpp"
+#include "event/EventManager.hpp"
 #include "util/Definitions.hpp"
 
 using namespace tudov;
@@ -23,6 +24,11 @@ AbstractEvent::AbstractEvent(IEventManager &eventManager, EventID eventID, Scrip
 
 AbstractEvent::~AbstractEvent() noexcept
 {
+}
+
+Context &AbstractEvent::GetContext() noexcept
+{
+	return eventManager.GetContext();
 }
 
 EventID AbstractEvent::GetID() const noexcept

@@ -15,6 +15,7 @@
 #include "event/OverrideHandlerArgs.hpp"
 #include "event/RuntimeEvent.hpp"
 #include "util/Definitions.hpp"
+#include "util/LogMicros.hpp"
 
 #include <variant>
 
@@ -67,18 +68,23 @@ bool LoadtimeEvent::TryBuild(ScriptID scriptID, const std::vector<std::string> &
 	return true;
 }
 
-RuntimeEvent LoadtimeEvent::ToRuntime() noexcept
+RuntimeEvent LoadtimeEvent::ToRuntime() const
 {
 	std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> keys{};
-	for (auto &&key : _keys)
+	for (const EventHandleKey &key : _keys)
 	{
 		keys.emplace(key);
 	}
 
-	_orders.shrink_to_fit();
-	RuntimeEvent event{eventManager, _id, _orders, keys, _scriptID};
+	RuntimeEvent event{
+	    eventManager,
+	    _id,
+	    _orders,
+	    keys,
+	    _scriptID,
+	};
 
-	for (auto &&operation : _operations)
+	for (const Operation &operation : _operations)
 	{
 		if (std::holds_alternative<AddHandlerArgs>(operation))
 		{

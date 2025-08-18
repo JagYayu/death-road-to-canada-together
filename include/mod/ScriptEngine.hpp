@@ -41,19 +41,21 @@ namespace tudov
 
 		// STD functions.
 
+		virtual void CollectGarbage() = 0;
+
+		virtual sol::table CreateTable(std::uint32_t arr = 0, std::uint32_t hash = 0) noexcept = 0;
+
+		virtual std::string DebugTraceback(std::string_view message = "", std::double_t level = 1) noexcept = 0;
+
 		/**
 		 * Get total memory bytes in luaVM.
 		 * @return bytes.
 		 */
 		virtual size_t GetMemory() const noexcept = 0;
 
-		virtual sol::table CreateTable(std::uint32_t arr = 0, std::uint32_t hash = 0) noexcept = 0;
-
-		virtual void CollectGarbage() = 0;
+		virtual void RawSet(sol::table tbl, sol::object key, sol::object value) = 0;
 
 		virtual void SetMetatable(sol::table tbl, sol::metatable mt) = 0;
-
-		virtual void RawSet(sol::table tbl, sol::object key, sol::object value) = 0;
 
 		// Extended functions.
 
@@ -140,11 +142,12 @@ namespace tudov
 
 		sol::state_view &GetState();
 
-		size_t GetMemory() const noexcept override;
-		sol::table CreateTable(std::uint32_t arr = 0, std::uint32_t hash = 0) noexcept override;
 		void CollectGarbage() override;
-		void SetMetatable(sol::table tbl, sol::metatable mt) override;
+		sol::table CreateTable(std::uint32_t arr = 0, std::uint32_t hash = 0) noexcept override;
+		std::string DebugTraceback(std::string_view message = 0, std::double_t level = 1) noexcept override;
+		size_t GetMemory() const noexcept override;
 		void RawSet(sol::table tbl, sol::object key, sol::object value) override;
+		void SetMetatable(sol::table tbl, sol::metatable mt) override;
 		sol::object MakeReadonlyGlobal(sol::object obj) override;
 		sol::load_result LoadFunction(const std::string &name, std::string_view code) override;
 		void InitializeScript(ScriptID scriptID, std::string_view scriptName, std::string_view modUID, bool sandboxed, sol::protected_function &func) noexcept override;

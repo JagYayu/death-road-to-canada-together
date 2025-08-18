@@ -32,6 +32,7 @@ namespace tudov
 		{
 			_what = std::format("Bad enumeration {}", EnumToPrettyString(_value));
 		}
+		~BadEnumException() noexcept = default;
 
 		inline TEnum GetValue() const noexcept
 		{

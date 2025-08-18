@@ -25,7 +25,6 @@
 
 #include "FileWatch.hpp"
 #include "util/LogMicros.hpp"
-#include "util/StringUtils.hpp"
 
 #include <filesystem>
 #include <memory>
@@ -196,7 +195,7 @@ void AssetsManager::LoadAssetsFromExternalDirectories() noexcept
 {
 	TE_DEBUG("{}", "Loading assets from external directories...");
 
-	const Config &config = GetConfig();
+	const Config &config = Tudov::GetConfig();
 
 	std::vector<std::string> externalDirectories = config.GetMountDirectories();
 

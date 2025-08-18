@@ -147,9 +147,10 @@ end
 
 --- @generic T
 --- @param tbl table<T, any>
+--- @param keys table? @An alias of return table, to avoid GC in specific situations.
 --- @return T[]
-function GTable.getKeyList(tbl)
-	local keyList = {}
+function GTable.getKeyList(tbl, keys)
+	local keyList = keys or {}
 
 	for k in pairs(tbl) do
 		keyList[#keyList + 1] = k
@@ -298,40 +299,51 @@ function GTable.reverse(list)
 	return list
 end
 
-function GTable.reversedPairs(list)
-	return function(li, i)
-		i = i - 1
-		if li[i] then
-			return i, li[i]
+do
+	local function reversedPairsIterator(list, index)
+		index = index - 1
+
+		if list[index] then
+			return index, list[index]
 		end
-	end, list, #list + 1
-end
+	end
 
-local function sortedPairsIterator(values, keys, index)
-	index = index + 1
-
-	local k = keys[index]
-	if k ~= nil then
-		return index, k, values[k]
+	function GTable.reversedPairs(list)
+		return reversedPairsIterator, list, #list + 1
 	end
 end
 
---- @generic TK, TV
---- @param tbl table<TK, TV>
---- @param sort fun(comp: (fun(a: TK, b: TK): boolean)?)?
---- @param comp (fun(a: TK, b: TK): boolean)?
---- @return fun(): TK, TV
---- @return table<TK, TV>
---- @return TK[]
---- @return integer
-function GTable.sortedPairs(tbl, sort, comp)
-	local keyList = GTable.getKeyList(tbl)
+do
+	local function sortedPairsIterator(tbl, state)
+		local index = state[2]
+		index = index + 1
+		state[2] = index
 
-	do
-		(sort or table.sort)(keyList, comp)
+		local key = state[1][index]
+		if key ~= nil then
+			return state, key, tbl[key]
+		end
 	end
 
-	return sortedPairsIterator, tbl, keyList, 0
+	--- @generic TK, TV
+	--- @param tbl table<TK, TV>
+	--- @param sort fun(comp: (fun(a: TK, b: TK): boolean)?)?
+	--- @param comp (fun(a: TK, b: TK): boolean)?
+	--- @return fun(): TK, TV
+	--- @return table<TK, TV> tbl
+	--- @return { [1]: TK[], [2]: integer } state @readonly
+	function GTable.sortedPairs(tbl, sort, comp)
+		local keyList = GTable.getKeyList(tbl)
+
+		do
+			(sort or table.sort)(keyList, comp)
+		end
+
+		return sortedPairsIterator, tbl, {
+			keyList,
+			0,
+		}
+	end
 end
 
 --- @generic T

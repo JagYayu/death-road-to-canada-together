@@ -102,6 +102,7 @@ namespace tudov
 		[[nodiscard]] EventID AllocEventID(std::string_view eventName) noexcept;
 		void DeallocEventID(EventID eventID) noexcept;
 		void OnScriptsLoaded();
+		void EmplaceRuntimeEventFromLoadtimeEvent(const std::shared_ptr<LoadtimeEvent> &loadtimeEvent);
 		[[nodiscard]] std::optional<std::reference_wrapper<AbstractEvent>> TryGetRegistryEvent(EventID eventID);
 
 		void LuaAdd(sol::object event, sol::object func, sol::object name, sol::object order, sol::object key, sol::object sequence);

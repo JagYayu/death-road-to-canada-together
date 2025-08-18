@@ -90,8 +90,8 @@ void WindowManager::InitializeMainWindow() noexcept
 		Log::Get("WindowManager")->Error("Engine main window has already been initialized!");
 	}
 
-	auto &&mainWindow = std::make_shared<MainWindow>(_context);
-	auto &config = _context.GetConfig();
+	const auto &mainWindow = std::make_shared<MainWindow>(_context);
+	Config &config = Tudov::GetConfig();
 	mainWindow->InitializeWindow(config.GetWindowWidth(), config.GetWindowHeight(), config.GetWindowTitle());
 	_windows.emplace_back(mainWindow);
 	_mainWindow = mainWindow;

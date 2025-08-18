@@ -32,9 +32,36 @@
 
 #include <cassert>
 #include <corecrt_terminate.h>
+#include <memory>
+#include <set>
 #include <unordered_map>
 
 using namespace tudov;
+
+constexpr std::string_view luaRequiredStdModules[] = {
+    "ffi",
+    "jit.profile",
+    "jit.util",
+    "string.buffer",
+    "table.clear",
+    "table.new",
+};
+
+decltype(auto) GetLuaRequiredStdModuleSet() noexcept
+{
+	static std::unique_ptr<std::set<std::string_view>> set;
+
+	if (set == nullptr) [[unlikely]]
+	{
+		set = std::make_unique<std::set<std::string_view>>();
+		for (std::string_view key : luaRequiredStdModules)
+		{
+			set->emplace(key);
+		}
+	}
+
+	return *set;
+}
 
 ScriptEngine::ScriptEngine(Context &context) noexcept
     : _context(context),
@@ -139,16 +166,7 @@ void ScriptEngine::Initialize() noexcept
 
 	GetLuaAPI().Install(_lua, _context);
 
-	constexpr const char *requiredStdModules[] = {
-	    "ffi",
-	    "jit.profile",
-	    "jit.util",
-	    "string.buffer",
-	    "table.clear",
-	    "table.new",
-	};
-
-	for (const char *key : requiredStdModules)
+	for (std::string_view key : luaRequiredStdModules)
 	{
 		_lua[key] = _lua["require"](key);
 	}
@@ -220,6 +238,11 @@ size_t ScriptEngine::GetMemory() const noexcept
 sol::table ScriptEngine::CreateTable(uint32_t arr, uint32_t hash) noexcept
 {
 	return _lua.create_table(arr, hash);
+}
+
+std::string ScriptEngine::DebugTraceback(std::string_view message, std::double_t level) noexcept
+{
+	return std::string(_lua["debug"]["traceback"](message, level).get<sol::string_view>());
 }
 
 sol::load_result ScriptEngine::LoadFunction(const std::string &name, std::string_view code)
@@ -450,7 +473,7 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 			}
 
 			const auto &virtualModule = scriptGlobals[targetScriptName];
-			if (virtualModule.valid())
+			if (virtualModule.valid() && GetLuaRequiredStdModuleSet().contains(targetScriptName))
 			{
 				return virtualModule;
 			}

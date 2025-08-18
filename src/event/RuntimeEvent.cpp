@@ -16,15 +16,18 @@
 #include "event/EventHandler.hpp"
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
+#include "exception/EventHandlerAddBadOrderException.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "util/Definitions.hpp"
 #include "util/EnumFlag.hpp"
 #include "util/LogMicros.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 
 using namespace tudov;
@@ -89,11 +92,11 @@ void RuntimeEvent::DisableProfiler() noexcept
 
 void RuntimeEvent::Add(const AddHandlerArgs &args)
 {
-	auto &&argName = args.name;
+	auto optArgName = args.name;
 	std::string name;
-	if (argName.has_value())
+	if (optArgName.has_value())
 	{
-		name = argName.value();
+		name = optArgName.value();
 	}
 	else
 	{
@@ -101,14 +104,21 @@ void RuntimeEvent::Add(const AddHandlerArgs &args)
 		name = std::format("{}-{}", args.scriptID, autoID++);
 	}
 
-	auto &&argOrder = args.order;
-	auto &&order = argOrder.has_value() ? argOrder.value() : _orders[0];
+	auto optArgOrder = args.order;
+	std::string order = optArgOrder.has_value() ? optArgOrder.value() : _orders[0];
 
-	auto &&argKey = args.key;
-	auto &&key = argKey.has_value() ? argKey.value() : EventHandler::emptyKey;
+	auto it = std::find(_orders.begin(), _orders.end(), order);
+	if (it == _orders.end()) [[unlikely]]
+	{
+		// auto &&message = std::format("Invalid event handler order \"{}\"", order);
+		throw EventHandlerAddBadOrderException(GetContext(), args.eventID, args.scriptID, order, args.stacktrace);
+	}
 
-	auto &&argSequence = args.sequence;
-	auto &&sequence = argSequence.has_value() ? argSequence.value() : EventHandler::defaultSequence;
+	auto optArgKey = args.key;
+	const EventHandleKey &key = optArgKey.has_value() ? optArgKey.value() : EventHandler::emptyKey;
+
+	auto optArgSequence = args.sequence;
+	std::double_t sequence = optArgSequence.has_value() ? optArgSequence.value() : EventHandler::defaultSequence;
 
 	_handlers.emplace_back(EventHandler{
 	    .eventID = args.eventID,

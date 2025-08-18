@@ -20,25 +20,20 @@
 
 using namespace tudov;
 
+static constexpr const char *errorMessage = "Engine pointer is nullptr";
+
 Context::Context(Engine *engine) noexcept
     : _engine(engine)
 {
 }
 
-static constexpr const char *errorMessage = "Engine pointer is nullptr";
-
 Engine &Context::GetEngine()
 {
-	if (!_engine) [[unlikely]]
+	if (_engine == nullptr) [[unlikely]]
 	{
-		throw std::runtime_error(errorMessage);
+		throw std::runtime_error("Engine does not exist");
 	}
 	return *_engine;
-}
-
-Config &Context::GetConfig()
-{
-	return Tudov::GetConfig();
 }
 
 IEventManager &Context::GetEventManager()

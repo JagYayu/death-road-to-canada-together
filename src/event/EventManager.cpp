@@ -15,8 +15,10 @@
 #include "event/CoreEvents.hpp"
 #include "event/LoadtimeEvent.hpp"
 #include "event/RuntimeEvent.hpp"
+#include "exception/EventHandlerAddBadOrderException.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"
+#include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "program/Context.hpp"
 #include "util/Definitions.hpp"
@@ -91,29 +93,21 @@ void EventManager::OnScriptsLoaded()
 				throw std::runtime_error(msg);
 			}
 
-			auto &&scriptProvider = GetScriptProvider();
-			TE_ERROR("{}, source script: <{}>\"{}\"", msg, scriptID, scriptProvider.GetScriptNameByID(scriptID)->data());
+			IScriptProvider &scriptProvider = GetScriptProvider();
+			TE_ERROR("{}, source script: <{}>\"{}\"", msg, scriptID, scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN&"));
+
 			continue;
 		}
 
 		if (loadtimeEvent->IsBuilt())
 		{
-			auto &&runtimeEvent = std::make_shared<RuntimeEvent>(loadtimeEvent->ToRuntime());
-			if (eventID != runtimeEvent->GetID())
-			{
-				TE_ERROR("Converted runtime event has different id to previous loadtime event! Expected <{}> but got <{}>", eventID, runtimeEvent->GetID());
-			}
-			else
-			{
-				TE_TRACE("Loadtime event converted to a runtime event <{}>\"{}\"", eventID, GetEventNameByID(eventID)->data());
-				assert(_runtimeEvents.try_emplace(eventID, runtimeEvent).second);
-			}
+			EmplaceRuntimeEventFromLoadtimeEvent(loadtimeEvent);
 		}
 		else
 		{
-			auto &&eventName = _eventID2Name[eventID];
-			auto scriptID = loadtimeEvent->GetScriptID();
-			auto scriptName = scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
+			std::string_view eventName = _eventID2Name[eventID];
+			ScriptID scriptID = loadtimeEvent->GetScriptID();
+			std::string_view scriptName = scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
 			TE_ERROR("Attempt to add handlers to non-exist event <{}>\"{}\", source script <{}>\"{}\"", eventID, eventName, scriptID, scriptName);
 		}
 	}
@@ -135,6 +129,41 @@ void EventManager::OnScriptsLoaded()
 				scriptLoader.AddReverseDependency(it->scriptID, scriptID);
 			}
 		}
+	}
+}
+
+void EventManager::EmplaceRuntimeEventFromLoadtimeEvent(const std::shared_ptr<LoadtimeEvent> &loadtimeEvent)
+{
+	std::shared_ptr<RuntimeEvent> runtimeEvent;
+
+	try
+	{
+		runtimeEvent = std::make_shared<RuntimeEvent>(loadtimeEvent->ToRuntime());
+
+		EventID id = loadtimeEvent->GetID();
+		if (id != runtimeEvent->GetID())
+		{
+			TE_ERROR("Converted runtime event has different id to previous loadtime event! Expected <{}> but got <{}>", id, runtimeEvent->GetID());
+		}
+		else
+		{
+			TE_TRACE("Loadtime event converted to a runtime event <{}>\"{}\"", id, GetEventNameByID(id).value_or("$UNKNOWN$"));
+			assert(_runtimeEvents.try_emplace(id, runtimeEvent).second);
+		}
+	}
+	catch (const EventHandlerAddBadOrderException &e)
+	{
+		TE_ERROR("{}", e.What());
+		if (e.scriptID != 0)
+		{
+			GetScriptErrors().AddLoadtimeError(e.scriptID, e.What());
+			// The event building failed due to a script error, so we need to add a dependency to the script which creates the event.
+			GetScriptLoader().AddReverseDependency(loadtimeEvent->GetScriptID(), e.scriptID);
+		}
+	}
+	catch (std::exception &e)
+	{
+		UnhandledCppException(_log, e);
 	}
 }
 
@@ -332,18 +361,18 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 			return;
 		}
 
-		std::optional<AddHandlerArgs::Key> key_;
+		std::optional<EventHandleKey> key_;
 		if (!key.valid() || key.is<sol::nil_t>())
 		{
 			key_ = std::nullopt;
 		}
 		else if (key.is<std::double_t>())
 		{
-			key_ = AddHandlerArgs::Key(key.as<std::double_t>());
+			key_ = EventHandleKey(key.as<std::double_t>());
 		}
 		else if (key.is<std::string_view>())
 		{
-			key_ = AddHandlerArgs::Key(std::string(key.as<std::string_view>()));
+			key_ = EventHandleKey(std::string(key.as<std::string_view>()));
 		}
 		else
 		{
@@ -387,7 +416,16 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		    .order = order_,
 		    .key = key_,
 		    .sequence = sequence_,
+		    .stacktrace = GetScriptEngine().DebugTraceback(),
 		});
+	}
+	catch (const EventHandlerAddBadOrderException &e)
+	{
+		TE_ERROR("{}", e.What());
+		if (e.scriptID != 0)
+		{
+			GetScriptErrors().AddLoadtimeError(e.scriptID, e.What());
+		}
 	}
 	catch (const std::exception &e)
 	{
@@ -583,7 +621,6 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 		else
 		{
 			scriptEngine.ThrowError("Bad argument #1 to 'event': expected EventID or string");
-
 			return;
 		}
 

@@ -1,3 +1,5 @@
+local CECSSchema = require("dr2c.client.ecs.ECSSchema")
+
 local CEntities = {}
 
 --- @param name string
@@ -6,19 +8,14 @@ function CEntities.registerEntity(name, components, mergeDepth, ...)
 	local extras = { ... }
 
 	events:add(N_("EntitySchemaLoadEntities"), function(e)
-		e.schema[name] = {
+		e.new[name] = {
 			components = components,
 			mergeDepth = mergeDepth,
 			unpack(extras),
 		}
 	end, N_("registerEntity" .. name), "Register")
-end
 
---- @param e dr2c.E.EntitySchemaLoadComponents
-events:add(N_("EntitySchemaLoadEntities"), function(e)
-	if e.dependencies then
-		-- todo
-	end
-end, "registerDependencies", "Dependency")
+	CECSSchema.reload()
+end
 
 return CEntities

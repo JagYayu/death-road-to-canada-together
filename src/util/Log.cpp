@@ -334,6 +334,7 @@ void Log::Output(std::string_view verb, std::string_view str) const noexcept
 
 void Log::OutputImpl(std::string_view module, std::string_view verb, std::string_view str)
 {
+	if (!_exit) [[likely]]
 	{
 		std::lock_guard<std::mutex> lock{_mutex};
 
