@@ -187,7 +187,7 @@ namespace tudov
 		 * @warning This function will terminate the program.
 		 */
 		template <typename... Args>
-		TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) const noexcept
+		[[noreturn]] TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) const noexcept
 		{
 			auto &&str = std::format(fmt, std::forward<Args>(args)...);
 			Output(VerbFatal, str);
@@ -264,7 +264,7 @@ namespace tudov
 			GetLog().Error(fmt, std::forward<Args>(args)...);
 		}
 		template <typename... Args>
-		TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) const
+		[[noreturn]] TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) const
 		{
 			GetLog().Fatal(fmt, std::forward<Args>(args)...);
 		}

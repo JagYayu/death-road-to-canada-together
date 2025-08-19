@@ -2,6 +2,7 @@ local ffi = require("ffi")
 local jit_util = require("jit.util")
 
 local type = type
+local table_concat = table.concat
 
 --- @class dr2c.Utility
 local Utility = {}
@@ -148,6 +149,38 @@ local function postProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed,
 
 	scriptGlobals.scriptID = scriptID
 	scriptGlobals.scriptName = scriptName
+
+	--#region wrap log table
+
+	local log = scriptGlobals.log
+	local function generateOutputFunction(verb)
+		return function(...)
+			if log:canOutput(verb) then
+				local inspect = scriptGlobals.require("inspect").inspect
+
+				local args = { ... }
+				for index, arg in ipairs(args) do
+					args[index] = inspect(arg)
+				end
+
+				log:output(verb, table_concat(args, "\t"))
+			end
+		end
+	end
+
+	scriptGlobals.log = setmetatable({
+		trace = generateOutputFunction("Trace"),
+		debug = generateOutputFunction("Debug"),
+		info = generateOutputFunction("Info"),
+		warn = generateOutputFunction("Warn"),
+		error = generateOutputFunction("Error"),
+	}, {
+		__index = function(_, k)
+			return log[k]
+		end,
+	})
+
+	--#endregion
 end
 
 return {

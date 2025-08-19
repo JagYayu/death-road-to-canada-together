@@ -12,6 +12,7 @@
 #include "data/Config.hpp"
 
 #include "data/Constants.hpp"
+#include "util/FileSystemWatch.hpp"
 #include "util/Log.hpp"
 
 #include "SDL3/SDL_properties.h"
@@ -104,15 +105,16 @@ Config::Config() noexcept
 {
 	Config::Load();
 
-	_fileWatcher = new filewatch::FileWatch<std::string>(std::string(AppConfigFile), [this](std::string_view path, const filewatch::Event changeType)
+	_fileWatch = std::make_unique<FileSystemWatch>(std::string(AppConfigFile));
+	_fileWatch->GetOnCallback() += [this](std::string_view path, const EFileChangeType changeType)
 	{
 		Config::Load();
-	});
+	};
+	_fileWatch->StartWatching();
 }
 
 Config::~Config() noexcept
 {
-	delete _fileWatcher;
 }
 
 void Config::Save() noexcept

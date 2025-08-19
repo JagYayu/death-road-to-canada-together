@@ -1,5 +1,5 @@
-local _ScriptEngine = require("#ScriptEngine")
-local Function = require("dr2c.shared.utils.Function")
+local _ScriptEngine = require("ScriptEngine")
+local GFunction = require("dr2c.shared.utils.Function")
 local stringBuffer = require("string.buffer")
 
 local ipairs = ipairs
@@ -11,7 +11,7 @@ local type = type
 local GTable = {}
 
 GTable.empty = setmetatable({}, {
-	__newindex = Function.empty,
+	__newindex = GFunction.empty,
 })
 
 GTable.clear = require("table.clear")
@@ -574,7 +574,7 @@ local function tableToReadonly(tbl, seen)
 	end
 
 	local index = {}
-	local proxy = setmetatable({}, { __index = index, __newindex = Function.newIndexReadonly })
+	local proxy = setmetatable({}, { __index = index, __newindex = GFunction.newIndexReadonly })
 	seen[tbl] = proxy
 
 	for k, v in pairs(tbl) do

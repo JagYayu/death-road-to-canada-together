@@ -42,10 +42,13 @@ namespace tudov
 		virtual void LoadMods() = 0;
 		virtual void LoadModsDeferred() = 0;
 		virtual void UnloadMods() = 0;
+		virtual void UnloadModsDeferred() = 0;
 
-		virtual std::vector<ModListedEntry> ListAvailableMods() noexcept = 0;
+		virtual bool IsModAvailable(std::string_view modUID) const noexcept = 0;
+		virtual bool IsModAvailable(std::string_view modUID, const Version &version) const noexcept = 0;
+		virtual std::vector<ModListedEntry> ListAvailableMods() const noexcept = 0;
 
-		virtual std::shared_ptr<Mod> FindLoadedMod(std::string_view uid) noexcept = 0;
+		virtual std::shared_ptr<Mod> FindLoadedMod(std::string_view modUID) noexcept = 0;
 
 		virtual std::vector<ModRequirement> &GetRequiredMods() noexcept = 0;
 		virtual const std::vector<ModRequirement> &GetRequiredMods() const noexcept = 0;
@@ -69,14 +72,14 @@ namespace tudov
 			std::filesystem::path path;
 		};
 
-	  public:
 		enum class ELoadState : std::uint8_t
 		{
 			None = 0,
 			LoadPending = 1 << 0,
 			Loading = 1 << 1,
-			Unloading = 1 << 2,
-			HotReloading = 1 << 3,
+			UnloadPending = 1 << 2,
+			Unloading = 1 << 3,
+			HotReloading = 1 << 4,
 		};
 
 	  protected:
@@ -89,7 +92,6 @@ namespace tudov
 		ELoadState _loadState;
 		std::unique_ptr<UnpackagedMod> _virtualUnpackagedMod;
 
-		std::vector<std::filesystem::path> _directories;
 		std::vector<ModDirectory> _modDirectories;
 		std::vector<std::shared_ptr<Mod>> _loadedMods;
 		std::vector<ModRequirement> _requiredMods;
@@ -111,10 +113,13 @@ namespace tudov
 		bool IsModMatched(const Mod &mod) const override;
 
 		void LoadMods() override;
-		void LoadModsDeferred() override;
+		void LoadModsDeferred() noexcept override;
 		void UnloadMods() override;
+		void UnloadModsDeferred() noexcept override;
 
-		std::vector<ModListedEntry> ListAvailableMods() noexcept override;
+		bool IsModAvailable(std::string_view modUID) const noexcept override;
+		bool IsModAvailable(std::string_view modUID, const Version &version) const noexcept override;
+		std::vector<ModListedEntry> ListAvailableMods() const noexcept override;
 
 		std::shared_ptr<Mod> FindLoadedMod(std::string_view namespace_) noexcept override;
 
@@ -128,6 +133,7 @@ namespace tudov
 		void ProvideDebug(IDebugManager &debugManager) noexcept override;
 
 	  private:
+		bool IsModAvailableImpl(std::string_view modUID, const Version *version) const noexcept;
 		void UpdateScripts() noexcept;
 
 		std::vector<DebugConsoleResult> DebugAdd(std::string_view arg);

@@ -195,7 +195,16 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 		return SDL_APP_FAILURE;
 	}
 
-	return app->Tick() ? SDL_APP_CONTINUE : SDL_APP_SUCCESS;
+	try
+	{
+		return app->Tick() ? SDL_APP_CONTINUE : SDL_APP_SUCCESS;
+	}
+	catch (const std::exception &e)
+	{
+		TE_G_FATAL("Main", "Unhandled exception in application iteration: {}", e.what());
+	}
+
+	return SDL_APP_FAILURE;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
@@ -206,8 +215,16 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 		return SDL_APP_FAILURE;
 	}
 
-	app->Event(static_cast<void *>(event));
-	return SDL_APP_CONTINUE;
+	try
+	{
+		app->Event(*event);
+		return SDL_APP_CONTINUE;
+	}
+	catch (const std::exception &e)
+	{
+		TE_G_FATAL("Main", "Unhandled exception in application event handling: {}", e.what());
+		return SDL_APP_FAILURE;
+	}
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result)

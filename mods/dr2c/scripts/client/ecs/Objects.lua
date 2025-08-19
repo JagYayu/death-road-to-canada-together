@@ -1,3 +1,0 @@
-local CObjects = {}
-
-return CObjects

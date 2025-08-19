@@ -7,7 +7,7 @@ local CEntities = {}
 function CEntities.registerEntity(name, components, mergeDepth, ...)
 	local extras = { ... }
 
-	events:add(N_("EntitySchemaLoadEntities"), function(e)
+	events:add(CECSSchema.eventEntitySchemaLoadEntities, function(e)
 		e.new[name] = {
 			components = components,
 			mergeDepth = mergeDepth,

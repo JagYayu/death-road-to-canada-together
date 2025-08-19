@@ -265,7 +265,7 @@ void Log::Process() noexcept
 
 	std::filesystem::create_directories("logs");
 	std::ofstream logFile{
-	    std::format("logs/{:%Y_%m_%d_%H_%M}.log", std::chrono::system_clock::now()),
+	    std::format("logs/{:%Y_%m_%d_%H_%M}.log", std::chrono::zoned_time(std::chrono::current_zone(), std::chrono::system_clock::now())),
 	    std::ios::app,
 	};
 

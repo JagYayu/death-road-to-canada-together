@@ -24,8 +24,9 @@ namespace tudov
 		std::string uid;
 		std::optional<Version> version;
 		int32_t priority;
+		bool load;
 
-		explicit ModRequirement(std::string_view uid, const std::optional<Version> &version, int32_t priority)
+		explicit ModRequirement(std::string_view uid, const std::optional<Version> &version, int32_t priority) noexcept
 		    : uid(std::string(uid)),
 		      version(version),
 		      priority(priority)

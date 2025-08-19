@@ -22,8 +22,8 @@
 #include "program/Engine.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "util/FileChangeType.hpp"
+#include "util/FileSystemWatch.hpp"
 
-#include "FileWatch.hpp"
 #include "util/LogMicros.hpp"
 
 #include <filesystem>
@@ -36,8 +36,6 @@
 
 using namespace tudov;
 
-using DeveloperDirectoryWatch = filewatch::FileWatch<std::string>;
-
 AssetsManager::AssetsManager(Context &context) noexcept
     : _context(context),
       _developerDirectoryWatch(nullptr)
@@ -46,11 +44,6 @@ AssetsManager::AssetsManager(Context &context) noexcept
 
 AssetsManager::~AssetsManager() noexcept
 {
-	if (_developerDirectoryWatch != nullptr)
-	{
-		delete static_cast<DeveloperDirectoryWatch *>(_developerDirectoryWatch);
-		_developerDirectoryWatch = nullptr;
-	}
 }
 
 Context &AssetsManager::GetContext() noexcept
@@ -151,11 +144,13 @@ void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 		try
 		{
 			std::filesystem::path absolutePath = GlobalStorageLocation::GetPath(EGlobalStorageLocation::Application) / Constants::DataDeveloperAssetsDirectory;
-			_developerDirectoryWatch = new DeveloperDirectoryWatch(absolutePath.generic_string(), [this](std::string_view path, const filewatch::Event changeType)
+
+			_developerDirectoryWatch = std::make_unique<FileSystemWatch>(absolutePath);
+			_developerDirectoryWatch->GetOnCallback() += [this](std::string_view path, EFileChangeType changeType)
 			{
-				auto filePath = Constants::DataDeveloperAssetsDirectory / std::filesystem::path(path);
-				DeveloperDirectoryWatchCallback(filePath, static_cast<EFileChangeType>(changeType));
-			});
+				DeveloperDirectoryWatchCallback(Constants::DataDeveloperAssetsDirectory / std::filesystem::path(path), changeType);
+			};
+			_developerDirectoryWatch->StartWatching();
 		}
 		catch (std::exception &e)
 		{

@@ -20,10 +20,9 @@
 #include "resource/FontResources.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/TextResources.hpp"
+#include "util/FileChangeType.hpp"
 #include "util/LogMicros.hpp"
 #include "util/StringUtils.hpp"
-
-#include "FileWatch.hpp"
 
 #include <cassert>
 #include <filesystem>
@@ -49,11 +48,6 @@ UnpackagedMod::UnpackagedMod(ModManager &modManager, const std::filesystem::path
 
 UnpackagedMod::~UnpackagedMod() noexcept
 {
-	if (_fileWatcher != nullptr)
-	{
-		delete (filewatch::FileWatch<std::string> *)_fileWatcher;
-		_fileWatcher = nullptr;
-	}
 }
 
 Context &UnpackagedMod::GetContext() noexcept
@@ -120,7 +114,7 @@ void UnpackagedMod::Update()
 	while (!_fileWatchQueue.empty()) [[unlikely]]
 	{
 		auto [path, changeType] = _fileWatchQueue.front();
-		auto changeEvent = static_cast<filewatch::Event>(changeType);
+		auto changeEvent = static_cast<EFileChangeType>(changeType);
 
 		_fileWatchQueue.pop();
 
@@ -129,26 +123,53 @@ void UnpackagedMod::Update()
 		{
 			switch (changeEvent)
 			{
-			case filewatch::Event::added:
-				TE_TRACE("Script added: \"{}\"", file);
+			case EFileChangeType::Added:
+				TE_DEBUG("Script added: \"{}\"", file);
 				ScriptAdded(file);
 				break;
-			case filewatch::Event::removed:
-				TE_TRACE("Script removed: \"{}\"", file);
+			case EFileChangeType::Removed:
+				TE_DEBUG("Script removed: \"{}\"", file);
 				ScriptRemoved(file);
 				break;
-			case filewatch::Event::modified:
-				TE_TRACE("Script modified: \"{}\"", file);
+			case EFileChangeType::Modified:
+				TE_DEBUG("Script modified: \"{}\"", file);
 				ScriptModified(file);
 				break;
-			case filewatch::Event::renamed_old:
-				TE_TRACE("Script renamed old: \"{}\"", file);
+			case EFileChangeType::RenamedOld:
+				TE_DEBUG("Script renamed old: \"{}\"", file);
 				break;
-			case filewatch::Event::renamed_new:
-				TE_TRACE("Script renamed new: \"{}\"", file);
+			case EFileChangeType::RenamedNew:
+				TE_DEBUG("Script renamed new: \"{}\"", file);
 				break;
 			default:
 				TE_WARN("Script unknown event: \"{}\"", file);
+				break;
+			}
+		}
+		else
+		{
+			switch (changeEvent)
+			{
+			case EFileChangeType::Added:
+				TE_DEBUG("File added: \"{}\"", file);
+				FileAdded(file);
+				break;
+			case EFileChangeType::Removed:
+				TE_DEBUG("File removed: \"{}\"", file);
+				FileRemoved(file);
+				break;
+			case EFileChangeType::Modified:
+				TE_DEBUG("File modified: \"{}\"", file);
+				FileModified(file);
+				break;
+			case EFileChangeType::RenamedOld:
+				TE_DEBUG("File renamed old: \"{}\"", file);
+				break;
+			case EFileChangeType::RenamedNew:
+				TE_DEBUG("File renamed new: \"{}\"", file);
+				break;
+			default:
+				TE_WARN("File unknown event: \"{}\"", file);
 				break;
 			}
 		}
@@ -194,7 +215,7 @@ void UnpackagedMod::Load()
 		if (_loaded)
 		{
 			std::lock_guard lock{_fileWatchMutex};
-			_fileWatchQueue.push(std::make_tuple(filePath, static_cast<int>(changeType)));
+			_fileWatchQueue.push(std::make_tuple(filePath, static_cast<EFileChangeType>(changeType)));
 
 			_modManager.GetEngine().GetLoadingState().store(Engine::ELoadingState::Pending);
 		}
@@ -207,7 +228,7 @@ void UnpackagedMod::Load()
 		return;
 	}
 
-	auto &&dir = _directory.generic_string();
+	const std::string &dir = _directory.generic_string();
 
 	TE_DEBUG("Loading unpacked mod from \"{}\" ...", dir);
 
@@ -227,6 +248,10 @@ void UnpackagedMod::Load()
 		if (IsScript(file))
 		{
 			ScriptAdded(file);
+		}
+		else
+		{
+			FileAdded(file);
 		}
 		// else if (IsFont(filePath))
 		// {
@@ -257,8 +282,13 @@ void UnpackagedMod::ScriptAdded(const std::filesystem::path &file) noexcept
 
 	if (ShouldScriptLoad(relativePath))
 	{
-		_modManager.UpdateScriptPending(scriptName, scriptTextID, _config.uniqueID);
+		_modManager.UpdateScriptPending(scriptName, scriptTextID, _config.uid);
 	}
+}
+
+void UnpackagedMod::FileAdded(const std::filesystem::path &file) noexcept
+{
+	GetVirtualFileSystem().MountFile(file, ReadFileToBytes(file.generic_string(), true));
 }
 
 void UnpackagedMod::ScriptRemoved(const std::filesystem::path &file) noexcept
@@ -270,20 +300,30 @@ void UnpackagedMod::ScriptRemoved(const std::filesystem::path &file) noexcept
 
 	assert(GetVirtualFileSystem().DismountFile(file) && "Invalid file path!");
 
-	_modManager.UpdateScriptPending(scriptName, 0, _config.uniqueID);
+	_modManager.UpdateScriptPending(scriptName, 0, _config.uid);
+}
+
+void UnpackagedMod::FileRemoved(const std::filesystem::path &file) noexcept
+{
+	assert(GetVirtualFileSystem().DismountFile(file));
 }
 
 void UnpackagedMod::ScriptModified(const std::filesystem::path &file) noexcept
 {
+	std::string filePathStr = file.generic_string();
+	if (!std::filesystem::exists(filePathStr))
+	{
+		return;
+	}
+
 	std::filesystem::path &&relative = std::filesystem::relative(file, _directory);
 	relative = std::filesystem::relative(relative, _config.scripts.directory);
 	std::string scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relative.generic_string()));
 
-	std::string filePathStr = file.generic_string();
 	std::string relativePath = relative.generic_string();
 	std::vector<std::byte> scriptCode = ReadFileToBytes(filePathStr, true);
 
-	assert(GetVirtualFileSystem().RemountFile(file, scriptCode) && "Invalid file path!");
+	assert(GetVirtualFileSystem().RemountFile(file, scriptCode));
 
 	TextResources &textResources = GetGlobalResourcesCollection().GetTextResources();
 	TextID scriptTextID = textResources.GetResourceID(filePathStr);
@@ -291,12 +331,17 @@ void UnpackagedMod::ScriptModified(const std::filesystem::path &file) noexcept
 
 	if (ShouldScriptLoad(relativePath))
 	{
-		_modManager.UpdateScriptPending(scriptName, scriptTextID, _config.uniqueID);
+		_modManager.UpdateScriptPending(scriptName, scriptTextID, _config.uid);
 	}
 	else
 	{
-		_modManager.UpdateScriptPending(scriptName, 0, _config.uniqueID);
+		_modManager.UpdateScriptPending(scriptName, 0, _config.uid);
 	}
+}
+
+void UnpackagedMod::FileModified(const std::filesystem::path &file) noexcept
+{
+	assert(GetVirtualFileSystem().RemountFile(file, ReadFileToBytes(file.generic_string(), true)));
 }
 
 void UnpackagedMod::Unload()
@@ -307,20 +352,21 @@ void UnpackagedMod::Unload()
 		return;
 	}
 
-	auto &&dir = _directory.generic_string();
+	const std::string &dir = _directory.generic_string();
 
 	TE_DEBUG("Unloading unpackaged mod from \"{}\"", dir);
 
 	{
-		auto &modUID = Mod::GetConfig().uniqueID;
-		_modManager.GetScriptLoader().UnloadScriptsBy(modUID);
-		_modManager.GetScriptProvider().RemoveScriptsBy(modUID);
-		// _scripts.clear();
+		auto &modUID = Mod::GetConfig().uid;
+		GetScriptLoader().UnloadScriptsBy(modUID);
+		GetScriptProvider().RemoveScriptsBy(modUID);
+		GetVirtualFileSystem().DismountDirectory(_directory);
 	}
 
 	for (auto &&fontID : _fonts)
 	{
-		_modManager.GetGlobalResourcesCollection().GetFontResources().Unload(fontID);
+		GetGlobalResourcesCollection().GetFontResources().Unload(fontID);
+		// todo use this `GetGlobalResourcesCollection().GetFontResources().UnloadAllFromDirectory`?
 	}
 	_fonts.clear();
 

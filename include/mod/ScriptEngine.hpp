@@ -55,6 +55,7 @@ namespace tudov
 
 		virtual void RawSet(sol::table tbl, sol::object key, sol::object value) = 0;
 
+		[[deprecated("Use `table[::sol::metatable_key] = xxx;` instead")]]
 		virtual void SetMetatable(sol::table tbl, sol::metatable mt) = 0;
 
 		// Extended functions.
@@ -72,7 +73,8 @@ namespace tudov
 		/**
 		 * @warning This is a dangerous function (C longjmp), make sure you manually call necessary destructors!
 		 */
-		virtual std::int32_t ThrowError(std::string_view message) noexcept = 0;
+		[[noreturn]]
+		virtual void ThrowError(std::string_view message) noexcept = 0;
 
 		virtual void SetReadonlyGlobal(const std::string_view &key, sol::object value) = 0;
 
@@ -80,19 +82,21 @@ namespace tudov
 
 		virtual sol::object RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter) = 0;
 
-		virtual std::unordered_map<std::string_view, sol::object> GetScriptPersistVariables(std::string_view scriptName = "") noexcept = 0;
+		virtual std::unordered_map<std::string_view, sol::object> GetScriptPersistVariables(std::string_view scriptName) noexcept = 0;
+
+		virtual void SaveScriptPersistVariables(std::string_view scriptName) noexcept = 0;
+
+		virtual void SavePersistVariables() noexcept = 0;
 
 		virtual bool ClearScriptPersistVariables(std::string_view scriptName) noexcept = 0;
 
 		virtual void ClearPersistVariables() noexcept = 0;
 
-		/*
-		 * @warning This is a dangerous function.
-		 */
 		template <typename... Args>
-		inline std::int32_t ThrowError(std::format_string<Args...> fmt, Args &&...args) noexcept
+		[[noreturn]]
+		inline void ThrowError(std::format_string<Args...> fmt, Args &&...args) noexcept
 		{
-			return ThrowError(std::format(fmt, std::forward<Args>(args)...));
+			ThrowError(std::format(fmt, std::forward<Args>(args)...));
 		}
 	};
 
@@ -106,6 +110,8 @@ namespace tudov
 		{
 			sol::object value;
 			sol::function getter;
+
+			void Save() noexcept;
 		};
 
 	  private:
@@ -153,11 +159,14 @@ namespace tudov
 		void InitializeScript(ScriptID scriptID, std::string_view scriptName, std::string_view modUID, bool sandboxed, sol::protected_function &func) noexcept override;
 		void DeinitializeScript(ScriptID scriptID, std::string_view scriptName) override;
 		std::string Inspect(sol::object obj) override;
-		std::int32_t ThrowError(std::string_view message) noexcept override;
+		[[noreturn]]
+		void ThrowError(std::string_view message) noexcept override;
 		void SetReadonlyGlobal(const std::string_view &key, sol::object value) override;
 		sol::table &GetModGlobals(std::string_view sandboxKey, bool sandboxed) noexcept override;
 		sol::object RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter) override;
 		std::unordered_map<std::string_view, sol::object> GetScriptPersistVariables(std::string_view scriptName) noexcept override;
+		void SaveScriptPersistVariables(std::string_view scriptName) noexcept override;
+		void SavePersistVariables() noexcept override;
 		bool ClearScriptPersistVariables(std::string_view scriptName) noexcept override;
 		void ClearPersistVariables() noexcept override;
 

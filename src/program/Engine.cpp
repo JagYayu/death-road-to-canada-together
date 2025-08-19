@@ -60,12 +60,16 @@ Engine::Engine() noexcept
       _beginTick(0),
       _previousTick(0),
       _framerate(0),
+      _firstTick(false),
+      _loadingState(ELoadingState::Done),
+      _loadingThread(),
       _luaAPI(std::make_shared<LuaAPI>()),
       _globalStorageManager(std::make_shared<GlobalStorageManager>()),
-      _virtualFileSystem(std::make_shared<VirtualFileSystem>()),
       _localization(std::make_shared<Localization>())
 {
 	context = Context(this);
+
+	_virtualFileSystem = std::make_shared<VirtualFileSystem>(context);
 
 	_globalResourcesCollection = std::make_shared<GlobalResourcesCollection>(context),
 	_assetsManager = std::make_shared<AssetsManager>(context);
@@ -79,7 +83,6 @@ Engine::Engine() noexcept
 	_eventManager = std::make_shared<EventManager>(context);
 	_gameScripts = std::make_shared<GameScripts>(context);
 
-	_loadingState = ELoadingState::Done;
 	_loadingThread = std::thread(std::bind(&Engine::BackgroundLoadingThread, this));
 }
 
@@ -275,10 +278,9 @@ void Engine::ProcessTick() noexcept
 		_eventManager->GetCoreEvents().TickUpdate().Invoke();
 	}
 
-	for (auto &&event : _sdlEvents)
+	for (const std::unique_ptr<SDL_Event> &event : _sdlEvents)
 	{
 		HandleEvent(*event);
-		delete event;
 	}
 	_sdlEvents.clear();
 
@@ -296,15 +298,9 @@ void Engine::HandleEvent(SDL_Event &event) noexcept
 	_windowManager->HandleEvents(event);
 }
 
-void Engine::Event(void *event) noexcept
+void Engine::Event(SDL_Event &event) noexcept
 {
-	auto sdlEvent = static_cast<SDL_Event *>(event);
-	if (sdlEvent == nullptr) [[unlikely]]
-	{
-		return;
-	}
-
-	switch (sdlEvent->type)
+	switch (event.type)
 	{
 	case SDL_EVENT_QUIT:
 		Quit();
@@ -313,7 +309,7 @@ void Engine::Event(void *event) noexcept
 
 	if (_sdlEvents.size() < 999)
 	{
-		_sdlEvents.emplace_back(new SDL_Event(*sdlEvent));
+		_sdlEvents.emplace_back(std::make_unique<SDL_Event>(event));
 	}
 }
 
@@ -436,7 +432,6 @@ std::timed_mutex &Engine::GetLoadingMutex() noexcept
 
 bool Engine::IsLoadingLagged() noexcept
 {
-	// TE_INFO("{} {}", std::chrono::nanoseconds(SDL_GetTicksNS() - _loadingBeginNS), _loadingState.load() == ELoadingState::InProgress && std::chrono::nanoseconds(SDL_GetTicksNS() - _loadingBeginNS) > std::chrono::milliseconds(1));
 	return !DisableLoadingThread && _loadingState.load() == ELoadingState::InProgress;
 }
 

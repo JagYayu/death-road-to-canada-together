@@ -36,7 +36,8 @@ using namespace tudov;
 ModManager::ModManager(Context &context) noexcept
     : _log(Log::Get("ModManager")),
       _context(context),
-      _loadState(ELoadState::None)
+      _loadState(ELoadState::None),
+      _updateScriptsPending(nullptr)
 {
 	_virtualUnpackagedMod = std::make_unique<UnpackagedMod>(*this, "");
 }
@@ -58,17 +59,15 @@ Log &ModManager::GetLog() noexcept
 
 void ModManager::Initialize() noexcept
 {
-	// _directories = {
-	//     "mods",
-	//     "downloadedMods",
-	// };
 	_modDirectories = {
 	    {EGlobalStorageLocation::Application, "mods"},
 	    {EGlobalStorageLocation::User, "mods"},
 	};
+
 	_requiredMods = {
 	    ModRequirement("dr2c_e0c8375e09d74bb9aa704d4a3c4afa79", Version(1, 0, 0), 0),
 	};
+
 	_updateScriptsPending = nullptr;
 }
 
@@ -85,9 +84,9 @@ bool ModManager::IsNoModMatch() const
 
 bool ModManager::IsModMatched(const Mod &mod) const
 {
-	auto &&uid = mod.IMod::GetConfig().uniqueID;
+	std::string_view uid = mod.IMod::GetConfig().uid;
 
-	for (auto &&modEntry : _requiredMods)
+	for (const ModRequirement &modEntry : _requiredMods)
 	{
 		if (uid == modEntry.uid)
 		{
@@ -132,10 +131,10 @@ void ModManager::LoadMods()
 
 		if (entry.is_directory())
 		{
-			auto &&dir = entry.path();
+			const std::filesystem::path &dir = entry.path();
 			if (_virtualUnpackagedMod->IsValidDirectory(dir))
 			{
-				auto &&mod = std::make_shared<UnpackagedMod>(*this, dir);
+				const auto &mod = std::make_shared<UnpackagedMod>(*this, dir);
 				if (IsModMatched(*mod))
 				{
 					_loadedMods.emplace_back(mod);
@@ -147,7 +146,7 @@ void ModManager::LoadMods()
 		++it;
 	}
 
-	for (auto &&mod : _loadedMods)
+	for (const std::shared_ptr<Mod> &mod : _loadedMods)
 	{
 		mod->Load();
 	}
@@ -159,9 +158,10 @@ void ModManager::LoadMods()
 	EnumFlag::Unmask(_loadState, ELoadState::Loading);
 }
 
-void ModManager::LoadModsDeferred()
+void ModManager::LoadModsDeferred() noexcept
 {
 	EnumFlag::Mask(_loadState, ELoadState::LoadPending);
+	EnumFlag::Unmask(_loadState, ELoadState::UnloadPending);
 
 	GetEngine().TriggerLoadPending();
 }
@@ -189,18 +189,41 @@ void ModManager::UnloadMods()
 	EnumFlag::Unmask(_loadState, ELoadState::Unloading);
 }
 
-std::vector<ModListedEntry> ModManager::ListAvailableMods() noexcept
+void ModManager::UnloadModsDeferred() noexcept
+{
+	EnumFlag::Mask(_loadState, ELoadState::UnloadPending);
+	EnumFlag::Unmask(_loadState, ELoadState::LoadPending);
+
+	GetEngine().TriggerLoadPending();
+}
+
+bool ModManager::IsModAvailable(std::string_view modUID) const noexcept
+{
+	return IsModAvailableImpl(modUID, nullptr);
+}
+
+bool ModManager::IsModAvailable(std::string_view modUID, const Version &version) const noexcept
+{
+	return IsModAvailableImpl(modUID, &version);
+}
+
+bool ModManager::IsModAvailableImpl(std::string_view modUID, const Version *version) const noexcept
+{
+	return true; // TODO not implemented yet
+}
+
+std::vector<ModListedEntry> ModManager::ListAvailableMods() const noexcept
 {
 	std::vector<ModListedEntry> entries;
-	//
+	// TODO not implemented yet
 	return entries;
 }
 
-std::shared_ptr<Mod> ModManager::FindLoadedMod(std::string_view uid) noexcept
+std::shared_ptr<Mod> ModManager::FindLoadedMod(std::string_view modUID) noexcept
 {
 	for (auto &&mod : _loadedMods)
 	{
-		if (mod->GetConfig().uniqueID == uid)
+		if (mod->GetConfig().uid == modUID)
 		{
 			return mod;
 		}
@@ -232,16 +255,29 @@ void ModManager::UpdateScriptPending(std::string_view scriptName, TextID scriptT
 
 void ModManager::Update()
 {
-	for (auto &&mod : _loadedMods)
+	for (const std::shared_ptr<Mod> &mod : _loadedMods)
 	{
 		mod->Update();
 	}
 
-	if (EnumFlag::HasAny(_loadState, ELoadState::LoadPending)) [[unlikely]]
+	if (EnumFlag::HasAll(_loadState, EnumFlag::BitOr(ELoadState::LoadPending, ELoadState::UnloadPending))) [[unlikely]]
 	{
-		LoadMods();
+		EnumFlag::Unmask(_loadState, EnumFlag::BitOr(ELoadState::LoadPending, ELoadState::UnloadPending));
+	}
+	else [[likely]]
+	{
+		if (EnumFlag::HasAny(_loadState, ELoadState::LoadPending)) [[unlikely]]
+		{
+			LoadMods();
 
-		EnumFlag::Unmask(_loadState, ELoadState::LoadPending);
+			EnumFlag::Unmask(_loadState, ELoadState::LoadPending);
+		}
+		else if (EnumFlag::HasAny(_loadState, ELoadState::UnloadPending)) [[unlikely]]
+		{
+			UnloadMods();
+
+			EnumFlag::Unmask(_loadState, ELoadState::UnloadPending);
+		}
 	}
 
 	if (_updateScriptsPending) [[unlikely]]

@@ -17,9 +17,7 @@
 #include "util/Log.hpp"
 #include "util/Version.hpp"
 
-#include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
 
 namespace tudov
@@ -40,6 +38,7 @@ namespace tudov
 	};
 
 	enum class EFileChangeType;
+	class FileSystemWatch;
 	class GlobalStorage;
 
 	class AssetsManager : public IAssetsManager, private ILogProvider
@@ -48,7 +47,7 @@ namespace tudov
 		Context &_context;
 		std::vector<PackInfo> _founded;
 		std::vector<PackInfo> _loaded;
-		void *_developerDirectoryWatch;
+		std::unique_ptr<FileSystemWatch> _developerDirectoryWatch;
 		DelegateEvent<const std::filesystem::path &, EFileChangeType> _developerFilesTrigger;
 
 	  public:

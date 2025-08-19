@@ -11,11 +11,32 @@
 
 #pragma once
 
-#include "Defs.hpp"
-#include "mod/ScriptEngine.hpp"
-
+#include "Micros.hpp"
 #include <sol/types.hpp>
 
-namespace tudov::util
+namespace tudov
 {
-} // namespace tudov::util
+	struct LuaUtils
+	{
+		TE_STATIC_CLASS(LuaUtils);
+
+		template <typename... TArgs>
+		static void Deconstruct(TArgs &...objects) noexcept
+		{
+			DeconstructImpl(objects...);
+		}
+
+	  private:
+		template <typename T, typename... TArgs>
+		static void DeconstructImpl(T &first, TArgs &...rest) noexcept
+		{
+			using U = std::remove_reference_t<decltype(first)>;
+			first.~U();
+			DeconstructImpl(rest...);
+		}
+
+		static void DeconstructImpl() noexcept
+		{
+		}
+	};
+} // namespace tudov

@@ -27,6 +27,8 @@ namespace tudov
 		virtual std::filesystem::path GetDirectory() noexcept = 0;
 	};
 
+	enum class EFileChangeType : int;
+
 	class UnpackagedMod : public Mod, public IUnpackagedMod, public IContextProvider, private ILogProvider
 	{
 	  private:
@@ -39,7 +41,7 @@ namespace tudov
 		std::vector<std::regex> _scriptFilePatterns;
 		std::vector<std::regex> _fontFilePatterns;
 
-		std::queue<std::tuple<std::filesystem::path, int>> _fileWatchQueue;
+		std::queue<std::tuple<std::filesystem::path, EFileChangeType>> _fileWatchQueue;
 		std::mutex _fileWatchMutex;
 
 	  public:
@@ -51,7 +53,7 @@ namespace tudov
 		Log &GetLog() noexcept override;
 
 		std::filesystem::path GetDirectory() noexcept override;
-		
+
 		void Update() override;
 
 		bool IsScript(std::string_view file) const;
@@ -68,5 +70,8 @@ namespace tudov
 		void ScriptAdded(const std::filesystem::path &file) noexcept;
 		void ScriptRemoved(const std::filesystem::path &file) noexcept;
 		void ScriptModified(const std::filesystem::path &file) noexcept;
+		void FileAdded(const std::filesystem::path &file) noexcept;
+		void FileRemoved(const std::filesystem::path &file) noexcept;
+		void FileModified(const std::filesystem::path &file) noexcept;
 	};
 } // namespace tudov

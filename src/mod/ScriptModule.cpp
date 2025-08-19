@@ -16,6 +16,8 @@
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
+#include "sol/forward.hpp"
+#include "sol/types.hpp"
 #include "util/LogMicros.hpp"
 #include "util/Utils.hpp"
 
@@ -86,20 +88,24 @@ sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 		return _table;
 	}
 
+	assert(_scriptID);
+
+	ScriptLoader &parent = static_cast<ScriptLoader &>(scriptLoader);
+	_parentContext = &parent._context;
+	_parentLog = parent._log;
+
 	if (!_func.valid()) [[unlikely]]
 	{
-		_table = scriptLoader.GetScriptEngine().CreateTable();
+		_table = GetScriptEngine().CreateTable();
+		sol::table metatable = GetScriptEngine().CreateTable(0, 2);
+		metatable["__index"] = []() {};
+		_table[sol::metatable_key] = metatable;
+
 		_fullyLoaded = true;
 		return _table;
 	}
 
-	assert(_scriptID);
-
-	auto &&parent = static_cast<ScriptLoader &>(scriptLoader);
-	_parentContext = &parent._context;
-	_parentLog = parent._log;
-
-	auto &&engine = scriptLoader.GetEngine();
+	Engine &engine = GetEngine();
 
 	engine.SetLoadingDescription(scriptLoader.GetScriptProvider().GetScriptNameByID(_scriptID).value());
 
@@ -118,14 +124,26 @@ sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 	}
 
 	parent._loadingScript = previousLoadingScript;
+	sol::table tbl;
 	if (result.get<sol::object>(0).get_type() == sol::type::table)
 	{
-		_table = result.get<sol::object>(0);
+		tbl = result.get<sol::object>(0);
 	}
 	else
 	{
-		_table = scriptLoader.GetScriptEngine().CreateTable();
+		tbl = scriptLoader.GetScriptEngine().CreateTable();
 	}
+
+	IScriptEngine &scriptEngine = GetScriptEngine();
+	_table = scriptEngine.CreateTable();
+	sol::table metatable = scriptEngine.CreateTable(0, 2);
+	_table[sol::metatable_key] = metatable;
+
+	metatable["__index"] = tbl;
+	metatable["__newindex"] = [this, &parent](const sol::this_state &ts, sol::object, sol::object key, sol::object value)
+	{
+		parent.GetScriptEngine().ThrowError(std::format("Cannot override module"));
+	};
 
 	_fullyLoaded = true;
 	engine.AddLoadingProgress(1);
@@ -192,13 +210,13 @@ sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 
 	engine.SetLoadingDescription(GetScriptProvider().GetScriptNameByID(_scriptID).value());
 
-	auto previousScriptID = parent._loadingScript;
+	ScriptID previousScriptID = parent._loadingScript;
 	parent._loadingScript = _scriptID;
 
-	auto &&scriptEngine = parent.GetScriptEngine();
+	IScriptEngine &scriptEngine = parent.GetScriptEngine();
 
 	_table = scriptEngine.CreateTable();
-	auto &&metatable = scriptEngine.CreateTable(0, 2);
+	sol::table metatable = scriptEngine.CreateTable(0, 2);
 	_table[sol::metatable_key] = metatable;
 
 	metatable["__index"] = [this, &parent](const sol::this_state &ts, sol::object, sol::object key)
@@ -244,12 +262,12 @@ sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 		sol::table metatable = scriptEngine.CreateTable();
 		metatable["__index"] = [this, scriptName]()
 		{
-			if (_parentContext)
+			if (_parentContext) [[likely]]
 			{
 				_parentContext->GetScriptEngine().ThrowError("Cascaded error occurred: <{}>\"{}\"", _scriptID, scriptName);
 			}
 		};
-		scriptEngine.SetMetatable(tbl, metatable);
+		tbl[sol::metatable_key] = metatable;
 	}
 	else [[likely]]
 	{
@@ -258,7 +276,7 @@ sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 			TE_WARN("'{}': Does not support receiving multiple return values", parent.GetLoadingScriptName().value());
 		}
 
-		auto &&value = result.get<sol::object>(0);
+		auto value = result.get<sol::object>(0);
 		if (value.get_type() == sol::type::table)
 		{
 			tbl = value.as<sol::table>();

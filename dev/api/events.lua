@@ -3,9 +3,11 @@ error("this is a lua library module")
 
 --- @diagnostic disable: duplicate-doc-alias
 
+--- @class Events.EventID : integer
+
 --- @alias Events.E any?
 
---- @alias Events.Event string
+--- @alias Events.Event string | Events.EventID
 --- @alias Events.Event "DebugCommand"
 --- @alias Events.Event "DebugSnapshot"
 --- @alias Events.Event "KeyDown"
@@ -20,20 +22,15 @@ error("this is a lua library module")
 
 --- @diagnostic enable: duplicate-doc-alias
 
---- @class Events.InvocationOption : integer
-
---- @type Events.InvocationOption
-eventsOption_All = 255
---- @type Events.InvocationOption
-eventsOption_None = 0
---- @type Events.InvocationOption
-eventsOption_CacheHandlers = 1
---- @type Events.InvocationOption
-eventsOption_NoProfiler = 2
---- @type Events.InvocationOption
-eventsOption_TrackProgression = 4
---- @type Events.InvocationOption
-eventsOption_Default = eventsOption_CacheHandlers
+--- @enum Events.EEventInvocation
+EEventInvocation = {
+	All = 255,
+	CacheHandlers = 1,
+	Default = 1,
+	NoProfiler = 2,
+	None = 0,
+	TrackProgression = 4,
+}
 
 --- @class Events
 events = {}
@@ -59,13 +56,13 @@ function events:add(event, func, name, order, key, sequence) end
 --- @param event string | integer
 --- @param e Events.E
 --- @param key Events.Key?
---- @param options Events.InvocationOption? @default: `_G.eventsOption_Default`
+--- @param options Events.EEventInvocation? @default: `EEventInvocation.Default`
 function events:invoke(event, e, key, options) end
 
 --- @param event string
 --- @param orders string[]?
 --- @param keys (number|string)[]?
---- @return integer
+--- @return Events.EventID
 function events:new(event, orders, keys) end
 
 return events

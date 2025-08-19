@@ -13,6 +13,7 @@
 
 #include "AbstractEvent.hpp"
 #include "EventHandler.hpp"
+#include "EventInvocation.hpp"
 #include "debug/EventProfiler.hpp"
 #include "util/Definitions.hpp"
 #include "util/Log.hpp"
@@ -22,7 +23,6 @@
 
 #include <cstdint>
 #include <optional>
-#include <type_traits>
 #include <unordered_set>
 
 namespace tudov
@@ -36,18 +36,6 @@ namespace tudov
 	{
 		using InvocationCache = std::vector<EventHandler *>;
 		using InvocationTrackID = std::uint32_t;
-
-	  public:
-		enum class EInvocation : std::uint8_t
-		{
-			All = static_cast<std::underlying_type_t<EInvocation>>(-1),
-			None = 0,
-			CacheHandlers = 1 << 0,
-			NoProfiler = 1 << 1,
-			TrackProgression = 1 << 2,
-
-			Default = CacheHandlers,
-		};
 
 	  private:
 		struct InvocationTrack
@@ -94,10 +82,10 @@ namespace tudov
 
 		void Add(const AddHandlerArgs &args) override;
 
-		void Invoke(const sol::object &e = sol::lua_nil, const EventHandleKey &key = {}, EInvocation options = EInvocation::Default);
+		void Invoke(const sol::object &e = sol::lua_nil, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
 		[[deprecated]] void InvokeUncached(const sol::object &e = sol::lua_nil, const EventHandleKey &key = {});
 
-		void Invoke(IScriptEngine &scriptEngine, CoreEventData *data, const EventHandleKey &key = {}, EInvocation options = EInvocation::Default);
+		void Invoke(IScriptEngine &scriptEngine, CoreEventData *data, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
 
 		InvocationTrackID GetNextInvocationID() noexcept;
 

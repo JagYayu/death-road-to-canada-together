@@ -109,8 +109,10 @@ namespace tudov
 		std::uint64_t _beginTick;
 		std::float_t _previousTick;
 		std::float_t _framerate;
-		std::vector<std::shared_ptr<IEngineComponent>> _components;
-		std::vector<SDL_Event *> _sdlEvents;
+		bool _firstTick;
+		std::vector<std::unique_ptr<SDL_Event>> _sdlEvents;
+
+		// Background loading thread
 		std::atomic<ELoadingState> _loadingState;
 		std::thread _loadingThread;
 		std::timed_mutex _loadingMutex;
@@ -118,11 +120,14 @@ namespace tudov
 		LoadingInfo _loadingInfo;
 		std::mutex _loadingInfoMutex;
 
+		std::vector<std::shared_ptr<IEngineComponent>> _components;
+
 		std::shared_ptr<Log> _log;
 		std::shared_ptr<ILuaAPI> _luaAPI;
 		std::shared_ptr<IGlobalStorageManager> _globalStorageManager;
-		std::shared_ptr<VirtualFileSystem> _virtualFileSystem;
 		std::shared_ptr<ILocalization> _localization;
+
+		std::shared_ptr<VirtualFileSystem> _virtualFileSystem;
 
 		std::shared_ptr<GlobalResourcesCollection> _globalResourcesCollection;
 		std::shared_ptr<IAssetsManager> _assetsManager;
@@ -146,7 +151,7 @@ namespace tudov
 	  public:
 		void Initialize() noexcept override;
 		bool Tick() noexcept override;
-		void Event(void *event) noexcept override;
+		void Event(SDL_Event &event) noexcept override;
 		void Deinitialize() noexcept override;
 
 		Log &GetLog() noexcept override;

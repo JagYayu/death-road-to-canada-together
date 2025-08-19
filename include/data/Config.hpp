@@ -11,22 +11,24 @@
 
 #pragma once
 
-#include "FileWatch.hpp"
 #include "resource/ResourceType.hpp"
 #include "util/Log.hpp"
 
 #include "json.hpp"
 
+#include <memory>
 #include <optional>
 #include <string>
 
 namespace tudov
 {
+	class FileSystemWatch;
+
 	class Config : private ILogProvider
 	{
 	  private:
 		mutable nlohmann::json _config;
-		filewatch::FileWatch<std::string> *_fileWatcher;
+		std::unique_ptr<FileSystemWatch> _fileWatch;
 		std::optional<std::uint32_t> _propertiesID;
 
 	  public:

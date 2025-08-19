@@ -1,6 +1,7 @@
 --- @meta
 error("this is a lua library module")
 
+--- @diagnostic disable-next-line: duplicate-doc-alias
 --- @alias N_Hint string
 
 --- @alias NotNil number | string | boolean | table | function | thread | userdata

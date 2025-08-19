@@ -192,10 +192,10 @@ TE_FORCEINLINE void PCallHandler(const PCallHandlerObject &obj, EventHandler &ha
 	}
 }
 
-void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvocation options)
+void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEventInvocation options)
 {
 	Profile *profile;
-	if (_profile != nullptr && !EnumFlag::HasAny(options, EInvocation::NoProfiler))
+	if (_profile != nullptr && !EnumFlag::HasAny(options, EEventInvocation::NoProfiler))
 	{
 		profile = _profile.get();
 	}
@@ -205,7 +205,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 	}
 
 	InvocationTrackID trackID;
-	if (EnumFlag::HasAny(options, EInvocation::TrackProgression))
+	if (EnumFlag::HasAny(options, EEventInvocation::TrackProgression))
 	{
 		trackID = _invocationTrackID;
 		++_invocationTrackID;
@@ -224,7 +224,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 		profile->eventProfiler.BeginEvent(scriptEngine);
 	}
 
-	if (EnumFlag::HasAny(options, EInvocation::CacheHandlers))
+	if (EnumFlag::HasAny(options, EEventInvocation::CacheHandlers))
 	{
 		InvocationCache *cache;
 
@@ -273,7 +273,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 			}
 		}
 	}
-	else // * !EnumFlag::HasAny(options, EInvocation::CacheHandlers)
+	else // * !EnumFlag::HasAny(options, EEventInvocation::CacheHandlers)
 	{
 		if (anyKey)
 		{
@@ -325,7 +325,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EInvo
 	}
 }
 
-void RuntimeEvent::Invoke(IScriptEngine &scriptEngine, CoreEventData *data, const EventHandleKey &key, EInvocation options)
+void RuntimeEvent::Invoke(IScriptEngine &scriptEngine, CoreEventData *data, const EventHandleKey &key, EEventInvocation options)
 {
 	if (data == nullptr) [[unlikely]]
 	{

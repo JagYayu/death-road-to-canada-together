@@ -23,6 +23,7 @@
 #include "program/Context.hpp"
 #include "util/Definitions.hpp"
 #include "util/LogMicros.hpp"
+#include "util/LuaUtils.hpp"
 #include "util/Utils.hpp"
 
 #include "sol/types.hpp"
@@ -308,26 +309,45 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 {
 	try
 	{
-		auto &&scriptEngine = GetScriptEngine();
+		IScriptEngine &scriptEngine = GetScriptEngine();
 
-		auto scriptID = GetScriptLoader().GetLoadingScriptID();
+		ScriptID scriptID = GetScriptLoader().GetLoadingScriptID();
 		if (!scriptID)
 		{
 			scriptEngine.ThrowError("Failed to add event handler: must add at script load time");
-			return;
 		}
 
-		if (!event.valid() || !event.is<std::string_view>())
+		EventID eventID;
+		std::string_view eventName;
+		if (event.is<std::double_t>())
 		{
-			scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#1 `event` type, expected string, got {}", GetLuaTypeStringView(event.get_type())));
-			return;
+			eventID = event.as<std::double_t>();
+			auto optEventName = GetEventNameByID(eventID);
+			if (!optEventName.has_value()) [[unlikely]]
+			{
+				scriptEngine.ThrowError("Failed to add event handler: {} is an invalid event id", eventID);
+			}
+			eventName = optEventName.value();
 		}
-		std::string_view eventName = event.as<std::string_view>();
+		else if (event.is<sol::string_view>())
+		{
+			eventName = event.as<std::string_view>();
+			eventID = GetEventIDByName(eventName);
+		}
+		else
+		{
+			scriptEngine.ThrowError("Failed to add event handler: invalid arg#1 `event` type, string or number expected, got {}",
+			                        GetLuaTypeStringView(event.get_type()));
+		}
+
+		if (!eventID)
+		{
+			eventID = AllocEventID(eventName);
+		}
 
 		if (!func.valid() || !func.is<sol::function>())
 		{
 			scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#2 `func` type, expected function, got {}", GetLuaTypeStringView(func.get_type())));
-			return;
 		}
 		sol::function func_ = func.as<sol::function>();
 
@@ -342,8 +362,8 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		}
 		else
 		{
+			LuaUtils::Deconstruct(name_);
 			scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#3 `name` type, nil or string expected, got {}", GetLuaTypeStringView(name.get_type())));
-			return;
 		}
 
 		std::optional<std::string> order_;
@@ -357,8 +377,8 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		}
 		else
 		{
+			LuaUtils::Deconstruct(name_, order_);
 			scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#4 `order` type, nil or string expected, got {}", GetLuaTypeStringView(order.get_type())));
-			return;
 		}
 
 		std::optional<EventHandleKey> key_;
@@ -376,8 +396,8 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		}
 		else
 		{
+			LuaUtils::Deconstruct(name_, order_, key_);
 			scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#5 `key` type, nil or number or number expected, got {}", GetLuaTypeStringView(key.get_type())));
-			return;
 		}
 
 		std::optional<std::double_t> sequence_;
@@ -391,15 +411,10 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		}
 		else
 		{
+			LuaUtils::Deconstruct(name_, order_, key_, sequence_);
 			scriptEngine.ThrowError(std::format("Failed to add event handler: invalid arg#6 `sequence` type, nil or string expected, got {}", GetLuaTypeStringView(sequence.get_type())));
-			return;
 		}
 
-		auto &&eventID = GetEventIDByName(eventName);
-		if (!eventID)
-		{
-			eventID = AllocEventID(eventName);
-		}
 		auto &&registryEvent = TryGetRegistryEvent(eventID);
 		if (!registryEvent.has_value())
 		{
@@ -438,13 +453,12 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 {
 	try
 	{
-		auto &&scriptEngine = GetScriptEngine();
+		IScriptEngine &scriptEngine = GetScriptEngine();
 
-		auto &&scriptID = GetScriptLoader().GetLoadingScriptID();
+		ScriptID scriptID = GetScriptLoader().GetLoadingScriptID();
 		if (!scriptID)
 		{
 			scriptEngine.ThrowError("Failed to new event: must call at script load time");
-			return false;
 		}
 
 		EventID eventID = false;
@@ -461,7 +475,6 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 		else
 		{
 			scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#1 `event` type, string expected, got {}", GetLuaTypeStringView(event.get_type())));
-			return false;
 		}
 
 		std::vector<std::string> orders_;
@@ -478,16 +491,16 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 				}
 				if (!val.is<std::string_view>())
 				{
+					LuaUtils::Deconstruct(orders_);
 					scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#2 'orders' type, table must be a string array, contains {}", GetLuaTypeStringView(tbl[i].get_type())));
-					return false;
 				}
 				orders_.emplace_back(val.as<std::string_view>());
 			}
 		}
 		else
 		{
+			LuaUtils::Deconstruct(orders_);
 			scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#2 'orders' type, table expected, got {}", GetLuaTypeStringView(orders.get_type())));
-			return false;
 		}
 
 		std::vector<EventHandleKey> keys_;
@@ -507,8 +520,8 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 				}
 				else
 				{
+					LuaUtils::Deconstruct(orders_, keys_);
 					scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#2 'keys' type, table must be a number/string array, contains {}", GetLuaTypeStringView(tbl[i].get_type())));
-					return false;
 				}
 			}
 		}
@@ -518,8 +531,8 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 		}
 		else
 		{
+			LuaUtils::Deconstruct(orders_, keys_);
 			scriptEngine.ThrowError(std::format("Failed to new event: invalid arg#2 'keys' type, table or nil expected, got {}", GetLuaTypeStringView(keys.get_type())));
-			return false;
 		}
 
 		std::optional<ScriptID> failed = TryBuildEvent(eventID, scriptID, orders_, keys_);
@@ -528,9 +541,9 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 			ScriptID sourceScriptID = failed.has_value();
 			std::string_view scriptName = GetScriptProvider().GetScriptNameByID(sourceScriptID).value_or("$UNKNOWN");
 
+			LuaUtils::Deconstruct(orders_, keys_);
 			scriptEngine.ThrowError("Failed to new event <{}>\"{}\", already been registered from script <{}>\"{}\"",
 			                        eventID, eventName, sourceScriptID, scriptName.data());
-			return false;
 		}
 
 		TE_TRACE("Constructed loadtime event <{}>\"{}\" from script <{}>", eventID, eventName, scriptID);
@@ -582,7 +595,6 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 		if (GetScriptLoader().GetLoadingScriptID() != 0) [[unlikely]]
 		{
 			scriptEngine.ThrowError("Attempt to invoke event at script load time");
-			return;
 		}
 
 		RuntimeEvent *eventInstance;
@@ -592,13 +604,8 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 			auto it = _runtimeEvents.find(eventID);
 			if (it == _runtimeEvents.end())
 			{
-				{
-					using It = decltype(it);
-					it.It::~It();
-				}
-
+				LuaUtils::Deconstruct(it);
 				scriptEngine.ThrowError(std::format("Runtime event <{}> not found", eventID));
-				return;
 			}
 			eventInstance = it->second.get();
 		}
@@ -608,20 +615,14 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 			auto it = _runtimeEvents.find(_eventName2ID[eventName]);
 			if (it == _runtimeEvents.end())
 			{
-				{
-					using It = decltype(it);
-					it.It::~It();
-				}
-
+				LuaUtils::Deconstruct(it);
 				scriptEngine.ThrowError(std::format("Runtime event <{}> not found", eventName));
-				return;
 			}
 			eventInstance = it->second.get();
 		}
 		else
 		{
 			scriptEngine.ThrowError("Bad argument #1 to 'event': expected EventID or string");
-			return;
 		}
 
 		EventHandleKey key_;
@@ -634,19 +635,19 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 			key_.value = key.as<std::string>();
 		}
 
-		RuntimeEvent::EInvocation options_;
+		EEventInvocation options_;
 		if (options.is<std::double_t>())
 		{
-			options_ = static_cast<RuntimeEvent::EInvocation>(options.as<std::double_t>());
+			options_ = static_cast<EEventInvocation>(options.as<std::double_t>());
 		}
 		else if (options.is<sol::nil_t>())
 		{
-			options_ = RuntimeEvent::EInvocation::Default;
+			options_ = EEventInvocation::Default;
 		}
 		else
 		{
+			LuaUtils::Deconstruct(key_);
 			scriptEngine.ThrowError("Bad argument #4 to 'options': expected number or nil");
-			return;
 		}
 
 		assert(eventInstance != nullptr);

@@ -1,3 +1,5 @@
+local CECSSchema = require("dr2c.client.ecs.ECSSchema")
+
 --- @class dr2c.Components
 local CComponents = {}
 
@@ -6,7 +8,7 @@ local CComponents = {}
 function CComponents.registerSerializable(name, fields, ...)
 	local extras = { ... }
 
-	events:add(N_("EntitySchemaLoadComponents"), function(e)
+	events:add(CECSSchema.eventEntitySchemaLoadComponents, function(e)
 		local CEntitySchema = require("dr2c.client.ecs.ECSSchema")
 
 		e.new[name] = {

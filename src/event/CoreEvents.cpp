@@ -48,7 +48,7 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 	{                                             \
 		return *Field;                            \
 	}                                             \
-	TE_GEN_END
+	TE_MICRO_END
 
 TUDOV_CORE_EVENTS_GEN_GETTER(ClientConnect, _clientConnect);
 TUDOV_CORE_EVENTS_GEN_GETTER(ClientDisconnect, _clientDisconnect);

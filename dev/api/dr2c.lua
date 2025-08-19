@@ -1,6 +1,7 @@
 
 --- @diagnostic disable: duplicate-doc-alias
 
+--- @alias N_Hint "ContentLoad"
 --- @alias N_Hint "EntitySchemaLoadComponents"
 --- @alias N_Hint "EntitySchemaLoadEntities"
 

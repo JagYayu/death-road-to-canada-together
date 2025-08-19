@@ -29,7 +29,7 @@ namespace tudov
 		/**
 		 * Abort the application with fatal error.
 		 */
-		static void FatalError(std::string_view errorMessage) noexcept;
+		[[noreturn]] static void FatalError(std::string_view errorMessage) noexcept;
 
 		/**
 		 * Get application.

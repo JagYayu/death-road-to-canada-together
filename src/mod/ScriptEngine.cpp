@@ -63,6 +63,23 @@ decltype(auto) GetLuaRequiredStdModuleSet() noexcept
 	return *set;
 }
 
+void ScriptEngine::PersistVariable::Save() noexcept
+{
+	if (getter.valid())
+	{
+		sol::protected_function_result result = getter();
+		if (result.valid())
+		{
+			auto value = result.get<sol::object>();
+			if (value != sol::nil)
+			{
+				this->value = value;
+				getter = sol::nil;
+			}
+		}
+	}
+}
+
 ScriptEngine::ScriptEngine(Context &context) noexcept
     : _context(context),
       _log(Log::Get("ScriptEngine")),
@@ -132,7 +149,7 @@ void ScriptEngine::Initialize() noexcept
 		auto &&inspectModule = scriptLoader.Load("#inspect");
 		if (inspectModule != nullptr)
 		{
-			_luaInspect = inspectModule->GetTable().raw_get<sol::function>("inspect");
+			_luaInspect = inspectModule->GetTable()["inspect"];
 
 			AssertLuaValue(_luaInspect, "#inspect.inspect");
 		}
@@ -267,10 +284,10 @@ std::string ScriptEngine::Inspect(sol::object obj)
 	return std::string(result.get<sol::string_view>());
 }
 
-int ScriptEngine::ThrowError(std::string_view message) noexcept
+void ScriptEngine::ThrowError(std::string_view message) noexcept
 {
 	lua_pushlstring(_lua, message.data(), message.size());
-	return lua_error(_lua);
+	lua_error(_lua);
 }
 
 sol::object ScriptEngine::MakeReadonlyGlobalImpl(sol::object obj, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited) noexcept
@@ -338,6 +355,7 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	    // lua51 std
 	    "_VERSION",
 	    "assert",
+	    "bit",
 	    "collectgarbage",
 	    "coroutine",
 	    "error",
@@ -365,10 +383,15 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	    "string.buffer",
 	    "table.clear",
 	    "table.new",
-	    // C++ classes
+	    // C++ enum classes
+	    "ELogVerbosity",
+	    "EEventInvocation",
+	    "EPathListOption",
+	    // C++ exports
 	    "engine",
 	    "events",
 	    "images",
+	    "mods",
 	    "vfs",
 	};
 
@@ -426,6 +449,12 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 	{
 		try
 		{
+			const std::shared_ptr<Log> &log = Log::Get(scriptName);
+			if (!log->CanDebug())
+			{
+				return;
+			}
+
 			std::string string;
 			for (auto &&arg : args)
 			{
@@ -435,7 +464,7 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 				}
 				string.append(_luaInspect(arg));
 			}
-			Log::Get(scriptName)->Debug("{}", string.c_str());
+			log->Debug("{}", string.c_str());
 		}
 		catch (const std::exception &e)
 		{
@@ -450,7 +479,13 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 			IScriptProvider &scriptProvider = GetScriptProvider();
 
 			ScriptID targetScriptID = scriptProvider.GetScriptIDByName(targetScriptName);
-			if (targetScriptID)
+			if (targetScriptID == 0)
+			{
+				std::string fallbackScriptName = std::format("#{}", targetScriptName);
+				targetScriptID = scriptProvider.GetScriptIDByName(fallbackScriptName);
+			}
+
+			if (targetScriptID != 0)
 			{
 				IScriptLoader &scriptLoader = GetScriptLoader();
 
@@ -506,7 +541,12 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 
 void ScriptEngine::DeinitializeScript(ScriptID scriptID, std::string_view scriptName)
 {
-	auto &&it = _persistVariables.find(scriptName.data());
+	SaveScriptPersistVariables(scriptName);
+}
+
+void ScriptEngine::SaveScriptPersistVariables(std::string_view scriptName) noexcept
+{
+	auto it = _persistVariables.find(scriptName.data());
 	if (it == _persistVariables.end())
 	{
 		return;
@@ -514,18 +554,17 @@ void ScriptEngine::DeinitializeScript(ScriptID scriptID, std::string_view script
 
 	for (auto &&[_, variable] : it->second)
 	{
-		if (variable.getter.valid())
+		variable.Save();
+	}
+}
+
+void ScriptEngine::SavePersistVariables() noexcept
+{
+	for (auto &&[scriptName, variables] : _persistVariables)
+	{
+		for (auto &&[key, variable] : variables)
 		{
-			auto result = variable.getter();
-			if (result.valid())
-			{
-				auto value = result.get<sol::object>();
-				if (value != sol::nil)
-				{
-					variable.value = value;
-					variable.getter = sol::nil;
-				}
-			}
+			variable.Save();
 		}
 	}
 }

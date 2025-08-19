@@ -12,9 +12,13 @@
 #include "data/VirtualFileSystem.hpp"
 
 #include "data/PathType.hpp"
+#include "mod/ScriptEngine.hpp"
 #include "resource/ResourceType.hpp"
+#include "sol/string_view.hpp"
 #include "util/EnumFlag.hpp"
 #include "util/LogMicros.hpp"
+#include "util/LuaUtils.hpp"
+#include "util/Utils.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -25,6 +29,7 @@
 #include <stdexcept>
 #include <variant>
 #include <vector>
+#include <winscard.h>
 
 using namespace tudov;
 
@@ -61,9 +66,15 @@ VirtualFileSystem::FileNode::FileNode(const std::vector<std::byte> &bytes, EReso
 
 // region VirtualFileSystem
 
-VirtualFileSystem::VirtualFileSystem() noexcept
-    : _rootNode()
+VirtualFileSystem::VirtualFileSystem(Context &context) noexcept
+    : _context(context),
+      _rootNode()
 {
+}
+
+Context &VirtualFileSystem::GetContext() noexcept
+{
+	return _context;
 }
 
 Log &VirtualFileSystem::GetLog() noexcept
@@ -336,7 +347,7 @@ EResourceType VirtualFileSystem::GetFileResourceType(const std::filesystem::path
 	return std::get<FileNode>(*node).resourceType;
 }
 
-std::vector<VirtualFileSystem::ListEntry> VirtualFileSystem::List(const std::filesystem::path &directory, ListOption options) const
+std::vector<VirtualFileSystem::ListEntry> VirtualFileSystem::List(const std::filesystem::path &directory, EPathListOption options) const
 {
 	const DirectoryNode *directoryNode;
 	{
@@ -355,7 +366,7 @@ std::vector<VirtualFileSystem::ListEntry> VirtualFileSystem::List(const std::fil
 
 	std::vector<ListEntry> result{};
 
-	if (EnumFlag::HasAny(options, ListOption::FullPath))
+	if (EnumFlag::HasAny(options, EPathListOption::FullPath))
 	{
 		CollectListEntries(result, directory, directoryNode, options, 255);
 	}
@@ -364,7 +375,7 @@ std::vector<VirtualFileSystem::ListEntry> VirtualFileSystem::List(const std::fil
 		CollectListEntries(result, "", directoryNode, options, 255);
 	}
 
-	if (EnumFlag::HasAny(options, ListOption::Sorted))
+	if (EnumFlag::HasAny(options, EPathListOption::Sorted))
 	{
 		std::sort(result.begin(), result.end());
 	}
@@ -372,7 +383,7 @@ std::vector<VirtualFileSystem::ListEntry> VirtualFileSystem::List(const std::fil
 	return result;
 }
 
-void VirtualFileSystem::CollectListEntries(std::vector<ListEntry> &entries, const std::filesystem::path &directory, const DirectoryNode *directoryNode, ListOption options, std::uint32_t depth) const noexcept
+void VirtualFileSystem::CollectListEntries(std::vector<ListEntry> &entries, const std::filesystem::path &directory, const DirectoryNode *directoryNode, EPathListOption options, std::uint32_t depth) const noexcept
 {
 	for (const auto &[relativePath, child] : directoryNode->children)
 	{
@@ -380,19 +391,19 @@ void VirtualFileSystem::CollectListEntries(std::vector<ListEntry> &entries, cons
 
 		if (std::holds_alternative<FileNode>(child))
 		{
-			if (EnumFlag::HasAny(options, ListOption::File))
+			if (EnumFlag::HasAny(options, EPathListOption::File))
 			{
 				entries.emplace_back(path.generic_string(), false);
 			}
 		}
 		else if (std::holds_alternative<DirectoryNode>(child))
 		{
-			if (EnumFlag::HasAny(options, ListOption::Directory))
+			if (EnumFlag::HasAny(options, EPathListOption::Directory))
 			{
 				entries.emplace_back(path.generic_string(), true);
 			}
 
-			if (EnumFlag::HasAny(options, ListOption::Recursed) && depth != 0)
+			if (EnumFlag::HasAny(options, EPathListOption::Recursed) && depth != 0)
 			{
 				const DirectoryNode *childDirectoryNode = &std::get<DirectoryNode>(child);
 				CollectListEntries(entries, path, childDirectoryNode, options, depth - 1);
@@ -424,6 +435,116 @@ VirtualFileSystem::Node *VirtualFileSystem::FindNode(const std::filesystem::path
 	}
 
 	return currentNode;
+}
+
+bool VirtualFileSystem::LuaExists(sol::object path) noexcept
+{
+	std::filesystem::path path_;
+	if (path.is<sol::string_view>())
+	{
+		path_ = std::filesystem::path(path.as<sol::string_view>());
+	}
+	else [[unlikely]]
+	{
+		LuaUtils::Deconstruct(path_);
+		GetScriptEngine().ThrowError("bad argument #2 to 'path' (string expected, got {})", GetLuaTypeStringView(path.get_type()));
+	}
+
+	return Exists(path_);
+}
+
+sol::table VirtualFileSystem::LuaList(sol::object directory, sol::object options) noexcept
+{
+	try
+	{
+		IScriptEngine &scriptEngine = GetScriptEngine();
+
+		std::vector<ListEntry> list;
+		{
+			std::filesystem::path directory_;
+			if (directory.is<sol::string_view>())
+			{
+				directory_ = std::filesystem::path(directory.as<sol::string_view>());
+			}
+			else if (directory.is<sol::nil_t>())
+			{
+				directory_ = "";
+			}
+			else [[unlikely]]
+			{
+				LuaUtils::Deconstruct(list, directory_);
+				scriptEngine.ThrowError("bad argument #2 to 'directory' (string or nil expected, got {})", GetLuaTypeStringView(directory.get_type()));
+			}
+
+			EPathListOption options_;
+			if (options.is<std::double_t>())
+			{
+				options_ = static_cast<EPathListOption>(options.as<std::double_t>());
+			}
+			else if (options.is<sol::nil_t>())
+			{
+				options_ = EPathListOption::Default;
+			}
+			else [[unlikely]]
+			{
+				LuaUtils::Deconstruct(list, directory_, options_);
+				scriptEngine.ThrowError("bad argument #3 to 'directory' (number expected, got {})", GetLuaTypeStringView(options.get_type()));
+			}
+
+			list = List(directory_, options_);
+		}
+
+		sol::table result = scriptEngine.CreateTable(list.size(), 0);
+		std::size_t index = 0;
+		for (const ListEntry &entry : list)
+		{
+			++index;
+
+			sol::table tbl = scriptEngine.CreateTable(0, 2);
+			tbl["path"] = entry.path;
+			tbl["isDirectory"] = entry.isDirectory;
+
+			result[index] = tbl;
+		}
+
+		return result;
+	}
+	catch (const std::exception &e)
+	{
+		GetScriptEngine().ThrowError(e.what());
+	}
+
+	return GetScriptEngine().CreateTable();
+}
+
+std::string VirtualFileSystem::LuaReadFile(sol::object file) noexcept
+{
+	try
+	{
+		std::filesystem::path file_;
+		if (file.is<sol::string_view>())
+		{
+			file_ = std::filesystem::path(file.as<sol::string_view>());
+		}
+		else if (file.is<sol::nil_t>())
+		{
+			file_ = "";
+		}
+		else [[unlikely]]
+		{
+			LuaUtils::Deconstruct(file_);
+			GetScriptEngine().ThrowError("bad argument #2 to 'file' (string or nil expected, got {})", GetLuaTypeStringView(file.get_type()));
+		}
+
+		std::span<std::byte> bytes = GetFileBytes(file_);
+		return std::string(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+	}
+	catch (const std::exception &e)
+	{
+		GetScriptEngine().ThrowError(e.what());
+	}
+
+	return "";
 }
 
 // endregion VirtualFileSystem

@@ -11,6 +11,8 @@
 
 #pragma once
 
+union SDL_Event;
+
 namespace tudov
 {
 	/**
@@ -22,7 +24,7 @@ namespace tudov
 
 		virtual void Initialize() noexcept = 0;
 		virtual bool Tick() noexcept = 0;
-		virtual void Event(void *event) noexcept = 0;
+		virtual void Event(SDL_Event &event) noexcept = 0;
 		virtual void Deinitialize() noexcept = 0;
 	};
 } // namespace tudov

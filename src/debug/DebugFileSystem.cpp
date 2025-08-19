@@ -178,9 +178,9 @@ void DebugFileSystem::Refresh(VirtualFileSystem &vfs) noexcept
 	else
 	{
 		auto options = EnumFlag::BitOr(
-		    VirtualFileSystem::ListOption::File,
-		    VirtualFileSystem::ListOption::Directory,
-		    VirtualFileSystem::ListOption::Sorted);
+		    EPathListOption::File,
+		    EPathListOption::Directory,
+		    EPathListOption::Sorted);
 
 		list = vfs.List(_currentPath, options);
 	}

@@ -11,6 +11,7 @@
 
 #include "mod/LuaAPI.hpp"
 
+#include "data/VirtualFileSystem.hpp"
 #include "event/EventManager.hpp"
 #include "graphic/Camera2D.hpp"
 #include "graphic/RenderTarget.hpp"
@@ -56,11 +57,21 @@ decltype(auto) GetMainWindowFromContext(Context &context)
 	});
 }
 
-#define TE_ENUM(Class, ...)     lua.new_enum<Class>("tudov_" #Class, __VA_ARGS__)
-#define TE_USERTYPE(Class, ...) lua.new_usertype<Class>("tudov_" #Class, __VA_ARGS__)
+#define TE_ENUM(Class, ...)     lua.new_enum<Class>(#Class, __VA_ARGS__)
+#define TE_USERTYPE(Class, ...) lua.new_usertype<Class>(#Class, __VA_ARGS__)
 
 void LuaAPI::Install(sol::state &lua, Context &context)
 {
+	TE_ENUM(EEventInvocation,
+	        {
+	            {"All", EEventInvocation::All},
+	            {"None", EEventInvocation::None},
+	            {"CacheHandlers", EEventInvocation::CacheHandlers},
+	            {"NoProfiler", EEventInvocation::NoProfiler},
+	            {"TrackProgression", EEventInvocation::TrackProgression},
+	            {"Default", EEventInvocation::Default},
+	        });
+
 	TE_ENUM(ELogVerbosity,
 	        {
 	            {"All", ELogVerbosity::All},
@@ -71,6 +82,17 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            {"Debug", ELogVerbosity::Debug},
 	            {"Trace", ELogVerbosity::Trace},
 	            {"Fatal", ELogVerbosity::Fatal},
+	        });
+
+	TE_ENUM(EPathListOption,
+	        {
+	            {"All", EPathListOption::All},
+	            {"None", EPathListOption::None},
+	            {"File", EPathListOption::File},
+	            {"Directory", EPathListOption::Directory},
+	            {"Recursed", EPathListOption::Recursed},
+	            {"Sorted", EPathListOption::Sorted},
+	            {"FullPath", EPathListOption::FullPath},
 	        });
 
 	TE_USERTYPE(Engine,
@@ -88,14 +110,6 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "getPath", &ImageResources::LuaGetPath);
 
 	TE_USERTYPE(Log,
-	            // "Verbosity_All", ELogVerbosity::All,
-	            // "Verbosity_None", ELogVerbosity::None,
-	            // "Verbosity_Error", ELogVerbosity::Error,
-	            // "Verbosity_Warn", ELogVerbosity::Warn,
-	            // "Verbosity_Info", ELogVerbosity::Info,
-	            // "Verbosity_Debug", ELogVerbosity::Debug,
-	            // "Verbosity_Trace", ELogVerbosity::Trace,
-	            // "Verbosity_Fatal", ELogVerbosity::Fatal,
 	            "canOutput", &Log::CanOutput,
 	            "output", &Log::Output);
 
@@ -105,7 +119,11 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "distribution", &ModConfig::distribution,
 	            "name", &ModConfig::name,
 	            "namespace", &ModConfig::namespace_,
-	            "uid", &ModConfig::uniqueID);
+	            "uid", &ModConfig::uid);
+
+	TE_USERTYPE(ModManager,
+	            "loadMods", &ModManager::LoadModsDeferred,
+	            "unloadMods", &ModManager::UnloadModsDeferred);
 
 	TE_USERTYPE(Window,
 	            "renderer", &Window::renderer,
@@ -143,6 +161,11 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "snapCameraScale", &RenderTarget::SnapCameraScale,
 	            "update", &RenderTarget::Update);
 
+	TE_USERTYPE(VirtualFileSystem,
+	            "exists", &VirtualFileSystem::LuaExists,
+	            "list", &VirtualFileSystem::LuaList,
+	            "readFile", &VirtualFileSystem::LuaReadFile);
+
 	// TE_USERTYPE(GlobalResourcesCollection);
 
 	// TE_USERTYPE(Version,
@@ -154,20 +177,11 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	lua["engine"] = &context.GetEngine();
 	lua["mods"] = &dynamic_cast<ModManager &>(context.GetModManager());
 	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
-	lua["scriptEngine"] = &dynamic_cast<ScriptEngine &>(context.GetScriptEngine());
-	lua["scriptLoader"] = &dynamic_cast<ScriptLoader &>(context.GetScriptLoader());
-	lua["scriptProvider"] = &dynamic_cast<ScriptProvider &>(context.GetScriptProvider());
+	lua["vfs"] = &dynamic_cast<VirtualFileSystem &>(context.GetVirtualFileSystem());
 	auto &collection = context.GetGlobalResourcesCollection();
 	lua["binaries"] = collection.GetBinariesResources();
 	lua["fonts"] = collection.GetFontResources();
 	lua["images"] = collection.GetImageResources();
-
-	lua["eventsOption_All"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::All);
-	lua["eventsOption_None"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::None);
-	lua["eventsOption_CacheHandlers"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::CacheHandlers);
-	lua["eventsOption_NoProfiler"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::NoProfiler);
-	lua["eventsOption_TrackProgression"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::TrackProgression);
-	lua["eventsOption_Default"] = static_cast<std::int32_t>(RuntimeEvent::EInvocation::Default);
 
 	lua.set_function("getModConfig", [this, &context](sol::string_view modUID) -> ModConfig *
 	{

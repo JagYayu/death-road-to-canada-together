@@ -11,9 +11,13 @@
 
 #pragma once
 
+#include "PathListOption.hpp"
 #include "event/DelegateEvent.hpp"
+#include "program/Context.hpp"
 #include "resource/ResourceType.hpp"
 #include "util/Log.hpp"
+
+#include "sol/table.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -28,9 +32,12 @@
 namespace tudov
 {
 	enum class EPathType;
+	class LuaAPI;
 
-	class VirtualFileSystem : private ILogProvider
+	class VirtualFileSystem : public IContextProvider, private ILogProvider
 	{
+		friend LuaAPI;
+
 	  public:
 		using MountDirectoryEvent = DelegateEvent<const std::filesystem::path &>;
 		using DismountDirectoryEvent = MountDirectoryEvent;
@@ -46,18 +53,7 @@ namespace tudov
 			bool operator<(const ListEntry &r) const noexcept;
 		};
 
-		enum class ListOption : std::uint8_t
-		{
-			All = static_cast<std::uint8_t>(-1),
-			None = 0,
-			File = 1 << 0,
-			Directory = 1 << 1,
-			Recursed = 1 << 2,
-			Sorted = 1 << 3,
-			FullPath = 1 << 4,
-		};
-
-	  private:
+	  protected:
 		struct DirectoryNode;
 		struct FileNode;
 		using Node = std::variant<DirectoryNode, FileNode>;
@@ -84,7 +80,8 @@ namespace tudov
 			explicit FileNode(const std::vector<std::byte> &bytes = {}, EResourceType resourceType = EResourceType::Unknown) noexcept;
 		};
 
-	  private:
+	  protected:
+		Context &_context;
 		Node _rootNode;
 		MountDirectoryEvent _onMountDirectory;
 		DismountDirectoryEvent _onDismountDirectory;
@@ -93,9 +90,10 @@ namespace tudov
 		RemountFileEvent _onRemountFile;
 
 	  public:
-		explicit VirtualFileSystem() noexcept;
+		explicit VirtualFileSystem(Context &context) noexcept;
 		~VirtualFileSystem() noexcept override = default;
 
+		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;
 
 		MountDirectoryEvent &GetOnMountDirectory() noexcept;
@@ -117,11 +115,16 @@ namespace tudov
 		std::span<std::byte> GetFileBytes(const std::filesystem::path &file);
 		EResourceType GetFileResourceType(const std::filesystem::path &file);
 
-		std::vector<ListEntry> List(const std::filesystem::path &directory, ListOption options = ListOption::All) const;
+		std::vector<ListEntry> List(const std::filesystem::path &directory, EPathListOption options = EPathListOption::Default) const;
+
+	  protected:
+		Node *FindNode(const std::filesystem::path &path) noexcept;
+		void CollectListEntries(std::vector<ListEntry> &entries, const std::filesystem::path &directory, const DirectoryNode *directoryNode, EPathListOption options, std::uint32_t depth) const noexcept;
 
 	  private:
-		Node *FindNode(const std::filesystem::path &path) noexcept;
-		void CollectListEntries(std::vector<ListEntry> &entries, const std::filesystem::path &directory, const DirectoryNode *directoryNode, ListOption options, std::uint32_t depth) const noexcept;
+		bool LuaExists(sol::object path) noexcept;
+		sol::table LuaList(sol::object directory, sol::object options) noexcept;
+		std::string LuaReadFile(sol::object file) noexcept;
 
 	  public:
 		inline std::span<const std::byte> GetFileBytes(const std::filesystem::path &path) const
@@ -129,7 +132,7 @@ namespace tudov
 			return const_cast<VirtualFileSystem *>(this)->GetFileBytes(path);
 		}
 
-	  private:
+	  protected:
 		inline const Node *FindNode(const std::filesystem::path &path) const noexcept
 		{
 			return const_cast<VirtualFileSystem *>(this)->FindNode(path);

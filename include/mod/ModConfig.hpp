@@ -38,7 +38,7 @@ namespace tudov
 			bool sandbox = true;
 		};
 
-		std::string uniqueID = "";
+		std::string uid = "";
 		std::string namespace_ = "";
 		Version version = Version(1, 0, 0);
 		std::string name = "";
@@ -72,7 +72,7 @@ namespace tudov
 
 	inline void from_json(const nlohmann::json &j, ModConfig &m) noexcept
 	{
-		m.uniqueID = j.value("uid", std::string());
+		m.uid = j.value("uid", std::string());
 		m.namespace_ = j.value("namespace", std::string());
 		m.version = j.value("version", Version());
 		m.name = j.value("name", std::string());

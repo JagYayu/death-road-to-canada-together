@@ -177,18 +177,27 @@ local function spawnEntityImpl(entry)
 	entities[#entities + 1] = entity
 	entitiesSorted = false
 
-	for _, component in ipairs(assert(CECSSchema.getEntityComponentsMutable(entity[1]))) do
-		componentsPoolMutable[entity[1]] = stringBuffer.decode(component.data)
+	do
+		local decode = stringBuffer.decode
+
+		for _, component in ipairs(assert(CECSSchema.getEntityComponentsMutable(entity[1]))) do
+			local fieldsBuffer = component.fields
+			--- @cast fieldsBuffer string
+			componentsPoolMutable[entityID] = decode(fieldsBuffer)
+		end
 	end
 
 	for _, component in ipairs(assert(CECSSchema.getEntityComponentsSerializable(entity[1]))) do
-		componentsPoolSerializable[entity[1]] = stringBuffer.decode(component.data)
+		local fields = {}
+		componentsPoolSerializable[entityID] = setmetatable(fields, {
+			__index = component.fields,
+		})
 	end
 
 	if type(entry.components) == "table" then
 		-- TODO
 
-		for index, value in GTable.sortedPairs(entry.components) do
+		for _, index, value in GTable.sortedPairs(entry.components) do
 			--
 		end
 	end

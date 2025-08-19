@@ -364,7 +364,7 @@ void DebugScripts::UpdateAndRenderProvidedScripts(IWindow &window) noexcept
 
 				{
 					sol::table snapshot = scriptEngine.CreateTable();
-					eventDebugSnapshot.Invoke(snapshot, scriptName.data(), RuntimeEvent::EInvocation::None);
+					eventDebugSnapshot.Invoke(snapshot, scriptName.data(), EEventInvocation::None);
 					std::string text = scriptEngine.Inspect(snapshot);
 
 					TE_INFO("{}", text);
@@ -375,6 +375,7 @@ void DebugScripts::UpdateAndRenderProvidedScripts(IWindow &window) noexcept
 
 				{
 					sol::table persistVariables = scriptEngine.CreateTable();
+					scriptEngine.SaveScriptPersistVariables(scriptName);
 					for (const auto &[key, value] : scriptEngine.GetScriptPersistVariables(scriptName))
 					{
 						persistVariables[key] = value;
