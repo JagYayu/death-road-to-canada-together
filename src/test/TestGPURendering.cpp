@@ -16,7 +16,7 @@
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_storage.h"
 
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 #include <cstdint>
 #include <cstring>
 #include <memory>

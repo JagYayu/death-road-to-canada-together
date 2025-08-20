@@ -15,7 +15,7 @@
 #include "resource/GlobalResourcesCollection.hpp"
 #include "util/Definitions.hpp"
 #include "util/EnumFlag.hpp"
-#include "util/LogMicros.hpp"
+#include "system/LogMicros.hpp"
 #include "util/StringUtils.hpp"
 
 

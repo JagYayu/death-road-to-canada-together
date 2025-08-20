@@ -11,10 +11,8 @@
 
 #pragma once
 
-#include "EngineComponent.hpp"
-#include "graphic/Renderer.hpp"
-#include "mod/LuaAPI.hpp"
-#include "util/Log.hpp"
+#include "program/Context.hpp"
+#include "system/Log.hpp"
 
 #include <memory>
 #include <tuple>
@@ -27,6 +25,7 @@ namespace tudov
 {
 	class Engine;
 	class ScriptEngine;
+	class Renderer;
 	struct EventHandleKey;
 
 	struct IWindow : public IContextProvider
@@ -52,7 +51,7 @@ namespace tudov
 	class Window : public IWindow
 	{
 	  protected:
-		static ILuaAPI::TInstallation windowLuaAPIInstallation;
+		// static ILuaAPI::TInstallation windowLuaAPIInstallation;
 
 	  protected:
 		Context &_context;

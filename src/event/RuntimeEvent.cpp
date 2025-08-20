@@ -11,23 +11,24 @@
 
 #include "event/RuntimeEvent.hpp"
 
+#include "debug/EventProfiler.hpp"
 #include "event/AbstractEvent.hpp"
 #include "event/CoreEventsData.hpp"
 #include "event/EventHandler.hpp"
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
 #include "exception/EventHandlerAddBadOrderException.hpp"
+#include "mod/ScriptEngine.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptProvider.hpp"
+#include "system/LogMicros.hpp"
 #include "util/Definitions.hpp"
 #include "util/EnumFlag.hpp"
-#include "util/LogMicros.hpp"
 
 #include <algorithm>
 
 #include <cstddef>
 #include <memory>
-#include <stdexcept>
 #include <utility>
 
 using namespace tudov;
@@ -200,7 +201,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 	if (_profile != nullptr && !EnumFlag::HasAny(options, EEventInvocation::NoProfiler))
 	{
 		profile = _profile.get();
-		profile->eventProfiler.BeginEvent(scriptEngine);
+		profile->eventProfiler->BeginEvent(scriptEngine);
 	}
 	else
 	{
@@ -269,7 +270,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 					for (EventHandler *handler : *cache)
 					{
 						PCallHandler(obj, *handler, e);
-						_profile->eventProfiler.TraceHandler(scriptEngine, handler->name);
+						_profile->eventProfiler->TraceHandler(scriptEngine, handler->name);
 						++progression->value;
 					}
 				}
@@ -278,7 +279,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 					for (EventHandler *handler : *cache)
 					{
 						PCallHandler(obj, *handler, e);
-						_profile->eventProfiler.TraceHandler(scriptEngine, handler->name);
+						_profile->eventProfiler->TraceHandler(scriptEngine, handler->name);
 					}
 				}
 			}
@@ -334,7 +335,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 					for (EventHandler &handler : _handlers)
 					{
 						PCallHandler(obj, handler, e);
-						_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
+						_profile->eventProfiler->TraceHandler(scriptEngine, handler.name);
 						++progression->value;
 					}
 				}
@@ -343,7 +344,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 					for (EventHandler &handler : _handlers)
 					{
 						PCallHandler(obj, handler, e);
-						_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
+						_profile->eventProfiler->TraceHandler(scriptEngine, handler.name);
 					}
 				}
 			}
@@ -379,7 +380,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 						if (handler.key.Match(key))
 						{
 							PCallHandler(obj, handler, e);
-							_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
+							_profile->eventProfiler->TraceHandler(scriptEngine, handler.name);
 							++progression->value;
 						}
 					}
@@ -391,7 +392,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 						if (handler.key.Match(key))
 						{
 							PCallHandler(obj, handler, e);
-							_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
+							_profile->eventProfiler->TraceHandler(scriptEngine, handler.name);
 						}
 					}
 				}
@@ -426,7 +427,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 
 	if (profile)
 	{
-		profile->eventProfiler.EndEvent(scriptEngine);
+		profile->eventProfiler->EndEvent(scriptEngine);
 	}
 }
 

@@ -13,6 +13,7 @@
 
 #include "i18n/Localization.hpp"
 #include "program/Engine.hpp"
+#include "program/EngineData.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "util/MicrosImpl.hpp"
 
@@ -38,65 +39,65 @@ Engine &Context::GetEngine()
 
 IEventManager &Context::GetEventManager()
 {
-	return *GetEngine()._eventManager;
+	return *GetEngine()._data->_eventManager;
 }
 
 ILuaAPI &Context::GetLuaAPI()
 {
-	return *GetEngine()._luaAPI;
+	return *GetEngine()._data->_luaAPI;
 }
 
 IModManager &Context::GetModManager()
 {
-	return *GetEngine()._modManager;
+	return *GetEngine()._data->_modManager;
 }
 
 IScriptEngine &Context::GetScriptEngine()
 {
-	return *GetEngine()._scriptEngine;
+	return *GetEngine()._data->_scriptEngine;
 }
 
 IScriptErrors &Context::GetScriptErrors()
 {
-	return *GetEngine()._scriptErrors;
+	return *GetEngine()._data->_scriptErrors;
 }
 
 IScriptLoader &Context::GetScriptLoader()
 {
-	return *GetEngine()._scriptLoader;
+	return *GetEngine()._data->_scriptLoader;
 }
 
 IScriptProvider &Context::GetScriptProvider()
 {
-	return *GetEngine()._scriptProvider;
+	return *GetEngine()._data->_scriptProvider;
 }
 
 IGlobalStorageManager &Context::GetGlobalStorageManager()
 {
-	return *GetEngine()._globalStorageManager;
+	return *GetEngine()._data->_globalStorageManager;
 }
 
 ILocalization &Context::GetLocalization()
 {
-	return *GetEngine()._localization;
+	return *GetEngine()._data->_localization;
 }
 
 GlobalResourcesCollection &Context::GetGlobalResourcesCollection()
 {
-	return *GetEngine()._globalResourcesCollection;
+	return *GetEngine()._data->_globalResourcesCollection;
 }
 
 VirtualFileSystem &Context::GetVirtualFileSystem()
 {
-	return *GetEngine()._virtualFileSystem;
+	return *GetEngine()._data->_virtualFileSystem;
 }
 
 WindowManager &Context::GetWindowManager()
 {
-	return *GetEngine()._windowManager;
+	return *GetEngine()._data->_windowManager;
 }
 
 INetworkManager &Context::GetNetworkManager()
 {
-	return *GetEngine()._networkManager;
+	return *GetEngine()._data->_networkManager;
 }

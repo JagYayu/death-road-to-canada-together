@@ -12,6 +12,7 @@
 #include "event/CoreEvents.hpp"
 
 #include "event/EventManager.hpp"
+#include "event/RuntimeEvent.hpp"
 #include "util/MicrosImpl.hpp"
 
 #include <memory>

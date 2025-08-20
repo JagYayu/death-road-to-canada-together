@@ -1,5 +1,5 @@
 /**
- * @file program/EngineFileType.hpp
+ * @file system/ScanCode.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -9,13 +9,6 @@
  *
  */
 
-#pragma once
+#include "system/ScanCode.hpp"
 
-namespace tudov
-{
-	[[depreciated]]
-	enum class EngineFileType
-	{
-		Texture,
-	};
-}
+using namespace tudov;

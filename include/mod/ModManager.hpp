@@ -20,7 +20,7 @@
 #include "debug/Debug.hpp"
 #include "event/EventManager.hpp"
 #include "program/EngineComponent.hpp"
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 
 #include <filesystem>
 #include <memory>

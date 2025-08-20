@@ -25,7 +25,7 @@
 #include "util/FileChangeType.hpp"
 #include "util/FileSystemWatch.hpp"
 
-#include "util/LogMicros.hpp"
+#include "system/LogMicros.hpp"
 
 #include <filesystem>
 #include <memory>

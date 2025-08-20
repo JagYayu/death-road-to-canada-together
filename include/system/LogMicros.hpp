@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "util/Log.hpp" // IWYU pragma: keep
+#include "system/Log.hpp" // IWYU pragma: keep
 
 // region Global Logging
 

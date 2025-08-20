@@ -11,8 +11,6 @@
 
 #pragma once
 
-#include "DebugElement.hpp"
-#include "DebugFileSystem.hpp"
 #include "util/Scopes.hpp"
 
 #include <memory>
@@ -20,6 +18,8 @@
 
 namespace tudov
 {
+	struct IWindow;
+
 	struct IDebugManager
 	{
 		virtual ~IDebugManager() noexcept = default;
@@ -53,6 +53,7 @@ namespace tudov
 	class DebugLog;
 	class DebugProfiler;
 	class DebugScripts;
+	class DebugFileSystem;
 
 	class DebugManager : public IDebugManager
 	{

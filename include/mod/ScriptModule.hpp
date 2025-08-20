@@ -13,7 +13,7 @@
 
 #include "program/Context.hpp"
 #include "util/Definitions.hpp"
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 
 #include "sol/table.hpp"
 

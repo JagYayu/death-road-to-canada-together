@@ -17,7 +17,7 @@
 #include "program/Window.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/ImageResources.hpp"
-#include "util/LogMicros.hpp"
+#include "system/LogMicros.hpp"
 
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_pixels.h"

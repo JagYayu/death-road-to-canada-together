@@ -11,7 +11,7 @@
 
 #include "graphic/Device.hpp"
 
-// #include "util/Log.hpp"
+// #include "system/Log.hpp"
 
 // #include "SDL3/SDL_error.h"
 // #include "SDL3/SDL_gpu.h"

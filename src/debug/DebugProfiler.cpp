@@ -12,6 +12,8 @@
 #include "debug/DebugProfiler.hpp"
 #include "debug/EventProfiler.hpp"
 #include "event/EventManager.hpp"
+#include "event/RuntimeEvent.hpp"
+#include "mod/ScriptEngine.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
 #include "util/Utils.hpp"
@@ -123,7 +125,7 @@ void DebugProfiler::UpdateAndRender(IWindow &window) noexcept
 				auto *profile = entry.event->GetProfile();
 				if (profile != nullptr)
 				{
-					auto &&perfEntries = profile->eventProfiler.GetPerfEntries();
+					auto &&perfEntries = profile->eventProfiler->GetPerfEntries();
 					std::float_t durations[EventProfiler::EntrySize];
 					std::float_t memories[EventProfiler::EntrySize];
 
@@ -203,7 +205,7 @@ std::vector<DebugProfiler::DebugProfilerEntry> DebugProfiler::CollectDebugProfil
 		auto profile = event.GetProfile();
 		if (profile != nullptr)
 		{
-			const EventProfiler::PerfEntries &perfEntries = profile->eventProfiler.GetPerfEntries();
+			const EventProfiler::PerfEntries &perfEntries = profile->eventProfiler->GetPerfEntries();
 
 			for (std::uint64_t i = 0; i < EventProfiler::EntrySize; ++i)
 			{

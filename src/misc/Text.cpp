@@ -11,7 +11,7 @@
 
 #include "misc/Text.hpp"
 
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 
 using namespace tudov;
 

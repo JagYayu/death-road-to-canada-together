@@ -15,7 +15,7 @@
 #include "Context.hpp"
 #include "debug/Debug.hpp"
 #include "program/EngineComponent.hpp"
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 
 #include <atomic>
 #include <cmath>
@@ -29,6 +29,8 @@ union SDL_Event;
 
 namespace tudov
 {
+	class EngineData;
+
 	struct IGameScripts;
 	struct ILuaAPI;
 	struct INetworkManager;
@@ -49,6 +51,7 @@ namespace tudov
 	class Engine : public Application, public IDebugProvider, private ILogProvider
 	{
 		friend Context;
+		friend EngineData;
 		friend LuaAPI;
 
 	  public:
@@ -111,6 +114,7 @@ namespace tudov
 		std::float_t _framerate;
 		bool _firstTick;
 		std::vector<std::unique_ptr<SDL_Event>> _sdlEvents;
+		std::unique_ptr<EngineData> _data;
 
 		// Background loading thread
 		std::atomic<ELoadingState> _loadingState;
@@ -120,26 +124,7 @@ namespace tudov
 		LoadingInfo _loadingInfo;
 		std::mutex _loadingInfoMutex;
 
-		std::vector<std::shared_ptr<IEngineComponent>> _components;
-
 		std::shared_ptr<Log> _log;
-		std::shared_ptr<ILuaAPI> _luaAPI;
-		std::shared_ptr<IGlobalStorageManager> _globalStorageManager;
-		std::shared_ptr<ILocalization> _localization;
-
-		std::shared_ptr<VirtualFileSystem> _virtualFileSystem;
-
-		std::shared_ptr<GlobalResourcesCollection> _globalResourcesCollection;
-		std::shared_ptr<IAssetsManager> _assetsManager;
-		std::shared_ptr<WindowManager> _windowManager;
-		std::shared_ptr<INetworkManager> _networkManager;
-		std::shared_ptr<IModManager> _modManager;
-		std::shared_ptr<IEventManager> _eventManager;
-		std::shared_ptr<IGameScripts> _gameScripts;
-		std::shared_ptr<IScriptEngine> _scriptEngine;
-		std::shared_ptr<IScriptErrors> _scriptErrors;
-		std::shared_ptr<IScriptLoader> _scriptLoader;
-		std::shared_ptr<IScriptProvider> _scriptProvider;
 
 	  public:
 		Context context;
@@ -164,13 +149,6 @@ namespace tudov
 		std::uint64_t GetBeginTick() const noexcept;
 		std::uint64_t GetTick() const noexcept;
 		void Quit();
-
-		// Windows operations.
-
-		// std::shared_ptr<IWindow> GetMainWindow() noexcept;
-		// std::shared_ptr<const IWindow> GetMainWindow() const noexcept;
-		// void AddWindow(const std::shared_ptr<IWindow> &window);
-		// void RemoveWindow(const std::shared_ptr<IWindow> &window);
 
 		// Background loading info operations.
 

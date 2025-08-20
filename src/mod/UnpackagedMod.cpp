@@ -23,7 +23,7 @@
 #include "resource/TextResources.hpp"
 #include "util/FileChangeType.hpp"
 #include "util/FileSystemWatch.hpp"
-#include "util/LogMicros.hpp"
+#include "system/LogMicros.hpp"
 #include "util/StringUtils.hpp"
 
 

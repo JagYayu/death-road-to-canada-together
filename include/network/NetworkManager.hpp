@@ -17,7 +17,7 @@
 #include "debug/Debug.hpp"
 #include "program/EngineComponent.hpp"
 #include "sol/forward.hpp"
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 
 #include <memory>
 

@@ -12,7 +12,7 @@
 #ifdef _WIN32
 
 #	include "util/SystemUtils.hpp"
-#	include "util/Log.hpp"
+#	include "system/Log.hpp"
 
 #	include <windows.h>
 #	include <filesystem>

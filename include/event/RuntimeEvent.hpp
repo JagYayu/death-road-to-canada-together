@@ -14,14 +14,14 @@
 #include "AbstractEvent.hpp"
 #include "EventHandler.hpp"
 #include "EventInvocation.hpp"
-#include "debug/EventProfiler.hpp"
+#include "system/Log.hpp"
 #include "util/Definitions.hpp"
-#include "util/Log.hpp"
 
 #include "sol/forward.hpp"
 #include "sol/types.hpp"
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <tuple>
 #include <unordered_map>
@@ -30,9 +30,9 @@
 namespace tudov
 {
 	struct CoreEventData;
-	struct IEventProfiler;
 	struct IScriptEngine;
 	struct IScriptProvider;
+	class EventProfiler;
 
 	class RuntimeEvent : public AbstractEvent, private ILogProvider
 	{
@@ -49,7 +49,7 @@ namespace tudov
 		struct Profile
 		{
 			bool traceHandlers;
-			EventProfiler eventProfiler;
+			std::unique_ptr<EventProfiler> eventProfiler;
 
 			template <typename... TArgs>
 			explicit Profile(bool traceHandlers, TArgs &&...args) noexcept

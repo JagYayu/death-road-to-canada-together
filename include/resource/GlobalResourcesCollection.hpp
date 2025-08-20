@@ -19,7 +19,7 @@
 #include "TextResources.hpp"
 #include "event/DelegateEvent.hpp"
 #include "program/EngineComponent.hpp"
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 
 #include <filesystem>
 #include <memory>

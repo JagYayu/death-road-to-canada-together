@@ -18,7 +18,7 @@
 #include "mod/ScriptProvider.hpp"
 #include "sol/trampoline.hpp"
 #include "util/Definitions.hpp"
-#include "util/LogMicros.hpp"
+#include "system/LogMicros.hpp"
 #include "util/Utils.hpp"
 
 #include "sol/environment.hpp"

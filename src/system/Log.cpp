@@ -9,13 +9,12 @@
  *
  */
 
-#include "util/Log.hpp"
+#include "system/Log.hpp"
+#include "system/LogVerbosity.hpp"
 #include "util/EnumFlag.hpp"
-#include "util/LogVerbosity.hpp"
 #include "util/Utils.hpp"
 
 #include "json.hpp"
-
 
 #include <chrono>
 #include <format>

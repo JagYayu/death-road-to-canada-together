@@ -23,7 +23,7 @@
 #include "program/Engine.hpp"
 #include "util/Definitions.hpp"
 #include "util/EnumFlag.hpp"
-#include "util/LogMicros.hpp"
+#include "system/LogMicros.hpp"
 #include "util/Version.hpp"
 
 #include <memory>

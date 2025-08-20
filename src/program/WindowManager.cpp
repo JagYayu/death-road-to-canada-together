@@ -14,8 +14,8 @@
 #include "data/Config.hpp"
 #include "debug/DebugManager.hpp"
 #include "program/MainWindow.hpp"
-#include "util/Log.hpp"
-#include "util/LogMicros.hpp"
+#include "system/Log.hpp"
+#include "system/LogMicros.hpp"
 #include "util/MicrosImpl.hpp"
 
 #include "SDL3/SDL_events.h"

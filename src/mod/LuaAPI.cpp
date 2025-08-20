@@ -12,9 +12,11 @@
 #include "mod/LuaAPI.hpp"
 
 #include "data/VirtualFileSystem.hpp"
+#include "event/EventInvocation.hpp"
 #include "event/EventManager.hpp"
 #include "graphic/Camera2D.hpp"
 #include "graphic/RenderTarget.hpp"
+#include "graphic/Renderer.hpp"
 #include "mod/ModManager.hpp"
 #include "network/Client.hpp"
 #include "network/NetworkManager.hpp"

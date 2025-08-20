@@ -17,7 +17,7 @@
 #include "program/Context.hpp"
 #include "sol/forward.hpp"
 #include "util/Definitions.hpp"
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 
 #include "SDL3/SDL_rect.h"
 #include "sol/table.hpp"

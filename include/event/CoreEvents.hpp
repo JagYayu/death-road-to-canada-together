@@ -11,10 +11,12 @@
 
 #pragma once
 
-#include "RuntimeEvent.hpp"
+#include <memory>
 
 namespace tudov
 {
+	class RuntimeEvent;
+
 	struct ICoreEvents
 	{
 		// Tick events.

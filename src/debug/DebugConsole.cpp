@@ -12,6 +12,7 @@
 #include "debug/DebugConsole.hpp"
 
 #include <algorithm>
+#include <array>
 #include <imgui.h>
 #include <tuple>
 

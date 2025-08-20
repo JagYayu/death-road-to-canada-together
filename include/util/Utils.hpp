@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "Log.hpp"
 #include "Scopes.hpp"
+#include "system/Log.hpp"
 
 #include "json.hpp"
 #include "sol/table.hpp"

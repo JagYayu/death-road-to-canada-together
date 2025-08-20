@@ -21,7 +21,8 @@
 
 namespace tudov
 {
-	class IWindow;
+	struct IWindow;
+	class ScriptError;
 
 	class DebugScripts : public IDebugElement, private ILogProvider
 	{

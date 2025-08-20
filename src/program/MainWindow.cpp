@@ -11,19 +11,17 @@
 
 #include "program/MainWindow.hpp"
 
-#include "SDL3/SDL_timer.h"
 #include "debug/DebugManager.hpp"
 #include "event/EventHandleKey.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/Renderer.hpp"
-#include "imgui.h"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
-#include "util/Micros.hpp"
 #include "util/StringUtils.hpp"
 
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_video.h"
+#include "imgui.h"
 #include "imgui_freetype.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
@@ -264,7 +262,7 @@ EventHandleKey MainWindow::GetKey() const noexcept
 
 bool MainWindow::HandleEvent(SDL_Event &event) noexcept
 {
-	return Window::HandleEvent(event) && ImGui_ImplSDL3_ProcessEvent(&event);
+	return Window::HandleEvent(event) || ImGui_ImplSDL3_ProcessEvent(&event);
 }
 
 void MainWindow::Render() noexcept

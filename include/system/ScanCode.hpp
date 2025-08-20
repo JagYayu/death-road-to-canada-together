@@ -218,11 +218,4 @@ namespace tudov
 		AcRefresh = SDL_SCANCODE_AC_REFRESH,
 		AcBookmarks = SDL_SCANCODE_AC_BOOKMARKS,
 	}; // namespace tudov
-
-	struct ScanCode
-	{
-		TE_STATIC_CLASS(ScanCode);
-
-		
-	};
 } // namespace tudov

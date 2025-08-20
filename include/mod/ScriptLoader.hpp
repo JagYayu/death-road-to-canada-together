@@ -13,10 +13,9 @@
 
 #include "ScriptProvider.hpp"
 #include "event/DelegateEvent.hpp"
-#include "program/Context.hpp"
 #include "program/EngineComponent.hpp"
 #include "util/Definitions.hpp"
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 #include "util/Micros.hpp"
 
 #include <sol/table.hpp>

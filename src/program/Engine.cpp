@@ -11,31 +11,24 @@
 
 #include "program/Engine.hpp"
 
-#include "data/AssetsManager.hpp"
 #include "data/Config.hpp"
-#include "data/GlobalStorageManager.hpp"
-#include "data/VirtualFileSystem.hpp"
 #include "debug/Debug.hpp"
 #include "debug/DebugConsole.hpp"
 #include "debug/DebugManager.hpp"
-#include "i18n/Localization.hpp"
+#include "event/CoreEvents.hpp"
+#include "event/EventManager.hpp"
+#include "event/RuntimeEvent.hpp"
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptErrors.hpp"
-#include "mod/ScriptLoader.hpp"
-#include "network/NetworkManager.hpp"
 #include "program/Context.hpp"
 #include "program/EngineComponent.hpp"
+#include "program/EngineData.hpp"
 #include "program/MainWindow.hpp"
 #include "program/Window.hpp"
 #include "program/WindowManager.hpp"
-#include "resource/FontResources.hpp"
-#include "resource/GlobalResourcesCollection.hpp"
-#include "resource/ImageResources.hpp"
-#include "resource/TextResources.hpp"
-#include "scripts/GameScripts.hpp"
-#include "util/Log.hpp"
-#include "util/LogMicros.hpp"
+#include "system/Log.hpp"
+#include "system/LogMicros.hpp"
 #include "util/MicrosImpl.hpp"
 
 #include "SDL3/SDL_events.h"
@@ -62,26 +55,11 @@ Engine::Engine() noexcept
       _framerate(0),
       _firstTick(false),
       _loadingState(ELoadingState::Done),
-      _loadingThread(),
-      _luaAPI(std::make_shared<LuaAPI>()),
-      _globalStorageManager(std::make_shared<GlobalStorageManager>()),
-      _localization(std::make_shared<Localization>())
+      _loadingThread()
 {
 	context = Context(this);
 
-	_virtualFileSystem = std::make_shared<VirtualFileSystem>(context);
-
-	_globalResourcesCollection = std::make_shared<GlobalResourcesCollection>(context),
-	_assetsManager = std::make_shared<AssetsManager>(context);
-	_windowManager = std::make_shared<WindowManager>(context);
-	_networkManager = std::make_shared<NetworkManager>(context);
-	_modManager = std::make_shared<ModManager>(context);
-	_scriptProvider = std::make_shared<ScriptProvider>(context);
-	_scriptLoader = std::make_shared<ScriptLoader>(context);
-	_scriptEngine = std::make_shared<ScriptEngine>(context);
-	_scriptErrors = std::make_shared<ScriptErrors>(context);
-	_eventManager = std::make_shared<EventManager>(context);
-	_gameScripts = std::make_shared<GameScripts>(context);
+	_data = std::make_unique<EngineData>(context);
 
 	_loadingThread = std::thread(std::bind(&Engine::BackgroundLoadingThread, this));
 }
@@ -161,34 +139,21 @@ bool Engine::ShouldQuit() noexcept
 		break;
 	}
 
-	return _windowManager->IsEmpty();
+	return _data->_windowManager->IsEmpty();
 }
 
 void Engine::Initialize() noexcept
 {
-	_components = {
-	    _globalResourcesCollection,
-	    _assetsManager,
-	    _modManager,
-	    _networkManager,
-	    _eventManager,
-	    _gameScripts,
-	    _scriptProvider,
-	    _scriptLoader,
-	    _scriptEngine,
-	    _scriptErrors,
-	};
-
 	TE_DEBUG("{}", "Initializing engine ...");
 	{
-		_windowManager->InitializeMainWindow();
+		_data->_windowManager->InitializeMainWindow();
 
-		for (auto it = _components.begin(); it != _components.end(); ++it)
+		for (auto it = _data->_components.begin(); it != _data->_components.end(); ++it)
 		{
 			(*it)->PreInitialize();
 		}
 
-		for (auto it = _components.begin(); it != _components.end(); ++it)
+		for (auto it = _data->_components.begin(); it != _data->_components.end(); ++it)
 		{
 			(*it)->Initialize();
 		}
@@ -202,9 +167,9 @@ void Engine::Initialize() noexcept
 
 void Engine::PostInitialization() noexcept
 {
-	ProvideDebug(*_windowManager->GetDebugManager());
+	ProvideDebug(*_data->_windowManager->GetDebugManager());
 
-	_modManager->LoadModsDeferred();
+	_data->_modManager->LoadModsDeferred();
 	_previousTick = SDL_GetTicksNS();
 	_beginTick = SDL_GetTicksNS();
 	_framerate = 0;
@@ -267,15 +232,15 @@ bool Engine::Tick() noexcept
 
 void Engine::ProcessLoad() noexcept
 {
-	_modManager->Update();
-	_eventManager->GetCoreEvents().TickLoad().Invoke();
+	_data->_modManager->Update();
+	_data->_eventManager->GetCoreEvents().TickLoad().Invoke();
 }
 
 void Engine::ProcessTick() noexcept
 {
-	if (!_scriptErrors->HasLoadtimeError())
+	if (!_data->_scriptErrors->HasLoadtimeError())
 	{
-		_eventManager->GetCoreEvents().TickUpdate().Invoke();
+		_data->_eventManager->GetCoreEvents().TickUpdate().Invoke();
 	}
 
 	for (const std::unique_ptr<SDL_Event> &event : _sdlEvents)
@@ -288,12 +253,12 @@ void Engine::ProcessTick() noexcept
 
 void Engine::ProcessRender() noexcept
 {
-	_windowManager->Render();
+	_data->_windowManager->Render();
 }
 
 void Engine::HandleEvent(SDL_Event &event) noexcept
 {
-	if (_windowManager->HandleEvent(event))
+	if (_data->_windowManager->HandleEvent(event))
 	{
 		return;
 	}
@@ -334,12 +299,12 @@ void Engine::Deinitialize() noexcept
 	{
 		PreDeinitialization();
 
-		for (auto it = _components.rbegin(); it != _components.rend(); ++it)
+		for (auto it = _data->_components.rbegin(); it != _data->_components.rend(); ++it)
 		{
 			(*it)->Deinitialize();
 		}
 
-		for (auto it = _components.rbegin(); it != _components.rend(); ++it)
+		for (auto it = _data->_components.rbegin(); it != _data->_components.rend(); ++it)
 		{
 			(*it)->PostDeinitialize();
 		}
@@ -351,7 +316,7 @@ void Engine::Deinitialize() noexcept
 
 void Engine::PreDeinitialization() noexcept
 {
-	_modManager->UnloadMods();
+	_data->_modManager->UnloadMods();
 }
 
 void Engine::Quit()
@@ -361,7 +326,7 @@ void Engine::Quit()
 		TE_DEBUG("{}", "Engine is pending quit!");
 
 		_state = EState::Quit;
-		_windowManager->CloseWindows();
+		_data->_windowManager->CloseWindows();
 	}
 }
 
@@ -396,7 +361,7 @@ void Engine::ProvideDebug(IDebugManager &debugManager) noexcept
 		});
 	}
 
-	for (auto &&component : _components)
+	for (auto &&component : _data->_components)
 	{
 		if (auto &&debugProvider = std::dynamic_pointer_cast<IDebugProvider>(component); debugProvider != nullptr)
 		{

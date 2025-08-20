@@ -16,7 +16,7 @@
 #include "resource/ResourceType.hpp"
 #include "sol/string_view.hpp"
 #include "util/EnumFlag.hpp"
-#include "util/LogMicros.hpp"
+#include "system/LogMicros.hpp"
 #include "util/LuaUtils.hpp"
 #include "util/Utils.hpp"
 

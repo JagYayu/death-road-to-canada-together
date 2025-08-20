@@ -13,6 +13,8 @@
 
 #include "event/CoreEvents.hpp"
 #include "event/EventManager.hpp"
+#include "event/RuntimeEvent.hpp"
+#include "mod/ScriptEngine.hpp"
 #include "network/SocketType.hpp"
 
 #include "enet/enet.h"
@@ -63,17 +65,17 @@ bool ReliableUDPServer::IsHosting() const noexcept
 	return false;
 }
 
-std::optional<std::string_view> ReliableUDPServer::GetTitle()const noexcept
+std::optional<std::string_view> ReliableUDPServer::GetTitle() const noexcept
 {
 	return std::nullopt;
 }
 
-std::optional<std::string_view> ReliableUDPServer::GetPassword()const noexcept
+std::optional<std::string_view> ReliableUDPServer::GetPassword() const noexcept
 {
 	return std::nullopt;
 }
 
-std::optional<std::size_t> ReliableUDPServer::GetMaxClients()const noexcept
+std::optional<std::size_t> ReliableUDPServer::GetMaxClients() const noexcept
 {
 	return std::nullopt;
 }

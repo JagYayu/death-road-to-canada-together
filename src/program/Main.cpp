@@ -16,8 +16,8 @@
 #include "program/Engine.hpp"
 #include "program/Tudov.hpp"
 #include "test/TestGPURendering.hpp"
-#include "util/Log.hpp"
-#include "util/LogMicros.hpp"
+#include "system/Log.hpp"
+#include "system/LogMicros.hpp"
 
 #define SDL_MAIN_USE_CALLBACKS
 

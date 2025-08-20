@@ -18,14 +18,14 @@
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
+#include "system/LogMicros.hpp"
 #include "util/Definitions.hpp"
-#include "util/LogMicros.hpp"
 #include "util/StringUtils.hpp"
+
 
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
-
 
 #include <corecrt_terminate.h>
 #include <format>
@@ -33,6 +33,7 @@
 #include <optional>
 #include <stdexcept>
 #include <tuple>
+#include <unordered_set>
 #include <vector>
 
 using namespace tudov;

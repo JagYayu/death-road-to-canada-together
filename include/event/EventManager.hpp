@@ -11,21 +11,25 @@
 
 #pragma once
 
-#include "CoreEvents.hpp"
-#include "LoadtimeEvent.hpp"
-#include "RuntimeEvent.hpp"
-#include "mod/LuaAPI.hpp"
 #include "program/EngineComponent.hpp"
-#include "sol/forward.hpp"
+#include "program/Window.hpp"
+#include "system/Log.hpp"
 #include "util/Definitions.hpp"
+
+#include "sol/forward.hpp"
 
 #include <memory>
 #include <optional>
+#include <string>
+#include <unordered_map>
 
 namespace tudov
 {
 	class Context;
 	class Engine;
+	class LoadtimeEvent;
+	class RuntimeEvent;
+	struct ICoreEvents;
 
 	struct IEventManager : public IEngineComponent
 	{
@@ -47,13 +51,17 @@ namespace tudov
 		}
 	};
 
+	class AbstractEvent;
+	class CoreEvents;
+	class LuaAPI;
+
 	class EventManager : public IEventManager, private ILogProvider
 	{
-		friend class CoreEvents;
-		friend class LuaAPI;
+		friend CoreEvents;
+		friend LuaAPI;
 
 	  private:
-		static ILuaAPI::TInstallation rendererLuaAPIInstallation;
+		// static ILuaAPI::TInstallation rendererLuaAPIInstallation;
 
 	  protected:
 		Context &_context;

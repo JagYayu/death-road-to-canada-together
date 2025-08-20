@@ -22,7 +22,7 @@
 #include "mod/ScriptLoader.hpp"
 #include "program/Context.hpp"
 #include "util/Definitions.hpp"
-#include "util/LogMicros.hpp"
+#include "system/LogMicros.hpp"
 #include "util/LuaUtils.hpp"
 #include "util/Utils.hpp"
 

@@ -15,7 +15,7 @@
 #include "program/Application.hpp"
 #include "program/Engine.hpp"
 #include "program/MainArgs.hpp"
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 
 #include "SDL3/SDL_messagebox.h"
 

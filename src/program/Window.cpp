@@ -11,7 +11,10 @@
 
 #include "program/Window.hpp"
 
+#include "event/CoreEvents.hpp"
+#include "event/EventHandleKey.hpp"
 #include "event/EventManager.hpp"
+#include "event/RuntimeEvent.hpp"
 #include "graphic/Renderer.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "program/Engine.hpp"

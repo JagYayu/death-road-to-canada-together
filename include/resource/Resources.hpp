@@ -11,9 +11,9 @@
 
 #pragma once
 
+#include "system/Log.hpp"
+#include "system/LogMicros.hpp"
 #include "util/Definitions.hpp"
-#include "util/Log.hpp"
-#include "util/LogMicros.hpp"
 
 #include <stdexcept>
 #include <unordered_map>

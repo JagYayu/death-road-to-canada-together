@@ -15,6 +15,7 @@
 #include "debug/DebugManager.hpp"
 #include "exception/BadEnumException.hpp"
 #include "exception/Exception.hpp"
+#include "mod/ScriptEngine.hpp"
 #include "network/LocalClient.hpp"
 #include "network/LocalServer.hpp"
 #include "network/ReliableUDPClient.hpp"

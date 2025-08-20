@@ -14,7 +14,7 @@
 #include "data/ApplicationGlobalStorage.hpp"
 #include "data/GlobalStorageLocation.hpp"
 #include "data/GlobalStorageManager.hpp"
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 
 #include "SDL3/SDL_properties.h"
 #include "SDL3/SDL_storage.h"

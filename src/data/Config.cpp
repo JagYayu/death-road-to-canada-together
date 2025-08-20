@@ -14,10 +14,10 @@
 #include "data/Constants.hpp"
 #include "data/PathType.hpp"
 #include "util/FileSystemWatch.hpp"
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 
 #include "SDL3/SDL_properties.h"
-#include "util/LogMicros.hpp"
+#include "system/LogMicros.hpp"
 #include <json.hpp>
 
 #include <fstream>

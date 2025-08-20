@@ -11,8 +11,7 @@
 
 #pragma once
 
-#include "debug/DebugManager.hpp"
-#include "util/Log.hpp"
+#include "system/Log.hpp"
 
 #include <memory>
 #include <vector>

@@ -12,7 +12,9 @@
 #include "network/ReliableUDPClient.hpp"
 
 #include "data/Constants.hpp"
+#include "event/CoreEvents.hpp"
 #include "event/EventManager.hpp"
+#include "event/RuntimeEvent.hpp"
 #include "network/NetworkManager.hpp"
 
 #include "enet/enet.h"
