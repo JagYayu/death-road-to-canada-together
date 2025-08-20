@@ -95,3 +95,8 @@ WindowManager &Context::GetWindowManager()
 {
 	return *GetEngine()._windowManager;
 }
+
+INetworkManager &Context::GetNetworkManager()
+{
+	return *GetEngine()._networkManager;
+}

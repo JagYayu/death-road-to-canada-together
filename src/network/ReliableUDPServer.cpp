@@ -58,22 +58,22 @@ void ReliableUDPServer::Shutdown()
 {
 }
 
-bool ReliableUDPServer::IsHosting() noexcept
+bool ReliableUDPServer::IsHosting() const noexcept
 {
 	return false;
 }
 
-std::optional<std::string_view> ReliableUDPServer::GetTitle() noexcept
+std::optional<std::string_view> ReliableUDPServer::GetTitle()const noexcept
 {
 	return std::nullopt;
 }
 
-std::optional<std::string_view> ReliableUDPServer::GetPassword() noexcept
+std::optional<std::string_view> ReliableUDPServer::GetPassword()const noexcept
 {
 	return std::nullopt;
 }
 
-std::optional<std::size_t> ReliableUDPServer::GetMaxClients() noexcept
+std::optional<std::size_t> ReliableUDPServer::GetMaxClients()const noexcept
 {
 	return std::nullopt;
 }

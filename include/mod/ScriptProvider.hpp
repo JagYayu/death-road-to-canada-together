@@ -41,6 +41,7 @@ namespace tudov
 	  public:
 		virtual ~IScriptProvider() noexcept = default;
 
+		virtual std::uint64_t GetVersionID() const noexcept = 0;
 		virtual size_t GetCount() const noexcept = 0;
 		virtual ScriptID GetScriptIDByName(std::string_view scriptName) const noexcept = 0;
 		virtual std::optional<std::string_view> GetScriptNameByID(ScriptID scriptID) const noexcept = 0;
@@ -107,6 +108,7 @@ namespace tudov
 		Context &_context;
 		std::shared_ptr<Log> _log;
 
+		std::uint64_t _versionID;
 		ScriptID _latestScriptID;
 		std::unordered_map<std::string_view, ScriptID> _scriptName2ID;
 		TScriptID2Entry _scriptID2Entry;
@@ -126,6 +128,7 @@ namespace tudov
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
 
+		std::uint64_t GetVersionID() const noexcept override;
 		size_t GetCount() const noexcept override;
 		ScriptID GetScriptIDByName(std::string_view scriptName) const noexcept override;
 		std::optional<std::string_view> GetScriptNameByID(ScriptID scriptID) const noexcept override;

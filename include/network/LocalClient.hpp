@@ -43,8 +43,8 @@ namespace tudov
 		INetworkManager &GetNetworkManager() noexcept override;
 		ESocketType GetSocketType() const noexcept override;
 
-		bool IsConnecting() noexcept override;
-		bool IsConnected() noexcept override;
+		bool IsConnecting() const noexcept override;
+		bool IsConnected() const noexcept override;
 		void Connect(const IClient::ConnectArgs &args) override;
 		void Disconnect() override;
 		void SendReliable(std::string_view data) override;

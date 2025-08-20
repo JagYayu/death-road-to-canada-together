@@ -47,7 +47,7 @@ ESocketType LocalServer::GetSocketType() const noexcept
 	return ESocketType::Local;
 }
 
-bool LocalServer::IsHosting() noexcept
+bool LocalServer::IsHosting() const noexcept
 {
 	return _hostInfo != nullptr;
 }
@@ -66,17 +66,17 @@ void LocalServer::Shutdown()
 	_hostInfo = nullptr;
 }
 
-std::optional<std::string_view> LocalServer::GetTitle() noexcept
+std::optional<std::string_view> LocalServer::GetTitle() const noexcept
 {
 	return _hostInfo != nullptr ? std::make_optional(_hostInfo->title) : std::nullopt;
 }
 
-std::optional<std::string_view> LocalServer::GetPassword() noexcept
+std::optional<std::string_view> LocalServer::GetPassword() const noexcept
 {
 	return _hostInfo != nullptr ? std::make_optional(_hostInfo->password) : std::nullopt;
 }
 
-std::optional<std::size_t> LocalServer::GetMaxClients() noexcept
+std::optional<std::size_t> LocalServer::GetMaxClients() const noexcept
 {
 	return _hostInfo != nullptr ? std::make_optional(_hostInfo->maximumClients) : std::nullopt;
 }
@@ -106,13 +106,13 @@ bool LocalServer::Update()
 	bool updated = false;
 
 	std::unordered_map<ClientID, std::weak_ptr<LocalClient>> &localClients = _hostInfo->localClients;
-	for (auto &&it = localClients.begin(); it != localClients.end();)
+	for (auto it = localClients.begin(); it != localClients.end();)
 	{
-		if (it->second.expired())
+		if (it->second.expired()) [[unlikely]]
 		{
 			it = localClients.erase(it);
 		}
-		else
+		else [[likely]]
 		{
 			++it;
 		}
@@ -151,6 +151,5 @@ bool LocalServer::Update()
 
 void LocalServer::AddClient(std::uint32_t uid, const std::weak_ptr<LocalClient> &localClient)
 {
-
-	// TODO
+	_hostInfo->localClients[uid] = localClient;
 }

@@ -23,6 +23,8 @@
 
 #include <cstdint>
 #include <optional>
+#include <tuple>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace tudov
@@ -35,11 +37,13 @@ namespace tudov
 	class RuntimeEvent : public AbstractEvent, private ILogProvider
 	{
 		using InvocationCache = std::vector<EventHandler *>;
-		using InvocationTrackID = std::uint32_t;
+		using ProgressionID = std::uint32_t;
 
 	  private:
-		struct InvocationTrack
+		struct Progression
 		{
+			std::size_t value;
+			std::size_t total;
 		};
 
 		struct Profile
@@ -64,7 +68,8 @@ namespace tudov
 		std::vector<std::string> _orders;
 		std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> _keys;
 		std::vector<EventHandler> _handlers;
-		InvocationTrackID _invocationTrackID;
+		ProgressionID _invocationTrackID;
+		std::unordered_map<ProgressionID, Progression> _invocationTracks;
 
 	  public:
 		explicit RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = {""}, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys = {}, ScriptID scriptID = false);
@@ -80,6 +85,9 @@ namespace tudov
 		void EnableProfiler(bool traceHandlers) noexcept;
 		void DisableProfiler() noexcept;
 
+		ProgressionID GetNextTrackID() noexcept;
+		std::tuple<std::size_t, std::size_t> GetProgression() noexcept;
+
 		void Add(const AddHandlerArgs &args) override;
 
 		void Invoke(const sol::object &e = sol::lua_nil, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
@@ -87,7 +95,7 @@ namespace tudov
 
 		void Invoke(IScriptEngine &scriptEngine, CoreEventData *data, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
 
-		InvocationTrackID GetNextInvocationID() noexcept;
+		ProgressionID GetNextInvocationID() noexcept;
 
 		void ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider);
 		void ClearSpecificScriptHandlers(const IScriptProvider &scriptProvider, ScriptID scriptID);
@@ -96,7 +104,6 @@ namespace tudov
 	  protected:
 		std::vector<EventHandler> &GetSortedHandlers();
 
-	  private:
 		void ClearCaches();
 		void ClearScriptHandlersImpl(std::function<bool(const EventHandler &)> pred);
 

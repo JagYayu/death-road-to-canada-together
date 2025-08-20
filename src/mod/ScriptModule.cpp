@@ -46,13 +46,13 @@ ScriptModule::ScriptModule(ScriptID scriptID, const sol::protected_function &fun
 
 Context &ScriptModule::GetContext() noexcept
 {
-	assert(_parentContext != nullptr);
+	TE_ASSERT(_parentContext != nullptr);
 	return *_parentContext;
 }
 
 Log &ScriptModule::GetLog() noexcept
 {
-	assert(!_parentLog.expired());
+	TE_ASSERT(!_parentLog.expired());
 	return *_parentLog.lock();
 }
 
@@ -88,7 +88,7 @@ sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 		return _table;
 	}
 
-	assert(_scriptID);
+	TE_ASSERT(_scriptID);
 
 	ScriptLoader &parent = static_cast<ScriptLoader &>(scriptLoader);
 	_parentContext = &parent._context;
@@ -200,7 +200,7 @@ sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 		return _table;
 	}
 
-	assert(_scriptID);
+	TE_ASSERT(_scriptID);
 
 	auto &parent = static_cast<ScriptLoader &>(scriptLoader);
 	_parentContext = &parent._context;
@@ -241,7 +241,7 @@ sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 
 	parent._scriptLoopLoadStack.emplace_back(_scriptID);
 	sol::protected_function_result result = _func();
-	assert(parent._scriptLoopLoadStack.back() == _scriptID);
+	TE_ASSERT(parent._scriptLoopLoadStack.back() == _scriptID);
 	parent._scriptLoopLoadStack.pop_back();
 
 	sol::table tbl;

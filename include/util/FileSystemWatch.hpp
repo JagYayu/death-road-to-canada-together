@@ -19,7 +19,8 @@
 
 namespace tudov
 {
-	enum class EFileChangeType;
+	enum class EFileChangeType : int;
+	enum class EPathType : int;
 
 	class FileSystemWatch
 	{
@@ -27,21 +28,21 @@ namespace tudov
 		void *_fileWatch;
 		std::filesystem::path _path;
 		std::atomic<bool> _watching;
-		DelegateEvent<std::string_view, EFileChangeType> _onCallback;
+		DelegateEvent<std::string_view, EPathType, EFileChangeType> _onCallback;
 
 	  public:
 		explicit FileSystemWatch() noexcept;
 		explicit FileSystemWatch(const std::filesystem::path &path) noexcept;
 		~FileSystemWatch() noexcept;
 
-		DelegateEvent<std::string_view, EFileChangeType> &GetOnCallback() noexcept;
+		decltype(_onCallback) &GetOnCallback() noexcept;
 		std::filesystem::path GetPath() const noexcept;
 		void SetPath(const std::filesystem::path &path) noexcept;
 		bool IsWatching() const noexcept;
 		void StartWatching();
 		void StopWatching();
 
-		TE_FORCEINLINE DelegateEvent<std::string_view, EFileChangeType> &GetOnCallback() const noexcept
+		TE_FORCEINLINE const decltype(_onCallback) &GetOnCallback() const noexcept
 		{
 			return const_cast<FileSystemWatch *>(this)->GetOnCallback();
 		}

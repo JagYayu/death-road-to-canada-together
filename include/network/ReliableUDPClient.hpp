@@ -13,6 +13,7 @@
 
 #include "Client.hpp"
 #include "SocketType.hpp"
+
 #include <string_view>
 
 struct _ENetHost;
@@ -50,8 +51,8 @@ namespace tudov
 		INetworkManager &GetNetworkManager() noexcept override;
 		bool Update() override;
 
-		bool IsConnecting() noexcept override;
-		bool IsConnected() noexcept override;
+		bool IsConnecting() const noexcept override;
+		bool IsConnected() const noexcept override;
 		void Connect(const IClient::ConnectArgs &address) override;
 		void Disconnect() override;
 		void SendReliable(std::string_view data) override;

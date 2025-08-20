@@ -35,7 +35,7 @@ namespace tudov::impl
 
 		static constexpr size_t Dimension = N;
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit VectorImpl(Args &&...args) noexcept
 		    : VectorData<N, T>(std::forward<Args>(args)...)
 		{
@@ -303,7 +303,7 @@ namespace tudov::impl
 			std::array<T, 2> array;
 		};
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit VectorData(Args &&...args) noexcept
 		    : array(std::forward<Args>(args)...){};
 
@@ -323,7 +323,7 @@ namespace tudov::impl
 			std::array<T, 3> array;
 		};
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit VectorData(Args &&...args) noexcept
 		    : array(std::forward<Args>(args)...){};
 
@@ -343,7 +343,7 @@ namespace tudov::impl
 			std::array<T, 4> array;
 		};
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit VectorData(Args &&...args) noexcept
 		    : array(std::forward<Args>(args)...){};
 
@@ -359,7 +359,7 @@ namespace tudov
 	{
 		constexpr explicit Vector() noexcept = default;
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit Vector(Args &&...args) noexcept
 		    : impl::VectorImpl<Dimension, TValue>(std::forward<Args>(args)...)
 		{
@@ -373,7 +373,7 @@ namespace tudov
 	{
 		constexpr explicit Vector() noexcept = default;
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit Vector(Args &&...args) noexcept
 		    : impl::VectorImpl<2, TValue>(std::forward<Args>(args)...)
 		{

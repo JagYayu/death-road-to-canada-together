@@ -158,38 +158,38 @@ namespace tudov
 			return true;
 		}
 
-		template <typename... Args>
-		TE_FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args) const noexcept
+		template <typename... TArgs>
+		TE_FORCEINLINE void Trace(std::format_string<TArgs...> fmt, TArgs &&...args) const noexcept
 		{
-			Output(VerbTrace, std::format(fmt, std::forward<Args>(args)...));
+			Output(VerbTrace, std::format(fmt, std::forward<TArgs>(args)...));
 		}
-		template <typename... Args>
-		TE_FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args) const noexcept
+		template <typename... TArgs>
+		TE_FORCEINLINE void Debug(std::format_string<TArgs...> fmt, TArgs &&...args) const noexcept
 		{
-			Output(VerbDebug, std::format(fmt, std::forward<Args>(args)...));
+			Output(VerbDebug, std::format(fmt, std::forward<TArgs>(args)...));
 		}
-		template <typename... Args>
-		TE_FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args) const noexcept
+		template <typename... TArgs>
+		TE_FORCEINLINE void Info(std::format_string<TArgs...> fmt, TArgs &&...args) const noexcept
 		{
-			Output(VerbInfo, std::format(fmt, std::forward<Args>(args)...));
+			Output(VerbInfo, std::format(fmt, std::forward<TArgs>(args)...));
 		}
-		template <typename... Args>
-		TE_FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args) const noexcept
+		template <typename... TArgs>
+		TE_FORCEINLINE void Warn(std::format_string<TArgs...> fmt, TArgs &&...args) const noexcept
 		{
-			Output(VerbWarn, std::format(fmt, std::forward<Args>(args)...));
+			Output(VerbWarn, std::format(fmt, std::forward<TArgs>(args)...));
 		}
-		template <typename... Args>
-		TE_FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args) const noexcept
+		template <typename... TArgs>
+		TE_FORCEINLINE void Error(std::format_string<TArgs...> fmt, TArgs &&...args) const noexcept
 		{
-			Output(VerbError, std::format(fmt, std::forward<Args>(args)...));
+			Output(VerbError, std::format(fmt, std::forward<TArgs>(args)...));
 		}
 		/**
 		 * @warning This function will terminate the program.
 		 */
-		template <typename... Args>
-		[[noreturn]] TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) const noexcept
+		template <typename... TArgs>
+		[[noreturn]] TE_FORCEINLINE void Fatal(std::format_string<TArgs...> fmt, TArgs &&...args) const noexcept
 		{
-			auto &&str = std::format(fmt, std::forward<Args>(args)...);
+			auto &&str = std::format(fmt, std::forward<TArgs>(args)...);
 			Output(VerbFatal, str);
 			Tudov::FatalError(str);
 		}
@@ -238,35 +238,35 @@ namespace tudov
 			return true;
 		}
 
-		template <typename... Args>
-		TE_FORCEINLINE void Trace(std::format_string<Args...> fmt, Args &&...args) const
+		template <typename... TArgs>
+		TE_FORCEINLINE void Trace(std::format_string<TArgs...> fmt, TArgs &&...args) const
 		{
-			GetLog().Trace(fmt, std::forward<Args>(args)...);
+			GetLog().Trace(fmt, std::forward<TArgs>(args)...);
 		}
-		template <typename... Args>
-		TE_FORCEINLINE void Debug(std::format_string<Args...> fmt, Args &&...args) const
+		template <typename... TArgs>
+		TE_FORCEINLINE void Debug(std::format_string<TArgs...> fmt, TArgs &&...args) const
 		{
-			GetLog().Debug(fmt, std::forward<Args>(args)...);
+			GetLog().Debug(fmt, std::forward<TArgs>(args)...);
 		}
-		template <typename... Args>
-		TE_FORCEINLINE void Info(std::format_string<Args...> fmt, Args &&...args) const
+		template <typename... TArgs>
+		TE_FORCEINLINE void Info(std::format_string<TArgs...> fmt, TArgs &&...args) const
 		{
-			GetLog().Info(fmt, std::forward<Args>(args)...);
+			GetLog().Info(fmt, std::forward<TArgs>(args)...);
 		}
-		template <typename... Args>
-		TE_FORCEINLINE void Warn(std::format_string<Args...> fmt, Args &&...args) const
+		template <typename... TArgs>
+		TE_FORCEINLINE void Warn(std::format_string<TArgs...> fmt, TArgs &&...args) const
 		{
-			GetLog().Warn(fmt, std::forward<Args>(args)...);
+			GetLog().Warn(fmt, std::forward<TArgs>(args)...);
 		}
-		template <typename... Args>
-		TE_FORCEINLINE void Error(std::format_string<Args...> fmt, Args &&...args) const
+		template <typename... TArgs>
+		TE_FORCEINLINE void Error(std::format_string<TArgs...> fmt, TArgs &&...args) const
 		{
-			GetLog().Error(fmt, std::forward<Args>(args)...);
+			GetLog().Error(fmt, std::forward<TArgs>(args)...);
 		}
-		template <typename... Args>
-		[[noreturn]] TE_FORCEINLINE void Fatal(std::format_string<Args...> fmt, Args &&...args) const
+		template <typename... TArgs>
+		[[noreturn]] TE_FORCEINLINE void Fatal(std::format_string<TArgs...> fmt, TArgs &&...args) const
 		{
-			GetLog().Fatal(fmt, std::forward<Args>(args)...);
+			GetLog().Fatal(fmt, std::forward<TArgs>(args)...);
 		}
 	};
 } // namespace tudov

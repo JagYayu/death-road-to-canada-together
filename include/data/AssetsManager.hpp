@@ -37,7 +37,8 @@ namespace tudov
 		virtual const std::vector<PackInfo> &GetLoaded() const noexcept = 0;
 	};
 
-	enum class EFileChangeType;
+	enum class EFileChangeType : int;
+	enum class EPathType : int;
 	class FileSystemWatch;
 	class GlobalStorage;
 
@@ -73,7 +74,7 @@ namespace tudov
 		void LoadAssetsFromPackageFiles() noexcept;
 		void LoadAssetsFromDeveloperDirectory() noexcept;
 		void LoadAssetsFromExternalDirectories() noexcept;
-		void DeveloperDirectoryWatchCallback(const std::filesystem::path &filePath, EFileChangeType type);
+		void DeveloperDirectoryWatchCallback(const std::filesystem::path &filePath, EPathType pathType, EFileChangeType type);
 		std::vector<std::vector<std::byte>> CollectPackageFileBytes() noexcept;
 	};
 } // namespace tudov

@@ -73,12 +73,12 @@ namespace tudov
 		INetworkManager &GetNetworkManager() noexcept override;
 		ESocketType GetSocketType() const noexcept override;
 
-		bool IsHosting() noexcept override;
+		bool IsHosting() const noexcept override;
 		void Host(const HostArgs &args) override;
 		void Shutdown() override;
-		std::optional<std::string_view> GetTitle() noexcept override;
-		std::optional<std::string_view> GetPassword() noexcept override;
-		std::optional<std::size_t> GetMaxClients() noexcept override;
+		std::optional<std::string_view> GetTitle() const noexcept override;
+		std::optional<std::string_view> GetPassword() const noexcept override;
+		std::optional<std::size_t> GetMaxClients() const noexcept override;
 
 		void SendReliable(ClientID clientID, std::string_view data) override;
 		void SendUnreliable(ClientID clientID, std::string_view data) override;

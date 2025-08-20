@@ -190,6 +190,8 @@ CECSSchema.eventEntitySchemaLoadEntities = events:new(N_("EntitySchemaLoadEntiti
 })
 
 local function reloadComponentsSchema(oldComponentsSchema)
+	local tempComponentsSchema = {}
+
 	--- @class dr2c.E.EntitySchemaLoadComponents
 	--- @field new table<string, { fields: table, trait: dr2c.ComponentTrait, [...]: any }>
 	--- @field dependencies table?
@@ -220,12 +222,14 @@ local function reloadComponentsSchema(oldComponentsSchema)
 			fields = componentFields,
 			trait = componentTrait,
 		}
-		componentsSchema[componentTypeID] = componentSchema
-		componentsSchema[componentType] = componentSchema
+		tempComponentsSchema[componentTypeID] = componentSchema
+		tempComponentsSchema[componentType] = componentSchema
 	end
+
+	return tempComponentsSchema
 end
 
-local function processEntityComponents(entityComponents)
+local function processEntityComponents(entityComponents, tempComponentsSchema)
 	local components = {}
 	local componentsSerializable = {}
 	local componentsMutable = {}
@@ -239,7 +243,7 @@ local function processEntityComponents(entityComponents)
 	for state, componentType, componentFields in GTable.sortedPairs(entityComponents.components) do
 		local index = state[2]
 
-		local componentSchema = componentsSchema[componentType]
+		local componentSchema = tempComponentsSchema[componentType]
 		if not componentSchema then
 			error("Invalid component " .. componentType, 3)
 		end
@@ -278,7 +282,9 @@ local function processEntityComponents(entityComponents)
 	return components, componentsSerializable, componentsMutable, componentsConstant, componentsShared
 end
 
-local function reloadEntitiesSchema(oldEntitiesSchema)
+local function reloadEntitiesSchema(oldEntitiesSchema, tempComponentsSchema)
+	local tempEntitiesSchema = {}
+
 	--- @class dr2c.E.EntitySchemaLoadEntities
 	local e = {
 		new = {},
@@ -292,7 +298,7 @@ local function reloadEntitiesSchema(oldEntitiesSchema)
 		local entityTypeID = state[2]
 
 		local components, componentsSerializable, componentsMutable, componentsConstant, componentsShared =
-			processEntityComponents(entityComponents)
+			processEntityComponents(entityComponents, tempComponentsSchema)
 
 		--- @type dr2c.ECSSchema.Entity
 		local entitySchema = {
@@ -305,22 +311,19 @@ local function reloadEntitiesSchema(oldEntitiesSchema)
 			componentsShared = componentsShared,
 		}
 
-		entitiesSchema[entityTypeID] = entitySchema
-		entitiesSchema[entityType] = entitySchema
+		tempEntitiesSchema[entityTypeID] = entitySchema
+		tempEntitiesSchema[entityType] = entitySchema
 	end
+
+	return tempEntitiesSchema
 end
 
 function CECSSchema.reloadImmediately()
-	engine:triggerLoadPending()
+	local tempComponentsSchema = reloadComponentsSchema(componentsSchema)
+	local tempEntitiesSchema = reloadEntitiesSchema(entitiesSchema, tempComponentsSchema)
 
-	local oldComponentsSchema = componentsSchema
-	local oldEntitiesSchema = entitiesSchema
-	componentsSchema = {}
-	entitiesSchema = {}
-
-	reloadComponentsSchema(oldComponentsSchema)
-	reloadEntitiesSchema(oldEntitiesSchema)
-
+	componentsSchema = tempComponentsSchema
+	entitiesSchema = tempEntitiesSchema
 	reloadPending = false
 
 	-- print("ECS Schema reloaded", componentsSchema, entitiesSchema)
@@ -328,7 +331,10 @@ end
 
 function CECSSchema.reload()
 	reloadPending = true
+	engine:triggerLoadPending()
 end
+
+CECSSchema.reload()
 
 events:add(N_("ContentLoad"), function(e)
 	if reloadPending then

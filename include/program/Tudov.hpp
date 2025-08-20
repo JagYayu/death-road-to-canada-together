@@ -13,7 +13,9 @@
 
 #include "util/Micros.hpp"
 
+#include <format>
 #include <memory>
+#include <source_location>
 #include <string_view>
 
 namespace tudov
@@ -75,3 +77,38 @@ namespace tudov
 		}
 	};
 } // namespace tudov
+
+namespace tudov::impl
+{
+	TE_FORCEINLINE void AssertFailed(std::string_view condition, const std::source_location &location, void * = nullptr) noexcept
+	{
+		auto message = std::format("Assertion failed: {}\nFile: {}\nLine: {}\nFunction: {}",
+		                           condition,
+		                           location.file_name(),
+		                           location.line(),
+		                           location.function_name());
+		Tudov::FatalError(message);
+	}
+
+	template <typename... TArgs>
+	TE_FORCEINLINE void AssertFailed(std::string_view condition, const std::source_location &location, std::format_string<TArgs...> fmt, TArgs &&...args) noexcept
+	{
+		auto message = std::format("Assertion failed: {}\nFile: {}\nLine: {}\nFunction: {}\nMessage: {}",
+		                           condition,
+		                           location.file_name(),
+		                           location.line(),
+		                           location.function_name(),
+		                           std::format(fmt, std::forward<TArgs>(args)...));
+		Tudov::FatalError(message);
+	}
+} // namespace tudov::impl
+
+#define TE_ASSERT(Condition, ...)                                                   \
+	do                                                                              \
+	{                                                                               \
+		if (!(Condition)) [[unlikely]]                                              \
+		{                                                                           \
+			auto src = ::std::source_location::current();                           \
+			::tudov::impl::AssertFailed(#Condition, src __VA_OPT__(, __VA_ARGS__)); \
+		}                                                                           \
+	} while (false)

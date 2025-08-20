@@ -30,7 +30,6 @@
 #include "sol/types.hpp"
 #include "sol/variadic_args.hpp"
 
-#include <cassert>
 #include <corecrt_terminate.h>
 #include <memory>
 #include <set>
@@ -388,16 +387,19 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	    "EEventInvocation",
 	    "EPathListOption",
 	    // C++ exports
+	    "binaries",
 	    "engine",
 	    "events",
+	    "fonts",
 	    "images",
 	    "mods",
+	    "network",
 	    "vfs",
 	};
 
 	for (const char *key : keys)
 	{
-		assert(!modGlobals[key].valid() && "global field duplicated!");
+		TE_ASSERT(!modGlobals[key].valid(), "global field duplicated!");
 		modGlobals[key] = luaGlobals[key];
 	}
 
@@ -417,7 +419,7 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	}
 
 	auto result = _modGlobals.try_emplace(modUID, modGlobals);
-	assert(result.second);
+	TE_ASSERT(result.second);
 	return result.first->second;
 }
 

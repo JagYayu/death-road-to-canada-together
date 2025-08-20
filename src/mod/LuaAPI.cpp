@@ -16,11 +16,11 @@
 #include "graphic/Camera2D.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "mod/ModManager.hpp"
-#include "mod/ScriptLoader.hpp"
+#include "network/Client.hpp"
+#include "network/NetworkManager.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
 #include "program/WindowManager.hpp"
-#include "resource/FontResources.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/ImageResources.hpp"
 
@@ -105,6 +105,25 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "new", &EventManager::LuaNew,
 	            "invoke", &EventManager::LuaInvoke);
 
+	TE_USERTYPE(IClient,
+	            "connect", &IClient::LuaConnect,
+	            "disconnect", &IClient::Disconnect,
+	            "isConnected", &IClient::IsConnected,
+	            "isConnecting", &IClient::IsConnecting,
+	            "sendReliable", &IClient::LuaSendReliable,
+	            "sendUnreliable", &IClient::LuaSendUnreliable,
+	            "tryDisconnect", &IClient::TryDisconnect);
+
+	TE_USERTYPE(IServer,
+	            "broadcastReliable", &IServer::LuaBroadcastReliable,
+	            "broadcastUnreliable", &IServer::LuaBroadcastUnreliable,
+	            "host", &IServer::LuaHost,
+	            "isHosting", &IServer::IsHosting,
+	            "isShutdown", &IServer::IsShutdown,
+	            "sendReliable", &IServer::LuaSendReliable,
+	            "sendUnreliable", &IServer::LuaSendUnreliable,
+	            "shutdown", &IServer::Shutdown);
+
 	TE_USERTYPE(ImageResources,
 	            "getID", &ImageResources::LuaGetID,
 	            "getPath", &ImageResources::LuaGetPath);
@@ -112,6 +131,10 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	TE_USERTYPE(Log,
 	            "canOutput", &Log::CanOutput,
 	            "output", &Log::Output);
+
+	TE_USERTYPE(NetworkManager,
+	            "getClient", &NetworkManager::LuaGetClient,
+	            "getServer", &NetworkManager::LuaGetServer);
 
 	TE_USERTYPE(ModConfig,
 	            "author", &ModConfig::author,
@@ -175,9 +198,11 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	//             "patch", &Version::Patch);
 
 	lua["engine"] = &context.GetEngine();
-	lua["mods"] = &dynamic_cast<ModManager &>(context.GetModManager());
 	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
+	lua["mods"] = &dynamic_cast<ModManager &>(context.GetModManager());
+	lua["network"] = &dynamic_cast<NetworkManager &>(context.GetNetworkManager());
 	lua["vfs"] = &dynamic_cast<VirtualFileSystem &>(context.GetVirtualFileSystem());
+
 	auto &collection = context.GetGlobalResourcesCollection();
 	lua["binaries"] = collection.GetBinariesResources();
 	lua["fonts"] = collection.GetFontResources();

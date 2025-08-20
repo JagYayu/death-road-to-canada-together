@@ -16,7 +16,7 @@
 
 #include "json.hpp"
 
-#include <cassert>
+
 #include <chrono>
 #include <format>
 #include <fstream>
@@ -253,7 +253,7 @@ Log::Log(std::string_view module) noexcept
 Log::~Log() noexcept
 {
 	--logCount;
-	assert(logCount >= 0);
+	TE_ASSERT(logCount >= 0);
 }
 
 void Log::Process() noexcept

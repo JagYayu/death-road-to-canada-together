@@ -12,10 +12,14 @@
 #include "util/FileSystemWatch.hpp"
 
 #include "FileWatch.hpp"
+#include "data/PathType.hpp"
+#include "util/LogMicros.hpp"
 #include <filesystem>
 #include <stdexcept>
 
 using namespace tudov;
+
+using FileWatch = filewatch::FileWatch<std::string>;
 
 FileSystemWatch::FileSystemWatch() noexcept
     : _fileWatch(nullptr)
@@ -33,7 +37,7 @@ FileSystemWatch::~FileSystemWatch() noexcept
 	StopWatching();
 }
 
-DelegateEvent<std::string_view, EFileChangeType> &FileSystemWatch::GetOnCallback() noexcept
+DelegateEvent<std::string_view, EPathType, EFileChangeType> &FileSystemWatch::GetOnCallback() noexcept
 {
 	return _onCallback;
 }
@@ -60,9 +64,38 @@ void FileSystemWatch::StartWatching()
 		throw std::runtime_error("Path is not a valid!");
 	}
 
-	_fileWatch = new filewatch::FileWatch<std::string>(_path.generic_string(), [this](std::string_view path, const filewatch::Event changeType)
+	_fileWatch = new FileWatch(_path.generic_string(), [this](std::string_view path, const filewatch::Event changeType)
 	{
-		_onCallback.Invoke(path, static_cast<EFileChangeType>(changeType));
+		std::filesystem::file_type fileType;
+		try
+		{
+			fileType = std::filesystem::status(std::filesystem::path(_path / path)).type();
+		}
+		catch (const std::filesystem::filesystem_error &e)
+		{
+			fileType = std::filesystem::file_type::none;
+		}
+
+		EPathType pathType;
+		switch (fileType)
+		{
+		case std::filesystem::file_type::regular:
+			pathType = EPathType::File;
+			break;
+		case std::filesystem::file_type::directory:
+		case std::filesystem::file_type::junction:
+			pathType = EPathType::Directory;
+			break;
+		case std::filesystem::file_type::none:
+		case std::filesystem::file_type::not_found:
+			pathType = EPathType::None;
+			break;
+		default:
+			pathType = EPathType::Other;
+			break;
+		}
+
+		_onCallback.Invoke(path, pathType, static_cast<EFileChangeType>(changeType));
 	});
 }
 
@@ -70,7 +103,7 @@ void FileSystemWatch::StopWatching()
 {
 	if (_fileWatch != nullptr)
 	{
-		delete static_cast<filewatch::FileWatch<std::filesystem::path> *>(_fileWatch);
+		delete static_cast<FileWatch *>(_fileWatch);
 		_fileWatch = nullptr;
 	}
 }

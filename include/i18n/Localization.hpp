@@ -15,7 +15,7 @@
 #include "TranslationPack.hpp"
 #include "util/Log.hpp"
 
-#include <cassert>
+
 #include <format>
 #include <memory>
 #include <string_view>

@@ -16,7 +16,7 @@
 #include "i18n/TranslationPack.hpp"
 #include "util/Utils.hpp"
 
-#include <cassert>
+
 
 using namespace tudov;
 

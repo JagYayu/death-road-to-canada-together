@@ -12,6 +12,7 @@
 #include "data/Config.hpp"
 
 #include "data/Constants.hpp"
+#include "data/PathType.hpp"
 #include "util/FileSystemWatch.hpp"
 #include "util/Log.hpp"
 
@@ -106,9 +107,12 @@ Config::Config() noexcept
 	Config::Load();
 
 	_fileWatch = std::make_unique<FileSystemWatch>(std::string(AppConfigFile));
-	_fileWatch->GetOnCallback() += [this](std::string_view path, const EFileChangeType changeType)
+	_fileWatch->GetOnCallback() += [this](std::string_view path, EPathType pathType, EFileChangeType changeType)
 	{
-		Config::Load();
+		if (pathType == EPathType::File)
+		{
+			Config::Load();
+		}
 	};
 	_fileWatch->StartWatching();
 }

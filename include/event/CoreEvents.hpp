@@ -26,6 +26,7 @@ namespace tudov
 		// Keyboard events.
 
 		[[nodiscard]] virtual RuntimeEvent &KeyDown() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &KeyRepeat() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &KeyUp() noexcept = 0;
 
 		// Mouse events.
@@ -76,6 +77,7 @@ namespace tudov
 		TRuntimeEvent _debugCommand;
 		TRuntimeEvent _debugSnapshot;
 		TRuntimeEvent _keyDown;
+		TRuntimeEvent _keyRepeat;
 		TRuntimeEvent _keyUp;
 		TRuntimeEvent _mouseMove;
 		TRuntimeEvent _mouseButtonDown;
@@ -97,6 +99,7 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &DebugCommand() noexcept override;
 		[[nodiscard]] RuntimeEvent &DebugSnapshot() noexcept override;
 		[[nodiscard]] RuntimeEvent &KeyDown() noexcept override;
+		[[nodiscard]] RuntimeEvent &KeyRepeat() noexcept override;
 		[[nodiscard]] RuntimeEvent &KeyUp() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseMove() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseButtonDown() noexcept override;

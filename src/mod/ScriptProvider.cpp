@@ -18,7 +18,7 @@
 #include "util/LogMicros.hpp"
 #include "util/StringUtils.hpp"
 
-#include <cassert>
+
 #include <stdexcept>
 #include <string_view>
 #include <unordered_set>
@@ -38,6 +38,7 @@ std::string StaticScriptNamespace(const std::string &path)
 ScriptProvider::ScriptProvider(Context &context) noexcept
     : _context(context),
       _log(Log::Get("ScriptProvider")),
+      _versionID(0),
       _latestScriptID(0)
 {
 }
@@ -106,7 +107,7 @@ void ScriptProvider::Initialize() noexcept
 		if (textID != 0) [[likely]]
 		{
 			auto &&scriptName = StaticScriptNamespace(std::string(relativePath));
-			// assert(code != nullptr);
+			// TE_ASSERT(code != nullptr);
 
 			AddScriptImpl(scriptName, textID);
 		}
@@ -115,6 +116,8 @@ void ScriptProvider::Initialize() noexcept
 			TE_WARN("lua file was found in VFS, but not in Text! path: \"{}\"", relativePath);
 		}
 	}
+
+	++_versionID;
 }
 
 void ScriptProvider::Deinitialize() noexcept
@@ -145,8 +148,14 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, TextID scrip
 	const std::string &name = result.first->second.name;
 	TE_TRACE("Add script <{}>\"{}\"", scriptID, name);
 	_scriptName2ID.emplace(name, scriptID);
+	++_versionID;
 
 	return scriptID;
+}
+
+std::uint64_t ScriptProvider::GetVersionID() const noexcept
+{
+	return _versionID;
 }
 
 size_t ScriptProvider::GetCount() const noexcept
@@ -185,7 +194,7 @@ ScriptID ScriptProvider::GetScriptIDByName(std::string_view scriptName) const no
 
 std::optional<std::string_view> ScriptProvider::GetScriptNameByID(ScriptID scriptID) const noexcept
 {
-	auto &&it = _scriptID2Entry.find(scriptID);
+	auto it = _scriptID2Entry.find(scriptID);
 	if (it != _scriptID2Entry.end())
 	{
 		return it->second.name;
@@ -225,9 +234,12 @@ bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 	{
 		return false;
 	}
+
 	TE_TRACE("Remove script <{}>\"{}\"", scriptID, it->second.name);
 	_scriptName2ID.erase(it->second.name);
 	_scriptID2Entry.erase(it);
+	++_versionID;
+
 	return true;
 }
 
@@ -235,12 +247,15 @@ std::size_t ScriptProvider::RemoveScriptsBy(std::string_view uid) noexcept
 {
 	return std::erase_if(_scriptID2Entry, [this, &uid](const std::pair<const ScriptID, Entry> &pair)
 	{
-		if (pair.second.modUID == uid)
+		if (pair.second.modUID != uid)
 		{
-			_scriptName2ID.erase(pair.second.name);
-			return true;
+			return false;
 		}
-		return false;
+
+		_scriptName2ID.erase(pair.second.name);
+		++_versionID;
+
+		return true;
 	});
 }
 

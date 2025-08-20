@@ -40,7 +40,7 @@ std::string_view DebugScripts::GetName() noexcept
 
 DebugScripts::~DebugScripts() noexcept
 {
-	if (isOpeningScriptEditor && _openScriptEditorThread.joinable())
+	if (_isOpeningScriptEditor && _openScriptEditorThread.joinable())
 	{
 		_openScriptEditorThread.join();
 	}
@@ -56,11 +56,17 @@ void DebugScripts::OnOpened(IWindow &window) noexcept
 	UpdateCaches(window);
 }
 
+void DebugScripts::OnClosed(IWindow &window) noexcept
+{
+	_providedScriptsVersionID = 0;
+	_providedScriptsCache = {};
+}
+
 void DebugScripts::UpdateCaches(IWindow &window) noexcept
 {
 	IScriptProvider &scriptProvider = window.GetScriptProvider();
 
-	_providedScriptsCache.reserve(scriptProvider.GetEntriesSize());
+	_providedScriptsCache.clear();
 
 	for (const auto &[scriptID, entry] : scriptProvider)
 	{
@@ -73,19 +79,18 @@ void DebugScripts::UpdateCaches(IWindow &window) noexcept
 	});
 }
 
-void DebugScripts::OnClosed(IWindow &window) noexcept
-{
-	_providedScriptsCache = {};
-}
-
 void DebugScripts::UpdateAndRender(IWindow &window) noexcept
 {
+	if (_providedScriptsVersionID != window.GetScriptProvider().GetVersionID()) [[unlikely]]
+	{
+		UpdateCaches(window);
+		_providedScriptsVersionID = window.GetScriptProvider().GetVersionID();
+	}
+
 	std::float_t scale = window.GetGUIScale();
 
-	bool p_open = true;
-
 	ImGui::SetNextWindowSize(ImVec2(800 * scale, 600 * scale), ImGuiCond_FirstUseEver);
-	if (ImGui::Begin("Scripts", &p_open))
+	if (ImGui::Begin("Scripts"))
 	{
 		ImGui::InputText("Script name filter", _filterText, IM_ARRAYSIZE(_filterText));
 
@@ -237,7 +242,7 @@ void DebugScripts::UpdateAndRenderErrorsArea(IWindow &window, const ErrorsArea &
 	if (ImGui::Button("Open script editor") && selectedError != nullptr && SystemUtils::IsScriptEditorAvailable())
 	{
 		TextID textID = scriptProvider.GetScriptTextID(selectedError->scriptID);
-		if (textID != 0 && !isOpeningScriptEditor)
+		if (textID != 0 && !_isOpeningScriptEditor)
 		{
 			std::string_view scriptPath = window.GetGlobalResourcesCollection().GetTextResources().GetResourcePath(textID);
 			std::filesystem::path path = std::filesystem::current_path() / scriptPath;
@@ -245,11 +250,11 @@ void DebugScripts::UpdateAndRenderErrorsArea(IWindow &window, const ErrorsArea &
 			_openScriptEditorThread = SystemUtils::OpenScriptEditorAsync(path, selectedError->line, [this](const std::filesystem::path &path, std::uint32_t line)
 			{
 				TE_INFO("Opened file \"{}:{}\" with script editor", path.generic_string(), line);
-				isOpeningScriptEditor = false;
+				_isOpeningScriptEditor = false;
 			}, [this](const std::filesystem::path &path, std::uint32_t line, std::exception &e)
 			{
 				TE_WARN("Could not open file \"{}:{}\" with script editor: {}", path.generic_string(), line, e.what());
-				isOpeningScriptEditor = false;
+				_isOpeningScriptEditor = false;
 			});
 		}
 	}

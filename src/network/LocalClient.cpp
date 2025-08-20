@@ -34,12 +34,12 @@ ESocketType LocalClient::GetSocketType() const noexcept
 	return ESocketType::Local;
 }
 
-bool LocalClient::IsConnecting() noexcept
+bool LocalClient::IsConnecting() const noexcept
 {
 	return false;
 }
 
-bool LocalClient::IsConnected() noexcept
+bool LocalClient::IsConnected() const noexcept
 {
 	return _connected;
 }

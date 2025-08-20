@@ -20,11 +20,11 @@ namespace tudov
 	/**
 	 * @brief Provided for internal use by the C++ tudov engine.
 	 */
-	template <typename... Args>
+	template <typename... TArgs>
 	class DelegateEvent
 	{
 	  public:
-		using HandlerType = std::function<void(Args...)>;
+		using HandlerType = std::function<void(TArgs...)>;
 		using HandlerID = DelegateEventHandlerID;
 
 	  private:
@@ -59,9 +59,9 @@ namespace tudov
 		}
 
 		template <typename TObj>
-		HandlerID Bind(TObj *obj, void (TObj::*func)(Args...))
+		HandlerID Bind(TObj *obj, void (TObj::*func)(TArgs...))
 		{
-			return *this += [obj, func](Args... args)
+			return *this += [obj, func](TArgs... args)
 			{
 				(obj->*func)(args...);
 			};

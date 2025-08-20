@@ -20,6 +20,7 @@
 #include <tuple>
 
 union SDL_Event;
+struct SDL_KeyboardEvent;
 struct SDL_Window;
 
 namespace tudov
@@ -86,5 +87,8 @@ namespace tudov
 
 	  protected:
 		bool RenderPreImpl() noexcept;
+
+	  private:
+		bool HandleEventKey(SDL_KeyboardEvent &e) noexcept;
 	};
 } // namespace tudov

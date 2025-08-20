@@ -17,6 +17,7 @@
 #include "data/GlobalStorageLocation.hpp"
 #include "data/GlobalStorageManager.hpp"
 #include "data/HierarchyIterationResult.hpp"
+#include "data/PathType.hpp"
 #include "data/VirtualFileSystem.hpp"
 #include "data/ZipStorage.hpp"
 #include "program/Engine.hpp"
@@ -146,9 +147,9 @@ void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 			std::filesystem::path absolutePath = GlobalStorageLocation::GetPath(EGlobalStorageLocation::Application) / Constants::DataDeveloperAssetsDirectory;
 
 			_developerDirectoryWatch = std::make_unique<FileSystemWatch>(absolutePath);
-			_developerDirectoryWatch->GetOnCallback() += [this](std::string_view path, EFileChangeType changeType)
+			_developerDirectoryWatch->GetOnCallback() += [this](std::string_view path, EPathType pathType, EFileChangeType changeType)
 			{
-				DeveloperDirectoryWatchCallback(Constants::DataDeveloperAssetsDirectory / std::filesystem::path(path), changeType);
+				DeveloperDirectoryWatchCallback(Constants::DataDeveloperAssetsDirectory / std::filesystem::path(path), pathType, changeType);
 			};
 			_developerDirectoryWatch->StartWatching();
 		}
@@ -159,15 +160,18 @@ void AssetsManager::LoadAssetsFromDeveloperDirectory() noexcept
 	}
 }
 
-void AssetsManager::DeveloperDirectoryWatchCallback(const std::filesystem::path &filePath, EFileChangeType type)
+void AssetsManager::DeveloperDirectoryWatchCallback(const std::filesystem::path &path, EPathType pathType, EFileChangeType type)
 {
-	auto fileExtension = filePath.extension();
-	if (fileExtension.has_extension())
+	switch (pathType)
 	{
-		std::string file = filePath.generic_string();
+	case EPathType::None:
+	case EPathType::Directory:
+	case EPathType::File:
+	{
+		std::string file = path.generic_string();
 		Debug("File in developer directory changed, file: \"{}\", type: {}", file, static_cast<int>(type));
 
-		_developerFilesTrigger.Invoke(filePath, std::move(type));
+		_developerFilesTrigger.Invoke(path, std::move(type));
 
 		GlobalStorage &applicationGlobalStorage = GetGlobalStorageManager().GetApplicationStorage();
 		GlobalResourcesCollection &globalResourcesCollection = GetGlobalResourcesCollection();
@@ -178,11 +182,14 @@ void AssetsManager::DeveloperDirectoryWatchCallback(const std::filesystem::path 
 		case EFileChangeType::Added:
 		case EFileChangeType::Removed:
 		case EFileChangeType::Modified:
-			globalResourcesCollection.ReloadResource(filePath, bytes);
+			globalResourcesCollection.ReloadResource(path, bytes);
 		case EFileChangeType::RenamedOld:
 		case EFileChangeType::RenamedNew:
 			break;
 		}
+	}
+	case EPathType::Other:
+		break;
 	}
 }
 

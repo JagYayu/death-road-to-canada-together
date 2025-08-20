@@ -24,7 +24,7 @@
 #include "util/LogMicros.hpp"
 
 #include <algorithm>
-#include <cassert>
+
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
@@ -159,7 +159,7 @@ std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 			{
 				return lhsOrder < rhsOrder;
 			}
-			return lhs.scriptID < rhs.scriptID;
+			return lhs.name < rhs.name;
 		});
 	}
 
@@ -194,24 +194,19 @@ TE_FORCEINLINE void PCallHandler(const PCallHandlerObject &obj, EventHandler &ha
 
 void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEventInvocation options)
 {
+	IScriptEngine &scriptEngine = eventManager.GetScriptEngine();
+
 	Profile *profile;
 	if (_profile != nullptr && !EnumFlag::HasAny(options, EEventInvocation::NoProfiler))
 	{
 		profile = _profile.get();
+		profile->eventProfiler.BeginEvent(scriptEngine);
 	}
 	else
 	{
 		profile = nullptr;
 	}
 
-	InvocationTrackID trackID;
-	if (EnumFlag::HasAny(options, EEventInvocation::TrackProgression))
-	{
-		trackID = _invocationTrackID;
-		++_invocationTrackID;
-	}
-
-	IScriptEngine &scriptEngine = eventManager.GetScriptEngine();
 	PCallHandlerObject obj{
 	    _log,
 	    eventManager,
@@ -219,9 +214,15 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 
 	bool anyKey = key.IsAny();
 
-	if (profile)
+	Progression *progression;
+	if (EnumFlag::HasAny(options, EEventInvocation::TrackProgression))
 	{
-		profile->eventProfiler.BeginEvent(scriptEngine);
+		++_invocationTrackID;
+		_invocationTracks[_invocationTrackID] = {0, 0};
+	}
+	else
+	{
+		progression = nullptr;
 	}
 
 	if (EnumFlag::HasAny(options, EEventInvocation::CacheHandlers))
@@ -260,16 +261,64 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 
 		if (anyKey)
 		{
-			for (EventHandler *handler : *cache)
+			if (_profile && _profile->traceHandlers)
 			{
-				PCallHandler(obj, *handler, e);
+				if (progression != nullptr)
+				{
+					progression->total = cache->size();
+					for (EventHandler *handler : *cache)
+					{
+						PCallHandler(obj, *handler, e);
+						_profile->eventProfiler.TraceHandler(scriptEngine, handler->name);
+						++progression->value;
+					}
+				}
+				else
+				{
+					for (EventHandler *handler : *cache)
+					{
+						PCallHandler(obj, *handler, e);
+						_profile->eventProfiler.TraceHandler(scriptEngine, handler->name);
+					}
+				}
+			}
+			else
+			{
+				if (progression != nullptr)
+				{
+					progression->total = cache->size();
+					for (EventHandler *handler : *cache)
+					{
+						PCallHandler(obj, *handler, e);
+						++progression->value;
+					}
+				}
+				else
+				{
+					for (EventHandler *handler : *cache)
+					{
+						PCallHandler(obj, *handler, e);
+					}
+				}
 			}
 		}
 		else
 		{
-			for (EventHandler *handler : *cache)
+			if (progression != nullptr)
 			{
-				PCallHandler(obj, *handler, e, key);
+				progression->total = cache->size();
+				for (EventHandler *handler : *cache)
+				{
+					PCallHandler(obj, *handler, e, key);
+					++progression->value;
+				}
+			}
+			else
+			{
+				for (EventHandler *handler : *cache)
+				{
+					PCallHandler(obj, *handler, e, key);
+				}
 			}
 		}
 	}
@@ -279,27 +328,19 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 		{
 			if (_profile && _profile->traceHandlers)
 			{
-				for (EventHandler &handler : _handlers)
+				if (progression != nullptr)
 				{
-					PCallHandler(obj, handler, e);
-					_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
+					progression->total = _handlers.size();
+					for (EventHandler &handler : _handlers)
+					{
+						PCallHandler(obj, handler, e);
+						_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
+						++progression->value;
+					}
 				}
-			}
-			else
-			{
-				for (EventHandler &handler : _handlers)
+				else
 				{
-					PCallHandler(obj, handler, e, key);
-				}
-			}
-		}
-		else
-		{
-			if (_profile && _profile->traceHandlers)
-			{
-				for (EventHandler &handler : _handlers)
-				{
-					if (handler.key.Match(key))
+					for (EventHandler &handler : _handlers)
 					{
 						PCallHandler(obj, handler, e);
 						_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
@@ -308,11 +349,75 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 			}
 			else
 			{
-				for (EventHandler &handler : _handlers)
+				if (progression != nullptr)
 				{
-					if (handler.key.Match(key))
+					progression->total = _handlers.size();
+					for (EventHandler &handler : _handlers)
 					{
 						PCallHandler(obj, handler, e, key);
+						++progression->value;
+					}
+				}
+				else
+				{
+					for (EventHandler &handler : _handlers)
+					{
+						PCallHandler(obj, handler, e, key);
+					}
+				}
+			}
+		}
+		else
+		{
+			if (_profile && _profile->traceHandlers)
+			{
+				if (progression != nullptr)
+				{
+					progression->total = _handlers.size();
+					for (EventHandler &handler : _handlers)
+					{
+						if (handler.key.Match(key))
+						{
+							PCallHandler(obj, handler, e);
+							_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
+							++progression->value;
+						}
+					}
+				}
+				else
+				{
+					for (EventHandler &handler : _handlers)
+					{
+						if (handler.key.Match(key))
+						{
+							PCallHandler(obj, handler, e);
+							_profile->eventProfiler.TraceHandler(scriptEngine, handler.name);
+						}
+					}
+				}
+			}
+			else
+			{
+				if (progression != nullptr)
+				{
+					progression->total = _handlers.size();
+					for (EventHandler &handler : _handlers)
+					{
+						if (handler.key.Match(key))
+						{
+							PCallHandler(obj, handler, e, key);
+							++progression->value;
+						}
+					}
+				}
+				else
+				{
+					for (EventHandler &handler : _handlers)
+					{
+						if (handler.key.Match(key))
+						{
+							PCallHandler(obj, handler, e, key);
+						}
 					}
 				}
 			}

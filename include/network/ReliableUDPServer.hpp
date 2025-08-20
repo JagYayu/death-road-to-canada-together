@@ -51,10 +51,10 @@ namespace tudov
 
 		void Host(const HostArgs &args) override;
 		void Shutdown() override;
-		bool IsHosting() noexcept override;
-		std::optional<std::string_view> GetTitle() noexcept override;
-		std::optional<std::string_view> GetPassword() noexcept override;
-		std::optional<std::size_t> GetMaxClients() noexcept override;
+		bool IsHosting() const noexcept override;
+		std::optional<std::string_view> GetTitle() const noexcept override;
+		std::optional<std::string_view> GetPassword() const noexcept override;
+		std::optional<std::size_t> GetMaxClients() const noexcept override;
 		void SendReliable(std::uint64_t clientID, std::string_view data) override;
 		void SendUnreliable(std::uint64_t clientID, std::string_view data) override;
 		void BroadcastReliable(std::string_view data) override;

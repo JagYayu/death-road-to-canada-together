@@ -14,12 +14,18 @@
 #include "NetworkComponent.hpp"
 #include "data/Constants.hpp"
 
+#include "sol/forward.hpp"
+
 #include <optional>
 
 namespace tudov
 {
+	class LuaAPI;
+
 	struct IServer : public INetworkComponent
 	{
+		friend LuaAPI;
+
 		using ClientID = std::uint64_t;
 
 		struct HostArgs
@@ -35,10 +41,10 @@ namespace tudov
 
 		virtual void Host(const HostArgs &args) = 0;
 		virtual void Shutdown() = 0;
-		virtual bool IsHosting() noexcept = 0;
-		virtual std::optional<std::string_view> GetTitle() noexcept = 0;
-		virtual std::optional<std::string_view> GetPassword() noexcept = 0;
-		virtual std::optional<std::size_t> GetMaxClients() noexcept = 0;
+		virtual bool IsHosting() const noexcept = 0;
+		virtual std::optional<std::string_view> GetTitle() const noexcept = 0;
+		virtual std::optional<std::string_view> GetPassword() const noexcept = 0;
+		virtual std::optional<std::size_t> GetMaxClients() const noexcept = 0;
 		virtual void SendReliable(ClientID clientID, std::string_view data) = 0;
 		virtual void SendUnreliable(ClientID clientID, std::string_view data) = 0;
 		virtual void BroadcastReliable(std::string_view data) = 0;
@@ -48,5 +54,12 @@ namespace tudov
 		{
 			return !IsHosting();
 		}
+
+	  private:
+		void LuaHost(sol::object args) noexcept;
+		void LuaSendReliable(sol::object clientID, sol::object data) noexcept;
+		void LuaSendUnreliable(sol::object clientID, sol::object data) noexcept;
+		void LuaBroadcastReliable(sol::object data) noexcept;
+		void LuaBroadcastUnreliable(sol::object data) noexcept;
 	};
 } // namespace tudov

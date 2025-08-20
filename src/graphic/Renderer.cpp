@@ -320,7 +320,7 @@ void Renderer::LuaBeginTarget(sol::object renderTarget) noexcept
 	}
 	catch (std::exception &e)
 	{
-		assert(false && "UNHANDLED ERROR");
+		TE_ASSERT(false, "UNHANDLED ERROR");
 	}
 }
 
@@ -347,7 +347,7 @@ std::shared_ptr<RenderTarget> Renderer::LuaEndTarget() noexcept
 	}
 	catch (std::exception &e)
 	{
-		assert(false && "UNHANDLED ERROR");
+		TE_ASSERT(false, "UNHANDLED ERROR");
 		return nullptr;
 	}
 }

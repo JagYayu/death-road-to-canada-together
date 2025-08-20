@@ -26,7 +26,7 @@
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
 
-#include <cassert>
+
 #include <corecrt_terminate.h>
 #include <format>
 #include <memory>
@@ -234,7 +234,7 @@ void ScriptLoader::LoadAllScripts()
 	for (auto &&[scriptID, entry] : scriptProvider)
 	{
 		std::shared_ptr<Text> code = textResources.GetResource(entry.textID);
-		assert(code != nullptr);
+		TE_ASSERT(code != nullptr);
 		LoadImpl(scriptID, entry.name, code->View(), entry.modUID);
 	}
 
@@ -302,7 +302,7 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 		auto &&function = result.get<sol::protected_function>();
 		auto &&scriptModule = std::make_shared<ScriptModule>(scriptID, function);
 		auto &&[it, inserted] = _scriptModules.try_emplace(scriptID, scriptModule);
-		assert(inserted);
+		TE_ASSERT(inserted);
 
 		if (GetScriptProvider().IsStaticScript(scriptName))
 		{
@@ -336,7 +336,7 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 
 		auto &&scriptModule = std::make_shared<ScriptModule>(scriptID, sol::protected_function());
 		auto &&[_, inserted] = _scriptModules.try_emplace(scriptID, scriptModule);
-		assert(inserted);
+		TE_ASSERT(inserted);
 
 		_onFailedLoadScript(scriptID, scriptName, std::string_view(err.what()));
 

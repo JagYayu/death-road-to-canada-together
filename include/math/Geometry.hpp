@@ -42,7 +42,7 @@ namespace tudov::impl
 
 		static constexpr size_t Dimension = N;
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit GeoImpl(Args &&...args) noexcept
 		    : GeometryData<N, T>(std::forward<Args>(args)...)
 		{
@@ -105,7 +105,7 @@ namespace tudov::impl
 			std::array<T, 4> array;
 		};
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit GeometryData(Args &&...args) noexcept
 		    : array(std::forward<Args>(args)...){};
 
@@ -126,7 +126,7 @@ namespace tudov::impl
 			std::array<T, 4> array;
 		};
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit GeometryData(Args &&...args) noexcept
 		    : array(std::forward<Args>(args)...){};
 
@@ -147,7 +147,7 @@ namespace tudov::impl
 			std::array<T, 6> array;
 		};
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit GeometryData(Args &&...args) noexcept
 		    : array(std::forward<Args>(args)...){};
 
@@ -163,7 +163,7 @@ namespace tudov
 	{
 		constexpr explicit Geo() noexcept = default;
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit Geo(Args &&...args) noexcept
 		    : impl::GeoImpl<Dimension, TValue>(std::forward<Args>(args)...)
 		{
@@ -177,7 +177,7 @@ namespace tudov
 	{
 		constexpr explicit Geo() noexcept = default;
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit Geo(Args &&...args) noexcept
 		    : impl::GeoImpl<2, TValue>(std::forward<Args>(args)...)
 		{
@@ -196,7 +196,7 @@ namespace tudov
 	{
 		constexpr explicit Geo() noexcept = default;
 
-		template <typename... Args>
+		template <typename... TArgs>
 		inline constexpr explicit Geo(Args &&...args) noexcept
 		    : impl::GeoImpl<2, TValue>(std::forward<Args>(args)...)
 		{

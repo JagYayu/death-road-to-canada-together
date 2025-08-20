@@ -70,8 +70,8 @@ namespace tudov
 			return it != _path2ID.end() ? it->second : false;
 		}
 
-		template <typename TDerived = TResource, typename... Args>
-		inline ResourceID Load(std::string_view path, Args &&...args)
+		template <typename TDerived = TResource, typename... TArgs>
+		inline ResourceID Load(std::string_view path, TArgs &&...args)
 		{
 			static_assert(std::is_base_of_v<TResource, TDerived>, "TDerived must inherit from T");
 
@@ -81,12 +81,12 @@ namespace tudov
 			}
 
 			++_latestID;
-			auto id = _latestID;
+			ResourceID id = _latestID;
 
 			std::shared_ptr<TResource> resource;
 			try
 			{
-				resource = std::static_pointer_cast<TResource>(std::make_shared<TDerived>(path, std::forward<Args>(args)...));
+				resource = std::static_pointer_cast<TResource>(std::make_shared<TDerived>(path, std::forward<TArgs>(args)...));
 			}
 			catch (const std::exception &e)
 			{

@@ -12,11 +12,13 @@
 #pragma once
 
 #include "debug/DebugManager.hpp"
+#include "util/Log.hpp"
 
 #include <memory>
 #include <vector>
 
 union SDL_Event;
+using SDL_WindowID = std::uint32_t;
 
 namespace tudov
 {
@@ -24,7 +26,7 @@ namespace tudov
 	struct IDebugManager;
 	struct IWindow;
 
-	class WindowManager
+	class WindowManager : private ILogProvider
 	{
 	  private:
 		Context &_context;
@@ -36,13 +38,18 @@ namespace tudov
 	  public:
 		explicit WindowManager(Context &context) noexcept;
 
+		Log &GetLog() noexcept override;
+
+		std::shared_ptr<IWindow> GetWindowByID(SDL_WindowID windowID) noexcept;
+
 		std::shared_ptr<IWindow> GetMainWindow() noexcept;
 		std::shared_ptr<const IWindow> GetMainWindow() const noexcept;
 		std::vector<std::shared_ptr<IWindow>> &GetSubWindows() noexcept;
 		const std::vector<std::shared_ptr<IWindow>> &GetSubWindows() const noexcept;
+
 		std::shared_ptr<IDebugManager> GetDebugManager() noexcept;
 		std::shared_ptr<const IDebugManager> GetDebugManager() const noexcept;
-		
+
 		void AddSubWindow(const std::shared_ptr<IWindow> &window);
 		void RemoveSubWindow(const std::shared_ptr<IWindow> &window);
 
@@ -50,7 +57,7 @@ namespace tudov
 		void InitializeMainWindow() noexcept;
 		void CloseWindows() noexcept;
 		void HandleEvents() noexcept;
-		void HandleEvents(SDL_Event &sdlEvent) noexcept;
+		bool HandleEvent(SDL_Event &sdlEvent) noexcept;
 		void Render() noexcept;
 
 		inline std::vector<std::shared_ptr<IWindow>>::iterator begin() noexcept

@@ -19,6 +19,7 @@ namespace tudov
 	struct IGlobalStorageManager;
 	struct ILuaAPI;
 	struct IModManager;
+	struct INetworkManager;
 	struct IScriptEngine;
 	struct IScriptErrors;
 	struct IScriptLoader;
@@ -56,6 +57,7 @@ namespace tudov
 		IScriptProvider &GetScriptProvider();
 		IGlobalStorageManager &GetGlobalStorageManager();
 		ILocalization &GetLocalization();
+		INetworkManager &GetNetworkManager();
 		GlobalResourcesCollection &GetGlobalResourcesCollection();
 		VirtualFileSystem &GetVirtualFileSystem();
 		WindowManager &GetWindowManager();
@@ -108,6 +110,11 @@ namespace tudov
 		TE_FORCEINLINE const ILocalization &GetLocalization() const
 		{
 			return This()->GetLocalization();
+		}
+
+		TE_FORCEINLINE const INetworkManager &GetNetworkManager() const
+		{
+			return const_cast<Context *>(this)->GetNetworkManager();
 		}
 
 		TE_FORCEINLINE const GlobalResourcesCollection &GetGlobalResourcesCollection() const
@@ -239,6 +246,16 @@ namespace tudov
 		const ILocalization &GetLocalization() const noexcept
 		{
 			return GetContext().GetLocalization();
+		}
+
+		INetworkManager &GetNetworkManager() noexcept
+		{
+			return GetContext().GetNetworkManager();
+		}
+
+		const INetworkManager &GetNetworkManager() const noexcept
+		{
+			return GetContext().GetNetworkManager();
 		}
 
 		TE_FORCEINLINE const IGlobalStorageManager &GetGlobalStorageManager() const noexcept

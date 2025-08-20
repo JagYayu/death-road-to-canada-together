@@ -11,16 +11,19 @@
 
 #include "network/NetworkManager.hpp"
 
+#include "debug/DebugConsole.hpp"
+#include "debug/DebugManager.hpp"
+#include "exception/BadEnumException.hpp"
+#include "exception/Exception.hpp"
 #include "network/LocalClient.hpp"
 #include "network/LocalServer.hpp"
 #include "network/ReliableUDPClient.hpp"
 #include "network/ReliableUDPServer.hpp"
 #include "network/SocketType.hpp"
-#include "debug/DebugConsole.hpp"
-#include "debug/DebugManager.hpp"
-#include "exception/BadEnumException.hpp"
-#include "exception/Exception.hpp"
+#include "sol/types.hpp"
+#include "util/Utils.hpp"
 
+#include <cmath>
 #include <format>
 #include <memory>
 #include <string>
@@ -464,4 +467,36 @@ bool NetworkManager::Update() noexcept
 		return true;
 	}
 	return false;
+}
+
+IClient *NetworkManager::LuaGetClient(sol::object uid) noexcept
+{
+	if (uid.is<sol::nil_t>())
+	{
+		return GetClient();
+	}
+	else if (uid.is<std::double_t>())
+	{
+		return GetClient(uid.as<std::double_t>());
+	}
+	else [[unlikely]]
+	{
+		GetScriptEngine().ThrowError("bad argument #1 to 'uid' (number or nil expected, got {})", GetLuaTypeStringView(uid.get_type()));
+	}
+}
+
+IServer *NetworkManager::LuaGetServer(sol::object uid) noexcept
+{
+	if (uid.is<sol::nil_t>())
+	{
+		return GetServer();
+	}
+	else if (uid.is<std::double_t>())
+	{
+		return GetServer(uid.as<std::double_t>());
+	}
+	else [[unlikely]]
+	{
+		GetScriptEngine().ThrowError("bad argument #1 to 'uid' (number or nil expected, got {})", GetLuaTypeStringView(uid.get_type()));
+	}
 }

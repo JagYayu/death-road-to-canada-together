@@ -34,8 +34,8 @@ namespace tudov
 			                          static_cast<typename std::underlying_type<TEnum>::type>(b));
 		}
 
-		template <ScopeEnum TEnum, typename... Args>
-		TE_FORCEINLINE static constexpr TEnum BitAnd(TEnum first, Args... args) noexcept
+		template <ScopeEnum TEnum, typename... TArgs>
+		TE_FORCEINLINE static constexpr TEnum BitAnd(TEnum first, TArgs... args) noexcept
 		{
 			return BitAnd(first, BitAnd(args...));
 		}
@@ -59,8 +59,8 @@ namespace tudov
 			                          static_cast<typename std::underlying_type<TEnum>::type>(b));
 		}
 
-		template <ScopeEnum TEnum, typename... Args>
-		TE_FORCEINLINE static constexpr TEnum BitOr(TEnum first, Args... args) noexcept
+		template <ScopeEnum TEnum, typename... TArgs>
+		TE_FORCEINLINE static constexpr TEnum BitOr(TEnum first, TArgs... args) noexcept
 		{
 			return BitOr(first, BitOr(args...));
 		}
@@ -78,8 +78,8 @@ namespace tudov
 			                          static_cast<std::underlying_type_t<TEnum>>(b));
 		}
 
-		template <ScopeEnum TEnum, typename... Args>
-		TE_FORCEINLINE static constexpr TEnum BitXOr(TEnum first, Args... args) noexcept
+		template <ScopeEnum TEnum, typename... TArgs>
+		TE_FORCEINLINE static constexpr TEnum BitXOr(TEnum first, TArgs... args) noexcept
 		{
 			return BitXOr(first, BitXOr(args...));
 		}
@@ -90,8 +90,8 @@ namespace tudov
 			return BitAnd(a, b) == b;
 		}
 
-		template <ScopeEnum TEnum, typename... Args>
-		TE_FORCEINLINE static constexpr bool HasAll(TEnum a, TEnum first, Args... args) noexcept
+		template <ScopeEnum TEnum, typename... TArgs>
+		TE_FORCEINLINE static constexpr bool HasAll(TEnum a, TEnum first, TArgs... args) noexcept
 		{
 			return HasAll(a, first) && HasAll(a, args...);
 		}
@@ -102,8 +102,8 @@ namespace tudov
 			return BitAnd(a, b) != TEnum(0);
 		}
 
-		template <ScopeEnum TEnum, typename... Args>
-		TE_FORCEINLINE static constexpr bool HasAny(TEnum a, TEnum first, Args... args) noexcept
+		template <ScopeEnum TEnum, typename... TArgs>
+		TE_FORCEINLINE static constexpr bool HasAny(TEnum a, TEnum first, TArgs... args) noexcept
 		{
 			return HasAny(a, first) || HasAny(a, args...);
 		}

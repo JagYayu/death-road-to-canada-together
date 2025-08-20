@@ -92,11 +92,11 @@ namespace tudov
 
 		virtual void ClearPersistVariables() noexcept = 0;
 
-		template <typename... Args>
+		template <typename... TArgs>
 		[[noreturn]]
-		inline void ThrowError(std::format_string<Args...> fmt, Args &&...args) noexcept
+		inline void ThrowError(std::format_string<TArgs...> fmt, TArgs &&...args) noexcept
 		{
-			ThrowError(std::format(fmt, std::forward<Args>(args)...));
+			ThrowError(std::format(fmt, std::forward<TArgs>(args)...));
 		}
 	};
 

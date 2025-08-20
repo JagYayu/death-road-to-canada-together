@@ -15,11 +15,13 @@
 #include "debug/DebugManager.hpp"
 #include "program/MainWindow.hpp"
 #include "util/Log.hpp"
+#include "util/LogMicros.hpp"
 #include "util/MicrosImpl.hpp"
 
 #include "SDL3/SDL_events.h"
 
 #include <algorithm>
+#include <memory>
 #include <stdexcept>
 
 using namespace tudov;
@@ -27,6 +29,11 @@ using namespace tudov;
 WindowManager::WindowManager(Context &context) noexcept
     : _context(context)
 {
+}
+
+Log &WindowManager::GetLog() noexcept
+{
+	return *Log::Get(TE_NAMEOF(WindowManager));
 }
 
 TE_GEN_GETTER_SMART_PTR(std::shared_ptr, IWindow, WindowManager::GetMainWindow, _mainWindow, noexcept);
@@ -118,22 +125,19 @@ bool IsWindowShouldClose(const std::shared_ptr<IWindow> &window) noexcept
 
 void WindowManager::HandleEvents() noexcept
 {
-	// for (auto &&window : _windows)
-	// {
-	// 	window->HandleEvents();
-	// }
-	//
-	// _windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
 }
 
-void WindowManager::HandleEvents(SDL_Event &sdlEvent) noexcept
+bool WindowManager::HandleEvent(SDL_Event &sdlEvent) noexcept
 {
-	for (auto &&window : _windows)
+	bool handled = false;
+	for (const std::shared_ptr<IWindow> &window : _windows)
 	{
-		window->HandleEvent(sdlEvent);
+		handled = window->HandleEvent(sdlEvent) || handled;
 	}
 
 	_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());
+
+	return handled;
 }
 
 void WindowManager::Render() noexcept

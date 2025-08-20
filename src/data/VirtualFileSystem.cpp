@@ -147,7 +147,7 @@ void VirtualFileSystem::MountFile(const std::filesystem::path &path, std::span<c
 
 	for (const auto &part : path)
 	{
-		auto partStr = part.generic_string();
+		const std::string &partStr = part.generic_string();
 
 		if (part.has_extension()) // TODO or this is the last part, then we assume it is a file ... right?
 		{
@@ -289,8 +289,10 @@ EPathType VirtualFileSystem::GetPathType(const std::filesystem::path &path) noex
 	{
 		return EPathType::File;
 	}
-
-	return EPathType::None;
+	else
+	{
+		return EPathType::Other;
+	}
 }
 
 std::chrono::time_point<std::chrono::system_clock> VirtualFileSystem::GetPathDateModified(const std::filesystem::path &path)

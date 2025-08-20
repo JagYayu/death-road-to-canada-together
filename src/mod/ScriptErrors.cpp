@@ -14,7 +14,7 @@
 #include "mod/ScriptLoader.hpp"
 
 #include <algorithm>
-#include <cassert>
+
 #include <memory>
 #include <optional>
 #include <regex>
@@ -117,7 +117,7 @@ std::vector<std::shared_ptr<ScriptError>> ScriptErrors::GetLoadtimeErrors() cons
 
 	for (auto &[scriptID, error] : _scriptLoadtimeErrors)
 	{
-		assert(error != nullptr);
+		TE_ASSERT(error != nullptr);
 		errors.emplace_back(error);
 	}
 

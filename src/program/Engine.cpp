@@ -283,9 +283,7 @@ void Engine::ProcessTick() noexcept
 		HandleEvent(*event);
 	}
 	_sdlEvents.clear();
-
-	// ? does nothing
-	// _windowManager->HandleEvents();
+	_sdlEvents.reserve(0);
 }
 
 void Engine::ProcessRender() noexcept
@@ -295,7 +293,14 @@ void Engine::ProcessRender() noexcept
 
 void Engine::HandleEvent(SDL_Event &event) noexcept
 {
-	_windowManager->HandleEvents(event);
+	if (_windowManager->HandleEvent(event))
+	{
+		return;
+	}
+
+	switch (event.type)
+	{
+	}
 }
 
 void Engine::Event(SDL_Event &event) noexcept
@@ -307,7 +312,7 @@ void Engine::Event(SDL_Event &event) noexcept
 		return;
 	}
 
-	if (_sdlEvents.size() < 999)
+	if (_sdlEvents.size() < 999) [[likely]]
 	{
 		_sdlEvents.emplace_back(std::make_unique<SDL_Event>(event));
 	}

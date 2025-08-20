@@ -69,26 +69,62 @@ void Window::HandleEvents() noexcept
 
 bool Window::HandleEvent(SDL_Event &event) noexcept
 {
-	if (SDL_GetWindowID(_sdlWindow) != event.window.windowID)
+	IEventManager &eventManager = GetEventManager();
+
+	if (event.type >= SDL_EVENT_WINDOW_FIRST && event.type <= SDL_EVENT_WINDOW_LAST)
+	{
+		if (SDL_GetWindowID(_sdlWindow) != event.window.windowID)
+		{
+			return false;
+		}
+	}
+	else if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP)
+	{
+		SDL_KeyboardEvent &key = event.key;
+		SDL_WindowID windowID = SDL_GetWindowID(_sdlWindow);
+		if (windowID != key.windowID)
+		{
+			return false;
+		}
+
+		RuntimeEvent *runtimeEvent;
+		if (event.type == SDL_EVENT_KEY_UP)
+		{
+			runtimeEvent = &GetEventManager().GetCoreEvents().KeyUp();
+		}
+		else if (key.repeat)
+		{
+			runtimeEvent = &GetEventManager().GetCoreEvents().KeyRepeat();
+		}
+		else
+		{
+			runtimeEvent = &GetEventManager().GetCoreEvents().KeyDown();
+		}
+
+		sol::table e = GetScriptEngine().CreateTable(0, 3);
+		e["window"] = this;
+		e["windowID"] = windowID;
+		e[""] = key.down;
+
+		runtimeEvent->Invoke(e, windowID);
+	}
+	else
 	{
 		return false;
 	}
 
-	auto &&eventManager = GetEventManager();
-	switch (event.type)
-	{
-	case SDL_EVENT_QUIT:
-		Close();
-		break;
-	case SDL_EVENT_LOW_MEMORY:
-		break;
-	case SDL_EVENT_MOUSE_MOTION:
-		break;
-	default:
-		break;
-	}
-
 	return true;
+}
+
+bool Window::HandleEventKey(SDL_KeyboardEvent &e) noexcept
+{
+	// if (SDL_GetWindowID(_sdlWindow) == e.windowID)
+	// {
+	// 	if (e.type != SDL_EVENT_KEY_DOWN)
+	// 	{
+	// 	}
+	// }
+	return 1;
 }
 
 void Window::Render() noexcept

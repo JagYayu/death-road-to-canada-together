@@ -17,7 +17,7 @@
 
 #define TE_G_LOG(Name, Verb, Format, ...)                       \
 	if (auto &&log = ::tudov::Log::Get(Name); log->Can##Verb()) \
-	log->Verb(Format, __VA_ARGS__)
+	log->Verb(Format __VA_OPT__(, __VA_ARGS__))
 
 #define TE_G_TRACE(Name, Format, ...) TE_G_LOG(Name, Trace, Format, __VA_ARGS__)
 #define TE_G_DEBUG(Name, Format, ...) TE_G_LOG(Name, Debug, Format, __VA_ARGS__)
@@ -32,7 +32,7 @@
 
 #define TE_L_LOG(Name, Verb, Format, ...) \
 	if (TE_L_log->Can##Verb())            \
-	TE_L_log->Verb(Format, __VA_ARGS__)
+	TE_L_log->Verb(Format __VA_OPT__(, __VA_ARGS__))
 
 #define TE_L_TRACE(Format, ...) TE_L_LOG(Name, Trace, Format, __VA_ARGS__)
 #define TE_L_DEBUG(Format, ...) TE_L_LOG(Name, Debug, Format, __VA_ARGS__)
@@ -47,7 +47,7 @@
 
 #define TE_LOG(Verb, Format, ...) \
 	if (this->Can##Verb())        \
-	this->Verb(Format, __VA_ARGS__)
+	this->Verb(Format __VA_OPT__(, __VA_ARGS__))
 
 #define TE_TRACE(Format, ...) TE_LOG(Trace, Format, __VA_ARGS__)
 #define TE_DEBUG(Format, ...) TE_LOG(Debug, Format, __VA_ARGS__)

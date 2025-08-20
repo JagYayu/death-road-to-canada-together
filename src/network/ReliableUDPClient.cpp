@@ -57,12 +57,12 @@ ESocketType ReliableUDPClient::GetSocketType() const noexcept
 	return ESocketType::RUDP;
 }
 
-bool ReliableUDPClient::IsConnecting() noexcept
+bool ReliableUDPClient::IsConnecting() const noexcept
 {
 	return _isConnecting;
 }
 
-bool ReliableUDPClient::IsConnected() noexcept
+bool ReliableUDPClient::IsConnected() const noexcept
 {
 	return !_isConnecting && _eNetPeer != nullptr;
 }

@@ -16,10 +16,10 @@
 #include "SocketType.hpp"
 #include "debug/Debug.hpp"
 #include "program/EngineComponent.hpp"
+#include "sol/forward.hpp"
 #include "util/Log.hpp"
 
 #include <memory>
-#include <optional>
 
 namespace tudov
 {
@@ -29,11 +29,25 @@ namespace tudov
 
 		~INetworkManager() noexcept override = default;
 
+		/**
+		 * Get client with specific UID.
+		 */
 		virtual IClient *GetClient(std::int32_t uid = 0) noexcept = 0;
+
+		/**
+		 * Get server with specific UID.
+		 */
 		virtual IServer *GetServer(std::int32_t uid = 0) noexcept = 0;
+
 		virtual std::vector<std::weak_ptr<IClient>> GetClients() noexcept = 0;
+
 		virtual std::vector<std::weak_ptr<IServer>> GetServers() noexcept = 0;
+
+		/**
+		 * Remove client.
+		 */
 		virtual bool SetClient(std::int32_t uid = DefaultUID) = 0;
+
 		/**
 		 * @brief Change client socket for specific uid. Do nothing and return false if socket type duplicated.
 		 *
@@ -43,7 +57,12 @@ namespace tudov
 		 * @return successful
 		 */
 		virtual bool SetClient(ESocketType socketType, std::int32_t uid = DefaultUID) = 0;
+
+		/**
+		 * Remove server.
+		 */
 		virtual bool SetServer(std::int32_t uid = DefaultUID) = 0;
+
 		/**
 		 * @brief Change server socket for specific uid. Do nothing and return false if socket type duplicated.
 		 *
@@ -54,8 +73,14 @@ namespace tudov
 		 */
 		virtual bool SetServer(ESocketType socketType, std::int32_t uid = DefaultUID) = 0;
 
+		/**
+		 * Get the loop limits when doing update.
+		 */
 		virtual std::int32_t GetLimitsPerUpdate() noexcept;
 
+		/**
+		 * Update clients and servers.
+		 */
 		virtual bool Update() noexcept;
 
 		inline const IClient *GetClient() const noexcept
@@ -69,8 +94,12 @@ namespace tudov
 		}
 	};
 
+	class LuaAPI;
+
 	class NetworkManager : public INetworkManager, public IDebugProvider
 	{
+		friend LuaAPI;
+
 	  protected:
 		std::shared_ptr<Log> _log;
 		Context &_context;
@@ -107,5 +136,9 @@ namespace tudov
 		bool SetServer(std::int32_t uid = DefaultUID) override;
 		bool SetServer(ESocketType socketType, std::int32_t uid = DefaultUID) override;
 		bool Update() noexcept override;
+
+	  private:
+		IClient *LuaGetClient(sol::object uid) noexcept;
+		IServer *LuaGetServer(sol::object uid) noexcept;
 	};
 } // namespace tudov

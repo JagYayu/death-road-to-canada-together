@@ -29,7 +29,7 @@
 #include "sol/types.hpp"
 #include <sol/forward.hpp>
 
-#include <cassert>
+
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -121,7 +121,7 @@ void EventManager::OnScriptsLoaded()
 	for (auto &&[_, event] : _runtimeEvents)
 	{
 		auto scriptID = event->GetScriptID();
-		assert(!scriptID || scriptProvider.IsValidScript(scriptID) && "Invalid script detected!");
+		TE_ASSERT(!scriptID || scriptProvider.IsValidScript(scriptID), "{}", "Invalid script detected!");
 
 		if (scriptID)
 		{
@@ -149,7 +149,7 @@ void EventManager::EmplaceRuntimeEventFromLoadtimeEvent(const std::shared_ptr<Lo
 		else
 		{
 			TE_TRACE("Loadtime event converted to a runtime event <{}>\"{}\"", id, GetEventNameByID(id).value_or("$UNKNOWN$"));
-			assert(_runtimeEvents.try_emplace(id, runtimeEvent).second);
+			TE_ASSERT(_runtimeEvents.try_emplace(id, runtimeEvent).second);
 		}
 	}
 	catch (const EventHandlerAddBadOrderException &e)
@@ -246,7 +246,7 @@ void EventManager::PreInitialize() noexcept
 
 	_onUnloadScriptHandlerID = scriptLoader.GetOnUnloadScript() += [this](ScriptID scriptID, std::string_view scriptName)
 	{
-		assert(scriptID && "invalid script id!");
+		TE_ASSERT(scriptID && "invalid script id!");
 
 		for (auto &&it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 		{
@@ -650,7 +650,7 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 			scriptEngine.ThrowError("Bad argument #4 to 'options': expected number or nil");
 		}
 
-		assert(eventInstance != nullptr);
+		TE_ASSERT(eventInstance != nullptr);
 
 		eventInstance->Invoke(args, key_, options_);
 	}

@@ -28,6 +28,8 @@ namespace tudov
 	};
 
 	enum class EFileChangeType : int;
+	enum class EPathType : int;
+	class FileSystemWatch;
 
 	class UnpackagedMod : public Mod, public IUnpackagedMod, public IContextProvider, private ILogProvider
 	{
@@ -35,13 +37,13 @@ namespace tudov
 		std::shared_ptr<Log> _log;
 
 		bool _loaded;
-		void *_fileWatcher;
+		std::unique_ptr<FileSystemWatch> _fileWatcher;
 		std::filesystem::path _directory;
 
 		std::vector<std::regex> _scriptFilePatterns;
 		std::vector<std::regex> _fontFilePatterns;
 
-		std::queue<std::tuple<std::filesystem::path, EFileChangeType>> _fileWatchQueue;
+		std::queue<std::tuple<std::filesystem::path, EPathType, EFileChangeType>> _fileWatchQueue;
 		std::mutex _fileWatchMutex;
 
 	  public:
@@ -56,7 +58,13 @@ namespace tudov
 
 		void Update() override;
 
+		/**
+		 * Check file's extension to determine if it's a script file.
+		 */
 		bool IsScript(std::string_view file) const;
+		/**
+		 * Check file's extension to determine if it's a font file.
+		 */
 		bool IsFont(std::string_view file) const;
 
 		bool IsValidDirectory(const std::filesystem::path &directory);
@@ -68,8 +76,8 @@ namespace tudov
 	  private:
 		void UpdateFileMatchPatterns();
 		void ScriptAdded(const std::filesystem::path &file) noexcept;
-		void ScriptRemoved(const std::filesystem::path &file) noexcept;
-		void ScriptModified(const std::filesystem::path &file) noexcept;
+		bool ScriptRemoved(const std::filesystem::path &file) noexcept;
+		bool ScriptModified(const std::filesystem::path &file) noexcept;
 		void FileAdded(const std::filesystem::path &file) noexcept;
 		void FileRemoved(const std::filesystem::path &file) noexcept;
 		void FileModified(const std::filesystem::path &file) noexcept;

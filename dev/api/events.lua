@@ -24,11 +24,18 @@ error("this is a lua library module")
 
 --- @enum Events.EEventInvocation
 EEventInvocation = {
+	-- All flags
 	All = 255,
+	-- Try caching all handlers that meet the key criteria.
+	-- Disabling it can reduce memory usage, but may result in slightly worse performance when called frequently with a large number of handlers.
 	CacheHandlers = 1,
+	-- Default flags
 	Default = 1,
+	-- It will forcibly disable the Profiler functionality, even if the client has enabled performance monitoring.
 	NoProfiler = 2,
+	-- No flags
 	None = 0,
+	
 	TrackProgression = 4,
 }
 
@@ -53,7 +60,7 @@ events = {}
 --- @param sequence integer?
 function events:add(event, func, name, order, key, sequence) end
 
---- @param event string | integer
+--- @param event Events.Event
 --- @param e Events.E
 --- @param key Events.Key?
 --- @param options Events.EEventInvocation? @default: `EEventInvocation.Default`

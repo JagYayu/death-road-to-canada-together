@@ -50,13 +50,14 @@ namespace tudov
 		std::weak_ptr<IWindow> window;
 
 	  protected:
-		std::atomic<bool> isOpeningScriptEditor = false;
+		std::atomic<bool> _isOpeningScriptEditor = false;
 		std::thread _openScriptEditorThread;
 		std::size_t _selectedLoadtimeErrorIndex = -1;
 		std::size_t _selectedRuntimeErrorIndex = -1;
 		bool _autoScroll = true;
 		char _filterText[128];
 
+		std::uint64_t _providedScriptsVersionID = 0;
 		std::vector<LoadedScriptEntry> _providedScriptsCache;
 
 	  public:
