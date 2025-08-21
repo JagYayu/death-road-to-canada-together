@@ -12,10 +12,14 @@
 #pragma once
 
 #include "Micros.hpp"
+
+#include "sol/forward.hpp"
 #include <sol/types.hpp>
 
 namespace tudov
 {
+	struct IScriptEngine;
+
 	struct LuaUtils
 	{
 		TE_STATIC_CLASS(LuaUtils);
@@ -25,6 +29,8 @@ namespace tudov
 		{
 			DeconstructImpl(objects...);
 		}
+
+		std::string LuaFormat(IScriptEngine &scriptEngine, sol::object fmt, sol::variadic_args args);
 
 	  private:
 		template <typename T, typename... TArgs>

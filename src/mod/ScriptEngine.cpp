@@ -16,9 +16,9 @@
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptModule.hpp"
 #include "mod/ScriptProvider.hpp"
-#include "sol/trampoline.hpp"
-#include "util/Definitions.hpp"
 #include "system/LogMicros.hpp"
+#include "util/Definitions.hpp"
+#include "util/LuaUtils.hpp"
 #include "util/Utils.hpp"
 
 #include "sol/environment.hpp"
@@ -30,14 +30,14 @@
 #include "sol/types.hpp"
 #include "sol/variadic_args.hpp"
 
+#include <array>
 #include <corecrt_terminate.h>
 #include <memory>
-#include <set>
 #include <unordered_map>
 
 using namespace tudov;
 
-constexpr std::string_view luaRequiredStdModules[] = {
+constexpr std::array<const char *, 6> preRequiredStdModules = {
     "ffi",
     "jit.profile",
     "jit.util",
@@ -46,21 +46,55 @@ constexpr std::string_view luaRequiredStdModules[] = {
     "table.new",
 };
 
-decltype(auto) GetLuaRequiredStdModuleSet() noexcept
-{
-	static std::unique_ptr<std::set<std::string_view>> set;
+// constexpr const char *preFullyLoadScriptNames[] = {};
 
-	if (set == nullptr) [[unlikely]]
-	{
-		set = std::make_unique<std::set<std::string_view>>();
-		for (std::string_view key : luaRequiredStdModules)
-		{
-			set->emplace(key);
-		}
-	}
-
-	return *set;
-}
+constexpr const char *modCopyGlobals[] = {
+    // lua51 std
+    "_VERSION",
+    "assert",
+    "bit",
+    "collectgarbage",
+    "coroutine",
+    "error",
+    "getmetatable",
+    "ipairs",
+    "load",
+    "loadstring",
+    "math",
+    "newproxy",
+    "next",
+    "pairs",
+    "pcall",
+    "print",
+    "select",
+    "setmetatable",
+    "string",
+    "table",
+    "tonumber",
+    "tostring",
+    "type",
+    "unpack",
+    "utf8",
+    "xpcall",
+    // extensions
+    "string.buffer",
+    "table.clear",
+    "table.new",
+    // C++ enum classes
+    "ELogVerbosity",
+    "EEventInvocation",
+    "EPathListOption",
+    // "EScanCode",
+    // C++ exports
+    "binaries",
+    "engine",
+    "events",
+    "fonts",
+    "images",
+    "mods",
+    "network",
+    "vfs",
+};
 
 void ScriptEngine::PersistVariable::Save() noexcept
 {
@@ -111,9 +145,30 @@ void ScriptEngine::PostDeinitialize() noexcept
 {
 }
 
-int ExceptionHandler(lua_State *L, sol::optional<const std::exception &> aa, std::string_view b)
+int my_exception_handler(lua_State *L, sol::optional<const std::exception &> maybe_exception, sol::string_view description)
 {
-	return 0;
+	// L is the lua state, which you can wrap in a state_view if necessary
+	// maybe_exception will contain exception, if it exists
+	// description will either be the what() of the exception or a description saying that we hit the general-case catch(...)
+	std::cout << "An exception occurred in a function, here's what it says ";
+	if (maybe_exception)
+	{
+		std::cout << "(straight from the exception): ";
+		const std::exception &ex = *maybe_exception;
+		std::cout << ex.what() << std::endl;
+	}
+	else
+	{
+		std::cout << "(from the description parameter): ";
+		std::cout.write(description.data(), static_cast<std::streamsize>(description.size()));
+		std::cout << std::endl;
+	}
+
+	// you must push 1 element onto the stack to be
+	// transported through as the error object in Lua
+	// note that Lua -- and 99.5% of all Lua users and libraries -- expects a string
+	// so we push a single string (in our case, the description of the error)
+	return sol::stack::push(L, description);
 }
 
 void ScriptEngine::Initialize() noexcept
@@ -123,8 +178,6 @@ void ScriptEngine::Initialize() noexcept
 		return;
 	}
 	_luaInit = true;
-
-	set_default_exception_handler(_lua, ExceptionHandler);
 
 	_lua.open_libraries(sol::lib::base);
 	_lua.open_libraries(sol::lib::bit32);
@@ -139,6 +192,12 @@ void ScriptEngine::Initialize() noexcept
 	_lua.open_libraries(sol::lib::string);
 	_lua.open_libraries(sol::lib::table);
 	_lua.open_libraries(sol::lib::utf8);
+
+	_luaSTDRequire = _lua["require"];
+	_lua["require"] = [this](sol::string_view targetScriptName) -> sol::object
+	{
+		return LuaRequire(targetScriptName, nullptr);
+	};
 
 	IScriptLoader &scriptLoader = GetScriptLoader();
 
@@ -159,10 +218,10 @@ void ScriptEngine::Initialize() noexcept
 	}
 
 	{
-		auto &&engineModule = scriptLoader.Load("#ScriptEngine");
-		if (engineModule != nullptr)
+		auto &&scriptEngine = scriptLoader.Load("#ScriptEngine");
+		if (scriptEngine != nullptr)
 		{
-			auto &&scriptEngineModule = engineModule->GetTable();
+			auto &&scriptEngineModule = scriptEngine->GetTable();
 
 			scriptEngineModule.get<sol::function>("initialize")();
 
@@ -182,10 +241,15 @@ void ScriptEngine::Initialize() noexcept
 
 	GetLuaAPI().Install(_lua, _context);
 
-	for (std::string_view key : luaRequiredStdModules)
+	for (std::string_view key : preRequiredStdModules)
 	{
-		_lua[key] = _lua["require"](key);
+		_lua[key] = _luaSTDRequire(key);
 	}
+
+	// for (const char *scriptName : preFullyLoadScriptNames)
+	// {
+	// 	scriptLoader.Load(scriptName)->FullLoad(scriptLoader);
+	// }
 
 	MakeReadonlyGlobal(_lua.globals());
 }
@@ -251,6 +315,75 @@ size_t ScriptEngine::GetMemory() const noexcept
 	return _lua.memory_used();
 }
 
+sol::object ScriptEngine::LuaRequire(sol::string_view targetScriptName, ScriptRequire *script) noexcept
+{
+	IScriptProvider &scriptProvider = GetScriptProvider();
+
+	ScriptID targetScriptID = scriptProvider.GetScriptIDByName(targetScriptName);
+	if (targetScriptID == 0)
+	{
+		std::string fallbackScriptName = std::format("#{}", targetScriptName);
+		targetScriptID = scriptProvider.GetScriptIDByName(fallbackScriptName);
+	}
+
+	if (targetScriptID != 0)
+	{
+		IScriptLoader &scriptLoader = GetScriptLoader();
+
+		if (script != nullptr)
+		{
+			if (!scriptLoader.IsScriptValid(script->id)) [[unlikely]]
+			{
+				GetScriptEngine().ThrowError("Cannot require '{}': Target module is invalid (probably loadtime error)", targetScriptName.data());
+			}
+
+			if (!scriptProvider.IsStaticScript(targetScriptID))
+			{
+				scriptLoader.AddReverseDependency(script->id, targetScriptID);
+			}
+		}
+
+		const std::shared_ptr<IScriptModule> &targetModule = scriptLoader.Load(targetScriptID);
+		if (targetModule)
+		{
+			if (scriptProvider.IsStaticScript(targetScriptID))
+			{
+				return targetModule->RawLoad(scriptLoader);
+			}
+			else
+			{
+				return targetModule->LazyLoad(scriptLoader);
+			}
+		}
+	}
+
+	if (script != nullptr)
+	{
+		const auto &virtualModule = script->globals[targetScriptName];
+		if (virtualModule.valid() && std::find(preRequiredStdModules.begin(), preRequiredStdModules.end(), targetScriptName) != preRequiredStdModules.end())
+		{
+			return virtualModule;
+		}
+	}
+
+	std::string errorMessage;
+
+	{
+		sol::protected_function_result result = _luaSTDRequire(targetScriptName);
+		if (result.valid()) [[likely]]
+		{
+			return result;
+		}
+		else [[unlikely]]
+		{
+			sol::error err = result;
+			errorMessage = err.what();
+		}
+	}
+
+	GetScriptEngine().ThrowError(errorMessage);
+}
+
 sol::table ScriptEngine::CreateTable(uint32_t arr, uint32_t hash) noexcept
 {
 	return _lua.create_table(arr, hash);
@@ -283,9 +416,10 @@ std::string ScriptEngine::Inspect(sol::object obj)
 	return std::string(result.get<sol::string_view>());
 }
 
-void ScriptEngine::ThrowError(std::string_view message) noexcept
+void ScriptEngine::ThrowError(std::string &message) noexcept
 {
 	lua_pushlstring(_lua, message.data(), message.size());
+	LuaUtils::Deconstruct(message);
 	lua_error(_lua);
 }
 
@@ -342,62 +476,15 @@ sol::object ScriptEngine::MakeReadonlyGlobal(sol::object obj)
 
 sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed) noexcept
 {
-	if (auto &&it = _modGlobals.find(modUID); it != _modGlobals.end())
+	if (auto it = _modGlobals.find(modUID); it != _modGlobals.end())
 	{
 		return it->second;
 	}
 
-	auto &&luaGlobals = _lua.globals();
-	auto &&modGlobals = CreateTable();
+	auto &luaGlobals = _lua.globals();
+	auto modGlobals = CreateTable();
 
-	constexpr const char *keys[] = {
-	    // lua51 std
-	    "_VERSION",
-	    "assert",
-	    "bit",
-	    "collectgarbage",
-	    "coroutine",
-	    "error",
-	    "getmetatable",
-	    "ipairs",
-	    "load",
-	    "loadstring",
-	    "math",
-	    "newproxy",
-	    "next",
-	    "pairs",
-	    "pcall",
-	    "print",
-	    "select",
-	    "setmetatable",
-	    "string",
-	    "table",
-	    "tonumber",
-	    "tostring",
-	    "type",
-	    "unpack",
-	    "utf8",
-	    "xpcall",
-	    // extensions
-	    "string.buffer",
-	    "table.clear",
-	    "table.new",
-	    // C++ enum classes
-	    "ELogVerbosity",
-	    "EEventInvocation",
-	    "EPathListOption",
-	    // C++ exports
-	    "binaries",
-	    "engine",
-	    "events",
-	    "fonts",
-	    "images",
-	    "mods",
-	    "network",
-	    "vfs",
-	};
-
-	for (const char *key : keys)
+	for (const char *key : modCopyGlobals)
 	{
 		TE_ASSERT(!modGlobals[key].valid(), "global field duplicated!");
 		modGlobals[key] = luaGlobals[key];
@@ -440,8 +527,7 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 	{
 		if (defaultValue == sol::nil) [[unlikely]]
 		{
-			ThrowError("Default value could not be nil");
-			return sol::object(sol::nil);
+			GetScriptEngine().ThrowError("Default value could not be nil");
 		}
 
 		return RegisterPersistVariable(scriptName, key, defaultValue, getter);
@@ -449,80 +535,28 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 
 	scriptGlobals.set_function("print", [this, scriptName](const sol::variadic_args &args)
 	{
-		try
+		const std::shared_ptr<Log> &log = Log::Get(scriptName);
+		if (!log->CanDebug())
 		{
-			const std::shared_ptr<Log> &log = Log::Get(scriptName);
-			if (!log->CanDebug())
-			{
-				return;
-			}
+			return;
+		}
 
-			std::string string;
-			for (auto &&arg : args)
-			{
-				if (!string.empty())
-				{
-					string.append("\t");
-				}
-				string.append(_luaInspect(arg));
-			}
-			log->Debug("{}", string.c_str());
-		}
-		catch (const std::exception &e)
+		std::string string;
+		for (auto &&arg : args)
 		{
-			UnhandledCppException(_log, e);
+			if (!string.empty())
+			{
+				string.append("\t");
+			}
+			string.append(_luaInspect(arg));
 		}
+		log->Debug("{}", string.c_str());
 	});
 
-	scriptGlobals.set_function("require", [this, scriptGlobals, scriptID](const sol::string_view &targetScriptName) -> sol::object
+	scriptGlobals.set_function("require", [this, scriptGlobals, scriptID](sol::string_view targetScriptName) -> sol::object
 	{
-		try
-		{
-			IScriptProvider &scriptProvider = GetScriptProvider();
-
-			ScriptID targetScriptID = scriptProvider.GetScriptIDByName(targetScriptName);
-			if (targetScriptID == 0)
-			{
-				std::string fallbackScriptName = std::format("#{}", targetScriptName);
-				targetScriptID = scriptProvider.GetScriptIDByName(fallbackScriptName);
-			}
-
-			if (targetScriptID != 0)
-			{
-				IScriptLoader &scriptLoader = GetScriptLoader();
-
-				if (!scriptLoader.IsScriptValid(scriptID)) [[unlikely]]
-				{
-					IScriptEngine::ThrowError("Cannot require '{}': Target module is invalid (probably loadtime error)", targetScriptName.data());
-					return sol::nil;
-				}
-
-				if (!scriptProvider.IsStaticScript(targetScriptID))
-				{
-					scriptLoader.AddReverseDependency(scriptID, targetScriptID);
-				}
-
-				const std::shared_ptr<IScriptModule> &targetModule = scriptLoader.Load(targetScriptID);
-				if (targetModule)
-				{
-					return targetModule->LazyLoad(scriptLoader);
-				}
-			}
-
-			const auto &virtualModule = scriptGlobals[targetScriptName];
-			if (virtualModule.valid() && GetLuaRequiredStdModuleSet().contains(targetScriptName))
-			{
-				return virtualModule;
-			}
-
-			IScriptEngine::ThrowError("Cannot require '{}': Script module not found", targetScriptName.data());
-		}
-		catch (const std::exception &e)
-		{
-			UnhandledCppException(_log, e);
-		}
-
-		return sol::nil;
+		ScriptRequire script{scriptID, scriptGlobals};
+		return LuaRequire(targetScriptName, &script);
 	});
 
 	sol::table metatable = _lua.create_table(0, 1);

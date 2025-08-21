@@ -22,7 +22,6 @@
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 
-
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
@@ -480,6 +479,7 @@ void ScriptLoader::ProcessFullLoads()
 		{
 			try
 			{
+				TE_TRACE("Fully loading script \"{}\"", GetScriptProvider().GetScriptNameByID(scriptID).value());
 				scriptModule->FullLoad(*this);
 				TE_TRACE("Fully loaded script \"{}\"", GetScriptProvider().GetScriptNameByID(scriptID).value());
 			}

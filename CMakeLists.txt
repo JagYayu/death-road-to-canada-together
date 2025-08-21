@@ -24,7 +24,7 @@ set_target_properties(tudov PROPERTIES
 )
 
 target_include_directories(tudov PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/ext
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 

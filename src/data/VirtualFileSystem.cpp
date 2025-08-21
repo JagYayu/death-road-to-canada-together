@@ -15,8 +15,8 @@
 #include "mod/ScriptEngine.hpp"
 #include "resource/ResourceType.hpp"
 #include "sol/string_view.hpp"
-#include "util/EnumFlag.hpp"
 #include "system/LogMicros.hpp"
+#include "util/EnumFlag.hpp"
 #include "util/LuaUtils.hpp"
 #include "util/Utils.hpp"
 
@@ -439,7 +439,7 @@ VirtualFileSystem::Node *VirtualFileSystem::FindNode(const std::filesystem::path
 	return currentNode;
 }
 
-bool VirtualFileSystem::LuaExists(sol::object path) noexcept
+bool VirtualFileSystem::LuaExists(sol::object path)
 {
 	std::filesystem::path path_;
 	if (path.is<sol::string_view>())
@@ -449,13 +449,13 @@ bool VirtualFileSystem::LuaExists(sol::object path) noexcept
 	else [[unlikely]]
 	{
 		LuaUtils::Deconstruct(path_);
-		GetScriptEngine().ThrowError("bad argument #2 to 'path' (string expected, got {})", GetLuaTypeStringView(path.get_type()));
+		throw std::runtime_error(std::format("bad argument #2 to 'path' (string expected, got {})", GetLuaTypeStringView(path.get_type())));
 	}
 
 	return Exists(path_);
 }
 
-sol::table VirtualFileSystem::LuaList(sol::object directory, sol::object options) noexcept
+sol::table VirtualFileSystem::LuaList(sol::object directory, sol::object options)
 {
 	try
 	{
@@ -490,7 +490,7 @@ sol::table VirtualFileSystem::LuaList(sol::object directory, sol::object options
 			else [[unlikely]]
 			{
 				LuaUtils::Deconstruct(list, directory_, options_);
-				scriptEngine.ThrowError("bad argument #3 to 'directory' (number expected, got {})", GetLuaTypeStringView(options.get_type()));
+				throw std::runtime_error(std::format("bad argument #3 to 'directory' (number expected, got {})", GetLuaTypeStringView(options.get_type())));
 			}
 
 			list = List(directory_, options_);
@@ -513,13 +513,15 @@ sol::table VirtualFileSystem::LuaList(sol::object directory, sol::object options
 	}
 	catch (const std::exception &e)
 	{
-		GetScriptEngine().ThrowError(e.what());
+		std::string errorMessage = e.what();
+		LuaUtils::Deconstruct(e);
+		GetScriptEngine().ThrowError(errorMessage);
 	}
 
 	return GetScriptEngine().CreateTable();
 }
 
-std::string VirtualFileSystem::LuaReadFile(sol::object file) noexcept
+std::string VirtualFileSystem::LuaReadFile(sol::object file)
 {
 	try
 	{
@@ -543,7 +545,9 @@ std::string VirtualFileSystem::LuaReadFile(sol::object file) noexcept
 	}
 	catch (const std::exception &e)
 	{
-		GetScriptEngine().ThrowError(e.what());
+		std::string errorMessage = e.what();
+		LuaUtils::Deconstruct(e);
+		GetScriptEngine().ThrowError(errorMessage);
 	}
 
 	return "";

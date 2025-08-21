@@ -431,16 +431,18 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 	}
 }
 
-void RuntimeEvent::Invoke(IScriptEngine &scriptEngine, CoreEventData *data, const EventHandleKey &key, EEventInvocation options)
+void RuntimeEvent::Invoke(CoreEventData *data, const EventHandleKey &key, EEventInvocation options)
 {
-	if (data == nullptr) [[unlikely]]
+	if (data != nullptr)
 	{
-		abort();
+		sol::table args = GetScriptEngine().CreateTable(0, 1);
+		args["data"] = data;
+		Invoke(args, key, options);
 	}
-
-	sol::table &&args = scriptEngine.CreateTable(0, 1);
-	args["data"] = data;
-	Invoke(args, key, options);
+	else
+	{
+		Invoke(GetScriptEngine().CreateTable(), key, options);
+	}
 }
 
 void RuntimeEvent::InvokeUncached(const sol::object &args, const EventHandleKey &key)

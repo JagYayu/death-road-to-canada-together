@@ -20,26 +20,26 @@
 
 using namespace tudov;
 
-void IClient::LuaConnect(sol::object args) noexcept
+void IClient::LuaConnect(sol::object args)
 {
 	//
 }
 
-void IClient::LuaSendReliable(sol::object data) noexcept
+void IClient::LuaSendReliable(sol::object data)
 {
 	if (!data.is<sol::string_view>()) [[unlikely]]
 	{
-		GetScriptEngine().ThrowError("bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
+		throw std::runtime_error(std::format("bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type())));
 	}
 
 	SendReliable(data.as<sol::string_view>());
 }
 
-void IClient::LuaSendUnreliable(sol::object data) noexcept
+void IClient::LuaSendUnreliable(sol::object data)
 {
 	if (!data.is<sol::string_view>()) [[unlikely]]
 	{
-		GetScriptEngine().ThrowError("bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
+		throw std::runtime_error(std::format("bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type())));
 	}
 
 	SendUnreliable(data.as<sol::string_view>());

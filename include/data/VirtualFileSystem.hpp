@@ -122,9 +122,9 @@ namespace tudov
 		void CollectListEntries(std::vector<ListEntry> &entries, const std::filesystem::path &directory, const DirectoryNode *directoryNode, EPathListOption options, std::uint32_t depth) const noexcept;
 
 	  private:
-		bool LuaExists(sol::object path) noexcept;
-		sol::table LuaList(sol::object directory, sol::object options) noexcept;
-		std::string LuaReadFile(sol::object file) noexcept;
+		bool LuaExists(sol::object path);
+		sol::table LuaList(sol::object directory, sol::object options);
+		std::string LuaReadFile(sol::object file);
 
 	  public:
 		inline std::span<const std::byte> GetFileBytes(const std::filesystem::path &path) const

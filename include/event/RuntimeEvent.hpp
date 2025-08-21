@@ -90,10 +90,9 @@ namespace tudov
 
 		void Add(const AddHandlerArgs &args) override;
 
-		void Invoke(const sol::object &e = sol::lua_nil, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
+		void Invoke(const sol::object &e, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
+		void Invoke(CoreEventData *data = nullptr, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
 		[[deprecated]] void InvokeUncached(const sol::object &e = sol::lua_nil, const EventHandleKey &key = {});
-
-		void Invoke(IScriptEngine &scriptEngine, CoreEventData *data, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
 
 		ProgressionID GetNextInvocationID() noexcept;
 

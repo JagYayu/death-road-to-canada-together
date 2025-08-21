@@ -1,5 +1,5 @@
 /**
- * @file util/Log.cpp
+ * @file system/Log.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -26,9 +26,12 @@
 
 using namespace tudov;
 
+constexpr bool SingleThread = true;
+
 static constexpr decltype(auto) defaultModule = "Log";
 static uint32_t logCount = 0;
 static std::unique_ptr<std::thread> logWorker = nullptr;
+static std::ofstream fileStream;
 
 ELogVerbosity Log::_globalVerbosities = ELogVerbosity::All;
 std::unordered_map<std::string, ELogVerbosity> Log::_verbosities{};
@@ -242,6 +245,8 @@ Log::Log(std::string_view module) noexcept
 {
 	if (logCount == 0 && logWorker == nullptr)
 	{
+		std::filesystem::create_directories("logs");
+
 		logWorker = std::make_unique<std::thread>(Log::Process);
 
 		OutputImpl(defaultModule, VerbDebug, "Logging system initialized");
@@ -257,13 +262,17 @@ Log::~Log() noexcept
 
 void Log::Process() noexcept
 {
+	if (SingleThread)
+	{
+		return;
+	}
+
 	auto &&pred = []
 	{
 		return !_queue.empty() || _exit;
 	};
 
-	std::filesystem::create_directories("logs");
-	std::ofstream logFile{
+	fileStream = std::ofstream{
 	    std::format("logs/{:%Y_%m_%d_%H_%M}.log", std::chrono::zoned_time(std::chrono::current_zone(), std::chrono::system_clock::now())),
 	    std::ios::app,
 	};
@@ -286,7 +295,7 @@ void Log::Process() noexcept
 			                                  entry.message);
 
 			PrintToConsole(message, entry);
-			logFile << message << std::endl;
+			fileStream << message << std::endl;
 
 			lock.lock();
 		}
@@ -331,19 +340,35 @@ void Log::Output(std::string_view verb, std::string_view str) const noexcept
 	OutputImpl(_module, verb, str);
 }
 
-void Log::OutputImpl(std::string_view module, std::string_view verb, std::string_view str)
+void Log::OutputImpl(std::string_view module, std::string_view verb, std::string_view message)
 {
-	if (!_exit) [[likely]]
+	Entry entry{
+	    .time = std::chrono::system_clock::now(),
+	    .verbosity = verb,
+	    .module = std::string(module),
+	    .message = std::string(message),
+	};
+
+	if (SingleThread)
 	{
-		std::lock_guard<std::mutex> lock{_mutex};
+		std::string message = std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}",
+		                                  std::chrono::zoned_time(std::chrono::current_zone(), std::chrono::system_clock::now()),
+		                                  entry.module,
+		                                  entry.verbosity,
+		                                  entry.message);
 
-		_queue.push(Entry{
-		    .time = std::chrono::system_clock::now(),
-		    .verbosity = verb,
-		    .module = std::string(module),
-		    .message = std::string(str),
-		});
+		PrintToConsole(message, entry);
+		fileStream << message << std::endl;
 	}
+	else
+	{
+		if (!_exit) [[likely]]
+		{
+			std::lock_guard<std::mutex> lock{_mutex};
 
-	_cv.notify_one();
+			_queue.push(entry);
+		}
+
+		_cv.notify_one();
+	}
 }

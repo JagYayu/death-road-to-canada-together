@@ -160,7 +160,7 @@ bool ReliableUDPClient::Update()
 			{
 				_isConnecting = false;
 
-				coreEvents.ClientConnect().Invoke();
+				coreEvents.ClientConnect().Invoke(sol::lua_nil, {}, EEventInvocation::None);
 			}
 			break;
 		}

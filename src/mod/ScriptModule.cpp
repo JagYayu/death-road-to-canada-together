@@ -17,9 +17,15 @@
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
 #include "sol/forward.hpp"
+#include "sol/optional_implementation.hpp"
+#include "sol/protected_function_result.hpp"
 #include "sol/types.hpp"
+#include "sol/variadic_args.hpp"
 #include "system/LogMicros.hpp"
 #include "util/Utils.hpp"
+#include <exception>
+#include <memory>
+#include <stdexcept>
 
 using namespace tudov;
 
@@ -81,6 +87,44 @@ sol::table &ScriptModule::GetTable()
 	return _table;
 }
 
+void CopyTableMetatableFields(sol::table dst, sol::table src)
+{
+	if (!dst.valid() || !src.valid())
+	{
+		return;
+	}
+
+	if (!src[sol::metatable_key].valid())
+	{
+		return;
+	}
+
+	sol::table dstMt = dst[sol::metatable_key];
+	sol::table srcMt = src[sol::metatable_key];
+
+	if (!dstMt.valid() || !srcMt.valid())
+	{
+		return;
+	}
+
+	constexpr const char *keys[] = {
+	    "__call",
+	};
+
+	for (const char *key : keys)
+	{
+		sol::object field = srcMt[key];
+		if (field.valid() && field.is<sol::function>())
+		{
+			auto f = field.as<sol::function>();
+			dstMt[key] = [f, src](const sol::this_state &ts, sol::object, sol::variadic_args vargs)
+			{
+				return f(src, vargs);
+			};
+		}
+	}
+}
+
 sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 {
 	if (_fullyLoaded)
@@ -98,7 +142,7 @@ sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 	{
 		_table = GetScriptEngine().CreateTable();
 		sol::table metatable = GetScriptEngine().CreateTable(0, 2);
-		metatable["__index"] = []() {};
+		// metatable["__index"] = []() {};
 		_table[sol::metatable_key] = metatable;
 
 		_fullyLoaded = true;
@@ -125,24 +169,28 @@ sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 
 	parent._loadingScript = previousLoadingScript;
 	sol::table tbl;
-	if (result.get<sol::object>(0).get_type() == sol::type::table)
 	{
-		tbl = result.get<sol::object>(0);
-	}
-	else
-	{
-		tbl = scriptLoader.GetScriptEngine().CreateTable();
+		auto tblRes = result.get<sol::object>(0);
+		if (tblRes.get_type() == sol::type::table)
+		{
+			tbl = tblRes;
+		}
+		else
+		{
+			tbl = scriptLoader.GetScriptEngine().CreateTable();
+		}
 	}
 
 	IScriptEngine &scriptEngine = GetScriptEngine();
 	_table = scriptEngine.CreateTable();
-	sol::table metatable = scriptEngine.CreateTable(0, 2);
+	sol::metatable metatable = scriptEngine.CreateTable(0, 2);
 	_table[sol::metatable_key] = metatable;
 
+	CopyTableMetatableFields(_table, tbl);
 	metatable["__index"] = tbl;
-	metatable["__newindex"] = [this, &parent](const sol::this_state &ts, sol::object, sol::object key, sol::object value)
+	metatable["__newindex"] = [this](const sol::this_state &ts)
 	{
-		parent.GetScriptEngine().ThrowError(std::format("Cannot override module"));
+		GetScriptEngine().ThrowError("Cannot override module");
 	};
 
 	_fullyLoaded = true;
@@ -178,9 +226,9 @@ sol::table &ScriptModule::LazyLoad(IScriptLoader &scriptLoader)
 	{
 		return FullLoad(scriptLoader)[key];
 	};
-	metatable["__newindex"] = [this, &scriptLoader](const sol::this_state &ts, sol::object, sol::object key, sol::object value)
+	metatable["__newindex"] = [this](const sol::this_state &ts)
 	{
-		scriptLoader.GetScriptEngine().ThrowError(std::format("Cannot override module"));
+		GetScriptEngine().ThrowError("Cannot override module");
 	};
 
 	return _table;
@@ -227,16 +275,16 @@ sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 			auto optScriptName = scriptProvider.GetScriptNameByID(_scriptID);
 			auto optPrevScriptName = scriptProvider.GetScriptNameByID(*optPrevScriptID);
 
-			parent.GetScriptEngine().ThrowError(std::format("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *optScriptName, *optPrevScriptID, *optPrevScriptName));
+			GetScriptEngine().ThrowError("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *optScriptName, *optPrevScriptID, *optPrevScriptName);
 		}
 		else
 		{
-			parent.GetScriptEngine().ThrowError("Attempt to access incomplete module");
+			GetScriptEngine().ThrowError("Attempt to access incomplete module");
 		}
 	};
 	metatable["__newindex"] = [this, &parent](const sol::this_state &ts, sol::object, sol::object key, sol::object value)
 	{
-		parent.GetScriptEngine().ThrowError(std::format("Cannot override module"));
+		throw std::runtime_error(std::format("Cannot override module"));
 	};
 
 	parent._scriptLoopLoadStack.emplace_back(_scriptID);
@@ -247,24 +295,24 @@ sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 	sol::table tbl;
 	if (!result.valid()) [[unlikely]]
 	{
-		sol::error err = result;
-		std::string_view what = err.what();
-
 		std::string_view scriptName = GetScriptProvider().GetScriptNameByID(_scriptID).value_or("");
-		TE_ERROR("Error load script module <{}>\"{}\": {}", _scriptID, scriptName, what);
+		sol::error err = result;
+		auto message = err.what();
+
+		TE_ERROR("Error load script module <{}>\"{}\": {}", _scriptID, scriptName, message);
 
 		// TODO use delegate event?
-		GetScriptErrors().AddLoadtimeError(_scriptID, what);
+		GetScriptErrors().AddLoadtimeError(_scriptID, message);
 
 		_hasError = true;
 
 		tbl = scriptEngine.CreateTable();
 		sol::table metatable = scriptEngine.CreateTable();
-		metatable["__index"] = [this, scriptName]()
+		metatable["__index"] = [this, scriptName](const sol::this_state &ts, sol::object, sol::object key)
 		{
 			if (_parentContext) [[likely]]
 			{
-				_parentContext->GetScriptEngine().ThrowError("Cascaded error occurred: <{}>\"{}\"", _scriptID, scriptName);
+				GetScriptEngine().ThrowError("Cascaded error occurred: <{}>\"{}\"", _scriptID, scriptName);
 			}
 		};
 		tbl[sol::metatable_key] = metatable;
@@ -276,14 +324,14 @@ sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 			TE_WARN("'{}': Does not support receiving multiple return values", parent.GetLoadingScriptName().value());
 		}
 
-		auto value = result.get<sol::object>(0);
-		if (value.get_type() == sol::type::table)
+		auto tblRes = result.get<sol::object>(0);
+		if (tblRes.get_type() == sol::type::table)
 		{
-			tbl = value.as<sol::table>();
+			tbl = tblRes.as<sol::table>();
 		}
 		else
 		{
-			if (value.get_type() != sol::type::nil)
+			if (tblRes.get_type() != sol::type::nil)
 			{
 				TE_WARN("'{}': Does not support receiving non-table values", parent.GetLoadingScriptName().value());
 			}
@@ -291,6 +339,7 @@ sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 		}
 	}
 
+	CopyTableMetatableFields(_table, tbl);
 	metatable["__index"] = tbl;
 
 	parent._loadingScript = previousScriptID;

@@ -156,7 +156,7 @@ local function postProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed,
 	local function generateOutputFunction(verb)
 		return function(...)
 			if log:canOutput(verb) then
-				local inspect = scriptGlobals.require("inspect").inspect
+				local inspect = scriptGlobals.require("inspect")
 
 				local args = { ... }
 				for index, arg in ipairs(args) do

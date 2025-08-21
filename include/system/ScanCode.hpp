@@ -1,3 +1,14 @@
+/**
+ * @file system/ScanCode.hpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #pragma once
 
 #include "util/Micros.hpp"
@@ -218,4 +229,9 @@ namespace tudov
 		AcRefresh = SDL_SCANCODE_AC_REFRESH,
 		AcBookmarks = SDL_SCANCODE_AC_BOOKMARKS,
 	}; // namespace tudov
+
+	struct ScanCode
+	{
+		TE_STATIC_CLASS(ScanCode);
+	};
 } // namespace tudov

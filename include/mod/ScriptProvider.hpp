@@ -12,9 +12,10 @@
 #pragma once
 
 #include "program/EngineComponent.hpp"
-#include "util/Definitions.hpp"
 #include "system/Log.hpp"
+#include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
+
 
 #include <optional>
 #include <string>
@@ -75,6 +76,11 @@ namespace tudov
 		inline bool RemoveScript(std::string_view scriptName) noexcept
 		{
 			return RemoveScript(GetScriptIDByName(scriptName));
+		}
+
+		inline TextID GetScriptTextID(std::string_view scriptName) const noexcept
+		{
+			return GetScriptTextID(GetScriptIDByName(scriptName));
 		}
 
 		inline std::shared_ptr<Text> GetScriptCode(std::string_view scriptName) const noexcept

@@ -13,11 +13,10 @@
 
 #include "data/VirtualFileSystem.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
+#include "system/LogMicros.hpp"
 #include "util/Definitions.hpp"
 #include "util/EnumFlag.hpp"
-#include "system/LogMicros.hpp"
 #include "util/StringUtils.hpp"
-
 
 #include <stdexcept>
 #include <string_view>
@@ -86,6 +85,7 @@ void ScriptProvider::Initialize() noexcept
 	    "jit/p.lua",
 	    "jit/v.lua",
 	    "jit/zone.lua",
+	    "lulpeg.lua",
 	};
 
 	for (auto &&[relativePath, isDirectory] : entries)

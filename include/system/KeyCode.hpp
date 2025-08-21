@@ -1,3 +1,14 @@
+/**
+ * @file system/KeyCode.hpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
 #pragma once
 
 #include "SDL3/SDL_keycode.h"
@@ -263,6 +274,6 @@ namespace tudov
 		LeftMeta = SDLK_LMETA,
 		RightMeta = SDLK_RMETA,
 		LeftHyper = SDLK_LHYPER,
-		RightHyper = SDLK_RHYPER
+		RightHyper = SDLK_RHYPER,
 	};
 } // namespace tudov

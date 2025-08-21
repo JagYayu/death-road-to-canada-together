@@ -91,7 +91,7 @@ bool Window::HandleEvent(SDL_Event &event) noexcept
 		}
 
 		RuntimeEvent *runtimeEvent;
-		if (event.type == SDL_EVENT_KEY_UP)
+		if (!key.down)
 		{
 			runtimeEvent = &GetEventManager().GetCoreEvents().KeyUp();
 		}
@@ -104,12 +104,16 @@ bool Window::HandleEvent(SDL_Event &event) noexcept
 			runtimeEvent = &GetEventManager().GetCoreEvents().KeyDown();
 		}
 
-		sol::table e = GetScriptEngine().CreateTable(0, 3);
+		sol::table e = GetScriptEngine().CreateTable(0, 8);
 		e["window"] = this;
 		e["windowID"] = windowID;
-		e[""] = key.down;
+		e["keyboard"] = nullptr;
+		e["keyboardID"] = 0;
+		e["scanCode"] = key.scancode;
+		e["keyCode"] = key.key;
+		e["mod"] = key.mod;
 
-		runtimeEvent->Invoke(e, windowID);
+		runtimeEvent->Invoke(e, windowID, EEventInvocation::None);
 	}
 	else
 	{
@@ -152,7 +156,7 @@ bool Window::RenderPreImpl() noexcept
 	args["isMain"] = GetContext().GetWindowManager().GetMainWindow().get() == this;
 	args["key"] = &key;
 	args["window"] = this;
-	GetEventManager().GetCoreEvents().TickRender().Invoke(args, key);
+	GetEventManager().GetCoreEvents().TickRender().Invoke(args, key, EEventInvocation::None);
 
 	return true;
 }

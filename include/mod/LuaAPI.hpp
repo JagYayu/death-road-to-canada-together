@@ -13,6 +13,8 @@
 
 #include "ScriptEngine.hpp"
 
+#include "sol/forward.hpp"
+
 #include <functional>
 #include <string_view>
 #include <tuple>
@@ -42,6 +44,9 @@ namespace tudov
 
 		bool RegisterInstallation(std::string_view key, const TInstallation &installation) override;
 		void Install(sol::state &lua, Context &context) override;
+
+	  private:
+		void InstallScanCode(sol::state &lua, Context &context) noexcept;
 	};
 
 	struct [[deprecated("DO NOT USE")]] ILuaAPIProvider

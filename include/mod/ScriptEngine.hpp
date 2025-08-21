@@ -11,9 +11,11 @@
 
 #pragma once
 
+#include "LuaReturn.hpp"
 #include "program/EngineComponent.hpp"
-#include "util/Definitions.hpp"
+#include "sol/table.hpp"
 #include "system/Log.hpp"
+#include "util/Definitions.hpp"
 
 #include "sol/load_result.hpp"
 #include "sol/state.hpp"
@@ -37,6 +39,12 @@ namespace tudov
 	 */
 	struct IScriptEngine : public IEngineComponent
 	{
+		struct ScriptRequire
+		{
+			ScriptID id;
+			sol::table globals;
+		};
+
 		virtual ~IScriptEngine() noexcept = default;
 
 		// STD functions.
@@ -71,10 +79,14 @@ namespace tudov
 		virtual std::string Inspect(sol::object obj) = 0;
 
 		/**
-		 * @warning This is a dangerous function (C longjmp), make sure you manually call necessary destructors!
+		 * @warning This is a dangerous function
+		 * This function is inherently unsafe as it performs a Lua C longjmp.
+		 * It MUST only be invoked from Lua and never directly from C++ code.
+		 * All C++ objects in scope must be manually destroyed before calling this function
+		 * to prevent undefined behavior and potential resource leaks.
 		 */
 		[[noreturn]]
-		virtual void ThrowError(std::string_view message) noexcept = 0;
+		virtual void ThrowError(std::string &message) noexcept = 0;
 
 		virtual void SetReadonlyGlobal(const std::string_view &key, sol::object value) = 0;
 
@@ -92,11 +104,19 @@ namespace tudov
 
 		virtual void ClearPersistVariables() noexcept = 0;
 
+		/**
+		 * @warning This is a dangerous function
+		 * @see `ScriptEngine::ThrowError`
+		 */
 		template <typename... TArgs>
 		[[noreturn]]
 		inline void ThrowError(std::format_string<TArgs...> fmt, TArgs &&...args) noexcept
 		{
-			ThrowError(std::format(fmt, std::forward<TArgs>(args)...));
+			static std::string temp;
+			{
+				temp = std::format(fmt, std::forward<TArgs>(args)...);
+			}
+			ThrowError(temp);
 		}
 	};
 
@@ -128,6 +148,7 @@ namespace tudov
 		sol::function _luaPostProcessModGlobals;
 		sol::function _luaPostProcessScriptGlobals;
 		sol::function _luaMarkAsLocked;
+		sol::function _luaSTDRequire;
 
 		std::vector<std::shared_ptr<ScriptError>> _scriptRuntimeErrors;
 
@@ -159,8 +180,12 @@ namespace tudov
 		void InitializeScript(ScriptID scriptID, std::string_view scriptName, std::string_view modUID, bool sandboxed, sol::protected_function &func) noexcept override;
 		void DeinitializeScript(ScriptID scriptID, std::string_view scriptName) override;
 		std::string Inspect(sol::object obj) override;
+		/**
+		 * @warning This is a dangerous function
+		 * @see `ScriptEngine::ThrowError`
+		 */
 		[[noreturn]]
-		void ThrowError(std::string_view message) noexcept override;
+		void ThrowError(std::string &message) noexcept override;
 		void SetReadonlyGlobal(const std::string_view &key, sol::object value) override;
 		sol::table &GetModGlobals(std::string_view sandboxKey, bool sandboxed) noexcept override;
 		sol::object RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter) override;
@@ -173,5 +198,7 @@ namespace tudov
 	  private:
 		void AssertLuaValue(sol::object value, std::string_view name) noexcept;
 		sol::object MakeReadonlyGlobalImpl(sol::object obj, std::unordered_map<sol::table, sol::table, LuaTableHash, LuaTableEqual> &visited) noexcept;
+
+		sol::object LuaRequire(sol::string_view targetScriptName, ScriptRequire *script) noexcept;
 	};
 } // namespace tudov

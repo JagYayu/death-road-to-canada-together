@@ -26,7 +26,9 @@
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/ImageResources.hpp"
 
+#include "sol/forward.hpp"
 #include "sol/property.hpp"
+#include "sol/string_view.hpp"
 
 using namespace tudov;
 
@@ -64,6 +66,8 @@ decltype(auto) GetMainWindowFromContext(Context &context)
 
 void LuaAPI::Install(sol::state &lua, Context &context)
 {
+	InstallScanCode(lua, context);
+
 	TE_ENUM(EEventInvocation,
 	        {
 	            {"All", EEventInvocation::All},
@@ -186,6 +190,9 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "snapCameraScale", &RenderTarget::SnapCameraScale,
 	            "update", &RenderTarget::Update);
 
+	TE_USERTYPE(ScriptProvider,
+	            "getScriptTextID", &ScriptProvider::GetScriptTextID);
+
 	TE_USERTYPE(VirtualFileSystem,
 	            "exists", &VirtualFileSystem::LuaExists,
 	            "list", &VirtualFileSystem::LuaList,
@@ -203,12 +210,14 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
 	lua["mods"] = &dynamic_cast<ModManager &>(context.GetModManager());
 	lua["network"] = &dynamic_cast<NetworkManager &>(context.GetNetworkManager());
+	lua["scriptProvider"] = &dynamic_cast<ScriptProvider &>(context.GetScriptProvider());
 	lua["vfs"] = &dynamic_cast<VirtualFileSystem &>(context.GetVirtualFileSystem());
 
 	auto &collection = context.GetGlobalResourcesCollection();
 	lua["binaries"] = collection.GetBinariesResources();
 	lua["fonts"] = collection.GetFontResources();
 	lua["images"] = collection.GetImageResources();
+	lua["texts"] = collection.GetTextResources();
 
 	lua.set_function("getModConfig", [this, &context](sol::string_view modUID) -> ModConfig *
 	{

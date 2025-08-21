@@ -65,8 +65,8 @@ namespace tudov
 		}
 
 	  private:
-		void LuaConnect(sol::object args) noexcept;
-		void LuaSendReliable(sol::object data) noexcept;
-		void LuaSendUnreliable(sol::object data) noexcept;
+		void LuaConnect(sol::object args);
+		void LuaSendReliable(sol::object data);
+		void LuaSendUnreliable(sol::object data);
 	};
 } // namespace tudov

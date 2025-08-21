@@ -103,7 +103,7 @@ bool ReliableUDPServer::Update() noexcept
 		{
 		case ENET_EVENT_TYPE_CONNECT:
 		{
-			coreEvents.ClientConnect().Invoke(scriptEngine, nullptr, ESocketType::RUDP);
+			coreEvents.ClientConnect().Invoke(nullptr, ESocketType::RUDP, EEventInvocation::None);
 
 			// printf("A new client connected from %x:%u.\n",
 			//        event.peer->address.host,
