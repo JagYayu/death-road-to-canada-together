@@ -11,18 +11,20 @@
 
 #pragma once
 
-#include "Client.hpp"
-#include "Server.hpp"
-#include "SocketType.hpp"
 #include "debug/Debug.hpp"
 #include "program/EngineComponent.hpp"
-#include "sol/forward.hpp"
 #include "system/Log.hpp"
+
+#include "sol/forward.hpp"
 
 #include <memory>
 
 namespace tudov
 {
+	enum class ESocketType : std::uint8_t;
+	struct IClientSession;
+	struct IServerSession;
+
 	struct INetworkManager : public IEngineComponent, private ILogProvider
 	{
 		static constexpr std::int32_t DefaultUID = 0;
@@ -32,16 +34,16 @@ namespace tudov
 		/**
 		 * Get client with specific UID.
 		 */
-		virtual IClient *GetClient(std::int32_t uid = 0) noexcept = 0;
+		virtual IClientSession *GetClient(std::int32_t uid = 0) noexcept = 0;
 
 		/**
 		 * Get server with specific UID.
 		 */
-		virtual IServer *GetServer(std::int32_t uid = 0) noexcept = 0;
+		virtual IServerSession *GetServer(std::int32_t uid = 0) noexcept = 0;
 
-		virtual std::vector<std::weak_ptr<IClient>> GetClients() noexcept = 0;
+		virtual std::vector<std::weak_ptr<IClientSession>> GetClients() noexcept = 0;
 
-		virtual std::vector<std::weak_ptr<IServer>> GetServers() noexcept = 0;
+		virtual std::vector<std::weak_ptr<IServerSession>> GetServers() noexcept = 0;
 
 		/**
 		 * Remove client.
@@ -83,12 +85,12 @@ namespace tudov
 		 */
 		virtual bool Update() noexcept;
 
-		inline const IClient *GetClient() const noexcept
+		inline const IClientSession *GetClient() const noexcept
 		{
 			return const_cast<INetworkManager *>(this)->GetClient();
 		}
 
-		inline const IServer *GetServer() const noexcept
+		inline const IServerSession *GetServer() const noexcept
 		{
 			return const_cast<INetworkManager *>(this)->GetServer();
 		}
@@ -103,12 +105,12 @@ namespace tudov
 	  protected:
 		std::shared_ptr<Log> _log;
 		Context &_context;
-		std::unordered_map<std::int32_t, std::shared_ptr<IClient>> _clients;
-		std::unordered_map<std::int32_t, std::shared_ptr<IServer>> _servers;
+		std::unordered_map<std::int32_t, std::shared_ptr<IClientSession>> _clients;
+		std::unordered_map<std::int32_t, std::shared_ptr<IServerSession>> _servers;
 		bool _initialized;
 		ESocketType _socketType;
-		std::int32_t _debugClientUID;
-		std::int32_t _debugServerUID;
+		std::uint32_t _debugClientUID;
+		std::uint32_t _debugServerUID;
 
 	  public:
 		explicit NetworkManager(Context &context) noexcept;
@@ -127,10 +129,10 @@ namespace tudov
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
 
-		IClient *GetClient(std::int32_t uid = DefaultUID) noexcept override;
-		IServer *GetServer(std::int32_t uid = DefaultUID) noexcept override;
-		std::vector<std::weak_ptr<IClient>> GetClients() noexcept override;
-		std::vector<std::weak_ptr<IServer>> GetServers() noexcept override;
+		IClientSession *GetClient(std::int32_t uid = DefaultUID) noexcept override;
+		IServerSession *GetServer(std::int32_t uid = DefaultUID) noexcept override;
+		std::vector<std::weak_ptr<IClientSession>> GetClients() noexcept override;
+		std::vector<std::weak_ptr<IServerSession>> GetServers() noexcept override;
 		bool SetClient(std::int32_t uid = DefaultUID) override;
 		bool SetClient(ESocketType socketType, std::int32_t uid = DefaultUID) override;
 		bool SetServer(std::int32_t uid = DefaultUID) override;
@@ -138,7 +140,7 @@ namespace tudov
 		bool Update() noexcept override;
 
 	  private:
-		IClient *LuaGetClient(sol::object uid) noexcept;
-		IServer *LuaGetServer(sol::object uid) noexcept;
+		IClientSession *LuaGetClient(sol::object uid) noexcept;
+		IServerSession *LuaGetServer(sol::object uid) noexcept;
 	};
 } // namespace tudov

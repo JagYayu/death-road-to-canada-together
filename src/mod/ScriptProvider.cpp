@@ -128,7 +128,7 @@ void ScriptProvider::Deinitialize() noexcept
 ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, TextID scriptTextID, std::string_view modUID)
 {
 	{
-		auto &&it = _scriptName2ID.find(scriptName);
+		auto it = _scriptName2ID.find(scriptName);
 		if (it != _scriptName2ID.end())
 		{
 			TE_WARN("Attempt to alloc script id for existed script name: {}", scriptName);
@@ -176,7 +176,7 @@ bool ScriptProvider::IsStaticScript(std::string_view scriptName) const noexcept
 ScriptID ScriptProvider::GetScriptIDByName(std::string_view scriptName) const noexcept
 {
 	std::string name{scriptName};
-	auto &&it = _scriptName2ID.find(name);
+	auto it = _scriptName2ID.find(name);
 	if (it != _scriptName2ID.end())
 	{
 		return it->second;
@@ -229,7 +229,7 @@ bool ScriptProvider::RemoveScript(ScriptID scriptID) noexcept
 
 bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 {
-	auto &&it = _scriptID2Entry.find(scriptID);
+	auto it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())
 	{
 		return false;
@@ -261,7 +261,7 @@ std::size_t ScriptProvider::RemoveScriptsBy(std::string_view uid) noexcept
 
 TextID ScriptProvider::GetScriptTextID(ScriptID scriptID) const noexcept
 {
-	auto &&it = _scriptID2Entry.find(scriptID);
+	auto it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())
 	{
 		return 0;
@@ -271,7 +271,7 @@ TextID ScriptProvider::GetScriptTextID(ScriptID scriptID) const noexcept
 
 std::shared_ptr<Text> ScriptProvider::GetScriptCode(ScriptID scriptID) const noexcept
 {
-	auto &&it = _scriptID2Entry.find(scriptID);
+	auto it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())
 	{
 		return nullptr;
@@ -288,7 +288,7 @@ std::shared_ptr<Text> ScriptProvider::GetScriptCode(ScriptID scriptID) const noe
 
 std::string_view ScriptProvider::GetScriptModUID(ScriptID scriptID) noexcept
 {
-	auto &&it = _scriptID2Entry.find(scriptID);
+	auto it = _scriptID2Entry.find(scriptID);
 	if (it == _scriptID2Entry.end())
 	{
 		return emptyString;

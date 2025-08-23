@@ -8,6 +8,8 @@ error("this is a lua library module")
 
 --- @alias Serializable boolean | number | string | table<Serializable, Serializable>
 
+--- @alias UInt8 integer
+
 --- @class FRect
 --- @field [1] number
 --- @field [2] number

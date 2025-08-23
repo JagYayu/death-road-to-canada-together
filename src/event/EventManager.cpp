@@ -63,7 +63,7 @@ EventID EventManager::AllocEventID(std::string_view eventName) noexcept
 
 void EventManager::DeallocEventID(EventID eventID) noexcept
 {
-	auto &&it = _eventID2Name.find(eventID);
+	auto it = _eventID2Name.find(eventID);
 	if (it != _eventID2Name.end())
 	{
 		_eventName2ID.erase(it->second);
@@ -126,7 +126,7 @@ void EventManager::OnScriptsLoaded()
 
 		if (scriptID)
 		{
-			for (auto &&it = event->BeginHandlers(); it != event->EndHandlers(); ++it)
+			for (auto it = event->BeginHandlers(); it != event->EndHandlers(); ++it)
 			{
 				scriptLoader.AddReverseDependency(it->scriptID, scriptID);
 			}
@@ -199,7 +199,7 @@ void EventManager::PreInitialize() noexcept
 
 	_onPreLoadAllScriptsHandlerID = scriptLoader.GetOnPreLoadAllScripts() += [this]()
 	{
-		for (auto &&it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
+		for (auto it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 		{
 			auto &&runtimeEvent = it->second;
 			if (runtimeEvent->GetScriptID())
@@ -249,7 +249,7 @@ void EventManager::PreInitialize() noexcept
 	{
 		TE_ASSERT(scriptID && "invalid script id!");
 
-		for (auto &&it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
+		for (auto it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 		{
 			if (it->second->GetScriptID() == scriptID)
 			{
@@ -664,7 +664,7 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 
 EventID EventManager::GetEventIDByName(std::string_view eventName) const noexcept
 {
-	auto &&it = _eventName2ID.find(std::string(eventName));
+	auto it = _eventName2ID.find(std::string(eventName));
 	if (it == _eventName2ID.end())
 	{
 		return false;
@@ -674,7 +674,7 @@ EventID EventManager::GetEventIDByName(std::string_view eventName) const noexcep
 
 std::optional<std::string_view> EventManager::GetEventNameByID(EventID eventID) const noexcept
 {
-	auto &&it = _eventID2Name.find(eventID);
+	auto it = _eventID2Name.find(eventID);
 	if (it == _eventID2Name.end())
 	{
 		return std::nullopt;
@@ -691,7 +691,7 @@ void EventManager::ClearInvalidScriptEvents() noexcept
 {
 	auto &&scriptProvider = GetScriptProvider();
 
-	for (auto &&it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
+	for (auto it = _runtimeEvents.begin(); it != _runtimeEvents.end();)
 	{
 		auto &&scriptID = it->second->GetScriptID();
 		if (scriptID && !scriptProvider.IsValidScript(scriptID))
@@ -714,14 +714,14 @@ std::optional<std::reference_wrapper<AbstractEvent>> EventManager::TryGetRegistr
 		throw std::runtime_error("invalid event id");
 	}
 	{
-		auto &&it = _runtimeEvents.find(eventID);
+		auto it = _runtimeEvents.find(eventID);
 		if (it != _runtimeEvents.end())
 		{
 			return *(it->second);
 		}
 	}
 	{
-		auto &&it = _loadtimeEvents.find(eventID);
+		auto it = _loadtimeEvents.find(eventID);
 		if (it != _loadtimeEvents.end())
 		{
 			return *(it->second);

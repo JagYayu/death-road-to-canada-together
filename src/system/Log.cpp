@@ -48,7 +48,7 @@ std::shared_ptr<Log> Log::Get(std::string_view module) noexcept
 	// ! Are you attempt to call `Log::Get` in static initialization?
 
 	auto &&str = std::string(module);
-	auto &&it = _logInstances.find(str);
+	auto it = _logInstances.find(str);
 	if (it != _logInstances.end()) [[likely]]
 	{
 		return it->second;
@@ -66,7 +66,7 @@ Log &Log::GetInstance() noexcept
 
 void Log::CleanupExpired() noexcept
 {
-	for (auto &&it = _logInstances.begin(); it != _logInstances.end();)
+	for (auto it = _logInstances.begin(); it != _logInstances.end();)
 	{
 		if (it->first.empty() || it->second.use_count() <= 1)
 		{
@@ -129,7 +129,7 @@ ELogVerbosity Log::GetVerbosities(std::string_view module) noexcept
 	}
 
 	{
-		if (auto &&it = _verbositiesOverrides.find(module.data()); it != _verbositiesOverrides.end())
+		if (auto it = _verbositiesOverrides.find(module.data()); it != _verbositiesOverrides.end())
 		{
 			return it->second;
 		}
@@ -140,7 +140,7 @@ ELogVerbosity Log::GetVerbosities(std::string_view module) noexcept
 
 bool Log::SetVerbosities(std::string_view module, ELogVerbosity flags) noexcept
 {
-	if (auto &&it = _verbositiesOverrides.find(module.data()); it != _verbositiesOverrides.end())
+	if (auto it = _verbositiesOverrides.find(module.data()); it != _verbositiesOverrides.end())
 	{
 		it->second = flags;
 		return true;
@@ -177,7 +177,7 @@ void Log::UpdateVerbosities(const void *jsonConfig)
 
 std::optional<ELogVerbosity> Log::GetVerbositiesOverride(const std::string &module) noexcept
 {
-	auto &&it = _verbositiesOverrides.find("key");
+	auto it = _verbositiesOverrides.find("key");
 	if (it != _verbositiesOverrides.end())
 	{
 		return it->second;

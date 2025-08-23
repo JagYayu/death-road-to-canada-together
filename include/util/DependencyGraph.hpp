@@ -44,14 +44,14 @@ class DependencyGraph
 	static std::optional<TNode> TraverseImpl(const TLinks &links, const TNode &node, std::optional<std::vector<TNode>> &result, std::unordered_map<TNode, bool> &visited) noexcept
 	{
 		{
-			auto &&it = visited.find(node);
+			auto it = visited.find(node);
 			if (it != visited.end())
 			{
 				return it->second ? std::optional<TNode>(node) : std::nullopt;
 			}
 		}
 
-		if (auto &&it = links.find(node); it != links.end())
+		if (auto it = links.find(node); it != links.end())
 		{
 			visited[node] = true;
 			for (const auto &next : it->second)
@@ -73,7 +73,7 @@ class DependencyGraph
 
 	static void BreakAllLinks(TLinks &links, TLinks &backLinks, const TNode &node) noexcept
 	{
-		auto &&it = links.find(node);
+		auto it = links.find(node);
 		if (it == links.end())
 		{
 			return;
@@ -113,7 +113,7 @@ class DependencyGraph
 
 	void RemoveLink(const TNode &from, const TNode &to) noexcept
 	{
-		auto &&it = _forwardLinks.find(from);
+		auto it = _forwardLinks.find(from);
 		if (it != _forwardLinks.end())
 		{
 			it->second.erase(to);

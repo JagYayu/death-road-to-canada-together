@@ -85,7 +85,7 @@ namespace tudov
 
 		inline std::optional<std::string_view> GetValue(std::string_view key) const noexcept
 		{
-			if (auto &&it = _values.find(key.data()); it != _values.end())
+			if (auto it = _values.find(key.data()); it != _values.end())
 			{
 				return it->second;
 			}

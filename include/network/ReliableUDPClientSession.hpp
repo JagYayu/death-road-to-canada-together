@@ -11,8 +11,9 @@
 
 #pragma once
 
-#include "Client.hpp"
+#include "ClientSession.hpp"
 #include "SocketType.hpp"
+#include "system/Log.hpp"
 
 #include <string_view>
 
@@ -23,10 +24,10 @@ namespace tudov
 {
 	struct INetworkManager;
 
-	class ReliableUDPClient : public IClient
+	class ReliableUDPClientSession : public IClientSession, private ILogProvider
 	{
 	  public:
-		struct ConnectArgs : public IClient::ConnectArgs
+		struct ConnectArgs : public IClientSession::ConnectArgs
 		{
 			std::string_view host;
 			std::uint16_t port;
@@ -34,13 +35,14 @@ namespace tudov
 
 	  protected:
 		INetworkManager &_networkManager;
+		ClientSessionToken _clientToken;
 		_ENetHost *_eNetHost;
 		_ENetPeer *_eNetPeer;
 		bool _isConnecting;
 
 	  public:
-		explicit ReliableUDPClient(INetworkManager &networkManager) noexcept;
-		~ReliableUDPClient() noexcept;
+		explicit ReliableUDPClientSession(INetworkManager &networkManager) noexcept;
+		~ReliableUDPClientSession() noexcept;
 
 	  private:
 		void TryCreateENetHost();
@@ -48,19 +50,22 @@ namespace tudov
 	  public:
 		ESocketType GetSocketType() const noexcept override;
 		Context &GetContext() noexcept override;
+		Log &GetLog() noexcept override;
+
 		INetworkManager &GetNetworkManager() noexcept override;
 		bool Update() override;
 
-		bool IsConnecting() const noexcept override;
-		bool IsConnected() const noexcept override;
-		void Connect(const IClient::ConnectArgs &address) override;
+		ClientSessionToken GetToken() const noexcept override;
+		EClientSessionState GetSessionState() const noexcept override;
+		void Connect(const IClientSession::ConnectArgs &address) override;
 		void Disconnect() override;
-		void SendReliable(std::string_view data) override;
-		void SendUnreliable(std::string_view data) override;
+		bool TryDisconnect() override;
+		void SendReliable(std::span<const std::byte> data, ChannelID channelID) override;
+		void SendUnreliable(std::span<const std::byte> data, ChannelID channelID) override;
 
 		inline void Connect(const ConnectArgs &args)
 		{
-			Connect(static_cast<const IClient::ConnectArgs &>(args));
+			Connect(static_cast<const IClientSession::ConnectArgs &>(args));
 		}
 	};
 } // namespace tudov

@@ -243,7 +243,7 @@ void AssetsManager::LoadAssetsFromExternalDirectories() noexcept
 			}
 
 			auto &&path = entry.path();
-			auto &&it = mountDirectories.find(path.extension().generic_string());
+			auto it = mountDirectories.find(path.extension().generic_string());
 			if (it == mountDirectories.end())
 			{
 				continue;

@@ -1,4 +1,4 @@
---- @class dr2c.Enum
+--- @class Enum
 local Enum = {}
 
 local enumerations = {}

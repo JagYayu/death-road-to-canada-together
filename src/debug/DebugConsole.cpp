@@ -85,7 +85,7 @@ void DebugConsole::Clear()
 
 DebugConsole::Command *DebugConsole::GetCommand(std::string_view commandName) noexcept
 {
-	auto &&it = _commands.find(std::string(commandName));
+	auto it = _commands.find(std::string(commandName));
 	return it == _commands.end() ? nullptr : &it->second;
 }
 
@@ -124,7 +124,7 @@ void DebugConsole::Execute(std::string_view command) noexcept
 		}
 	}
 
-	auto &&it = std::find_if(_commands.begin(), _commands.end(), [this, &commandName](const std::pair<std::string, Command> &pair)
+	auto it = std::find_if(_commands.begin(), _commands.end(), [this, &commandName](const std::pair<std::string, Command> &pair)
 	{
 		return pair.second.name == commandName;
 	});

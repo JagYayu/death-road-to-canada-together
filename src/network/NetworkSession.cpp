@@ -9,13 +9,13 @@
  *
  */
 
-#include "network/NetworkComponent.hpp"
+#include "network/NetworkSession.hpp"
 
 #include "network/NetworkManager.hpp"
 
 using namespace tudov;
 
-Context &INetworkComponent::GetContext() noexcept
+Context &INetworkSession::GetContext() noexcept
 {
 	return GetNetworkManager().GetContext();
 }

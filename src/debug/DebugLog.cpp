@@ -53,7 +53,7 @@ void DebugLog::UpdateAndRender(IWindow &window) noexcept
 		ImGui::TableHeadersRow();
 
 		std::int32_t id = 0;
-		for (auto &&it = Log::BeginLogs(); it != Log::EndLogs(); ++it)
+		for (auto it = Log::BeginLogs(); it != Log::EndLogs(); ++it)
 		{
 			++id;
 

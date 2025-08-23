@@ -244,7 +244,7 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 
 			cache = &_invocationCache.value();
 		}
-		else if (auto &&it = _invocationCaches.find(key); it != _invocationCaches.end()) [[likely]]
+		else if (auto it = _invocationCaches.find(key); it != _invocationCaches.end()) [[likely]]
 		{
 			cache = &it->second;
 		}

@@ -9,18 +9,19 @@
  *
  */
 
-#include "network/Server.hpp"
+#include "network/ServerSession.hpp"
 
 #include "mod/ScriptEngine.hpp"
+#include <span>
 
 using namespace tudov;
 
-void IServer::LuaHost(sol::object args) noexcept
+void IServerSession::LuaHost(sol::object args) noexcept
 {
 	TE_ASSERT(false, "Not implement yet");
 }
 
-void IServer::LuaSendReliable(sol::object clientID, sol::object data) noexcept
+void IServerSession::LuaSendReliable(sol::object clientID, sol::object data, sol::object channelID) noexcept
 {
 	if (!clientID.is<std::double_t>()) [[unlikely]]
 	{
@@ -32,10 +33,13 @@ void IServer::LuaSendReliable(sol::object clientID, sol::object data) noexcept
 		GetScriptEngine().ThrowError("bad argument to #2 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
 	}
 
-	SendReliable(static_cast<std::int32_t>(clientID.as<std::double_t>()), data.as<sol::string_view>());
+	auto str = data.as<sol::string_view>();
+	std::span<const std::byte> data_{reinterpret_cast<const std::byte *>(str.data()), str.size()};
+
+	SendReliable(clientID.as<std::double_t>(), data_, channelID.as<std::double_t>());
 }
 
-void IServer::LuaSendUnreliable(sol::object clientID, sol::object data) noexcept
+void IServerSession::LuaSendUnreliable(sol::object clientID, sol::object data, sol::object channelID) noexcept
 {
 	if (!clientID.is<std::double_t>()) [[unlikely]]
 	{
@@ -47,25 +51,34 @@ void IServer::LuaSendUnreliable(sol::object clientID, sol::object data) noexcept
 		GetScriptEngine().ThrowError("bad argument to #2 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
 	}
 
-	SendUnreliable(static_cast<std::int32_t>(clientID.as<std::double_t>()), data.as<sol::string_view>());
+	auto str = data.as<sol::string_view>();
+	std::span<const std::byte> data_{reinterpret_cast<const std::byte *>(str.data()), str.size()};
+
+	SendUnreliable(static_cast<std::int32_t>(clientID.as<std::double_t>()), data_, channelID.as<std::double_t>());
 }
 
-void IServer::LuaBroadcastReliable(sol::object data) noexcept
+void IServerSession::LuaBroadcastReliable(sol::object data, sol::object channelID) noexcept
 {
 	if (!data.is<sol::string_view>()) [[unlikely]]
 	{
 		GetScriptEngine().ThrowError("bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
 	}
 
-	BroadcastReliable(data.as<sol::string_view>());
+	auto str = data.as<sol::string_view>();
+	std::span<const std::byte> data_{reinterpret_cast<const std::byte *>(str.data()), str.size()};
+
+	BroadcastReliable(data_, channelID.as<std::double_t>());
 }
 
-void IServer::LuaBroadcastUnreliable(sol::object data) noexcept
+void IServerSession::LuaBroadcastUnreliable(sol::object data, sol::object channelID) noexcept
 {
 	if (!data.is<sol::string_view>()) [[unlikely]]
 	{
 		GetScriptEngine().ThrowError("bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
 	}
 
-	BroadcastUnreliable(data.as<sol::string_view>());
+	auto str = data.as<sol::string_view>();
+	std::span<const std::byte> data_{reinterpret_cast<const std::byte *>(str.data()), str.size()};
+
+	BroadcastUnreliable(data_, channelID.as<std::double_t>());
 }

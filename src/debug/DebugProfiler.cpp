@@ -70,14 +70,14 @@ void DebugProfiler::UpdateAndRender(IWindow &window) noexcept
 			{
 				if (i < _luaMemoryBuffer.size())
 				{
-					std::float_t mem = _luaMemoryBuffer[i] / 1024.0f;
+					std::float_t mem = _luaMemoryBuffer[i] / 1024.0f / 1024.0f;
 
 					luaMemories[i] = mem;
 					minimumMemory = std::min(minimumMemory, mem);
 				}
 				else if (i < LuaMemoryBufferSize - 1)
 				{
-					std::float_t mem = luaMemories[i + 1] / 1024.0f;
+					std::float_t mem = luaMemories[i + 1] / 1024.0f / 1024.0f;
 
 					luaMemories[i] = mem;
 					minimumMemory = std::min(minimumMemory, mem);
@@ -89,9 +89,9 @@ void DebugProfiler::UpdateAndRender(IWindow &window) noexcept
 			}
 			ImGui::PlotLines("MEM", luaMemories, FramerateBufferSize, 0, nullptr, 1.0f);
 			ImGui::SameLine();
-			ImGui::Text("%.2f KB", luaMemories[LuaMemoryBufferSize - 1]);
+			ImGui::Text("%.2f MB", luaMemories[LuaMemoryBufferSize - 1]);
 			ImGui::SameLine();
-			ImGui::Text("Min %.2f KB", minimumMemory);
+			ImGui::Text("Min %.2f MB", minimumMemory);
 		}
 
 		ImGui::Separator();
@@ -194,7 +194,7 @@ std::vector<DebugProfiler::DebugProfilerEntry> DebugProfiler::CollectDebugProfil
 	std::vector<DebugProfilerEntry> entries{};
 	entries.reserve(eventManager.GetRuntimeEventsCount());
 
-	for (auto &&it = eventManager.BeginRuntimeEvents(); it != eventManager.EndRuntimeEvents(); ++it)
+	for (auto it = eventManager.BeginRuntimeEvents(); it != eventManager.EndRuntimeEvents(); ++it)
 	{
 		RuntimeEvent &event = *it->second;
 		std::size_t index = entries.size();

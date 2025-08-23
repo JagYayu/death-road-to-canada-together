@@ -37,6 +37,7 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 	TE_CORE_EVENTS_GEN_INIT(_mouseButtonDown, "MouseButtonDown");
 	TE_CORE_EVENTS_GEN_INIT(_mouseButtonUp, "MouseButtonUp");
 	TE_CORE_EVENTS_GEN_INIT(_mouseWheel, "MouseWheel");
+	TE_CORE_EVENTS_GEN_INIT(_serverAuthenticate, "ServerAuthenticate");
 	TE_CORE_EVENTS_GEN_INIT(_serverConnect, "ServerConnect");
 	TE_CORE_EVENTS_GEN_INIT(_serverDisconnect, "ServerDisconnect");
 	TE_CORE_EVENTS_GEN_INIT(_serverMessage, "ServerMessage");
@@ -45,28 +46,29 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 	TE_CORE_EVENTS_GEN_INIT(_tickUpdate, "TickUpdate");
 }
 
-#define TUDOV_CORE_EVENTS_GEN_GETTER(Func, Field) \
-	RuntimeEvent &CoreEvents::Func() noexcept     \
-	{                                             \
-		return *Field;                            \
-	}                                             \
+#define TE_CORE_EVENTS_GEN_GETTER(Func, Field) \
+	RuntimeEvent &CoreEvents::Func() noexcept  \
+	{                                          \
+		return *Field;                         \
+	}                                          \
 	TE_MICRO_END
 
-TUDOV_CORE_EVENTS_GEN_GETTER(ClientConnect, _clientConnect);
-TUDOV_CORE_EVENTS_GEN_GETTER(ClientDisconnect, _clientDisconnect);
-TUDOV_CORE_EVENTS_GEN_GETTER(ClientMessage, _clientMessage);
-TUDOV_CORE_EVENTS_GEN_GETTER(DebugCommand, _debugCommand);
-TUDOV_CORE_EVENTS_GEN_GETTER(DebugSnapshot, _debugSnapshot);
-TUDOV_CORE_EVENTS_GEN_GETTER(KeyDown, _keyDown);
-TUDOV_CORE_EVENTS_GEN_GETTER(KeyRepeat, _keyRepeat);
-TUDOV_CORE_EVENTS_GEN_GETTER(KeyUp, _keyUp);
-TUDOV_CORE_EVENTS_GEN_GETTER(MouseMove, _mouseMove);
-TUDOV_CORE_EVENTS_GEN_GETTER(MouseButtonDown, _mouseButtonDown);
-TUDOV_CORE_EVENTS_GEN_GETTER(MouseButtonUp, _mouseButtonUp);
-TUDOV_CORE_EVENTS_GEN_GETTER(MouseWheel, _mouseWheel);
-TUDOV_CORE_EVENTS_GEN_GETTER(ServerConnect, _serverConnect);
-TUDOV_CORE_EVENTS_GEN_GETTER(ServerDisconnect, _serverDisconnect);
-TUDOV_CORE_EVENTS_GEN_GETTER(ServerMessage, _serverMessage);
-TUDOV_CORE_EVENTS_GEN_GETTER(TickLoad, _tickLoad);
-TUDOV_CORE_EVENTS_GEN_GETTER(TickUpdate, _tickUpdate);
-TUDOV_CORE_EVENTS_GEN_GETTER(TickRender, _tickRender);
+TE_CORE_EVENTS_GEN_GETTER(ClientConnect, _clientConnect);
+TE_CORE_EVENTS_GEN_GETTER(ClientDisconnect, _clientDisconnect);
+TE_CORE_EVENTS_GEN_GETTER(ClientMessage, _clientMessage);
+TE_CORE_EVENTS_GEN_GETTER(DebugCommand, _debugCommand);
+TE_CORE_EVENTS_GEN_GETTER(DebugSnapshot, _debugSnapshot);
+TE_CORE_EVENTS_GEN_GETTER(KeyDown, _keyDown);
+TE_CORE_EVENTS_GEN_GETTER(KeyRepeat, _keyRepeat);
+TE_CORE_EVENTS_GEN_GETTER(KeyUp, _keyUp);
+TE_CORE_EVENTS_GEN_GETTER(MouseMove, _mouseMove);
+TE_CORE_EVENTS_GEN_GETTER(MouseButtonDown, _mouseButtonDown);
+TE_CORE_EVENTS_GEN_GETTER(MouseButtonUp, _mouseButtonUp);
+TE_CORE_EVENTS_GEN_GETTER(MouseWheel, _mouseWheel);
+TE_CORE_EVENTS_GEN_GETTER(ServerAuthenticate, _serverAuthenticate);
+TE_CORE_EVENTS_GEN_GETTER(ServerConnect, _serverConnect);
+TE_CORE_EVENTS_GEN_GETTER(ServerDisconnect, _serverDisconnect);
+TE_CORE_EVENTS_GEN_GETTER(ServerMessage, _serverMessage);
+TE_CORE_EVENTS_GEN_GETTER(TickLoad, _tickLoad);
+TE_CORE_EVENTS_GEN_GETTER(TickUpdate, _tickUpdate);
+TE_CORE_EVENTS_GEN_GETTER(TickRender, _tickRender);

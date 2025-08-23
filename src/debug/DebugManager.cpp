@@ -69,7 +69,7 @@ void DebugManager::AddElement(const std::shared_ptr<IDebugElement> &element) noe
 
 bool DebugManager::RemoveElement(std::string_view elementName) noexcept
 {
-	for (auto &&it = _elements.begin(); it != _elements.end(); ++it)
+	for (auto it = _elements.begin(); it != _elements.end(); ++it)
 	{
 		if (it->get()->GetName() == elementName)
 		{

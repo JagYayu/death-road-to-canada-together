@@ -149,7 +149,7 @@ void GetScriptDependenciesImpl(const std::unordered_map<ScriptID, std::set<Scrip
 	}
 	visited.emplace(scriptID);
 
-	auto &&it = scriptDependencies.find(scriptID);
+	auto it = scriptDependencies.find(scriptID);
 	if (it != scriptDependencies.end())
 	{
 		for (auto &&source : it->second)
@@ -287,7 +287,7 @@ std::shared_ptr<IScriptModule> ScriptLoader::Load(ScriptID scriptID)
 std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view scriptCode, std::string_view modUID)
 {
 	{
-		auto &&it = _scriptModules.find(scriptID);
+		auto it = _scriptModules.find(scriptID);
 		if (it != _scriptModules.end())
 		{
 			return it->second;
@@ -348,7 +348,7 @@ void ScriptLoader::UnloadAllScripts()
 {
 	IScriptProvider &scriptProvider = GetScriptProvider();
 
-	for (auto &&it : _scriptModules)
+	for (auto it : _scriptModules)
 	{
 		if (!scriptProvider.GetScriptNameByID(it.first))
 		{

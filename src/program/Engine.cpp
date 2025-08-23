@@ -21,6 +21,7 @@
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptErrors.hpp"
+#include "network/NetworkManager.hpp"
 #include "program/Context.hpp"
 #include "program/EngineComponent.hpp"
 #include "program/EngineData.hpp"
@@ -238,6 +239,8 @@ void Engine::ProcessLoad() noexcept
 
 void Engine::ProcessTick() noexcept
 {
+	_data->_networkManager->Update();
+
 	if (!_data->_scriptErrors->HasLoadtimeError())
 	{
 		_data->_eventManager->GetCoreEvents().TickUpdate().Invoke();

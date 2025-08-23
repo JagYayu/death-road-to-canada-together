@@ -5,7 +5,37 @@ error("this is a lua library module")
 
 --- @class Events.EventID : integer
 
---- @alias Events.E any?
+--- @class Events.E.DebugCommand
+
+--- @class Events.E.DebugSnapshot
+
+--- @class Events.E.KeyDown
+--- @field window Window?
+--- @field windowID WindowID
+--- @field keyboard Keyboard?
+--- @field keyboardID KeyboardID
+--- @field scanCode EScanCode
+--- @field keyCode integer
+--- @field mod integer
+
+--- @class Events.E.KeyRepeat
+
+--- @class Events.E.KeyUp
+
+--- @class Events.E.MouseButtonDown
+
+--- @class Events.E.MouseButtonUp
+
+--- @class Events.E.MouseMove
+
+--- @class Events.E.MouseWheel
+
+--- @class Events.E.TickLoad
+
+--- @class Events.E.TickRender
+
+--- @class Events.E.TickUpdate
+
 
 --- @alias Events.Event string | Events.EventID
 --- @alias Events.Event "DebugCommand"
@@ -35,7 +65,7 @@ EEventInvocation = {
 	NoProfiler = 2,
 	-- No flags
 	None = 0,
-	
+	-- Trace event invocation progression.
 	TrackProgression = 4,
 }
 
@@ -61,7 +91,7 @@ events = {}
 function events:add(event, func, name, order, key, sequence) end
 
 --- @param event Events.Event
---- @param e Events.E
+--- @param e any
 --- @param key Events.Key?
 --- @param options Events.EEventInvocation? @default: `EEventInvocation.Default`
 function events:invoke(event, e, key, options) end

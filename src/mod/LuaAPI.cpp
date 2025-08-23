@@ -18,8 +18,9 @@
 #include "graphic/RenderTarget.hpp"
 #include "graphic/Renderer.hpp"
 #include "mod/ModManager.hpp"
-#include "network/Client.hpp"
+#include "network/ClientSession.hpp"
 #include "network/NetworkManager.hpp"
+#include "network/ServerSession.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
 #include "program/WindowManager.hpp"
@@ -111,24 +112,22 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "new", &EventManager::LuaNew,
 	            "invoke", &EventManager::LuaInvoke);
 
-	TE_USERTYPE(IClient,
-	            "connect", &IClient::LuaConnect,
-	            "disconnect", &IClient::Disconnect,
-	            "isConnected", &IClient::IsConnected,
-	            "isConnecting", &IClient::IsConnecting,
-	            "sendReliable", &IClient::LuaSendReliable,
-	            "sendUnreliable", &IClient::LuaSendUnreliable,
-	            "tryDisconnect", &IClient::TryDisconnect);
+	TE_USERTYPE(IClientSession,
+	            "connect", &IClientSession::LuaConnect,
+	            "disconnect", &IClientSession::Disconnect,
+	            "getSessionState", &IClientSession::GetSessionState,
+	            "sendReliable", &IClientSession::LuaSendReliable,
+	            "sendUnreliable", &IClientSession::LuaSendUnreliable,
+	            "tryDisconnect", &IClientSession::TryDisconnect);
 
-	TE_USERTYPE(IServer,
-	            "broadcastReliable", &IServer::LuaBroadcastReliable,
-	            "broadcastUnreliable", &IServer::LuaBroadcastUnreliable,
-	            "host", &IServer::LuaHost,
-	            "isHosting", &IServer::IsHosting,
-	            "isShutdown", &IServer::IsShutdown,
-	            "sendReliable", &IServer::LuaSendReliable,
-	            "sendUnreliable", &IServer::LuaSendUnreliable,
-	            "shutdown", &IServer::Shutdown);
+	TE_USERTYPE(IServerSession,
+	            "broadcastReliable", &IServerSession::LuaBroadcastReliable,
+	            "broadcastUnreliable", &IServerSession::LuaBroadcastUnreliable,
+	            "getSessionState", &IServerSession::GetSessionState,
+	            "host", &IServerSession::LuaHost,
+	            "sendReliable", &IServerSession::LuaSendReliable,
+	            "sendUnreliable", &IServerSession::LuaSendUnreliable,
+	            "shutdown", &IServerSession::Shutdown);
 
 	TE_USERTYPE(ImageResources,
 	            "getID", &ImageResources::LuaGetID,

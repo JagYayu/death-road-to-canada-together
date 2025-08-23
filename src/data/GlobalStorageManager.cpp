@@ -48,7 +48,7 @@ GlobalStorage &GlobalStorageManager::GetReadonlyStorage() noexcept
 
 GlobalStorage &GlobalStorageManager::GetUserStorage(std::string_view username) noexcept
 {
-	auto &&it = _users.find(username);
+	auto it = _users.find(username);
 	if (it == _users.end()) [[unlikely]]
 	{
 		auto &&userGlobalStorage = std::make_shared<UserGlobalStorage>(*this, username);

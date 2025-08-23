@@ -109,7 +109,7 @@ std::shared_ptr<Texture> Renderer::GetOrCreateImageTexture(ImageID imageID)
 	}
 
 	TextureID textureID;
-	if (auto &&it = _imageTextureMap.find(imageID); it != _imageTextureMap.end()) [[likely]]
+	if (auto it = _imageTextureMap.find(imageID); it != _imageTextureMap.end()) [[likely]]
 	{
 		textureID = it->second;
 	}
@@ -143,7 +143,7 @@ std::shared_ptr<Texture> Renderer::GetRenderTexture() noexcept
 {
 	if (auto &&sdlTexture = SDL_GetRenderTarget(_sdlRenderer); sdlTexture != nullptr)
 	{
-		auto &&it = _heldTextures.find(sdlTexture);
+		auto it = _heldTextures.find(sdlTexture);
 		if (it != _heldTextures.end())
 		{
 			return it->second;

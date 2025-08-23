@@ -1,5 +1,5 @@
 /**
- * @file event/CoreEventsData.cpp
+ * @file network/NetworkPeer.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -9,7 +9,7 @@
  *
  */
 
-#include "event/CoreEventsData.hpp"
+#include "network/NetworkPeer.hpp"
 
 #include "enet/enet.h"
 

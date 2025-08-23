@@ -86,18 +86,31 @@ namespace tudov
 		// Function Keys
 
 		CapsLock = SDL_SCANCODE_CAPSLOCK, // Caps Lock
-		F1 = SDL_SCANCODE_F1,             // F1
-		F2 = SDL_SCANCODE_F2,             // F2
-		F3 = SDL_SCANCODE_F3,             // F3
-		F4 = SDL_SCANCODE_F4,             // F4
-		F5 = SDL_SCANCODE_F5,             // F5
-		F6 = SDL_SCANCODE_F6,             // F6
-		F7 = SDL_SCANCODE_F7,             // F7
-		F8 = SDL_SCANCODE_F8,             // F8
-		F9 = SDL_SCANCODE_F9,             // F9
-		F10 = SDL_SCANCODE_F10,           // F10
-		F11 = SDL_SCANCODE_F11,           // F11
-		F12 = SDL_SCANCODE_F12,           // F12
+
+		F1 = SDL_SCANCODE_F1,   // F1
+		F2 = SDL_SCANCODE_F2,   // F2
+		F3 = SDL_SCANCODE_F3,   // F3
+		F4 = SDL_SCANCODE_F4,   // F4
+		F5 = SDL_SCANCODE_F5,   // F5
+		F6 = SDL_SCANCODE_F6,   // F6
+		F7 = SDL_SCANCODE_F7,   // F7
+		F8 = SDL_SCANCODE_F8,   // F8
+		F9 = SDL_SCANCODE_F9,   // F9
+		F10 = SDL_SCANCODE_F10, // F10
+		F11 = SDL_SCANCODE_F11, // F11
+		F12 = SDL_SCANCODE_F12, // F12
+		F13 = SDL_SCANCODE_F13, // F13
+		F14 = SDL_SCANCODE_F14, // F14
+		F15 = SDL_SCANCODE_F15, // F15
+		F16 = SDL_SCANCODE_F16, // F16
+		F17 = SDL_SCANCODE_F17, // F17
+		F18 = SDL_SCANCODE_F18, // F18
+		F19 = SDL_SCANCODE_F19, // F19
+		F20 = SDL_SCANCODE_F20, // F20
+		F21 = SDL_SCANCODE_F21, // F21
+		F22 = SDL_SCANCODE_F22, // F22
+		F23 = SDL_SCANCODE_F23, // F23
+		F24 = SDL_SCANCODE_F24, // F24
 
 		PrintScreen = SDL_SCANCODE_PRINTSCREEN, // Print Screen
 		ScrollLock = SDL_SCANCODE_SCROLLLOCK,   // Scroll Lock

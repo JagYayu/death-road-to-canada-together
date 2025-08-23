@@ -19,12 +19,12 @@ namespace tudov
 	/**
 	 * @brief Socket types
 	 */
-	enum class ESocketType
+	enum class ESocketType : std::uint8_t
 	{
 		Local = 0,
 		RUDP,
-		TCP,
 		Steam,
+		TCP,
 	};
 
 	struct ISocketTypeProvider

@@ -16,9 +16,16 @@
 
 namespace tudov
 {
+	enum class ESessionEvent : std::uint8_t
+	{
+		Connect,
+		Receive,
+		Disconnect,
+	};
+
 	struct INetworkManager;
 
-	struct INetworkComponent : public ISocketTypeProvider, public IContextProvider
+	struct INetworkSession : public ISocketTypeProvider, public IContextProvider
 	{
 		virtual INetworkManager &GetNetworkManager() noexcept = 0;
 		virtual bool Update() = 0;

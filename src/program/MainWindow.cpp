@@ -262,7 +262,7 @@ EventHandleKey MainWindow::GetKey() const noexcept
 
 bool MainWindow::HandleEvent(SDL_Event &event) noexcept
 {
-	return Window::HandleEvent(event) || ImGui_ImplSDL3_ProcessEvent(&event);
+	return Window::HandleEvent(event) | ImGui_ImplSDL3_ProcessEvent(&event);
 }
 
 void MainWindow::Render() noexcept

@@ -74,7 +74,7 @@ void WindowManager::AddSubWindow(const std::shared_ptr<IWindow> &window)
 
 void WindowManager::RemoveSubWindow(const std::shared_ptr<IWindow> &window)
 {
-	auto &&it = std::find(_subWindows.begin(), _subWindows.end(), window);
+	auto it = std::find(_subWindows.begin(), _subWindows.end(), window);
 	if (it == _subWindows.end())
 	{
 		throw std::runtime_error("Failure remove sub window");
