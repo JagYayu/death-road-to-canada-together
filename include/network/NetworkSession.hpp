@@ -13,6 +13,7 @@
 
 #include "SocketType.hpp"
 #include "program/Context.hpp"
+#include "util/Definitions.hpp"
 
 namespace tudov
 {
@@ -28,6 +29,7 @@ namespace tudov
 	struct INetworkSession : public ISocketTypeProvider, public IContextProvider
 	{
 		virtual INetworkManager &GetNetworkManager() noexcept = 0;
+		virtual NetworkSessionSlot GetSessionSlot() noexcept = 0;
 		virtual bool Update() = 0;
 
 		Context &GetContext() noexcept override;

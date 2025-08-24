@@ -25,6 +25,11 @@ Exception::Exception(Context &context, std::string_view what) noexcept
 {
 }
 
+Context &Exception::GetContext() noexcept
+{
+	return _context;
+}
+
 const char *Exception::what() const noexcept
 {
 	return What().data();

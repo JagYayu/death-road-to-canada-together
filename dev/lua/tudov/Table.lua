@@ -1,5 +1,5 @@
-local _ScriptEngine = require("ScriptEngine")
-local GFunction = require("dr2c.shared.utils.Function")
+local ScriptEngine = require("ScriptEngine")
+local Function = require("tudov.Function")
 local stringBuffer = require("string.buffer")
 
 local ipairs = ipairs
@@ -8,15 +8,15 @@ local remove = table.remove
 local type = type
 
 --- @class Tudov.Table
-local GTable = {}
+local Table = {}
 
-GTable.empty = setmetatable({}, {
-	__newindex = GFunction.empty,
+Table.empty = setmetatable({}, {
+	__newindex = Function.empty,
 })
 
-GTable.clear = require("table.clear")
+Table.clear = require("table.clear")
 
-GTable.new = require("table.new")
+Table.new = require("table.new")
 
 --- @generic T: table, K, V
 --- @param tbl table
@@ -58,7 +58,7 @@ end
 --- @param tbl T
 --- @param depth number? default: math.huge
 --- @return T
-function GTable.copy(tbl, depth)
+function Table.copy(tbl, depth)
 	depth = depth or math.huge
 
 	return depth > 0 and copyImpl(tbl, depth) or copyFinalImpl(tbl)
@@ -70,7 +70,7 @@ end
 --- @generic T : table
 --- @param tbl T
 --- @return T
-function GTable.fastCopy(tbl)
+function Table.fastCopy(tbl)
 	if type(tbl) ~= "table" then
 		error("Type mismatch", 2)
 	end
@@ -111,8 +111,8 @@ end
 --- @param tbl table<TKey, TValue>
 --- @param depth integer? @default: math.huge
 --- @return (TKey | TValue)[]
-function GTable.flatten(tbl, depth, pairsFunc)
-	return flattenImpl(tbl, tonumber(depth) or 1, type(pairsFunc) == "function" and pairsFunc or GTable.sortedPairs)
+function Table.flatten(tbl, depth, pairsFunc)
+	return flattenImpl(tbl, tonumber(depth) or 1, type(pairsFunc) == "function" and pairsFunc or Table.sortedPairs)
 end
 
 --- @generic T : table
@@ -120,7 +120,7 @@ end
 --- @return fun(state: T, index: integer)
 --- @return T state
 --- @return integer index
-function GTable.flattenPairs(flattened)
+function Table.flattenPairs(flattened)
 	local function it(state, index)
 		index = index + 2
 		local value = state[index]
@@ -135,7 +135,7 @@ end
 
 --- @param tbl any[]
 --- @return integer[]
-function GTable.getIndexList(tbl)
+function Table.getIndexList(tbl)
 	local keyList = {}
 
 	for k in ipairs(tbl) do
@@ -149,7 +149,7 @@ end
 --- @param tbl table<T, any>
 --- @param keys table? @An alias of return table, to avoid GC in specific situations.
 --- @return T[]
-function GTable.getKeyList(tbl, keys)
+function Table.getKeyList(tbl, keys)
 	local keyList = keys or {}
 
 	for k in pairs(tbl) do
@@ -162,7 +162,7 @@ end
 --- @generic T
 --- @param tbl table<any, T>
 --- @return T[]
-function GTable.getValueList(tbl)
+function Table.getValueList(tbl)
 	local valueList = {}
 
 	for _, v in pairs(tbl) do
@@ -175,7 +175,7 @@ end
 --- @generic K, V
 --- @param tbl table<K, V>
 --- @return K[], V[]
-function GTable.getKeyValueLists(tbl)
+function Table.getKeyValueLists(tbl)
 	local keyList = {}
 	local valueList = {}
 
@@ -193,7 +193,7 @@ end
 --- @param list T[]
 --- @param value T
 --- @return integer? pos
-function GTable.listFastRemoveFirst(list, value)
+function Table.listFastRemoveFirst(list, value)
 	for pos, val in ipairs(list) do
 		if val == value then
 			list[pos] = remove(list, #list)
@@ -206,7 +206,7 @@ end
 --- @param list T[]
 --- @param func fun(value: T, index: integer): boolean
 --- @return integer? pos
-function GTable.listFastRemoveFirstIf(list, func)
+function Table.listFastRemoveFirstIf(list, func)
 	for pos, val in ipairs(list) do
 		if func(val, pos) then
 			list[pos] = remove(list, #list)
@@ -218,7 +218,7 @@ end
 --- @generic T
 --- @param list T[]
 --- @param value T
-function GTable.listRemoveFirst(list, value)
+function Table.listRemoveFirst(list, value)
 	for pos, val in ipairs(list) do
 		if val == value then
 			return remove(list, pos)
@@ -229,7 +229,7 @@ end
 --- @generic T
 --- @param list T[]
 --- @param func fun(value: T, index: integer): boolean
-function GTable.listRemoveFirstIf(list, func)
+function Table.listRemoveFirstIf(list, func)
 	for pos, val in ipairs(list) do
 		if func(val, pos) then
 			return remove(list, pos)
@@ -240,7 +240,7 @@ end
 --- @generic T
 --- @param list T[]
 --- @return T[]
-function GTable.listRemoveDuplicates(list)
+function Table.listRemoveDuplications(list)
 	local size = #list
 
 	if size ~= 0 then
@@ -265,9 +265,41 @@ end
 
 --- @generic T
 --- @param list T[]
+--- @return T[]
+function Table.listSortedRemoveDuplications(list)
+	local ti = 1
+	local tv = list[1]
+
+	for read = 2, #list do
+		local v = list[read]
+		if v ~= tv then
+			ti = ti + 1
+			list[ti] = v
+			tv = v
+		end
+	end
+
+	for i = #list, ti + 1, -1 do
+		list[i] = nil
+	end
+
+	return list
+end
+
+--- @generic T
+--- @param list T[]
+--- @param comp (fun(a: integer, b: T): boolean)?
+--- @return T[]
+function Table.listSortAndRemoveDuplications(list, comp)
+	table.sort(list, comp)
+	return Table.listSortedRemoveDuplications(list)
+end
+
+--- @generic T
+--- @param list T[]
 --- @param func fun(value: T, index: integer): boolean
 --- @return T[] list
-function GTable.listRemoveIf(list, func)
+function Table.listRemoveIf(list, func)
 	local l, r = 1, 1
 
 	while #list >= r do
@@ -288,7 +320,7 @@ function GTable.listRemoveIf(list, func)
 	return list
 end
 
-function GTable.reverse(list)
+function Table.reverse(list)
 	local len = #list
 
 	for i = 1, math.floor(len / 2) do
@@ -308,7 +340,7 @@ do
 		end
 	end
 
-	function GTable.reversedPairs(list)
+	function Table.reversedPairs(list)
 		return reversedPairsIterator, list, #list + 1
 	end
 end
@@ -332,8 +364,8 @@ do
 	--- @return fun(): TK, TV
 	--- @return table<TK, TV> tbl
 	--- @return { [1]: TK[], [2]: integer } state @readonly
-	function GTable.sortedPairs(tbl, sort, comp)
-		local keyList = GTable.getKeyList(tbl)
+	function Table.sortedPairs(tbl, sort, comp)
+		local keyList = Table.getKeyList(tbl)
 
 		do
 			(sort or table.sort)(keyList, comp)
@@ -350,8 +382,8 @@ end
 --- @param list T[]
 --- @return table<T, number>
 --- @nodiscard
-function GTable.invertIndexValues(list)
-	local tbl = GTable.new(0, #list)
+function Table.invertIndexValues(list)
+	local tbl = Table.new(0, #list)
 
 	for index, value in ipairs(list) do
 		tbl[value] = index
@@ -369,7 +401,7 @@ local function mergeImpl(dest, src, depth)
 		return dest
 	end
 
-	return GTable.copy(src)
+	return Table.copy(src)
 end
 
 --- @generic T : table
@@ -377,11 +409,11 @@ end
 --- @param src table
 --- @param depth number? default: 1
 --- @return T tbl
-function GTable.merge(dest, src, depth)
+function Table.merge(dest, src, depth)
 	return mergeImpl(dest, src, depth or 1)
 end
 
-function GTable.mergeDefaults(dest, src)
+function Table.mergeDefaults(dest, src)
 	for k, v in pairs(src) do
 		if dest[k] == nil then
 			dest[k] = v
@@ -395,7 +427,7 @@ end
 --- @param dest T
 --- @param src table
 --- @return T
-function GTable.mergeExists(dest, src)
+function Table.mergeExists(dest, src)
 	for k, v in pairs(src) do
 		if dest[k] ~= nil then
 			dest[k] = v
@@ -409,7 +441,7 @@ end
 --- @param list T[]
 --- @param items T[]
 --- @return T[] list
-function GTable.append(list, items)
+function Table.append(list, items)
 	local len = #list
 
 	for idx, val in ipairs(items) do
@@ -439,7 +471,7 @@ end
 --- @return TK? key
 --- @return TV? value
 --- @nodiscard
-function GTable.find(tbl, value, pairsFunc)
+function Table.find(tbl, value, pairsFunc)
 	return findImpl(tbl, value, pairsFunc or pairs)
 end
 
@@ -449,7 +481,7 @@ end
 --- @return integer? index
 --- @return T? value
 --- @nodiscard
-function GTable.listFindFirst(list, value)
+function Table.listFindFirst(list, value)
 	return findImpl(list, value, ipairs)
 end
 
@@ -474,7 +506,7 @@ end
 --- @return TK? key
 --- @return TV? value
 --- @nodiscard
-function GTable.findFirstIf(tbl, func, pairsFunc, ...)
+function Table.findFirstIf(tbl, func, pairsFunc, ...)
 	return findFirstIfImpl(tbl, func, pairsFunc or pairs, ...)
 end
 
@@ -483,7 +515,7 @@ end
 --- @param r T[]
 --- @return T[]
 --- @nodiscard
-function GTable.listConcat(l, r)
+function Table.listConcat(l, r)
 	local ll = #l
 	for i = 1, #r do
 		l[ll + i] = r[i]
@@ -498,7 +530,7 @@ end
 --- @return integer? index
 --- @return T? value
 --- @nodiscard
-function GTable.listFindFirstIf(list, func, ...)
+function Table.listFindFirstIf(list, func, ...)
 	return findFirstIfImpl(list, func, ipairs, ...)
 end
 
@@ -509,18 +541,18 @@ end
 --- @return integer? index
 --- @return T? value
 --- @nodiscard
-function GTable.listFindLastIf(list, func, ...)
-	return findFirstIfImpl(list, func, GTable.reversedPairs, ...)
+function Table.listFindLastIf(list, func, ...)
+	return findFirstIfImpl(list, func, Table.reversedPairs, ...)
 end
 
 --- @warn This function removes table's hash part.
 --- @generic T
 --- @param list T[]
 --- @return T[]
-function GTable.listShrinkToFit(list, length)
+function Table.listShrinkToFit(list, length)
 	local l = list
 
-	list = GTable.new(#l, 0)
+	list = Table.new(#l, 0)
 	for i = 1, length do
 		list[i] = l[i]
 	end
@@ -531,7 +563,7 @@ end
 --- @generic T
 --- @param list T[]
 --- @return { [T]: integer }
-function GTable.listToSet(list)
+function Table.listToSet(list)
 	local set = {}
 
 	for i = 1, #list do
@@ -547,7 +579,7 @@ assert(type(_G.newproxy) == "function", "`_G.newproxy` is not a function!")
 --- @param table T
 --- @param metatable metatable
 --- @return T
-function GTable.setProxyMetatable(table, metatable)
+function Table.setProxyMetatable(table, metatable)
 	local instance = newproxy(true)
 	--- @diagnostic disable-next-line: invisible
 	getmetatable(instance).__gc = metatable.__gc
@@ -558,11 +590,11 @@ end
 --- Lock a table's metatable, which can no longer be accessed by `getmetatable` functions in sandboxed scripts.
 --- @param tbl table
 --- @return metatable? metatable @nil if metatable not exists or valid.
-function GTable.lockMetatable(tbl)
+function Table.lockMetatable(tbl)
 	if type(tbl) == "table" then
 		local mt = getmetatable(tbl)
 		if type(mt) == "table" then
-			_ScriptEngine.markAsLocked(mt)
+			ScriptEngine.markAsLocked(mt)
 			return mt
 		end
 	end
@@ -574,7 +606,7 @@ local function tableToReadonly(tbl, seen)
 	end
 
 	local index = {}
-	local proxy = setmetatable({}, { __index = index, __newindex = GFunction.newIndexReadonly })
+	local proxy = setmetatable({}, { __index = index, __newindex = Function.errorModifyReadonly })
 	seen[tbl] = proxy
 
 	for k, v in pairs(tbl) do
@@ -595,15 +627,15 @@ end
 --- Create a readonly proxy table, which is readonly to original table.
 --- @param tbl table
 --- @return table
-function GTable.readonly(tbl)
+function Table.readonly(tbl)
 	return tableToReadonly(tbl, {})
 end
 
 --- TODO
 --- @param l table
 --- @param r table
-function GTable.deepEquals(l, r) end
+function Table.deepEquals(l, r) end
 
-GTable.lockMetatable(GTable.empty)
+Table.lockMetatable(Table.empty)
 
-return GTable
+return Table

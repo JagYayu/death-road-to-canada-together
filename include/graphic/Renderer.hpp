@@ -137,7 +137,7 @@ namespace tudov
 		std::shared_ptr<RenderTarget> LuaEndTarget() noexcept;
 		void LuaDraw(sol::table args);
 		std::shared_ptr<Texture> LuaDrawExtractTexture(sol::table args) noexcept;
-		std::shared_ptr<RenderTarget> LuaNewRenderTarget(const sol::object &width = sol::nil, const sol::object &height = sol::nil);
+		std::shared_ptr<RenderTarget> LuaNewRenderTarget(sol::object width = sol::nil, sol::object height = sol::nil);
 		void LuaClear(std::uint32_t color) noexcept;
 		std::tuple<std::float_t, std::float_t> LuaGetTargetSize(const std::shared_ptr<RenderTarget> &renderTarget) noexcept;
 

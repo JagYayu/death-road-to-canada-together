@@ -18,6 +18,27 @@ error("this is a lua library module")
 --- @field keyCode integer
 --- @field mod integer
 
+--- @class Events.E.ClientMessage.Data : userdata
+--- @field socketType ESocketType
+--- @field message string
+
+--- @class Events.E.LocalClientMessage.Data : Events.E.ClientMessage.Data
+--- @field clientSlot integer
+--- @field serverSlot integer
+
+--- @class Events.E.RUDPClientMessage.Data : Events.E.ClientMessage.Data
+--- @field host string
+--- @field port integer
+
+--- @class Events.E.ClientMessage
+--- @field data Events.E.ClientMessage.Data
+
+--- @class Events.E.LocalClientMessage
+--- @field data Events.E.LocalClientMessage.Data
+
+--- @class Events.E.RUDPClientMessage
+--- @field data Events.E.RUDPClientMessage.Data
+
 --- @class Events.E.KeyRepeat
 
 --- @class Events.E.KeyUp
@@ -36,8 +57,10 @@ error("this is a lua library module")
 
 --- @class Events.E.TickUpdate
 
-
 --- @alias Events.Event string | Events.EventID
+--- @alias Events.Event "ClientConnect"
+--- @alias Events.Event "ClientDisconnect"
+--- @alias Events.Event "ClientMessage"
 --- @alias Events.Event "DebugCommand"
 --- @alias Events.Event "DebugSnapshot"
 --- @alias Events.Event "KeyDown"
@@ -46,6 +69,9 @@ error("this is a lua library module")
 --- @alias Events.Event "MouseButtonUp"
 --- @alias Events.Event "MouseMove"
 --- @alias Events.Event "MouseWheel"
+--- @alias Events.Event "ServerConnect"
+--- @alias Events.Event "ServerDisconnect"
+--- @alias Events.Event "ServerMessage"
 --- @alias Events.Event "TickLoad"
 --- @alias Events.Event "TickRender"
 --- @alias Events.Event "TickUpdate"

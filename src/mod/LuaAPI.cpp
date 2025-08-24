@@ -67,6 +67,7 @@ decltype(auto) GetMainWindowFromContext(Context &context)
 
 void LuaAPI::Install(sol::state &lua, Context &context)
 {
+	InstallNetwork(lua, context);
 	InstallScanCode(lua, context);
 
 	TE_ENUM(EEventInvocation,
@@ -102,6 +103,14 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            {"FullPath", EPathListOption::FullPath},
 	        });
 
+	TE_ENUM(ESocketType,
+	        {
+	            {"Local", ESocketType::Local},
+	            {"RUDP", ESocketType::RUDP},
+	            {"Steam", ESocketType::Steam},
+	            {"TCP", ESocketType::TCP},
+	        });
+
 	TE_USERTYPE(Engine,
 	            "mainWindow", GetMainWindowFromContext(context),
 	            "quit", &Engine::Quit,
@@ -111,23 +120,6 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "add", &EventManager::LuaAdd,
 	            "new", &EventManager::LuaNew,
 	            "invoke", &EventManager::LuaInvoke);
-
-	TE_USERTYPE(IClientSession,
-	            "connect", &IClientSession::LuaConnect,
-	            "disconnect", &IClientSession::Disconnect,
-	            "getSessionState", &IClientSession::GetSessionState,
-	            "sendReliable", &IClientSession::LuaSendReliable,
-	            "sendUnreliable", &IClientSession::LuaSendUnreliable,
-	            "tryDisconnect", &IClientSession::TryDisconnect);
-
-	TE_USERTYPE(IServerSession,
-	            "broadcastReliable", &IServerSession::LuaBroadcastReliable,
-	            "broadcastUnreliable", &IServerSession::LuaBroadcastUnreliable,
-	            "getSessionState", &IServerSession::GetSessionState,
-	            "host", &IServerSession::LuaHost,
-	            "sendReliable", &IServerSession::LuaSendReliable,
-	            "sendUnreliable", &IServerSession::LuaSendUnreliable,
-	            "shutdown", &IServerSession::Shutdown);
 
 	TE_USERTYPE(ImageResources,
 	            "getID", &ImageResources::LuaGetID,

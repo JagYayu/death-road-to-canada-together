@@ -24,7 +24,7 @@
 #define TE_G_INFO(Name, Format, ...)  TE_G_LOG(Name, Info, Format, __VA_ARGS__)
 #define TE_G_WARN(Name, Format, ...)  TE_G_LOG(Name, Warn, Format, __VA_ARGS__)
 #define TE_G_ERROR(Name, Format, ...) TE_G_LOG(Name, Error, Format, __VA_ARGS__)
-#define TE_G_FATAL(Name, Format, ...) TE_G_LOG(Name, Fatal, Format, __VA_ARGS__)
+#define TE_G_FATAL(Name, Format, ...) ::tudov::Log::Get(Name)->Fatal(Format __VA_OPT__(, __VA_ARGS__))
 
 // endregion
 

@@ -30,7 +30,7 @@ namespace tudov
 		{
 		}
 
-		void operator()(const sol::object &obj) const
+		void operator()(sol::object obj) const
 		{
 			if (std::holds_alternative<sol::function>(function))
 			{
@@ -52,7 +52,7 @@ namespace tudov
 			}
 		}
 
-		void operator()(const sol::object &obj, const EventHandleKey &key) const
+		void operator()(sol::object obj, const EventHandleKey &key) const
 		{
 			if (auto &&func = std::get_if<sol::function>(&function); func != nullptr)
 			{

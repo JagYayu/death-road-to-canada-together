@@ -49,7 +49,7 @@ constexpr std::array<const char *, 6> preRequiredStdModules = {
 // constexpr const char *preFullyLoadScriptNames[] = {};
 
 constexpr const char *modCopyGlobals[] = {
-    // lua51 std
+    // luajit std
     "_VERSION",
     "assert",
     "bit",

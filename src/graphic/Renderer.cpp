@@ -286,7 +286,7 @@ std::shared_ptr<Texture> Renderer::LuaDrawExtractTexture(sol::table args) noexce
 	return nullptr;
 }
 
-std::shared_ptr<RenderTarget> Renderer::LuaNewRenderTarget(const sol::object &width, const sol::object &height)
+std::shared_ptr<RenderTarget> Renderer::LuaNewRenderTarget(sol::object width, sol::object height)
 {
 	return std::make_shared<RenderTarget>(*this,
 	                                      width.is<double_t>() ? int32_t(width.as<double_t>()) : _window.GetWidth(),

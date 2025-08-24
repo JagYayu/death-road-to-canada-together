@@ -46,6 +46,7 @@ namespace tudov
 		void Install(sol::state &lua, Context &context) override;
 
 	  private:
+		void InstallNetwork(sol::state &lua, Context &context) noexcept;
 		void InstallScanCode(sol::state &lua, Context &context) noexcept;
 	};
 

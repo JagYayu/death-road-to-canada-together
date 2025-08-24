@@ -1,5 +1,6 @@
 local CECSSchema = require("dr2c.client.ecs.ECSSchema")
-local GTable = require("dr2c.shared.utils.Table")
+local Table = require("tudov.Table")
+local String = require("tudov.String")
 
 local CECSSchema_getComponentTypeID = CECSSchema.getComponentTypeID
 local CECSSchema_getComponentTrait = CECSSchema.getComponentTrait
@@ -7,10 +8,9 @@ local CECSSchema_ComponentTrait_Constant = CECSSchema.ComponentTrait.Constant
 local CECSSchema_ComponentTrait_Mutable = CECSSchema.ComponentTrait.Mutable
 local CECSSchema_ComponentTrait_Serializable = CECSSchema.ComponentTrait.Serializable
 local CECSSchema_ComponentTrait_Shared = CECSSchema.ComponentTrait.Shared
-local GTable_deepEquals = GTable.deepEquals
+local Table_deepEquals = Table.deepEquals
 local assert = assert
 local pairs = pairs
-local stringBuffer = require("string.buffer")
 local type = type
 
 --- @class dr2c.ECS
@@ -178,7 +178,7 @@ local function spawnEntityImpl(entry)
 	entitiesSorted = false
 
 	do
-		local decode = stringBuffer.decode
+		local decode = String.bufferDecode
 
 		for _, component in ipairs(assert(CECSSchema.getEntityComponentsMutable(entity[1]))) do
 			local fieldsBuffer = component.fields
@@ -197,7 +197,7 @@ local function spawnEntityImpl(entry)
 	if type(entry.components) == "table" then
 		-- TODO
 
-		for _, index, value in GTable.sortedPairs(entry.components) do
+		for _, index, value in Table.sortedPairs(entry.components) do
 			--
 		end
 	end
@@ -221,7 +221,7 @@ local function despawnEntityImpl(entry)
 	local entityID = entity[1]
 	local entityTypeID = entity[2]
 
-	local index = GTable.listFindLastIf(entities, isEntityIDMatched, entityID)
+	local index = Table.listFindLastIf(entities, isEntityIDMatched, entityID)
 	if not index then
 		return
 	end
@@ -302,7 +302,7 @@ local function createEntityFilter(key, requires, excludes)
 	entityFilter.key = key
 
 	--- @type boolean[]
-	local filterEntityTypeIDCache = GTable.new(CECSSchema.getComponentsCount(), 0)
+	local filterEntityTypeIDCache = Table.new(CECSSchema.getComponentsCount(), 0)
 
 	--- @param entityTypeID dr2c.EntityTypeID
 	--- @return boolean
@@ -326,8 +326,8 @@ function CECS.filter(requiredComponents, excludedComponents)
 	requiredComponents = requiredComponents or {}
 	excludedComponents = excludedComponents or {}
 
-	local requires = GTable.new(#requiredComponents, 0)
-	local excludes = GTable.new(#excludedComponents, 0)
+	local requires = Table.new(#requiredComponents, 0)
+	local excludes = Table.new(#excludedComponents, 0)
 	for i, requiredComponent in ipairs(requiredComponents) do
 		requires[i] = requiredComponent
 	end
@@ -336,7 +336,7 @@ function CECS.filter(requiredComponents, excludedComponents)
 	end
 
 	--- @type dr2c.EntityFilterKey
-	local key = stringBuffer.encode({ requires, "|", excludes })
+	local key = String.bufferEncode({ requires, "|", excludes })
 	local entityFilter = entityFilters[key]
 
 	if not entityFilter then

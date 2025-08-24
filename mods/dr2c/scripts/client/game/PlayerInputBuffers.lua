@@ -1,4 +1,4 @@
-local GTable = require("dr2c.shared.utils.Table")
+local Table = require("tudov.Table")
 
 --- @class dr2c.PlayerInputEntry
 --- @field [1] boolean isPrediction
@@ -42,7 +42,7 @@ function CPlayerInputBuffers.getInputs(playerID, beginFrame, endFrame)
 	beginFrame = tonumber(beginFrame) or 1
 	endFrame = tonumber(endFrame) or inputs.latestFrame
 
-	local result = GTable.new(endFrame - beginFrame + 1, 0)
+	local result = Table.new(endFrame - beginFrame + 1, 0)
 	for frame = beginFrame, endFrame do
 		local entry = inputs[frame]
 		if not entry then

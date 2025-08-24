@@ -18,11 +18,13 @@
 #include "event/RuntimeEvent.hpp"
 #include "network/ClientSessionState.hpp"
 #include "network/NetworkManager.hpp"
-
-#include "enet/enet.h"
+#include "network/NetworkSessionData.hpp"
 #include "network/ReliableUDPSession.hpp"
 #include "network/SocketType.hpp"
 #include "system/LogMicros.hpp"
+
+#include "bitsery/adapter/buffer.h"
+#include "enet/enet.h"
 
 #include <array>
 #include <stdexcept>
@@ -30,9 +32,10 @@
 
 using namespace tudov;
 
-ReliableUDPClientSession::ReliableUDPClientSession(INetworkManager &networkManager) noexcept
+ReliableUDPClientSession::ReliableUDPClientSession(INetworkManager &networkManager, NetworkSessionSlot clientSlot) noexcept
     : _networkManager(networkManager),
-      _clientToken(0),
+      _clientSessionSlot(clientSlot),
+      _clientSessionID(0),
       _eNetHost(nullptr),
       _eNetPeer(nullptr)
 {
@@ -61,14 +64,19 @@ INetworkManager &ReliableUDPClientSession::GetNetworkManager() noexcept
 	return _networkManager;
 }
 
+NetworkSessionSlot ReliableUDPClientSession::GetSessionSlot() noexcept
+{
+	return _clientSessionSlot;
+}
+
 ESocketType ReliableUDPClientSession::GetSocketType() const noexcept
 {
 	return ESocketType::RUDP;
 }
 
-ClientSessionToken ReliableUDPClientSession::GetToken() const noexcept
+ClientSessionID ReliableUDPClientSession::GetSessionID() const noexcept
 {
-	return _clientToken;
+	return _clientSessionID;
 }
 
 EClientSessionState ReliableUDPClientSession::GetSessionState() const noexcept
@@ -98,7 +106,7 @@ void ReliableUDPClientSession::Connect(const IClientSession::ConnectArgs &baseAr
 	auto &args = dynamic_cast<const ConnectArgs &>(baseArgs);
 
 	ENetAddress enetAddress;
-	if (enet_address_set_host(&enetAddress, args.host.data()) != 0)
+	if (enet_address_set_host(&enetAddress, args.host.data()) != 0) [[unlikely]]
 	{
 		throw std::runtime_error("Failed to resolve hostname");
 	}
@@ -107,7 +115,7 @@ void ReliableUDPClientSession::Connect(const IClientSession::ConnectArgs &baseAr
 	TryCreateENetHost();
 
 	_eNetPeer = enet_host_connect(_eNetHost, &enetAddress, NetworkChannelsLimit, 0);
-	if (_eNetPeer == nullptr)
+	if (_eNetPeer == nullptr) [[unlikely]]
 	{
 		throw std::runtime_error("Failed to create peer for connection");
 	}
@@ -117,7 +125,7 @@ void ReliableUDPClientSession::Connect(const IClientSession::ConnectArgs &baseAr
 	_ENetEvent event;
 	if (enet_host_service(_eNetHost, &event, 5000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT)
 	{
-		TE_DEBUG("Connected!");
+		TE_DEBUG("Connected to server!");
 	}
 	else
 	{
@@ -148,23 +156,22 @@ bool ReliableUDPClientSession::TryDisconnect()
 	return true;
 }
 
-TE_FORCEINLINE void Send(ENetPeer *peer, std::span<const std::byte> data, ChannelID channelID, enet_uint32 flags)
+TE_FORCEINLINE void Send(ENetPeer *peer, const NetworkSessionData &data, enet_uint32 flags)
 {
-	ENetPacket *packet = enet_packet_create(data.data(), data.size(), flags);
-	enet_peer_send(peer, static_cast<std::uint8_t>(channelID), packet);
-	enet_packet_destroy(packet);
+	ENetPacket *packet = enet_packet_create(data.bytes.data(), data.bytes.size(), flags);
+	enet_peer_send(peer, static_cast<std::uint8_t>(data.channelID), packet);
 }
 
-void ReliableUDPClientSession::SendReliable(std::span<const std::byte> data, ChannelID channelID)
+void ReliableUDPClientSession::SendReliable(const NetworkSessionData &data)
 {
 	TE_TRACE("Send message");
-	Send(_eNetPeer, data, channelID, ENET_PACKET_FLAG_RELIABLE);
+	Send(_eNetPeer, data, ENET_PACKET_FLAG_RELIABLE);
 }
 
-void ReliableUDPClientSession::SendUnreliable(std::span<const std::byte> data, ChannelID channelID)
+void ReliableUDPClientSession::SendUnreliable(const NetworkSessionData &data)
 {
 	TE_TRACE("Send message");
-	Send(_eNetPeer, data, channelID, 0);
+	Send(_eNetPeer, data, 0);
 }
 
 bool ReliableUDPClientSession::Update()
@@ -190,36 +197,14 @@ bool ReliableUDPClientSession::Update()
 			std::array<char, 45> hostName;
 			enet_address_get_host(&event.peer->address, hostName.data(), hostName.size());
 
-			EventReliableUDPClientConnectData e{
+			EventReliableUDPClientConnectData data{
 			    .host = std::string_view(hostName.data()),
 			    .port = event.peer->address.port,
 			};
 
-			TE_TRACE("Connect event, host: {}, port: {}", e.host, ENET_NET_TO_HOST_16(e.port));
+			TE_TRACE("Connect event, host: {}, port: {}", data.host, data.port);
 
-			coreEvents.ClientConnect().Invoke(&e, {}, EEventInvocation::None);
-
-			break;
-		}
-		case ENET_EVENT_TYPE_RECEIVE:
-		{
-			std::array<char, 45> hostName;
-			enet_address_get_host(&event.peer->address, hostName.data(), hostName.size());
-
-			std::string_view receivedData{reinterpret_cast<const char *>(event.packet->data), event.packet->dataLength};
-
-			EventReliableUDPClientMessageData data{
-			    .socketType = ESocketType::RUDP,
-			    .message = receivedData,
-			    .host = std::string_view(hostName.data()),
-			    .port = event.peer->address.port,
-			};
-
-			TE_TRACE("Connect event, host: {}, port: {}, message: {} bytes", data.host, ENET_NET_TO_HOST_16(data.port), data.message.size());
-
-			coreEvents.ClientMessage().Invoke(&data, {}, EEventInvocation::None);
-
-			enet_packet_destroy(event.packet);
+			coreEvents.ClientConnect().Invoke(&data, _clientSessionSlot, EEventInvocation::None);
 
 			break;
 		}
@@ -228,20 +213,23 @@ bool ReliableUDPClientSession::Update()
 			std::array<char, 45> hostName;
 			enet_address_get_host(&event.peer->address, hostName.data(), hostName.size());
 
-			EventReliableUDPClientDisconnectData data{
+			EventReliableUDPClientDisconnectData eventData{
 			    .socketType = ESocketType::RUDP,
 			    .host = std::string_view(hostName.data()),
 			    .port = event.peer->address.port,
 			};
 
-			TE_TRACE("Disconnect event, host: {}, port: {}", data.host, ENET_NET_TO_HOST_16(data.port));
+			TE_TRACE("Disconnect event, host: {}, port: {}", eventData.host, eventData.port);
 
-			coreEvents.ClientMessage().Invoke(&data, {}, EEventInvocation::None);
-
-			enet_packet_destroy(event.packet);
+			coreEvents.ClientMessage().Invoke(&eventData, _clientSessionSlot, EEventInvocation::None);
 
 			break;
 		}
+		case ENET_EVENT_TYPE_RECEIVE:
+			UpdateENetReceive(event);
+			break;
+		case ENET_EVENT_TYPE_NONE:
+			break;
 		default:
 			TE_WARN("Unknown event type {}", static_cast<std::underlying_type_t<ENetEventType>>(event.type));
 			break;
@@ -251,4 +239,66 @@ bool ReliableUDPClientSession::Update()
 	enet_host_flush(_eNetHost);
 
 	return hasEvent;
+}
+
+void ReliableUDPClientSession::UpdateENetReceive(_ENetEvent &event) noexcept
+{
+	std::array<char, 45> hostName;
+	enet_address_get_host(&event.peer->address, hostName.data(), hostName.size());
+
+	std::string_view receivedData{reinterpret_cast<const char *>(event.packet->data), event.packet->dataLength};
+
+	EventReliableUDPClientMessageData data{
+	    .socketType = ESocketType::RUDP,
+	    .message = receivedData,
+	    .host = std::string_view(hostName.data()),
+	    .port = event.peer->address.port,
+	};
+
+	TE_TRACE("Receive event, host: {}, port: {}, message: {}B", data.host, data.port, data.message.size());
+
+	GetEventManager().GetCoreEvents().ClientMessage().Invoke(&data, _clientSessionSlot, EEventInvocation::None);
+
+	enet_packet_destroy(event.packet);
+
+	// auto head = static_cast<ENetworkSessionDataHead>(event.packet->data[0]);
+	// switch (head)
+	// {
+	// case ENetworkSessionDataHead::ServerConnection:
+	// {
+	// 	NetworkSessionDataContentServerConnection content;
+	// 	auto state = bitsery::quickDeserialization<bitsery::InputBufferAdapter<enet_uint8 *>>({event.packet->data, event.packet->dataLength}, content);
+
+	// 	if (state.first == bitsery::ReaderError::NoError)
+	// 	{
+	// 		content.clientSessionID;
+	// 	}
+	// 	else
+	// 	{
+	// 		TE_ERROR("Deserialization failed: {}", static_cast<std::underlying_type_t<decltype(state.first)>>(state.first));
+	// 	}
+
+	// 	break;
+	// }
+	// default:
+	// {
+	// 	std::array<char, 45> hostName;
+	// 	enet_address_get_host(&event.peer->address, hostName.data(), hostName.size());
+
+	// 	std::string_view receivedData{reinterpret_cast<const char *>(event.packet->data), event.packet->dataLength};
+
+	// 	EventReliableUDPClientMessageData data{
+	// 	    .socketType = ESocketType::RUDP,
+	// 	    .message = receivedData,
+	// 	    .host = std::string_view(hostName.data()),
+	// 	    .port = event.peer->address.port,
+	// 	};
+
+	// 	TE_TRACE("Receive event, host: {}, port: {}, message: {}B", data.host, data.port, data.message);
+
+	// 	GetEventManager().GetCoreEvents().ClientMessage().Invoke(&data, {}, EEventInvocation::None);
+
+	// 	enet_packet_destroy(event.packet);
+	// }
+	// }
 }

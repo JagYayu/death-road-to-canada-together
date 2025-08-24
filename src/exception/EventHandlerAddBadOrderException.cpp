@@ -1,5 +1,5 @@
 /**
- * @file exception/BadEventHandlerOrder.hpp
+ * @file exception/EventHandlerAddBadOrderException.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -10,6 +10,7 @@
  */
 
 #include "exception/EventHandlerAddBadOrderException.hpp"
+
 #include "event/EventManager.hpp"
 #include "mod/ScriptProvider.hpp"
 
@@ -18,17 +19,10 @@
 using namespace tudov;
 
 EventHandlerAddBadOrderException::EventHandlerAddBadOrderException(Context &context, EventID eventID, ScriptID scriptID, std::string order, std::string traceback) noexcept
-    : eventID(eventID),
-      scriptID(scriptID),
-      order(order),
-      traceback(traceback),
-      Exception(context)
+    : EventHandlerAddException(context,  eventID, scriptID, traceback),
+      order(order)
+      
 {
-}
-
-Context &EventHandlerAddBadOrderException::GetContext() noexcept
-{
-	return _context;
 }
 
 std::string_view EventHandlerAddBadOrderException::What() const noexcept

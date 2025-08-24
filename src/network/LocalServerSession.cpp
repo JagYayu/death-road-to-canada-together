@@ -21,6 +21,7 @@
 #include "network/LocalServerSession.hpp"
 #include "network/LocalSession.hpp"
 #include "network/NetworkManager.hpp"
+#include "network/NetworkSessionData.hpp"
 #include "network/ServerSessionState.hpp"
 #include "network/SocketType.hpp"
 #include "system/LogMicros.hpp"
@@ -40,18 +41,18 @@ using namespace tudov;
 // 	this->data = std::vector<std::byte>(data.begin(), data.end());
 // }
 
-// LocalServerSession::Message::Message(bool reliable, ClientSessionToken clientID, std::span<const std::byte> data) noexcept
+// LocalServerSession::Message::Message(bool reliable, ClientSessionID clientID, std::span<const std::byte> data) noexcept
 // {
 // 	this->source = reliable ? SendReliable : SendUnreliable;
-// 	this->clientSessionToken = clientID;
+// 	this->clientSessionID = clientID;
 // 	this->data = std::vector<std::byte>(data.begin(), data.end());
 // }
 
-LocalServerSession::LocalServerSession(INetworkManager &network, std::uint32_t serverUID) noexcept
+LocalServerSession::LocalServerSession(INetworkManager &network, NetworkSessionSlot serverSlot) noexcept
     : _networkManager(network),
-      _serverUID(serverUID),
+      _serverSessionSlot(serverSlot),
       _sessionState(EServerSessionState::Shutdown),
-      _latestToken(0)
+      _latestID(0)
 {
 }
 
@@ -63,6 +64,11 @@ INetworkManager &LocalServerSession::GetNetworkManager() noexcept
 ESocketType LocalServerSession::GetSocketType() const noexcept
 {
 	return ESocketType::Local;
+}
+
+NetworkSessionSlot LocalServerSession::GetSessionSlot() noexcept
+{
+	return _serverSessionSlot;
 }
 
 Log &LocalServerSession::GetLog() noexcept
@@ -120,29 +126,29 @@ std::optional<std::size_t> LocalServerSession::GetMaxClients() const noexcept
 	return _hostInfo != nullptr ? std::make_optional(_hostInfo->maximumClients) : std::nullopt;
 }
 
-void LocalServerSession::SendReliable(ClientSessionToken clientSessionToken, std::span<const std::byte> data, ChannelID channelID)
+void LocalServerSession::SendReliable(ClientSessionID clientSessionID, const NetworkSessionData &data)
 {
-	EnqueueMessage(clientSessionToken, data, channelID, ELocalSessionSource::SendReliable);
+	EnqueueMessage(clientSessionID, data, ELocalSessionSource::SendReliable);
 }
 
-void LocalServerSession::SendUnreliable(ClientSessionToken clientSessionToken, std::span<const std::byte> data, ChannelID channelID)
+void LocalServerSession::SendUnreliable(ClientSessionID clientSessionID, const NetworkSessionData &data)
 {
-	EnqueueMessage(clientSessionToken, data, channelID, ELocalSessionSource::SendUnreliable);
+	EnqueueMessage(clientSessionID, data, ELocalSessionSource::SendUnreliable);
 }
 
-void LocalServerSession::BroadcastReliable(std::span<const std::byte> data, ChannelID channelID)
+void LocalServerSession::BroadcastReliable(const NetworkSessionData &data)
 {
-	EnqueueMessage(0, data, channelID, ELocalSessionSource::BroadcastReliable);
+	EnqueueMessage(0, data, ELocalSessionSource::BroadcastReliable);
 }
 
-void LocalServerSession::BroadcastUnreliable(std::span<const std::byte> data, ChannelID channelID)
+void LocalServerSession::BroadcastUnreliable(const NetworkSessionData &data)
 {
-	EnqueueMessage(0, data, channelID, ELocalSessionSource::BroadcastUnreliable);
+	EnqueueMessage(0, data, ELocalSessionSource::BroadcastUnreliable);
 }
 
-void LocalServerSession::EnqueueMessage(ClientSessionToken clientSessionToken, std::span<const std::byte> data, ChannelID channelID, ELocalSessionSource source)
+void LocalServerSession::EnqueueMessage(ClientSessionID clientSessionID, const NetworkSessionData &data, ELocalSessionSource source)
 {
-	auto it = _hostInfo->localClients.find(clientSessionToken);
+	auto it = _hostInfo->localClients.find(clientSessionID);
 	if (it == _hostInfo->localClients.end() && !it->second.expired())
 	{
 		throw std::runtime_error("client haven't connect");
@@ -151,24 +157,24 @@ void LocalServerSession::EnqueueMessage(ClientSessionToken clientSessionToken, s
 	LocalSessionMessage message{
 	    .event = ESessionEvent::Receive,
 	    .source = ELocalSessionSource::SendReliable,
-	    .data = std::vector<std::byte>(data.begin(), data.end()),
-	    .clientToken = it->second.lock()->GetToken(),
-	    .clientUID = it->second.lock()->GetClientUID(),
-	    .serverUID = _serverUID,
+	    .bytes = std::vector<std::byte>(data.bytes.begin(), data.bytes.end()),
+	    .clientID = it->second.lock()->GetSessionID(),
+	    .clientSlot = it->second.lock()->GetClientSlot(),
+	    .serverSlot = _serverSessionSlot,
 	};
 	_messageQueue.emplace(message);
 }
 
-ClientSessionToken LocalServerSession::ClientUIDToClientID(std::uint32_t clientUID) const noexcept
+ClientSessionID LocalServerSession::ClientSlotToClientID(NetworkSessionSlot clientSlot) const noexcept
 {
-	return static_cast<ClientSessionToken>(clientUID) + 1;
+	return static_cast<ClientSessionID>(clientSlot) + 1;
 }
 
 bool LocalServerSession::Update()
 {
 	bool updated = false;
 
-	std::unordered_map<ClientSessionToken, std::weak_ptr<LocalClientSession>> &localClients = _hostInfo->localClients;
+	std::unordered_map<ClientSessionID, std::weak_ptr<LocalClientSession>> &localClients = _hostInfo->localClients;
 	for (auto it = localClients.begin(); it != localClients.end();)
 	{
 		if (it->second.expired()) [[unlikely]]
@@ -193,23 +199,23 @@ bool LocalServerSession::Update()
 		{
 			EventLocalServerConnectData data{
 			    .socketType = ESocketType::Local,
-			    .clientUID = messageEntry.clientUID,
-			    .serverUID = messageEntry.serverUID,
+			    .clientSlot = messageEntry.clientSlot,
+			    .serverSlot = messageEntry.serverSlot,
 			    .disconnect = EDisconnectionCode::None,
 			};
 
-			TE_TRACE("Connect event, client", data.clientUID);
+			TE_TRACE("Connect event, client", data.clientSlot);
 
 			coreEvents.ServerConnect().Invoke(&data, data.socketType, EEventInvocation::None);
 
 			if (data.disconnect != EDisconnectionCode::None)
 			{
-				TE_ASSERT(_hostInfo->localClients.erase(messageEntry.clientToken));
+				TE_ASSERT(_hostInfo->localClients.erase(messageEntry.clientID));
 			}
 			else
 			{
-				ClientSessionToken token = NewToken();
-				std::shared_ptr<LocalClientSession> client = _hostInfo->localClients[messageEntry.clientToken].lock();
+				ClientSessionID id = NewID();
+				std::shared_ptr<LocalClientSession> client = _hostInfo->localClients[messageEntry.clientID].lock();
 				TE_ASSERT(client != nullptr);
 			}
 
@@ -233,7 +239,7 @@ bool LocalServerSession::Update()
 
 void LocalServerSession::Receive(const LocalSessionMessage &message) noexcept
 {
-	auto it = _hostInfo->localClients.find(message.clientToken);
+	auto it = _hostInfo->localClients.find(message.clientID);
 	if (it == _hostInfo->localClients.end() || it->second.expired()) [[unlikely]]
 	{
 		return;
@@ -242,9 +248,9 @@ void LocalServerSession::Receive(const LocalSessionMessage &message) noexcept
 	it->second.lock()->Receive(message);
 }
 
-void LocalServerSession::AddClient(std::uint32_t clientUID, std::weak_ptr<LocalClientSession> localClient)
+void LocalServerSession::AddClient(NetworkSessionSlot clientSlot, std::weak_ptr<LocalClientSession> localClient)
 {
-	ClientSessionToken clientID = ClientUIDToClientID(clientUID);
+	ClientSessionID clientID = ClientSlotToClientID(clientSlot);
 	if (clientID == 0) [[unlikely]]
 	{
 		throw std::runtime_error("Invalid client uid");
@@ -253,8 +259,8 @@ void LocalServerSession::AddClient(std::uint32_t clientUID, std::weak_ptr<LocalC
 	_hostInfo->localClients[clientID] = localClient;
 }
 
-ClientSessionToken LocalServerSession::NewToken() noexcept
+ClientSessionID LocalServerSession::NewID() noexcept
 {
-	++_latestToken;
-	return _latestToken;
+	++_latestID;
+	return _latestID;
 }

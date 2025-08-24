@@ -4,7 +4,7 @@
 --- @class dr2c.CSprites
 local CSprites = {}
 
-local GTable = require("dr2c.shared.utils.Table")
+local Table = require("tudov.Table")
 local json = require("json")
 
 local tonumber = tonumber

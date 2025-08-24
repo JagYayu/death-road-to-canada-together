@@ -23,6 +23,7 @@
 namespace tudov
 {
 	enum class EServerSessionState : std::uint8_t;
+	struct NetworkSessionData;
 	class LuaAPI;
 
 	struct IServerSession : public INetworkSession
@@ -47,10 +48,10 @@ namespace tudov
 		virtual std::optional<std::string_view> GetTitle() const noexcept = 0;
 		virtual std::optional<std::string_view> GetPassword() const noexcept = 0;
 		virtual std::optional<std::size_t> GetMaxClients() const noexcept = 0;
-		virtual void SendReliable(ClientSessionToken clientSessionToken, std::span<const std::byte> data, ChannelID channelID) = 0;
-		virtual void SendUnreliable(ClientSessionToken clientSessionToken, std::span<const std::byte> data, ChannelID channelID) = 0;
-		virtual void BroadcastReliable(std::span<const std::byte> data, ChannelID channelID) = 0;
-		virtual void BroadcastUnreliable(std::span<const std::byte> data, ChannelID channelID) = 0;
+		virtual void SendReliable(ClientSessionID clientSessionID, const NetworkSessionData &data) = 0;
+		virtual void SendUnreliable(ClientSessionID clientSessionID, const NetworkSessionData &data) = 0;
+		virtual void BroadcastReliable(const NetworkSessionData &data) = 0;
+		virtual void BroadcastUnreliable(const NetworkSessionData &data) = 0;
 
 	  private:
 		void LuaHost(sol::object args) noexcept;

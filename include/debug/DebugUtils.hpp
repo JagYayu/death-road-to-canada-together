@@ -30,12 +30,12 @@ namespace tudov
 			std::array<std::string, Parts> result;
 
 			std::istringstream iss{arg.data()};
-			std::string token;
+			std::string id;
 			std::size_t count = 0;
 
-			while (iss >> token && count < Parts)
+			while (iss >> id && count < Parts)
 			{
-				result[count] = std::move(token);
+				result[count] = std::move(id);
 				++count;
 			}
 

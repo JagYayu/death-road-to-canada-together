@@ -37,8 +37,8 @@
 --- @field [dr2c.EntityType] dr2c.ECSSchema.Entity
 --- @field [dr2c.EntityTypeID] dr2c.ECSSchema.Entity
 
-local GTable = require("dr2c.shared.utils.Table")
-local stringBuffer = require("string.buffer")
+local Table = require("tudov.Table")
+local String = require("tudov.String")
 
 --- @class dr2c.ECSSchema
 local CECSSchema = {}
@@ -203,7 +203,7 @@ local function reloadComponentsSchema(oldComponentsSchema)
 
 	events:invoke(CECSSchema.eventEntitySchemaLoadComponents, e, nil, EEventInvocation.None)
 
-	for state, componentType, entry in GTable.sortedPairs(newComponentsSchema) do
+	for state, componentType, entry in Table.sortedPairs(newComponentsSchema) do
 		local componentTypeID = state[2]
 
 		local componentFields
@@ -240,7 +240,7 @@ local function processEntityComponents(entityComponents, tempComponentsSchema)
 
 	--- @param componentType dr2c.ComponentType
 	--- @param componentFields dr2c.Component
-	for state, componentType, componentFields in GTable.sortedPairs(entityComponents.components) do
+	for state, componentType, componentFields in Table.sortedPairs(entityComponents.components) do
 		local index = state[2]
 
 		local componentSchema = tempComponentsSchema[componentType]
@@ -248,11 +248,11 @@ local function processEntityComponents(entityComponents, tempComponentsSchema)
 			error("Invalid component " .. componentType, 3)
 		end
 
-		local fields = GTable.fastCopy(componentSchema.fields)
-		GTable.merge(fields, componentFields, tonumber(mergeDepth) or 1)
+		local fields = Table.fastCopy(componentSchema.fields)
+		Table.merge(fields, componentFields, tonumber(mergeDepth) or 1)
 
 		if componentSchema.trait == CECSSchema.ComponentTrait.Mutable then
-			fields = stringBuffer.encode(fields)
+			fields = String.bufferEncode(fields)
 		end
 
 		local component = {
@@ -294,7 +294,7 @@ local function reloadEntitiesSchema(oldEntitiesSchema, tempComponentsSchema)
 
 	events:invoke(CECSSchema.eventEntitySchemaLoadEntities, e, nil, EEventInvocation.None)
 
-	for state, entityType, entityComponents in GTable.sortedPairs(newEntitiesSchema) do
+	for state, entityType, entityComponents in Table.sortedPairs(newEntitiesSchema) do
 		local entityTypeID = state[2]
 
 		local components, componentsSerializable, componentsMutable, componentsConstant, componentsShared =

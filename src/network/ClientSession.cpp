@@ -12,6 +12,7 @@
 #pragma once
 
 #include "network/ClientSession.hpp"
+#include "network/NetworkSessionData.hpp"
 
 #include "util/Definitions.hpp"
 #include "util/Micros.hpp"
@@ -36,9 +37,12 @@ void IClientSession::LuaSendReliable(sol::object data, sol::object channelID)
 	}
 
 	auto str = data.as<sol::string_view>();
-	std::span<const std::byte> data_{reinterpret_cast<const std::byte *>(str.data()), str.size()};
 
-	SendReliable(data_, channelID.as<std::double_t>());
+	NetworkSessionData data_{
+	    .bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(str.data()), str.size() + 1),
+	    .channelID = static_cast<ChannelID>(channelID.as<std::double_t>()),
+	};
+	SendReliable(data_);
 }
 
 void IClientSession::LuaSendUnreliable(sol::object data, sol::object channelID)
@@ -49,7 +53,11 @@ void IClientSession::LuaSendUnreliable(sol::object data, sol::object channelID)
 	}
 
 	auto str = data.as<sol::string_view>();
-	std::span<const std::byte> data_{reinterpret_cast<const std::byte *>(str.data()), str.size()};
 
-	SendUnreliable(data_, channelID.as<std::double_t>());
+	NetworkSessionData data_{
+	    .bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(str.data()), str.size() + 1),
+	    .channelID = static_cast<ChannelID>(channelID.as<std::double_t>()),
+	};
+
+	SendUnreliable(data_);
 }

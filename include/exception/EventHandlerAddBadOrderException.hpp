@@ -1,5 +1,5 @@
 /**
- * @file exception/BadEventHandlerOrder.hpp
+ * @file exception/EventHandlerAddBadOrderException.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -11,13 +11,13 @@
 
 #pragma once
 
-#include "exception/Exception.hpp"
+#include "EventHandlerAddException.hpp"
 #include "program/Context.hpp"
 #include "util/Definitions.hpp"
 
 namespace tudov
 {
-	class EventHandlerAddBadOrderException : public Exception, public IContextProvider
+	class EventHandlerAddBadOrderException : public EventHandlerAddException
 	{
 	  public:
 		EventID eventID;
@@ -27,8 +27,6 @@ namespace tudov
 
 		explicit EventHandlerAddBadOrderException(Context &context, EventID eventID, ScriptID scriptID, std::string order, std::string traceback) noexcept;
 		~EventHandlerAddBadOrderException() noexcept override = default;
-
-		Context &GetContext() noexcept override;
 
 		std::string_view What() const noexcept override;
 	};

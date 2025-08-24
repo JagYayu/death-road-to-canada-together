@@ -17,12 +17,13 @@ namespace tudov
 {
 	// Identities
 
-	using ClientSessionToken = std::uint64_t;
+	using ChannelID = std::uint8_t;
+	using ClientSessionID = std::uint64_t;
 	using DelegateEventHandlerID = std::uint32_t;
 	using EventID = std::uint64_t;
+	using NetworkSessionSlot = std::uint32_t;
 	using ResourceID = std::uint64_t;
 	using ScriptID = std::uint64_t;
-	using ChannelID = std::uint8_t;
 
 	// Resources
 

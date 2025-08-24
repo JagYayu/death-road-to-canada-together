@@ -20,9 +20,13 @@
 
 struct _ENetHost;
 struct _ENetPeer;
+struct _ENetEvent;
 
 namespace tudov
 {
+	struct NetworkSessionData;
+	struct ReliableUDPSessionData;
+
 	class ReliableUDPServerSession : public IServerSession, private ILogProvider
 	{
 	  public:
@@ -36,23 +40,26 @@ namespace tudov
 
 	  protected:
 		INetworkManager &_networkManager;
+		NetworkSessionSlot _serverSessionSlot;
+		NetworkSessionSlot _serverSlot;
 		_ENetHost *_eNetHost;
-		ClientSessionToken _nextClientSessionToken;
-		UnorderedBimap<ClientSessionToken, _ENetPeer *> _clientTokenPeerBimap;
+		ClientSessionID _nextClientSessionID;
+		UnorderedBimap<ClientSessionID, _ENetPeer *> _clientIDPeerBimap;
 
 	  public:
-		explicit ReliableUDPServerSession(INetworkManager &network) noexcept;
+		explicit ReliableUDPServerSession(INetworkManager &network, NetworkSessionSlot serverSlot) noexcept;
 		~ReliableUDPServerSession() noexcept override;
 
 	  protected:
-		_ENetPeer *GetPeerByToken(std::uint64_t clientID) noexcept;
-		ClientSessionToken GetTokenByPeer(_ENetPeer *peer) noexcept;
-		ClientSessionToken NewToken() noexcept;
-		void Send(std::uint64_t clientID, std::span<const std::byte> data, ChannelID channelID, bool reliable);
-		void Broadcast(std::span<const std::byte> data, ChannelID channelID, bool reliable);
+		_ENetPeer *GetPeerByID(std::uint64_t clientID) noexcept;
+		ClientSessionID GetIDByPeer(_ENetPeer *peer) noexcept;
+		ClientSessionID NewClientSessionID() noexcept;
+		void Send(std::uint64_t clientID, const NetworkSessionData &data, bool reliable);
+		void Broadcast(const NetworkSessionData &data, bool reliable);
 
 	  public:
 		ESocketType GetSocketType() const noexcept override;
+		NetworkSessionSlot GetSessionSlot() noexcept override;
 		Log &GetLog() noexcept override;
 		INetworkManager &GetNetworkManager() noexcept override;
 		bool Update() noexcept override;
@@ -64,9 +71,12 @@ namespace tudov
 		std::optional<std::string_view> GetTitle() const noexcept override;
 		std::optional<std::string_view> GetPassword() const noexcept override;
 		std::optional<std::size_t> GetMaxClients() const noexcept override;
-		void SendReliable(std::uint64_t clientID, std::span<const std::byte> data, ChannelID channelID) override;
-		void SendUnreliable(std::uint64_t clientID, std::span<const std::byte> data, ChannelID channelID) override;
-		void BroadcastReliable(std::span<const std::byte> data, ChannelID channelID) override;
-		void BroadcastUnreliable(std::span<const std::byte> data, ChannelID channelID) override;
+		void SendReliable(std::uint64_t clientID, const NetworkSessionData &data) override;
+		void SendUnreliable(std::uint64_t clientID, const NetworkSessionData &data) override;
+		void BroadcastReliable(const NetworkSessionData &data) override;
+		void BroadcastUnreliable(const NetworkSessionData &data) override;
+
+	  private:
+		void UpdateENetReceive(_ENetEvent &event) noexcept;
 	};
 } // namespace tudov

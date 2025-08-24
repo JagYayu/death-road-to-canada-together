@@ -19,6 +19,7 @@
 
 struct _ENetHost;
 struct _ENetPeer;
+struct _ENetEvent;
 
 namespace tudov
 {
@@ -35,13 +36,14 @@ namespace tudov
 
 	  protected:
 		INetworkManager &_networkManager;
-		ClientSessionToken _clientToken;
+		NetworkSessionSlot _clientSessionSlot;
+		ClientSessionID _clientSessionID;
 		_ENetHost *_eNetHost;
 		_ENetPeer *_eNetPeer;
 		bool _isConnecting;
 
 	  public:
-		explicit ReliableUDPClientSession(INetworkManager &networkManager) noexcept;
+		explicit ReliableUDPClientSession(INetworkManager &networkManager,NetworkSessionSlot clientSlot) noexcept;
 		~ReliableUDPClientSession() noexcept;
 
 	  private:
@@ -49,23 +51,27 @@ namespace tudov
 
 	  public:
 		ESocketType GetSocketType() const noexcept override;
+		NetworkSessionSlot GetSessionSlot() noexcept override;
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;
 
 		INetworkManager &GetNetworkManager() noexcept override;
 		bool Update() override;
 
-		ClientSessionToken GetToken() const noexcept override;
+		ClientSessionID GetSessionID() const noexcept override;
 		EClientSessionState GetSessionState() const noexcept override;
 		void Connect(const IClientSession::ConnectArgs &address) override;
 		void Disconnect() override;
 		bool TryDisconnect() override;
-		void SendReliable(std::span<const std::byte> data, ChannelID channelID) override;
-		void SendUnreliable(std::span<const std::byte> data, ChannelID channelID) override;
+		void SendReliable(const NetworkSessionData &data) override;
+		void SendUnreliable(const NetworkSessionData &data) override;
 
 		inline void Connect(const ConnectArgs &args)
 		{
 			Connect(static_cast<const IClientSession::ConnectArgs &>(args));
 		}
+
+	  private:
+		void UpdateENetReceive(_ENetEvent &event) noexcept;
 	};
 } // namespace tudov

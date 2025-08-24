@@ -19,7 +19,7 @@
 
 namespace tudov
 {
-	class Exception : public std::exception
+	class Exception : public std::exception, public IContextProvider
 	{
 		static constexpr decltype(auto) Default = "Tudov engine exception";
 
@@ -31,6 +31,8 @@ namespace tudov
 		explicit Exception(Context &context) noexcept;
 		explicit Exception(Context &context, std::string_view what) noexcept;
 		~Exception() noexcept override = default;
+
+		Context &GetContext() noexcept override;
 
 		const char *what() const noexcept override;
 

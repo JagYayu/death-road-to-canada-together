@@ -14,6 +14,7 @@
 #include "AbstractEvent.hpp"
 #include "EventHandler.hpp"
 #include "EventInvocation.hpp"
+#include "mod/ScriptEngine.hpp"
 #include "system/Log.hpp"
 #include "util/Definitions.hpp"
 
@@ -90,9 +91,8 @@ namespace tudov
 
 		void Add(const AddHandlerArgs &args) override;
 
-		void Invoke(const sol::object &e, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
-		void Invoke(CoreEventData *data = nullptr, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
-		[[deprecated]] void InvokeUncached(const sol::object &e = sol::lua_nil, const EventHandleKey &key = {});
+		void Invoke(sol::object e = {}, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
+		[[deprecated]] void InvokeUncached(sol::object e = sol::lua_nil, const EventHandleKey &key = {});
 
 		ProgressionID GetNextInvocationID() noexcept;
 
@@ -107,5 +107,21 @@ namespace tudov
 		void ClearScriptHandlersImpl(std::function<bool(const EventHandler &)> pred);
 
 		void InvokeFunction() noexcept;
+
+	  public:
+		template <typename TData>
+		void Invoke(TData *data, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default)
+		{
+			if (data != nullptr)
+			{
+				sol::table args = GetScriptEngine().CreateTable(0, 1);
+				args["data"] = data;
+				Invoke(args, key, options);
+			}
+			else
+			{
+				Invoke(GetScriptEngine().CreateTable(), key, options);
+			}
+		}
 	};
 } // namespace tudov

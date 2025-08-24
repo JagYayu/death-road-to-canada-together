@@ -14,6 +14,7 @@
 #include "debug/Debug.hpp"
 #include "program/EngineComponent.hpp"
 #include "system/Log.hpp"
+#include "util/Definitions.hpp"
 
 #include "sol/forward.hpp"
 
@@ -27,19 +28,19 @@ namespace tudov
 
 	struct INetworkManager : public IEngineComponent, private ILogProvider
 	{
-		static constexpr std::int32_t DefaultUID = 0;
+		static constexpr std::int32_t DefaultSessionSlot = 0;
 
 		~INetworkManager() noexcept override = default;
 
 		/**
 		 * Get client with specific UID.
 		 */
-		virtual IClientSession *GetClient(std::int32_t uid = 0) noexcept = 0;
+		virtual IClientSession *GetClient(NetworkSessionSlot uid = 0) noexcept = 0;
 
 		/**
 		 * Get server with specific UID.
 		 */
-		virtual IServerSession *GetServer(std::int32_t uid = 0) noexcept = 0;
+		virtual IServerSession *GetServer(NetworkSessionSlot uid = 0) noexcept = 0;
 
 		virtual std::vector<std::weak_ptr<IClientSession>> GetClients() noexcept = 0;
 
@@ -48,7 +49,7 @@ namespace tudov
 		/**
 		 * Remove client.
 		 */
-		virtual bool SetClient(std::int32_t uid = DefaultUID) = 0;
+		virtual bool SetClient(NetworkSessionSlot clientSlot = DefaultSessionSlot) = 0;
 
 		/**
 		 * @brief Change client socket for specific uid. Do nothing and return false if socket type duplicated.
@@ -58,12 +59,12 @@ namespace tudov
 		 *
 		 * @return successful
 		 */
-		virtual bool SetClient(ESocketType socketType, std::int32_t uid = DefaultUID) = 0;
+		virtual bool SetClient(ESocketType socketType, NetworkSessionSlot clientSlot = DefaultSessionSlot) = 0;
 
 		/**
 		 * Remove server.
 		 */
-		virtual bool SetServer(std::int32_t uid = DefaultUID) = 0;
+		virtual bool SetServer(NetworkSessionSlot serverSlot = DefaultSessionSlot) = 0;
 
 		/**
 		 * @brief Change server socket for specific uid. Do nothing and return false if socket type duplicated.
@@ -73,7 +74,7 @@ namespace tudov
 		 *
 		 * @return successful
 		 */
-		virtual bool SetServer(ESocketType socketType, std::int32_t uid = DefaultUID) = 0;
+		virtual bool SetServer(ESocketType socketType, NetworkSessionSlot serverSlot = DefaultSessionSlot) = 0;
 
 		/**
 		 * Get the loop limits when doing update.
@@ -109,8 +110,8 @@ namespace tudov
 		std::unordered_map<std::int32_t, std::shared_ptr<IServerSession>> _servers;
 		bool _initialized;
 		ESocketType _socketType;
-		std::uint32_t _debugClientUID;
-		std::uint32_t _debugServerUID;
+		NetworkSessionSlot _debugClientSlot;
+		NetworkSessionSlot _debugServerSlot;
 
 	  public:
 		explicit NetworkManager(Context &context) noexcept;
@@ -129,14 +130,14 @@ namespace tudov
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
 
-		IClientSession *GetClient(std::int32_t uid = DefaultUID) noexcept override;
-		IServerSession *GetServer(std::int32_t uid = DefaultUID) noexcept override;
+		IClientSession *GetClient(NetworkSessionSlot clientSlot = DefaultSessionSlot) noexcept override;
+		IServerSession *GetServer(NetworkSessionSlot serverSlot = DefaultSessionSlot) noexcept override;
 		std::vector<std::weak_ptr<IClientSession>> GetClients() noexcept override;
 		std::vector<std::weak_ptr<IServerSession>> GetServers() noexcept override;
-		bool SetClient(std::int32_t uid = DefaultUID) override;
-		bool SetClient(ESocketType socketType, std::int32_t uid = DefaultUID) override;
-		bool SetServer(std::int32_t uid = DefaultUID) override;
-		bool SetServer(ESocketType socketType, std::int32_t uid = DefaultUID) override;
+		bool SetClient(NetworkSessionSlot clientSlot = DefaultSessionSlot) override;
+		bool SetClient(ESocketType socketType, NetworkSessionSlot clientSlot = DefaultSessionSlot) override;
+		bool SetServer(NetworkSessionSlot serverSlot = DefaultSessionSlot) override;
+		bool SetServer(ESocketType socketType, NetworkSessionSlot serverSlot = DefaultSessionSlot) override;
 		bool Update() noexcept override;
 
 	  private:

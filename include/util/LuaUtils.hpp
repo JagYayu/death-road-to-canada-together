@@ -30,7 +30,12 @@ namespace tudov
 			DeconstructImpl(objects...);
 		}
 
-		std::string LuaFormat(IScriptEngine &scriptEngine, sol::object fmt, sol::variadic_args args);
+		static std::size_t GetArrayPartSize(sol::table tbl) noexcept;
+		static std::size_t GetHashPartSize(sol::table tbl) noexcept;
+
+		static std::size_t LuaGetArrayPartSize(sol::object tbl) noexcept;
+		static std::size_t LuaGetHashPartSize(sol::object tbl) noexcept;
+		// std::string LuaFormat(IScriptEngine &scriptEngine, sol::object fmt, sol::variadic_args args);
 
 	  private:
 		template <typename T, typename... TArgs>

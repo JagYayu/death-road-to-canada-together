@@ -27,11 +27,9 @@ namespace tudov
 {
 	struct INetworkManager;
 	struct INetworkManager;
+	struct NetworkSessionData;
 	class LocalClientSession;
 
-	/**
-	 * We treat `ClientID` as `ClientUID + 1`, since all clients connected to local server are local clients.
-	 */
 	class LocalServerSession : public IServerSession, private ILogProvider
 	{
 		friend LocalClientSession;
@@ -45,23 +43,24 @@ namespace tudov
 			std::string_view title = NetworkServerTitle;
 			std::string_view password = NetworkServerPassword;
 			std::size_t maximumClients = NetworkServerMaximumClients;
-			std::unordered_map<ClientSessionToken, std::weak_ptr<LocalClientSession>> localClients;
+			std::unordered_map<ClientSessionID, std::weak_ptr<LocalClientSession>> localClients;
 		};
 
 	  protected:
 		INetworkManager &_networkManager;
 		EServerSessionState _sessionState;
-		std::uint32_t _serverUID;
+		NetworkSessionSlot _serverSessionSlot;
 		std::unique_ptr<HostInfo> _hostInfo;
 		std::queue<LocalSessionMessage> _messageQueue;
-		ClientSessionToken _latestToken;
+		ClientSessionID _latestID;
 
 	  public:
-		explicit LocalServerSession(INetworkManager &networkManager, std::uint32_t serverUID) noexcept;
+		explicit LocalServerSession(INetworkManager &networkManager, NetworkSessionSlot serverSlot) noexcept;
 		~LocalServerSession() noexcept override = default;
 
 	  public:
 		INetworkManager &GetNetworkManager() noexcept override;
+		NetworkSessionSlot GetSessionSlot() noexcept override;
 		ESocketType GetSocketType() const noexcept override;
 		Log &GetLog() noexcept override;
 
@@ -73,21 +72,21 @@ namespace tudov
 		std::optional<std::string_view> GetPassword() const noexcept override;
 		std::optional<std::size_t> GetMaxClients() const noexcept override;
 
-		void SendReliable(ClientSessionToken clientSessionToken, std::span<const std::byte> data, ChannelID channelID) override;
-		void SendUnreliable(ClientSessionToken clientSessionToken, std::span<const std::byte> data, ChannelID channelID) override;
-		void BroadcastReliable(std::span<const std::byte> data, ChannelID channelID) override;
-		void BroadcastUnreliable(std::span<const std::byte> data, ChannelID channelID) override;
+		void SendReliable(ClientSessionID clientSessionID, const NetworkSessionData &data) override;
+		void SendUnreliable(ClientSessionID clientSessionID, const NetworkSessionData &data) override;
+		void BroadcastReliable(const NetworkSessionData &data) override;
+		void BroadcastUnreliable(const NetworkSessionData &data) override;
 
 		bool Update() override;
 
-		ClientSessionToken ClientUIDToClientID(std::uint32_t clientUID) const noexcept;
+		ClientSessionID ClientSlotToClientID(NetworkSessionSlot clientSlot) const noexcept;
 
 		void Receive(const LocalSessionMessage &message) noexcept;
 
-		void AddClient(std::uint32_t clientUID, std::weak_ptr<LocalClientSession> localClient);
+		void AddClient(NetworkSessionSlot clientSlot, std::weak_ptr<LocalClientSession> localClient);
 
 	  protected:
-		ClientSessionToken NewToken() noexcept;
-		void EnqueueMessage(ClientSessionToken clientSessionToken, std::span<const std::byte> data, ChannelID channelID, ELocalSessionSource source);
+		ClientSessionID NewID() noexcept;
+		void EnqueueMessage(ClientSessionID clientSessionID, const NetworkSessionData &data, ELocalSessionSource source);
 	};
 } // namespace tudov

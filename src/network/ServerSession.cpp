@@ -12,6 +12,8 @@
 #include "network/ServerSession.hpp"
 
 #include "mod/ScriptEngine.hpp"
+#include "network/NetworkSessionData.hpp"
+
 #include <span>
 
 using namespace tudov;
@@ -34,9 +36,12 @@ void IServerSession::LuaSendReliable(sol::object clientID, sol::object data, sol
 	}
 
 	auto str = data.as<sol::string_view>();
-	std::span<const std::byte> data_{reinterpret_cast<const std::byte *>(str.data()), str.size()};
 
-	SendReliable(clientID.as<std::double_t>(), data_, channelID.as<std::double_t>());
+	NetworkSessionData data_{
+	    .bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(str.data()), str.size()),
+	    .channelID = static_cast<ChannelID>(channelID.as<std::double_t>()),
+	};
+	SendReliable(clientID.as<std::double_t>(), data_);
 }
 
 void IServerSession::LuaSendUnreliable(sol::object clientID, sol::object data, sol::object channelID) noexcept
@@ -52,9 +57,12 @@ void IServerSession::LuaSendUnreliable(sol::object clientID, sol::object data, s
 	}
 
 	auto str = data.as<sol::string_view>();
-	std::span<const std::byte> data_{reinterpret_cast<const std::byte *>(str.data()), str.size()};
 
-	SendUnreliable(static_cast<std::int32_t>(clientID.as<std::double_t>()), data_, channelID.as<std::double_t>());
+	NetworkSessionData data_{
+	    .bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(str.data()), str.size()),
+	    .channelID = static_cast<ChannelID>(channelID.as<std::double_t>()),
+	};
+	SendUnreliable(static_cast<std::int32_t>(clientID.as<std::double_t>()), data_);
 }
 
 void IServerSession::LuaBroadcastReliable(sol::object data, sol::object channelID) noexcept
@@ -65,9 +73,12 @@ void IServerSession::LuaBroadcastReliable(sol::object data, sol::object channelI
 	}
 
 	auto str = data.as<sol::string_view>();
-	std::span<const std::byte> data_{reinterpret_cast<const std::byte *>(str.data()), str.size()};
 
-	BroadcastReliable(data_, channelID.as<std::double_t>());
+	NetworkSessionData data_{
+	    .bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(str.data()), str.size()),
+	    .channelID = static_cast<ChannelID>(channelID.as<std::double_t>()),
+	};
+	BroadcastReliable(data_);
 }
 
 void IServerSession::LuaBroadcastUnreliable(sol::object data, sol::object channelID) noexcept
@@ -78,7 +89,10 @@ void IServerSession::LuaBroadcastUnreliable(sol::object data, sol::object channe
 	}
 
 	auto str = data.as<sol::string_view>();
-	std::span<const std::byte> data_{reinterpret_cast<const std::byte *>(str.data()), str.size()};
 
-	BroadcastUnreliable(data_, channelID.as<std::double_t>());
+	NetworkSessionData data_{
+	    .bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(str.data()), str.size()),
+	    .channelID = static_cast<ChannelID>(channelID.as<std::double_t>()),
+	};
+	BroadcastUnreliable(data_);
 }

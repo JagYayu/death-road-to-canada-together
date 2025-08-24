@@ -16,12 +16,12 @@
 
 #include "sol/forward.hpp"
 
-#include <span>
 #include <string_view>
 
 namespace tudov
 {
 	enum class EClientSessionState : std::uint8_t;
+	struct NetworkSessionData;
 	class LuaAPI;
 
 	struct IClientSession : public INetworkSession
@@ -37,13 +37,13 @@ namespace tudov
 
 		virtual ~IClientSession() noexcept override = default;
 
-		virtual ClientSessionToken GetToken() const noexcept = 0;
+		virtual ClientSessionID GetSessionID() const noexcept = 0;
 		virtual EClientSessionState GetSessionState() const noexcept = 0;
 		virtual void Connect(const ConnectArgs &address) = 0;
 		virtual void Disconnect() = 0;
 		virtual bool TryDisconnect() = 0;
-		virtual void SendReliable(std::span<const std::byte> data, ChannelID channelID) = 0;
-		virtual void SendUnreliable(std::span<const std::byte> data, ChannelID channelID) = 0;
+		virtual void SendReliable(const NetworkSessionData &data) = 0;
+		virtual void SendUnreliable(const NetworkSessionData &data) = 0;
 
 	  private:
 		void LuaConnect(sol::object args);

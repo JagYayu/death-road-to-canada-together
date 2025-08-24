@@ -27,10 +27,95 @@ namespace tudov
 	class UnorderedBimap
 	{
 	  private:
+		class ValueProxy
+		{
+		  private:
+			UnorderedBimap &_parent;
+			const TKey &_key;
+
+		  public:
+			explicit ValueProxy(UnorderedBimap &parent, const TKey &key) noexcept
+			    : _parent(parent),
+			      _key(key)
+			{
+			}
+
+			operator TValue &()
+			{
+				return _parent._key2value[_key];
+			}
+
+			operator const TValue &() const
+			{
+				return _parent._key2value[_key];
+			}
+
+			ValueProxy &operator=(const TValue &value)
+			{
+				_parent.EraseByKey(_key);
+				_parent.Insert(_key, value);
+				return *this;
+			}
+		};
+
+		class KeyProxy
+		{
+		  private:
+			UnorderedBimap &_parent;
+			const TValue &_value;
+
+		  public:
+			explicit KeyProxy(UnorderedBimap &parent, const TValue &value) noexcept
+			    : _parent(parent),
+			      _value(value)
+			{
+			}
+
+			operator TValue &()
+			{
+				return _parent._value2key[_value];
+			}
+
+			operator const TValue &() const
+			{
+				return _parent._value2key[_value];
+			}
+
+			ValueProxy &operator=(const TKey &key)
+			{
+				if (_parent.EraseByValue(_value))
+				{
+					_parent.Insert(key, _value);
+				}
+				return *this;
+			}
+		};
+
+	  private:
 		TKeyUnorderedMap _key2value;
 		TValueUnorderedMap _value2key;
 
 	  public:
+		ValueProxy operator[](const TKey key)
+		{
+			return ValueProxy(*this, key);
+		}
+
+		const ValueProxy operator[](const TKey key) const
+		{
+			return ValueProxy(*this, key);
+		}
+
+		KeyProxy operator[](const TValue value)
+		{
+			return KeyProxy(*this, value);
+		}
+
+		const KeyProxy operator[](const TValue value) const
+		{
+			return KeyProxy(*this, value);
+		}
+
 		inline size_t Size() const
 		{
 			return _key2value.size();

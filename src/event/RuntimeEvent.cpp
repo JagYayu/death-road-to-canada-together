@@ -17,6 +17,7 @@
 #include "event/EventHandler.hpp"
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
+#include "exception/EventHandlerAddBadKeyException.hpp"
 #include "exception/EventHandlerAddBadOrderException.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptErrors.hpp"
@@ -29,6 +30,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 
 using namespace tudov;
@@ -115,8 +117,11 @@ void RuntimeEvent::Add(const AddHandlerArgs &args)
 		throw EventHandlerAddBadOrderException(GetContext(), args.eventID, args.scriptID, order, args.stacktrace);
 	}
 
-	auto optArgKey = args.key;
-	const EventHandleKey &key = optArgKey.has_value() ? optArgKey.value() : EventHandler::emptyKey;
+	EventHandleKey key = args.key.value_or(EventHandler::emptyKey);
+	if (key != EventHandler::emptyKey && _keys.size() > 0 && !_keys.contains(key)) [[unlikely]]
+	{
+		throw EventHandlerAddBadKeyException(GetContext(), args.eventID, args.scriptID, key, args.stacktrace);
+	}
 
 	auto optArgSequence = args.sequence;
 	std::double_t sequence = optArgSequence.has_value() ? optArgSequence.value() : EventHandler::defaultSequence;
@@ -193,9 +198,14 @@ TE_FORCEINLINE void PCallHandler(const PCallHandlerObject &obj, EventHandler &ha
 	}
 }
 
-void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEventInvocation options)
+void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvocation options)
 {
 	IScriptEngine &scriptEngine = eventManager.GetScriptEngine();
+
+	if (!e.valid())
+	{
+		e = scriptEngine.CreateTable();
+	}
 
 	Profile *profile;
 	if (_profile != nullptr && !EnumFlag::HasAny(options, EEventInvocation::NoProfiler))
@@ -431,21 +441,21 @@ void RuntimeEvent::Invoke(const sol::object &e, const EventHandleKey &key, EEven
 	}
 }
 
-void RuntimeEvent::Invoke(CoreEventData *data, const EventHandleKey &key, EEventInvocation options)
-{
-	if (data != nullptr)
-	{
-		sol::table args = GetScriptEngine().CreateTable(0, 1);
-		args["data"] = data;
-		Invoke(args, key, options);
-	}
-	else
-	{
-		Invoke(GetScriptEngine().CreateTable(), key, options);
-	}
-}
+// void RuntimeEvent::Invoke(CoreEventData *data, const EventHandleKey &key, EEventInvocation options)
+// {
+// 	if (data != nullptr)
+// 	{
+// 		sol::table args = GetScriptEngine().CreateTable(0, 1);
+// 		args["data"] = data;
+// 		Invoke(args, key, options);
+// 	}
+// 	else
+// 	{
+// 		Invoke(GetScriptEngine().CreateTable(), key, options);
+// 	}
+// }
 
-void RuntimeEvent::InvokeUncached(const sol::object &args, const EventHandleKey &key)
+void RuntimeEvent::InvokeUncached(sol::object args, const EventHandleKey &key)
 {
 	Invoke(args, key);
 }

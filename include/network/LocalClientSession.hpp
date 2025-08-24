@@ -22,6 +22,7 @@
 
 namespace tudov
 {
+	struct NetworkSessionData;
 	class LocalServerSession;
 
 	class LocalClientSession : public IClientSession, private ILogProvider, public std::enable_shared_from_this<LocalClientSession>
@@ -37,31 +38,32 @@ namespace tudov
 	  protected:
 		INetworkManager &_networkManager;
 		EClientSessionState _clientSessionState;
-		ClientSessionToken _clientSessionToken = 0;
-		std::uint32_t _clientUID;
+		NetworkSessionSlot _clientSessionSlot;
+		ClientSessionID _clientSessionID = 0;
 		LocalServerSession *_localServer;
 		std::queue<LocalSessionMessage> _messageQueue;
 
 	  public:
-		explicit LocalClientSession(INetworkManager &network, std::uint32_t clientUID) noexcept;
+		explicit LocalClientSession(INetworkManager &network, NetworkSessionSlot clientSlot) noexcept;
 		~LocalClientSession() noexcept override = default;
 
 	  public:
 		INetworkManager &GetNetworkManager() noexcept override;
+		NetworkSessionSlot GetSessionSlot() noexcept override;
 		ESocketType GetSocketType() const noexcept override;
 		Log &GetLog() noexcept override;
 
-		ClientSessionToken GetToken() const noexcept override;
+		ClientSessionID GetSessionID() const noexcept override;
 		EClientSessionState GetSessionState() const noexcept override;
 		void Connect(const IClientSession::ConnectArgs &args) override;
 		void Disconnect() override;
 		bool TryDisconnect() override;
-		void SendReliable(std::span<const std::byte> data, ChannelID channelID) override;
-		void SendUnreliable(std::span<const std::byte> data, ChannelID channelID) override;
+		void SendReliable(const NetworkSessionData& data) override;
+		void SendUnreliable(const NetworkSessionData& data) override;
 
 		bool Update() override;
 
-		std::uint32_t GetClientUID() noexcept;
+		NetworkSessionSlot GetClientSlot() noexcept;
 
 		/**
 		 * Receive data from `LocalServerSession`.

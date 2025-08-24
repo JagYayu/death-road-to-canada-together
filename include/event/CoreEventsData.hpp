@@ -31,48 +31,48 @@ namespace tudov
 	struct EventLocalClientConnectData : public CoreEventData
 	{
 		ESocketType socketType;
-		std::uint32_t clientUID;
-		std::uint32_t serverUID;
+		NetworkSessionSlot clientSlot;
+		NetworkSessionSlot serverSlot;
 	};
 
 	struct EventLocalClientDisconnectData : public CoreEventData
 	{
 		ESocketType socketType;
-		ClientSessionToken clientToken;
-		std::uint32_t clientUID;
-		std::uint32_t serverUID;
+		ClientSessionID clientID;
+		NetworkSessionSlot clientSlot;
+		NetworkSessionSlot serverSlot;
 	};
 
 	struct EventLocalClientMessageData : public CoreEventData
 	{
 		ESocketType socketType;
-		ClientSessionToken clientToken;
+		ClientSessionID clientID;
 		std::string_view message;
-		std::uint32_t clientUID;
-		std::uint32_t serverUID;
+		NetworkSessionSlot clientSlot;
+		NetworkSessionSlot serverSlot;
 	};
 
 	struct EventLocalServerConnectData : public CoreEventData
 	{
 		ESocketType socketType;
-		std::uint32_t clientUID;
-		std::uint32_t serverUID;
+		NetworkSessionSlot clientSlot;
+		NetworkSessionSlot serverSlot;
 		EDisconnectionCode disconnect;
 	};
 
 	struct EventLocalServerDisconnectData : public CoreEventData
 	{
 		ESocketType socketType;
-		std::uint32_t clientUID;
-		std::uint32_t serverUID;
+		NetworkSessionSlot clientSlot;
+		NetworkSessionSlot serverSlot;
 	};
 
 	struct EventLocalServerMessageData : public CoreEventData
 	{
 		ESocketType socketType;
 		std::string_view message;
-		std::uint32_t clientUID;
-		std::uint32_t serverUID;
+		NetworkSessionSlot clientSlot;
+		NetworkSessionSlot serverSlot;
 	};
 
 	struct EventReliableUDPClientConnectData : public CoreEventData
@@ -100,7 +100,7 @@ namespace tudov
 	struct EventReliableUDPServerConnectData : public CoreEventData
 	{
 		ESocketType socketType;
-		ClientSessionToken clientToken;
+		ClientSessionID clientID;
 		std::string_view host;
 		std::uint16_t port;
 		EDisconnectionCode disconnect;
@@ -109,7 +109,7 @@ namespace tudov
 	struct EventReliableUDPServerDisconnectData : public CoreEventData
 	{
 		ESocketType socketType;
-		ClientSessionToken clientToken;
+		ClientSessionID clientID;
 		std::string_view host;
 		std::uint16_t port;
 	};
@@ -117,7 +117,7 @@ namespace tudov
 	struct EventReliableUDPServerMessageData : public CoreEventData
 	{
 		ESocketType socketType;
-		ClientSessionToken clientToken;
+		ClientSessionID clientID;
 		sol::string_view message;
 		sol::string_view messageOverride;
 		std::string_view host;

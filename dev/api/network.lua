@@ -3,22 +3,35 @@ error("this is a lua library module")
 
 --- @class Network.ClientID : integer
 
+--- @class Network.ServerID : integer
+
+--- @enum ESocketType
+ESocketType = {
+	Local = 0,
+	RUDP = 1,
+	Steam = 2,
+	TCP = 3,
+}
+
 --- @class Network
 network = {}
 
---- @param uid integer?
+--- @param clientSessionSlot integer?
 --- @return Network.Client
-function network:getClient(uid) end
+function network:getClient(clientSessionSlot) end
 
---- @param uid integer?
+--- @param serverSessionSlot integer?
 --- @return Network.Server
-function network:getServer(uid) end
+function network:getServer(serverSessionSlot) end
 
 --- @class Network.ClientConnectArgs
 --- @field password string
 
 --- @class Network.Client
 local client = {}
+
+--- @return Network.ClientID
+function client:getSessionID() end
 
 --- @param args Network.ClientConnectArgs
 function client:connect(args) end
@@ -46,6 +59,9 @@ function client:tryDisconnect() end
 
 --- @class Network.Server
 local server = {}
+
+--- @return Network.ServerID
+function server:getSessionID() end
 
 --- @param data string
 function server:broadcastReliable(data) end

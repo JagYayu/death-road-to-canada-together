@@ -66,3 +66,7 @@ target_link_libraries(tudov PRIVATE imgui::imgui)
 # minizip - from vcpkg
 find_package(unofficial-minizip CONFIG REQUIRED)
 target_link_libraries(tudov PRIVATE unofficial::minizip::minizip)
+
+# bitsery
+find_package(Bitsery CONFIG REQUIRED)
+target_link_libraries(tudov PRIVATE Bitsery::bitsery)

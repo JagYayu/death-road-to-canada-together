@@ -15,7 +15,7 @@
 #include "event/CoreEvents.hpp"
 #include "event/LoadtimeEvent.hpp"
 #include "event/RuntimeEvent.hpp"
-#include "exception/EventHandlerAddBadOrderException.hpp"
+#include "exception/EventHandlerAddException.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptErrors.hpp"
@@ -25,7 +25,6 @@
 #include "util/Definitions.hpp"
 #include "util/LuaUtils.hpp"
 #include "util/Utils.hpp"
-
 
 #include "sol/types.hpp"
 #include <format>
@@ -153,7 +152,7 @@ void EventManager::EmplaceRuntimeEventFromLoadtimeEvent(const std::shared_ptr<Lo
 			TE_ASSERT(_runtimeEvents.try_emplace(id, runtimeEvent).second);
 		}
 	}
-	catch (const EventHandlerAddBadOrderException &e)
+	catch (const EventHandlerAddException &e)
 	{
 		TE_ERROR("{}", e.What());
 		if (e.scriptID != 0)
@@ -326,7 +325,7 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 			auto optEventName = GetEventNameByID(eventID);
 			if (!optEventName.has_value()) [[unlikely]]
 			{
-				throw std::runtime_error(std::format("Failed to add event handler: {} is an invalid event id", eventID));
+				GetScriptEngine().ThrowError("Failed to add event handler: {} is an invalid event id", eventID);
 			}
 			eventName = optEventName.value();
 		}
@@ -337,8 +336,8 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		}
 		else
 		{
-			throw std::runtime_error(std::format("Failed to add event handler: invalid arg#1 `event` type, string or number expected, got {}",
-			                                     GetLuaTypeStringView(event.get_type())));
+			GetScriptEngine().ThrowError("Failed to add event handler: invalid arg#1 `event` type, string or number expected, got {}",
+			                             GetLuaTypeStringView(event.get_type()));
 		}
 
 		if (!eventID)
@@ -348,7 +347,7 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 
 		if (!func.valid() || !func.is<sol::function>())
 		{
-			throw std::runtime_error(std::format("Failed to add event handler: invalid arg#2 `func` type, expected function, got {}", GetLuaTypeStringView(func.get_type())));
+			GetScriptEngine().ThrowError("Failed to add event handler: invalid arg#2 `func` type, expected function, got {}", GetLuaTypeStringView(func.get_type()));
 		}
 		sol::function func_ = func.as<sol::function>();
 
@@ -435,7 +434,7 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		    .stacktrace = GetScriptEngine().DebugTraceback(),
 		});
 	}
-	catch (const EventHandlerAddBadOrderException &e)
+	catch (const EventHandlerAddException &e)
 	{
 		TE_ERROR("{}", e.What());
 		if (e.scriptID != 0)
@@ -519,6 +518,10 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 				{
 					keys_.emplace_back(tbl[i].get<std::string_view>());
 				}
+				else if (tbl[i].is<sol::nil_t>())
+				{
+					break;
+				}
 				else
 				{
 					LuaUtils::Deconstruct(orders_, keys_);
@@ -544,7 +547,7 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 
 			LuaUtils::Deconstruct(orders_, keys_);
 			GetScriptEngine().ThrowError("Failed to new event <{}>\"{}\", already been registered from script <{}>\"{}\"",
-			                        eventID, eventName, sourceScriptID, scriptName.data());
+			                             eventID, eventName, sourceScriptID, scriptName.data());
 		}
 
 		TE_TRACE("Constructed loadtime event <{}>\"{}\" from script <{}>", eventID, eventName, scriptID);

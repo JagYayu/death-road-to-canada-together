@@ -18,16 +18,18 @@
 #include "mod/ScriptEngine.hpp"
 #include "network/LocalClientSession.hpp"
 #include "network/LocalServerSession.hpp"
+#include "network/NetworkSessionData.hpp"
 #include "network/ReliableUDPClientSession.hpp"
 #include "network/ReliableUDPServerSession.hpp"
 #include "network/SocketType.hpp"
-#include "sol/types.hpp"
+#include "util/Definitions.hpp"
 #include "util/Utils.hpp"
+
+#include "sol/types.hpp"
 
 #include <cmath>
 #include <format>
 #include <memory>
-#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -83,8 +85,8 @@ NetworkManager::NetworkManager(Context &context) noexcept
       _context(context),
       _initialized(false),
       _socketType(ESocketType::Local),
-      _debugClientUID(0),
-      _debugServerUID(0)
+      _debugClientSlot(0),
+      _debugServerSlot(0)
 {
 }
 
@@ -116,7 +118,7 @@ std::vector<DebugConsoleResult> NetworkManager::DebugClientConnect(std::string_v
 
 		try
 		{
-			SetClient(optSocketType.value(), _debugClientUID);
+			SetClient(optSocketType.value(), _debugClientSlot);
 		}
 		catch (const Exception &e)
 		{
@@ -128,10 +130,10 @@ std::vector<DebugConsoleResult> NetworkManager::DebugClientConnect(std::string_v
 		address.remove_prefix(std::min(address.find_first_not_of(" "), address.size()));
 	}
 
-	auto *client = GetClient(_debugClientUID);
+	auto *client = GetClient(_debugClientSlot);
 	if (client == nullptr)
 	{
-		results.emplace_back(std::format("Client with uid {} does not exist", _debugClientUID), DebugConsole::Code::Failure);
+		results.emplace_back(std::format("Client with uid {} does not exist", _debugClientSlot), DebugConsole::Code::Failure);
 		return results;
 	}
 
@@ -212,7 +214,7 @@ std::vector<DebugConsoleResult> NetworkManager::DebugServerHost(std::string_view
 
 		try
 		{
-			SetServer(socketType.value(), _debugServerUID);
+			SetServer(socketType.value(), _debugServerSlot);
 		}
 		catch (const Exception &e)
 		{
@@ -224,10 +226,10 @@ std::vector<DebugConsoleResult> NetworkManager::DebugServerHost(std::string_view
 		address.remove_prefix(std::min(address.find_first_not_of(" "), address.size()));
 	}
 
-	IServerSession *server = GetServer(_debugServerUID);
+	IServerSession *server = GetServer(_debugServerSlot);
 	if (server == nullptr) [[unlikely]]
 	{
-		results.emplace_back(std::format("Server with uid {} does not exist", _debugClientUID), DebugConsole::Code::Failure);
+		results.emplace_back(std::format("Server with uid {} does not exist", _debugClientSlot), DebugConsole::Code::Failure);
 		return results;
 	}
 
@@ -299,12 +301,12 @@ void NetworkManager::ProvideDebug(IDebugManager &debugManager) noexcept
 
 		auto &&clientSet = [this](std::string_view arg)
 		{
-			std::uint32_t prevUID = _debugClientUID;
-			_debugClientUID = std::stoi(arg.data());
+			NetworkSessionSlot prevUID = _debugClientSlot;
+			_debugClientSlot = std::stoi(arg.data());
 
 			std::vector<DebugConsole::Result> results{};
 			results.emplace_back(DebugConsole::Result{
-			    .message = std::format("Changed client uid from {} to {}", prevUID, _debugClientUID),
+			    .message = std::format("Changed client uid from {} to {}", prevUID, _debugClientSlot),
 			    .code = DebugConsole::Code::Success,
 			});
 			return results;
@@ -322,12 +324,14 @@ void NetworkManager::ProvideDebug(IDebugManager &debugManager) noexcept
 
 			try
 			{
-				std::span<const std::byte> data{reinterpret_cast<const std::byte *>(arg.data()), arg.size()};
-
-				_clients.at(_debugClientUID)->SendReliable(data, 0);
+				NetworkSessionData data{
+				    .bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(arg.data()), arg.size() + 1),
+				    .channelID = 0,
+				};
+				_clients.at(_debugClientSlot)->SendReliable(data);
 
 				results.emplace_back(DebugConsole::Result{
-				    .message = std::format("Sent {} message to client {}: {}", "reliable", _debugClientUID, arg),
+				    .message = std::format("Sent {} message to client {}: {}", "reliable", _debugClientSlot, arg),
 				    .code = DebugConsole::Code::Success});
 			}
 			catch (const std::exception &e)
@@ -384,14 +388,14 @@ void NetworkManager::Initialize() noexcept
 		return;
 	}
 
-	std::uint32_t initClientUID = 0;
-	std::uint32_t initServerUID = 0;
+	NetworkSessionSlot initClientSlot = DefaultSessionSlot;
+	NetworkSessionSlot initServerSlot = DefaultSessionSlot;
 
-	auto &&client = std::make_shared<LocalClientSession>(*this, initClientUID);
-	auto &&server = std::make_shared<LocalServerSession>(*this, initServerUID);
+	auto &&client = std::make_shared<LocalClientSession>(*this, initClientSlot);
+	auto &&server = std::make_shared<LocalServerSession>(*this, initServerSlot);
 
-	_clients[initClientUID] = client;
-	_servers[initServerUID] = server;
+	_clients[initClientSlot] = client;
+	_servers[initServerSlot] = server;
 
 	LocalServerSession::HostArgs hostArgs;
 	hostArgs.title = "Local Server";
@@ -419,15 +423,15 @@ void NetworkManager::Deinitialize() noexcept
 	_initialized = false;
 }
 
-IClientSession *NetworkManager::GetClient(std::int32_t uid) noexcept
+IClientSession *NetworkManager::GetClient(NetworkSessionSlot clientSlot) noexcept
 {
-	auto it = _clients.find(uid);
+	auto it = _clients.find(clientSlot);
 	return it == _clients.end() ? nullptr : it->second.get();
 }
 
-IServerSession *NetworkManager::GetServer(std::int32_t uid) noexcept
+IServerSession *NetworkManager::GetServer(NetworkSessionSlot serverSlot) noexcept
 {
-	auto it = _servers.find(uid);
+	auto it = _servers.find(serverSlot);
 	return it == _servers.end() ? nullptr : it->second.get();
 }
 
@@ -451,14 +455,14 @@ std::vector<std::weak_ptr<IServerSession>> NetworkManager::GetServers() noexcept
 	return std::move(servers);
 }
 
-bool NetworkManager::SetClient(std::int32_t clientUID)
+bool NetworkManager::SetClient(NetworkSessionSlot clientSlot)
 {
-	return _clients.erase(clientUID);
+	return _clients.erase(clientSlot);
 }
 
-bool NetworkManager::SetClient(ESocketType socketType, std::int32_t clientUID)
+bool NetworkManager::SetClient(ESocketType socketType, NetworkSessionSlot clientSlot)
 {
-	if (auto it = _clients.find(clientUID); it != _clients.end() && it->second->GetSocketType() == socketType)
+	if (auto it = _clients.find(clientSlot); it != _clients.end() && it->second->GetSocketType() == socketType)
 	{
 		return false;
 	}
@@ -466,10 +470,10 @@ bool NetworkManager::SetClient(ESocketType socketType, std::int32_t clientUID)
 	switch (socketType)
 	{
 	case ESocketType::Local:
-		_clients[clientUID] = std::make_shared<LocalClientSession>(*this, clientUID);
+		_clients[clientSlot] = std::make_shared<LocalClientSession>(*this, clientSlot);
 		break;
 	case ESocketType::RUDP:
-		_clients[clientUID] = std::make_shared<ReliableUDPClientSession>(*this);
+		_clients[clientSlot] = std::make_shared<ReliableUDPClientSession>(*this, clientSlot);
 		break;
 	case ESocketType::Steam:
 		// _clients[uid] = std::make_shared<SteamClient>(*this);
@@ -481,14 +485,14 @@ bool NetworkManager::SetClient(ESocketType socketType, std::int32_t clientUID)
 	return true;
 }
 
-bool NetworkManager::SetServer(std::int32_t serverUID)
+bool NetworkManager::SetServer(NetworkSessionSlot serverSlot)
 {
-	return _servers.erase(serverUID);
+	return _servers.erase(serverSlot);
 }
 
-bool NetworkManager::SetServer(ESocketType socketType, std::int32_t serverUID)
+bool NetworkManager::SetServer(ESocketType socketType, NetworkSessionSlot serverSlot)
 {
-	if (auto it = _servers.find(serverUID); it != _servers.end() && it->second->GetSocketType() == socketType)
+	if (auto it = _servers.find(serverSlot); it != _servers.end() && it->second->GetSocketType() == socketType)
 	{
 		return false;
 	}
@@ -496,10 +500,10 @@ bool NetworkManager::SetServer(ESocketType socketType, std::int32_t serverUID)
 	switch (socketType)
 	{
 	case ESocketType::Local:
-		_servers[serverUID] = std::make_shared<LocalServerSession>(*this, serverUID);
+		_servers[serverSlot] = std::make_shared<LocalServerSession>(*this, serverSlot);
 		break;
 	case ESocketType::RUDP:
-		_servers[serverUID] = std::make_shared<ReliableUDPServerSession>(*this);
+		_servers[serverSlot] = std::make_shared<ReliableUDPServerSession>(*this, serverSlot);
 		break;
 	case ESocketType::Steam:
 		// _servers[uid] = std::make_shared<SteamServer>(*this);

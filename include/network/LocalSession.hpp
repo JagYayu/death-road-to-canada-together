@@ -33,10 +33,10 @@ namespace tudov
 		ESessionEvent event;
 
 		ELocalSessionSource source;
-		std::vector<std::byte> data;
-		ClientSessionToken clientToken;
+		std::vector<std::byte> bytes;
+		ClientSessionID clientID;
 
-		std::uint32_t clientUID;
-		std::uint32_t serverUID;
+		NetworkSessionSlot clientSlot;
+		NetworkSessionSlot serverSlot;
 	};
 } // namespace tudov
