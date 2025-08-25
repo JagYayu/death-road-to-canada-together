@@ -20,10 +20,7 @@ namespace tudov
 	class EventHandlerAddBadOrderException : public EventHandlerAddException
 	{
 	  public:
-		EventID eventID;
-		ScriptID scriptID;
 		std::string order;
-		std::string traceback;
 
 		explicit EventHandlerAddBadOrderException(Context &context, EventID eventID, ScriptID scriptID, std::string order, std::string traceback) noexcept;
 		~EventHandlerAddBadOrderException() noexcept override = default;

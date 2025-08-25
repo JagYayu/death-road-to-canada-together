@@ -23,6 +23,7 @@ error("this is a lua library module")
 --- e.g. `N_("HelloWorld")` --> `"dr2c_HelloWorld"`
 --- @param str N_Hint
 --- @return string
+--- @nodiscard
 function N_(str) end
 
 --- *Mod Scope*
@@ -31,10 +32,12 @@ function N_(str) end
 --- @param defaultValue T
 --- @param getter fun(): T
 --- @return T
+--- @nodiscard
 function persist(key, defaultValue, getter) end
 
 --- *Mod Scope*
 --- You can also assess this value via `modConfig`.
+--- e.g. "dr2c"
 --- @type string
 modNamespace = nil
 

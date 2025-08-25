@@ -13,7 +13,7 @@ local imageID = images:getID("gfx/cars/cars_unique_110x96.png")
 
 local renderTargetWidth, renderTargetHeight = 960, 640
 
-events:add(N_("RenderGame"), function(e)
+events:add(N_("CRender"), function(e)
 	local snapScale
 	local renderer = e.window.renderer
 	if not renderTarget then

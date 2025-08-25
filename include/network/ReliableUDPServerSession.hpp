@@ -41,7 +41,6 @@ namespace tudov
 	  protected:
 		INetworkManager &_networkManager;
 		NetworkSessionSlot _serverSessionSlot;
-		NetworkSessionSlot _serverSlot;
 		_ENetHost *_eNetHost;
 		ClientSessionID _nextClientSessionID;
 		UnorderedBimap<ClientSessionID, _ENetPeer *> _clientIDPeerBimap;

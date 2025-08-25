@@ -7,10 +7,11 @@ local GClient = {}
 GClient.State = Enum.sequence({
 	Disconnected = 0,
 	LoggingIn = 1,
-	
+	Synchronizing = 2,
+	Playing = 3,
 })
 
---- @enum dr2c.GClient.PublicAttribute
+--- @enum dr2c.ClientPublicAttribute
 GClient.PublicAttribute = Enum.sequence({
 	ID = 0,
 	State = 1,
@@ -19,33 +20,36 @@ GClient.PublicAttribute = Enum.sequence({
 	Statistics = 4,
 	DisplayName = 5,
 	ServerRoom = 6,
-	GameVersion = 7,
+	Version = 7,
 	ContentHash = 8,
 	ModsHash = 9,
 })
 
---- @enum dr2c.GClient.PrivateAttribute
+--- @enum dr2c.ClientPrivateAttribute
 GClient.PrivateAttribute = Enum.sequence({
 	SecretToken = 1,
 	SecretStatistics = 2,
 })
 
---- @type table<dr2c.GClient.PublicAttribute, fun(value: any): boolean?>
+--- @type table<dr2c.ClientPublicAttribute, fun(value: any): boolean?>
 local publicAttributeValidators = {
-	ID = Function.isTypeInteger,
-	State = Function.isTypeInteger,
-	Platform = Function.isTypeString,
-	PlatformID = Function.isTypeString,
-	Statistics = Function.isTypeTable,
-	DisplayName = Function.isTypeString,
-	ServerRooms = Function.isTypeTable,
-	GameVersion = Function.isTypeString,
-	ContentHash = Function.isTypeNumber,
-	ModsHash = Function.isTypeNumber,
+	[GClient.PublicAttribute.ID] = Function.isTypeInteger,
+	[GClient.PublicAttribute.State] = Function.isTypeInteger,
+	[GClient.PublicAttribute.Platform] = Function.isTypeString,
+	[GClient.PublicAttribute.PlatformID] = Function.isTypeString,
+	[GClient.PublicAttribute.Statistics] = Function.isTypeTable,
+	[GClient.PublicAttribute.DisplayName] = Function.isTypeString,
+	[GClient.PublicAttribute.ServerRoom] = Function.isTypeTable,
+	[GClient.PublicAttribute.Version] = Function.isTypeString,
+	[GClient.PublicAttribute.ContentHash] = Function.isTypeNumber,
+	[GClient.PublicAttribute.ModsHash] = Function.isTypeNumber,
 }
 
---- @type table<dr2c.GClient.PrivateAttribute, fun(value: any): boolean?>
-local privateAttributeValidators = {}
+--- @type table<dr2c.ClientPrivateAttribute, fun(value: any): boolean?>
+local privateAttributeValidators = {
+	[GClient.PrivateAttribute.SecretToken] = Function.isTypeNumber,
+	[GClient.PrivateAttribute.SecretStatistics] = Function.isTypeTable,
+}
 
 function GClient.validatePublicAttribute(attribute, value)
 	return not not (publicAttributeValidators[attribute] or Function.alwaysTrue)(value)

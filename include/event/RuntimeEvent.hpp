@@ -55,7 +55,7 @@ namespace tudov
 			template <typename... TArgs>
 			explicit Profile(bool traceHandlers, TArgs &&...args) noexcept
 			    : traceHandlers(traceHandlers),
-			      eventProfiler(std::move<TArgs>(args)...)
+			      eventProfiler(std::make_unique<EventProfiler>(std::move<TArgs>(args)...))
 			{
 			}
 		};

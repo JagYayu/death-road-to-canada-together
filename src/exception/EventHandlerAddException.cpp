@@ -19,17 +19,15 @@
 using namespace tudov;
 
 EventHandlerAddException::EventHandlerAddException(Context &context, EventID eventID, ScriptID scriptID, std::string traceback) noexcept
-    : Exception(context),
-      eventID(eventID),
-      scriptID(scriptID),
-      traceback(traceback)
+    : ScriptException(context, scriptID, traceback),
+      eventID(eventID)
 {
 }
 
 std::string_view EventHandlerAddException::What() const noexcept
 {
 	std::string_view eventName = GetEventManager().GetEventNameByID(eventID).value_or("$UNKNOWN$");
-	std::string_view scriptName = GetScriptProvider().GetScriptNameByID(eventID).value_or("$UNKNOWN$");
+	std::string_view scriptName = GetScriptProvider().GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
 	_what = std::format("Bad event handler event <{}>\"{}\", script <{}>\"{}\"{}",
 	                    eventID, eventName, scriptID, scriptName, traceback);
 	return _what;

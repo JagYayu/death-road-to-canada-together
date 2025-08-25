@@ -118,6 +118,7 @@ void ScriptProvider::Initialize() noexcept
 	}
 
 	++_versionID;
+	_iteratorEntries = std::nullopt;
 }
 
 void ScriptProvider::Deinitialize() noexcept
@@ -149,6 +150,7 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, TextID scrip
 	TE_TRACE("Add script <{}>\"{}\"", scriptID, name);
 	_scriptName2ID.emplace(name, scriptID);
 	++_versionID;
+	_iteratorEntries = std::nullopt;
 
 	return scriptID;
 }
@@ -239,6 +241,7 @@ bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 	_scriptName2ID.erase(it->second.name);
 	_scriptID2Entry.erase(it);
 	++_versionID;
+	_iteratorEntries = std::nullopt;
 
 	return true;
 }
@@ -254,6 +257,7 @@ std::size_t ScriptProvider::RemoveScriptsBy(std::string_view uid) noexcept
 
 		_scriptName2ID.erase(pair.second.name);
 		++_versionID;
+		_iteratorEntries = std::nullopt;
 
 		return true;
 	});
@@ -301,12 +305,40 @@ std::size_t ScriptProvider::GetEntriesSize() const
 	return _scriptID2Entry.size();
 }
 
-ScriptProvider::TScriptID2Entry::const_iterator ScriptProvider::BeginEntries() const
+std::vector<ScriptProvider::IteratorEntry>::const_iterator ScriptProvider::BeginEntries() const
 {
-	return _scriptID2Entry.begin();
+	UpdateScriptEntriesCache();
+	return _iteratorEntries->begin();
 }
 
-ScriptProvider::TScriptID2Entry::const_iterator ScriptProvider::EndEntries() const
+std::vector<ScriptProvider::IteratorEntry>::const_iterator ScriptProvider::EndEntries() const
 {
-	return _scriptID2Entry.end();
+	UpdateScriptEntriesCache();
+	return _iteratorEntries->end();
+}
+
+void ScriptProvider::UpdateScriptEntriesCache() const noexcept
+{
+	if (_iteratorEntries.has_value()) [[likely]]
+	{
+		return;
+	}
+
+	_iteratorEntries = std::vector<IteratorEntry>();
+	_iteratorEntries->reserve(_scriptID2Entry.size());
+
+	for (const auto &[scriptID, entry] : _scriptID2Entry)
+	{
+		_iteratorEntries->push_back({
+		    scriptID,
+		    entry.name,
+		    entry.textID,
+		    entry.modUID,
+		});
+	}
+
+	std::sort(_iteratorEntries->begin(), _iteratorEntries->end(), [](const IteratorEntry &l, const IteratorEntry &r) -> bool
+	{
+		return l.name < r.name;
+	});
 }

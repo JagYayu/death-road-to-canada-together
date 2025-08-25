@@ -1,4 +1,4 @@
---- @class dr2c.CFrame
+--- @class dr2c.CRender
 local CRender = {}
 
 --- @type integer
@@ -12,13 +12,13 @@ function CRender.getFrame()
 	return renderFrame
 end
 
-local eventRenderGame = events:new(N_("RenderGame"), {
+local eventClientRender = events:new(N_("CRender"), {
 	"Camera",
 	"UI",
 })
 
 events:add("TickRender", function(e)
-	events:invoke(eventRenderGame, e)
-end, N_("gameRender"), nil, "Main")
+	events:invoke(eventClientRender, e)
+end, N_("ClientRender"), nil, "Main")
 
 return CRender

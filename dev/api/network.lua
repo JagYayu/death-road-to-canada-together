@@ -5,6 +5,22 @@ error("this is a lua library module")
 
 --- @class Network.ServerID : integer
 
+--- @enum EClientSessionState
+EClientSessionState = {
+	Disconnected = 0,
+	Connecting = 1,
+	Connected = 2,
+	Disconnecting = 3,
+}
+
+--- @enum EServerSessionState
+EServerSessionState = {
+	Shutdown = 0,
+	Starting = 1,
+	Hosting = 2,
+	Stopping = 3,
+}
+
 --- @enum ESocketType
 ESocketType = {
 	Local = 0,
@@ -33,16 +49,13 @@ local client = {}
 --- @return Network.ClientID
 function client:getSessionID() end
 
+--- @return EClientSessionState
+function client:getSessionState() end
+
 --- @param args Network.ClientConnectArgs
 function client:connect(args) end
 
 function client:disconnect() end
-
---- @return boolean connected
-function client:isConnected() end
-
---- @return boolean connecting
-function client:isConnecting() end
 
 --- @param data string
 function client:sendReliable(data) end
@@ -63,6 +76,9 @@ local server = {}
 --- @return Network.ServerID
 function server:getSessionID() end
 
+--- @return EServerSessionState
+function server:getSessionState() end
+
 --- @param data string
 function server:broadcastReliable(data) end
 
@@ -71,12 +87,6 @@ function server:broadcastUnreliable(data) end
 
 --- @param args Network.ServerHostArgs
 function server:host(args) end
-
---- @return boolean hosting
-function server:isHosting() end
-
---- @return boolean shutdown
-function server:isShutdown() end
 
 --- @param clientID Network.ClientID
 --- @param data string

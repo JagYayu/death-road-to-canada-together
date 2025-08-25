@@ -84,7 +84,7 @@ end
 
 CSprites.reload()
 
-events:add(N_("ContentLoad"), function(e)
+events:add(N_("CContentLoad"), function(e)
 	if reloadPending then
 		CSprites.reloadImmediately()
 	end

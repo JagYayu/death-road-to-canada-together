@@ -35,7 +35,6 @@ namespace tudov
 
 		static std::size_t LuaGetArrayPartSize(sol::object tbl) noexcept;
 		static std::size_t LuaGetHashPartSize(sol::object tbl) noexcept;
-		// std::string LuaFormat(IScriptEngine &scriptEngine, sol::object fmt, sol::variadic_args args);
 
 	  private:
 		template <typename T, typename... TArgs>

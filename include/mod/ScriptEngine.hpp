@@ -11,20 +11,19 @@
 
 #pragma once
 
-#include "LuaReturn.hpp"
 #include "program/EngineComponent.hpp"
-#include "sol/table.hpp"
 #include "system/Log.hpp"
 #include "util/Definitions.hpp"
+#include "util/Utils.hpp"
 
 #include "sol/load_result.hpp"
 #include "sol/state.hpp"
-#include "util/Utils.hpp"
+#include "sol/table.hpp"
 
 #include <format>
+#include <map>
 #include <memory>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 
 namespace tudov
@@ -135,13 +134,13 @@ namespace tudov
 		};
 
 	  private:
-		Context _context;
+		Context &_context;
 		std::shared_ptr<Log> _log;
 		sol::state _lua;
 		bool _luaInit;
 
-		std::unordered_map<std::string, std::unordered_map<std::string, PersistVariable>> _persistVariables;
-		std::unordered_map<std::string_view, sol::table> _modGlobals;
+		std::map<std::string, std::map<std::string, PersistVariable>> _persistVariables;
+		std::map<std::string_view, sol::table> _modGlobals;
 
 		sol::function _luaThrowModifyReadonlyGlobalError;
 		sol::function _luaInspect;

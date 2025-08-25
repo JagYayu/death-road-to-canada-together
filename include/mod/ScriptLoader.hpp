@@ -14,9 +14,10 @@
 #include "ScriptProvider.hpp"
 #include "event/DelegateEvent.hpp"
 #include "program/EngineComponent.hpp"
-#include "util/Definitions.hpp"
 #include "system/Log.hpp"
+#include "util/Definitions.hpp"
 #include "util/Micros.hpp"
+
 
 #include <sol/table.hpp>
 
@@ -229,6 +230,7 @@ namespace tudov
 
 	class ScriptLoader : public IScriptLoader, private ILogProvider
 	{
+		friend LuaAPI;
 		friend ScriptModule;
 
 	  protected:
@@ -294,6 +296,6 @@ namespace tudov
 		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
 
 	  private:
-		// void LuaAddReverseDependency(sol::object source, sol::object target)
+		void LuaAddReverseDependency(sol::object source, sol::object target) noexcept;
 	};
 } // namespace tudov

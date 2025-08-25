@@ -16,7 +16,6 @@
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 
-
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -28,6 +27,15 @@ namespace tudov
 
 	struct IScriptProvider : public IEngineComponent
 	{
+	  public:
+		struct IteratorEntry
+		{
+			ScriptID scriptID;
+			std::string name;
+			TextID textID;
+			std::string_view modUID;
+		};
+
 	  protected:
 		struct Entry
 		{
@@ -60,8 +68,8 @@ namespace tudov
 		virtual std::string_view GetScriptModUID(ScriptID scriptID) noexcept = 0;
 
 		virtual std::size_t GetEntriesSize() const = 0;
-		virtual TScriptID2Entry::const_iterator BeginEntries() const = 0;
-		virtual TScriptID2Entry::const_iterator EndEntries() const = 0;
+		virtual std::vector<IteratorEntry>::const_iterator BeginEntries() const = 0;
+		virtual std::vector<IteratorEntry>::const_iterator EndEntries() const = 0;
 
 		inline bool IsStaticScript(ScriptID scriptID) const noexcept
 		{
@@ -119,6 +127,8 @@ namespace tudov
 		std::unordered_map<std::string_view, ScriptID> _scriptName2ID;
 		TScriptID2Entry _scriptID2Entry;
 
+		mutable std::optional<std::vector<IteratorEntry>> _iteratorEntries;
+
 	  public:
 		explicit ScriptProvider(Context &context) noexcept;
 		~ScriptProvider() override;
@@ -149,7 +159,10 @@ namespace tudov
 		std::string_view GetScriptModUID(ScriptID scriptID) noexcept override;
 
 		std::size_t GetEntriesSize() const override;
-		std::unordered_map<ScriptID, Entry>::const_iterator BeginEntries() const override;
-		std::unordered_map<ScriptID, Entry>::const_iterator EndEntries() const override;
+		std::vector<IteratorEntry>::const_iterator BeginEntries() const override;
+		std::vector<IteratorEntry>::const_iterator EndEntries() const override;
+
+	  protected:
+		void UpdateScriptEntriesCache() const noexcept;
 	};
 } // namespace tudov

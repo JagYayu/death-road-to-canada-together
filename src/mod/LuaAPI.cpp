@@ -18,6 +18,7 @@
 #include "graphic/RenderTarget.hpp"
 #include "graphic/Renderer.hpp"
 #include "mod/ModManager.hpp"
+#include "mod/ScriptLoader.hpp"
 #include "network/ClientSession.hpp"
 #include "network/NetworkManager.hpp"
 #include "network/ServerSession.hpp"
@@ -26,6 +27,9 @@
 #include "program/WindowManager.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/ImageResources.hpp"
+#include "system/RandomDevice.hpp"
+#include "system/Time.hpp"
+#include "util/LuaUtils.hpp"
 
 #include "sol/forward.hpp"
 #include "sol/property.hpp"
@@ -103,14 +107,6 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            {"FullPath", EPathListOption::FullPath},
 	        });
 
-	TE_ENUM(ESocketType,
-	        {
-	            {"Local", ESocketType::Local},
-	            {"RUDP", ESocketType::RUDP},
-	            {"Steam", ESocketType::Steam},
-	            {"TCP", ESocketType::TCP},
-	        });
-
 	TE_USERTYPE(Engine,
 	            "mainWindow", GetMainWindowFromContext(context),
 	            "quit", &Engine::Quit,
@@ -181,6 +177,11 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "snapCameraScale", &RenderTarget::SnapCameraScale,
 	            "update", &RenderTarget::Update);
 
+	TE_USERTYPE(ScriptLoader,
+	            "addReverseDependency", &ScriptLoader::LuaAddReverseDependency,
+	            "getLoadingScriptID", &ScriptLoader::GetLoadingScriptID,
+	            "getLoadingScriptName", &ScriptLoader::GetLoadingScriptName);
+
 	TE_USERTYPE(ScriptProvider,
 	            "getScriptTextID", &ScriptProvider::GetScriptTextID);
 
@@ -189,18 +190,24 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "list", &VirtualFileSystem::LuaList,
 	            "readFile", &VirtualFileSystem::LuaReadFile);
 
-	// TE_USERTYPE(GlobalResourcesCollection);
-
 	// TE_USERTYPE(Version,
 	//             "major", &Version::Major,
 	//             "minor", &Version::Minor,
 	//             "parts", &Version::_parts,
 	//             "patch", &Version::Patch);
 
+	lua.create_named_table(TE_NAMEOF(RandomDevice),
+	                       "entropy", &RandomDevice::Entropy,
+	                       "generate", &RandomDevice::LuaGenerate);
+
+	lua.create_named_table(TE_NAMEOF(Time),
+	                       "getSystemTime", &Time::GetSystemTime);
+
 	lua["engine"] = &context.GetEngine();
 	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
 	lua["mods"] = &dynamic_cast<ModManager &>(context.GetModManager());
 	lua["network"] = &dynamic_cast<NetworkManager &>(context.GetNetworkManager());
+	lua["scriptLoader"] = &dynamic_cast<ScriptLoader &>(context.GetScriptLoader());
 	lua["scriptProvider"] = &dynamic_cast<ScriptProvider &>(context.GetScriptProvider());
 	lua["vfs"] = &dynamic_cast<VirtualFileSystem &>(context.GetVirtualFileSystem());
 

@@ -153,27 +153,35 @@ local function postProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed,
 	--#region wrap log table
 
 	local log = scriptGlobals.log
+
+	local function generateCanOutputFunction(verb)
+		return function()
+			return log:canOutput(verb)
+		end
+	end
+
 	local function generateOutputFunction(verb)
 		return function(...)
-			if log:canOutput(verb) then
-				local inspect = scriptGlobals.require("inspect")
+			local inspect = scriptGlobals.require("inspect")
 
-				local args = { ... }
-				for index, arg in ipairs(args) do
-					args[index] = inspect(arg)
-				end
-
-				log:output(verb, table_concat(args, "\t"))
+			local args = { ... }
+			for index, arg in ipairs(args) do
+				args[index] = inspect(arg)
 			end
+
+			log:output(verb, table_concat(args, "\t"))
 		end
 	end
 
 	scriptGlobals.log = setmetatable({
+		canTrace = generateCanOutputFunction("Trace"),
+		canDebug = generateCanOutputFunction("Debug"),
+		canInfo = generateCanOutputFunction("Info"),
+		canWarn = generateCanOutputFunction("Warn"),
 		trace = generateOutputFunction("Trace"),
 		debug = generateOutputFunction("Debug"),
 		info = generateOutputFunction("Info"),
 		warn = generateOutputFunction("Warn"),
-		error = generateOutputFunction("Error"),
 	}, {
 		__index = function(_, k)
 			return log[k]

@@ -1,62 +1,163 @@
 local String = require("tudov.String")
 local Enum = require("tudov.Enum")
+local Utility = require("tudov.Utility")
 
+local GThrottle = require("dr2c.shared.utils.Throttle")
 local CNetwork = require("dr2c.client.misc.Network")
+local GClient = require("dr2c.shared.network.Client")
 local GMessage = require("dr2c.shared.network.Message")
 
 --- @class dr2c.CClients
 local CClients = {}
 
-CClients.SessionSlot = 0
+--- @type table<number, Network.ClientID>
+local secretToken2ClientID = {}
+secretToken2ClientID = persist("secretToken2ClientID", {}, function()
+	return secretToken2ClientID
+end)
 
-local clientsPublicAttributes = {}
-local clientsPrivateAttributes = {}
+--- @type table<Network.ClientID, table<dr2c.ClientPublicAttribute, any>>
+local clientsPublicAttributes
+clientsPublicAttributes = persist("clientsPublicAttributes", {}, function()
+	return clientsPublicAttributes
+end)
 
-function CClients.getPublicAttribute(clientPublicAttribute)
-	local attribute = clientsPublicAttributes[clientPublicAttribute]
+--- @type table<Network.ClientID, table<dr2c.ClientPublicAttribute, any>>
+local clientsPrivateAttributes
+clientsPrivateAttributes = persist("clientsPrivateAttributes", {}, function()
+	return clientsPrivateAttributes
+end)
+
+--- @type table<number, {callback: fun(success: boolean, attribute: any), expireTime: integer}>
+local privateAttributeRequests
+privateAttributeRequests = persist("privateAttributeRequests", {}, function()
+	return privateAttributeRequests
+end)
+
+local privateAttributeRequestLatestID
+privateAttributeRequestLatestID = persist("privateAttributeRequestLatestID", 0, function()
+	return privateAttributeRequestLatestID
+end)
+
+--- @param clientID Network.ClientID
+--- @return boolean
+function CClients.hasClient(clientID)
+	return clientsPublicAttributes[clientID] ~= nil
 end
 
-function CClients.requestPrivateAttribute(clientPrivateAttribute, callback)
-	--
+--- @param clientID Network.ClientID
+function CClients.addClient(clientID)
+	clientsPublicAttributes[clientID] = {}
+	clientsPrivateAttributes[clientID] = {}
 end
 
---- @return Network.ClientID
-function CClients.getLocalClientID()
-	return network:getClient(CClients.SessionSlot):getSessionID()
+--- @param clientID Network.ClientID
+function CClients.removeClient(clientID)
+	clientsPublicAttributes[clientID] = nil
+	clientsPrivateAttributes[clientID] = nil
 end
 
--- local function invokeEventClientConnect()
--- 	local e = {
--- 		type = "connect",
--- 		clientID = CClients.getLocalClientID(),
--- 	}
--- 	events:invoke(CNetwork.eventClientConnect, e)
--- end
+--- @param clientPublicAttribute dr2c.ClientPublicAttribute
+--- @nodiscard
+function CClients.getPublicAttribute(clientID, clientPublicAttribute)
+	local attributes = clientsPublicAttributes[clientID]
 
-events:add("ClientConnect", function(e) end)
+	local attribute = attributes[clientPublicAttribute]
 
-local function invokeEventClientMessage(messageContent, messageType)
-	local e = {
-		content = messageContent,
-		type = messageType,
-	}
-	events:invoke(CNetwork.eventClientMessage, e, messageType)
+	return attribute
 end
 
---- @param e Events.E.LocalClientMessage
-events:add("ClientMessage", function(e)
-	local messageType, messageContent = GMessage.unpack(e.data)
+--- @param clientID Network.ClientID
+--- @param clientPrivateAttribute dr2c.ClientPrivateAttribute
+--- @param callback fun(success: boolean, attribute: any)
+function CClients.requestPrivateAttribute(clientID, clientPrivateAttribute, callback)
+	local attributes = clientsPublicAttributes[clientID]
+	local value = attributes[clientPrivateAttribute]
 
-	invokeEventClientMessage(messageContent, messageType)
+	if value ~= nil then
+		callback(true, value)
+	else
+		privateAttributeRequestLatestID = privateAttributeRequestLatestID + 1
+		local requestID = privateAttributeRequestLatestID
 
-	-- print("CClients.getLocalClientID()", CClients.getLocalClientID())
-	-- print("e.data", e.data)
-	-- print("e.data.socketType", e.data.socketType)
-	-- print("e.data.message", e.data.message)
-	-- print("e.data.host", e.data.host)
-	-- print("e.data.port", e.data.port)
+		CNetwork.sendMessage(GMessage.pack(GMessage.Type.ClientPrivateAttribute, {
+			requestID = requestID,
+			clientID = clientID,
+			attribute = clientPrivateAttribute,
+		}))
 
-	-- events:invoke(CNetworkClient.eventClientMessage, e, key?, options?)
-end, "", nil, CClients.SessionSlot)
+		privateAttributeRequests[requestID] = {
+			callback = callback,
+			expireTime = Time.getSystemTime() + 30,
+		}
+	end
+end
+
+events:add(N_("CDisconnect"), function(e)
+	clientsPublicAttributes = {}
+	clientsPrivateAttributes = {}
+	privateAttributeRequests = {}
+end, N_("ClientResetClients"), "Reset")
+
+events:add(N_("CMessage"), function(e)
+	local content = e.content
+	if type(content) ~= "table" then
+		return
+	end
+
+	local clientID = content.clientID
+	local attribute = content.attribute
+	local value = content.value
+	if
+		type(clientID) ~= "number"
+		or type(attribute) ~= "number"
+		or not GClient.validatePrivateAttribute(attribute, value)
+	then
+		return
+	end
+
+	local attributes = clientsPrivateAttributes[clientID]
+	if attributes then
+		attributes[attribute] = value
+	end
+
+	if Utility.isIndexKey(content.requestID) then
+		privateAttributeRequests[content.requestID] = nil
+	end
+end, "CReceivePrivateAttribute", "Receive", GMessage.Type.ClientPrivateAttribute)
+
+events:add(N_("CMessage"), function(e)
+	local content = e.content
+	if type(content) ~= "table" or type(content.clientID) ~= "number" or type(content.attribute) ~= "number" then
+		return
+	end
+
+	local requests = privateAttributeRequests[e.content.clientID]
+	if requests then
+		requests[content.attribute] = nil
+	end
+end, "CClearPrivateAttributeCache", "Receive", GMessage.Type.ClientPrivateAttributeChanged)
+
+local throttleClientUpdateClientsPrivateAttributeRequests = GThrottle.newTime(1)
+
+events:add(N_("CUpdate"), function(e)
+	if throttleClientUpdateClientsPrivateAttributeRequests() then
+		return
+	end
+
+	local time = Time.getSystemTime()
+
+	for clientID, request in pairs(privateAttributeRequests) do
+		if time > request.expireTime then
+			if log.canTrace() then
+				log.warn(
+					("Private attribute request expired: clientID=%d, attribute=%d"):format(clientID, request.attribute)
+				)
+			end
+
+			privateAttributeRequests[clientID] = nil
+		end
+	end
+end, "ClientUpdateClientsPrivateAttributeRequests", "Network")
 
 return CClients

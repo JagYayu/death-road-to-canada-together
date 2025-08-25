@@ -21,6 +21,7 @@
 #include <fstream>
 #include <memory>
 #include <optional>
+#include <thread>
 #include <tuple>
 #include <type_traits>
 
@@ -279,26 +280,30 @@ void Log::Process() noexcept
 
 	while (!_exit)
 	{
-		std::unique_lock<std::mutex> lock{_mutex};
-		_cv.wait(lock, pred);
-
-		while (!_queue.empty())
 		{
-			auto entry = std::move(_queue.front());
-			_queue.pop();
-			lock.unlock();
+			std::unique_lock<std::mutex> lock{_mutex};
+			_cv.wait(lock, pred);
 
-			std::string message = std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}",
-			                                  std::chrono::zoned_time(std::chrono::current_zone(), entry.time),
-			                                  entry.module,
-			                                  entry.verbosity,
-			                                  entry.message);
+			while (!_queue.empty())
+			{
+				auto entry = std::move(_queue.front());
+				_queue.pop();
+				lock.unlock();
 
-			PrintToConsole(message, entry);
-			fileStream << message << std::endl;
+				std::string message = std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}",
+				                                  std::chrono::zoned_time(std::chrono::current_zone(), entry.time),
+				                                  entry.module,
+				                                  entry.verbosity,
+				                                  entry.message);
 
-			lock.lock();
+				PrintToConsole(message, entry);
+				fileStream << message << std::endl;
+
+				lock.lock();
+			}
 		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 }
 

@@ -13,6 +13,8 @@ local Enum = {}
 
 local enumerationsMetadata = {}
 
+local eventKeysCache = setmetatable({}, { __mode = "k" })
+
 local function isEmptyDefaults(defaults)
 	local init = defaults[false]
 	local step = defaults[true]
@@ -35,7 +37,7 @@ local function makeBitFlags(defaults, extend)
 	error("NOT IMPLEMENT YET")
 end
 
-local function makeIntegers(defaults, extend)
+local function makeIntegers(defaults, extend, valueCanBeString)
 	local metadata = {
 		extend = extend,
 		step = tonumber(defaults[true]) or 1,
@@ -53,7 +55,7 @@ local function makeIntegers(defaults, extend)
 	end
 
 	--- @param key string
-	--- @param value integer
+	--- @param value integer | string
 	local function add(key, value)
 		metadata.key2value[key] = value
 
@@ -70,10 +72,12 @@ local function makeIntegers(defaults, extend)
 	else
 		for key, value in pairs(defaults) do
 			if type(key) == "string" then
-				if type(value) == "number" then
+				if (type(value) == "number") or (valueCanBeString and type(value) == "string") then
 					add(key, value)
 				else
-					error("Invalid value type, number expected got " .. type(value), 2)
+					local prefix = valueCanBeString and "Invalid value type, number or string expected got "
+						or "Invalid value type, number expected got "
+					error(prefix .. type(value), 2)
 				end
 			elseif type(key) ~= "number" and type(key) ~= "boolean" then
 				error("Invalid key type, boolean or number or string expected got " .. type(key), 2)
@@ -131,6 +135,8 @@ end
 
 local function extendSequence(metadata, key) end
 
+local function extendProtocol(metadata, key) end
+
 function Enum.flags(defaults)
 	return makeBitFlags(defaults, extendBitFlags)
 end
@@ -151,6 +157,12 @@ function Enum.immutable(defaults)
 	return makeIntegers(defaults)
 end
 
+--- @param defaults Enum.Defaults
+--- @return table enum
+function Enum.protocol(defaults)
+	return makeIntegers(defaults, extendProtocol, true)
+end
+
 --- @param enum table
 --- @return boolean
 function Enum.isValid(enum)
@@ -169,7 +181,7 @@ end
 --- @warn Wrap a `pcall` If you are extending bit flag enumerations, because an error will be thrown when the number of flags exceeds 52.
 --- @param enum table
 --- @param key string
---- @return integer value
+--- @return integer | string value
 function Enum.extend(enum, key)
 	local metadata = getMetadata(enum)
 	if not metadata.extend then
@@ -182,7 +194,7 @@ end
 --- @param enum table
 --- @param key string
 --- @return boolean
-function Enum.containsKey(enum, key)
+function Enum.hasKey(enum, key)
 	local metadata = getMetadata(enum)
 	return not not metadata.key2value[key]
 end
@@ -206,7 +218,7 @@ function Enum.iterateValues(enum)
 end
 
 --- @param enum table
---- @param value integer
+--- @param value integer | string
 --- @param fallback string?
 --- @return string?
 function Enum.resolveValue(enum, value, fallback)
@@ -218,11 +230,16 @@ end
 --- @param enum table
 --- @return integer[]
 function Enum.eventKeys(enum)
-	local metadata = getMetadata(enum)
+	local eventKeys = eventKeysCache[enum]
+	if not eventKeys then
+		local metadata = getMetadata(enum)
 
-	local eventKeys = Table.new(#metadata.values, 0)
-	for index, value in ipairs(metadata.values) do
-		eventKeys[index] = value
+		eventKeys = Table.new(#metadata.values, 0)
+		for index, value in ipairs(metadata.values) do
+			eventKeys[index] = value
+		end
+
+		eventKeysCache[enum] = eventKeys
 	end
 
 	return eventKeys

@@ -18,6 +18,7 @@
 
 #include "sol/forward.hpp"
 
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -71,7 +72,7 @@ namespace tudov
 		EventID _latestEventID;
 		std::unordered_map<std::string_view, EventID> _eventName2ID;
 		std::unordered_map<EventID, std::string> _eventID2Name;
-		std::unordered_map<EventID, std::shared_ptr<LoadtimeEvent>> _loadtimeEvents;
+		std::map<EventID, std::shared_ptr<LoadtimeEvent>> _loadtimeEvents;
 		std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>> _runtimeEvents;
 		std::vector<std::shared_ptr<RuntimeEvent>> _staticEvents;
 

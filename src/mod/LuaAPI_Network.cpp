@@ -13,8 +13,10 @@
 #include "mod/LuaAPI.hpp"
 
 #include "network/ClientSession.hpp"
+#include "network/ClientSessionState.hpp"
 #include "network/NetworkManager.hpp"
 #include "network/ServerSession.hpp"
+#include "network/ServerSessionState.hpp"
 
 using namespace tudov;
 
@@ -23,6 +25,38 @@ using namespace tudov;
 
 void LuaAPI::InstallNetwork(sol::state &lua, Context &context) noexcept
 {
+	TE_ENUM(EClientSessionState,
+	        {
+	            {"Disconnected", EClientSessionState::Disconnected},
+	            {"Connecting", EClientSessionState::Connecting},
+	            {"Connected", EClientSessionState::Connected},
+	            {"Disconnecting", EClientSessionState::Disconnecting},
+	        });
+
+	TE_ENUM(EServerSessionState,
+	        {
+	            {"Shutdown", EServerSessionState::Shutdown},
+	            {"Starting", EServerSessionState::Starting},
+	            {"Hosting", EServerSessionState::Hosting},
+	            {"Stopping", EServerSessionState::Stopping},
+	        });
+
+	TE_ENUM(ESocketType,
+	        {
+	            {"Local", ESocketType::Local},
+	            {"RUDP", ESocketType::RUDP},
+	            {"Steam", ESocketType::Steam},
+	            {"TCP", ESocketType::TCP},
+	        });
+
+	TE_ENUM(ESocketType,
+	        {
+	            {"Local", ESocketType::Local},
+	            {"RUDP", ESocketType::RUDP},
+	            {"Steam", ESocketType::Steam},
+	            {"TCP", ESocketType::TCP},
+	        });
+
 	TE_USERTYPE(EventLocalClientConnectData,
 	            "socketType", &EventLocalClientConnectData::socketType,
 	            "clientSlot", &EventLocalClientConnectData::clientSlot,
@@ -44,8 +78,7 @@ void LuaAPI::InstallNetwork(sol::state &lua, Context &context) noexcept
 	TE_USERTYPE(EventLocalServerConnectData,
 	            "socketType", &EventLocalServerConnectData::socketType,
 	            "clientSlot", &EventLocalServerConnectData::clientSlot,
-	            "serverSlot", &EventLocalServerConnectData::serverSlot,
-	            "disconnect", &EventLocalServerConnectData::disconnect);
+	            "serverSlot", &EventLocalServerConnectData::serverSlot);
 
 	TE_USERTYPE(EventLocalServerDisconnectData,
 	            "socketType", &EventLocalServerDisconnectData::socketType,
@@ -78,8 +111,7 @@ void LuaAPI::InstallNetwork(sol::state &lua, Context &context) noexcept
 	            "socketType", &EventReliableUDPServerConnectData::socketType,
 	            "clientID", &EventReliableUDPServerConnectData::clientID,
 	            "host", &EventReliableUDPServerConnectData::host,
-	            "port", &EventReliableUDPServerConnectData::port,
-	            "disconnect", &EventReliableUDPServerConnectData::disconnect);
+	            "port", &EventReliableUDPServerConnectData::port);
 
 	TE_USERTYPE(EventReliableUDPServerDisconnectData,
 	            "socketType", &EventReliableUDPServerDisconnectData::socketType,

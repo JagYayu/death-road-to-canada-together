@@ -231,11 +231,11 @@ void ScriptLoader::LoadAllScripts()
 	TextResources &textResources = GetGlobalResourcesCollection().GetTextResources();
 
 	auto &&count = scriptProvider.GetCount();
-	for (auto &&[scriptID, entry] : scriptProvider)
+	for (const auto &entry : scriptProvider)
 	{
 		std::shared_ptr<Text> code = textResources.GetResource(entry.textID);
 		TE_ASSERT(code != nullptr);
-		LoadImpl(scriptID, entry.name, code->View(), entry.modUID);
+		LoadImpl(entry.scriptID, entry.name, code->View(), entry.modUID);
 	}
 
 	ProcessFullLoads();
@@ -491,4 +491,12 @@ void ScriptLoader::ProcessFullLoads()
 	}
 
 	TE_DEBUG("{}", "Processed full loads");
+}
+
+void ScriptLoader::LuaAddReverseDependency(sol::object source, sol::object target) noexcept
+{
+	auto source_ = static_cast<ScriptID>(source.as<double_t>());
+	auto target_ = static_cast<ScriptID>(target.as<double_t>());
+
+	AddReverseDependency(source_, target_);
 }

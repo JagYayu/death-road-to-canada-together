@@ -1,4 +1,4 @@
---- @class dr2c.CFrame
+--- @class dr2c.CRender
 local CFrame = {}
 
 function CFrame.getCurrentFrame()

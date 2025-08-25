@@ -9,6 +9,11 @@ local CPlayerInputBuffers = {}
 
 local playerInputBuffers = {}
 
+--- @warn Do not use this function unless you know what you're doing.
+function CPlayerInputBuffers.getRawTable()
+	return playerInputBuffers
+end
+
 function CPlayerInputBuffers.hasPlayer(playerID)
 	return not not playerInputBuffers[playerID]
 end

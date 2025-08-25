@@ -201,23 +201,15 @@ bool LocalServerSession::Update()
 			    .socketType = ESocketType::Local,
 			    .clientSlot = messageEntry.clientSlot,
 			    .serverSlot = messageEntry.serverSlot,
-			    .disconnect = EDisconnectionCode::None,
 			};
 
 			TE_TRACE("Connect event, client", data.clientSlot);
 
 			coreEvents.ServerConnect().Invoke(&data, data.socketType, EEventInvocation::None);
 
-			if (data.disconnect != EDisconnectionCode::None)
-			{
-				TE_ASSERT(_hostInfo->localClients.erase(messageEntry.clientID));
-			}
-			else
-			{
-				ClientSessionID id = NewID();
-				std::shared_ptr<LocalClientSession> client = _hostInfo->localClients[messageEntry.clientID].lock();
-				TE_ASSERT(client != nullptr);
-			}
+			ClientSessionID id = NewID();
+			std::shared_ptr<LocalClientSession> client = _hostInfo->localClients[messageEntry.clientID].lock();
+			TE_ASSERT(client != nullptr);
 
 			// TODO its not done yet
 			// std::span<std::byte> broadcastData{reinterpret_cast<std::byte *>(), event.packet->dataLength};

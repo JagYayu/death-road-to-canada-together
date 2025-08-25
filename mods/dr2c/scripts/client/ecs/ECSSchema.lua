@@ -174,7 +174,7 @@ function CECSSchema.entityHasAllComponents(entityTypeOrID, componentTypeOrIDs) e
 
 function CECSSchema.entityHasNonComponents(entityTypeOrID, componentTypeOrIDs) end
 
-CECSSchema.eventEntitySchemaLoadComponents = events:new(N_("EntitySchemaLoadComponents"), {
+CECSSchema.eventEntitySchemaLoadComponents = events:new(N_("CEntitySchemaLoadComponents"), {
 	"Register",
 	"Dependency",
 	"Override",
@@ -182,7 +182,7 @@ CECSSchema.eventEntitySchemaLoadComponents = events:new(N_("EntitySchemaLoadComp
 	"Finalize",
 })
 
-CECSSchema.eventEntitySchemaLoadEntities = events:new(N_("EntitySchemaLoadEntities"), {
+CECSSchema.eventEntitySchemaLoadEntities = events:new(N_("CEntitySchemaLoadEntities"), {
 	"Register",
 	"Override",
 	"Validate",
@@ -336,7 +336,7 @@ end
 
 CECSSchema.reload()
 
-events:add(N_("ContentLoad"), function(e)
+events:add(N_("CContentLoad"), function(e)
 	if reloadPending then
 		CECSSchema.reloadImmediately()
 	end

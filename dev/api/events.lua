@@ -18,27 +18,6 @@ error("this is a lua library module")
 --- @field keyCode integer
 --- @field mod integer
 
---- @class Events.E.ClientMessage.Data : userdata
---- @field socketType ESocketType
---- @field message string
-
---- @class Events.E.LocalClientMessage.Data : Events.E.ClientMessage.Data
---- @field clientSlot integer
---- @field serverSlot integer
-
---- @class Events.E.RUDPClientMessage.Data : Events.E.ClientMessage.Data
---- @field host string
---- @field port integer
-
---- @class Events.E.ClientMessage
---- @field data Events.E.ClientMessage.Data
-
---- @class Events.E.LocalClientMessage
---- @field data Events.E.LocalClientMessage.Data
-
---- @class Events.E.RUDPClientMessage
---- @field data Events.E.RUDPClientMessage.Data
-
 --- @class Events.E.KeyRepeat
 
 --- @class Events.E.KeyUp
@@ -56,6 +35,132 @@ error("this is a lua library module")
 --- @class Events.E.TickRender
 
 --- @class Events.E.TickUpdate
+
+--- @class Events.E.ClientConnect
+--- @field data Events.E.ClientConnect.Data
+
+--- @class Events.E.LocalClientConnect
+--- @field data Events.E.LocalClientConnect.Data
+
+--- @class Events.E.RUDPClientConnect
+--- @field data Events.E.RUDPClientConnect.Data
+
+--- @class Events.E.ClientConnect.Data : userdata
+--- @field socketType ESocketType
+--- @field clientID Network.ClientID
+
+--- @class Events.E.LocalClientConnect.Data : Events.E.ClientConnect.Data
+--- @field clientSlot integer
+--- @field serverSlot integer
+
+--- @class Events.E.RUDPClientConnect.Data : Events.E.ClientConnect.Data
+--- @field host string
+--- @field port integer
+
+--- @class Events.E.ClientDisconnect
+--- @field data Events.E.ClientDisconnect.Data
+
+--- @class Events.E.LocalClientDisconnect
+--- @field data Events.E.LocalClientDisconnect.Data
+
+--- @class Events.E.RUDPClientDisconnect
+--- @field data Events.E.RUDPClientDisconnect.Data
+
+--- @class Events.E.ClientDisconnect.Data : userdata
+--- @field socketType ESocketType
+--- @field message string
+
+--- @class Events.E.LocalClientDisconnect.Data : Events.E.ClientDisconnect.Data
+--- @field clientSlot integer
+--- @field serverSlot integer
+
+--- @class Events.E.RUDPClientDisconnect.Data : Events.E.ClientDisconnect.Data
+--- @field host string
+--- @field port integer
+
+--- @class Events.E.ClientMessage
+--- @field data Events.E.ClientMessage.Data
+
+--- @class Events.E.LocalClientMessage
+--- @field data Events.E.LocalClientMessage.Data
+
+--- @class Events.E.RUDPClientMessage
+--- @field data Events.E.RUDPClientMessage.Data
+
+--- @class Events.E.ClientMessage.Data : userdata
+--- @field socketType ESocketType
+--- @field message string
+
+--- @class Events.E.LocalClientMessage.Data : Events.E.ClientMessage.Data
+--- @field clientSlot integer
+--- @field serverSlot integer
+
+--- @class Events.E.RUDPClientMessage.Data : Events.E.ClientMessage.Data
+--- @field host string
+--- @field port integer
+
+--- @class Events.E.ServerConnect.Data : userdata
+--- @field socketType ESocketType
+--- @field clientID Network.ClientID
+
+--- @class Events.E.LocalServerConnect.Data : Events.E.ServerConnect.Data
+--- @field clientSlot integer
+--- @field serverSlot integer
+
+--- @class Events.E.RUDPServerConnect.Data : Events.E.ServerConnect.Data
+--- @field host string
+--- @field port integer
+
+--- @class Events.E.ServerConnect
+--- @field data Events.E.ServerConnect.Data
+
+--- @class Events.E.LocalServerConnect
+--- @field data Events.E.LocalServerConnect.Data
+
+--- @class Events.E.RUDPServerConnect
+--- @field data Events.E.RUDPServerConnect.Data
+
+--- @class Events.E.ServerDisconnect.Data : userdata
+--- @field socketType ESocketType
+--- @field clientID Network.ClientID
+
+--- @class Events.E.LocalServerDisconnect.Data : Events.E.ServerDisconnect.Data
+--- @field clientSlot integer
+--- @field serverSlot integer
+
+--- @class Events.E.RUDPServerDisconnect.Data : Events.E.ServerDisconnect.Data
+--- @field host string
+--- @field port integer
+
+--- @class Events.E.ServerDisconnect
+--- @field data Events.E.ServerDisconnect.Data
+
+--- @class Events.E.LocalServerDisconnect
+--- @field data Events.E.LocalServerDisconnect.Data
+
+--- @class Events.E.RUDPServerDisconnect
+--- @field data Events.E.RUDPServerDisconnect.Data
+
+--- @class Events.E.ServerMessage.Data : userdata
+--- @field socketType ESocketType
+--- @field clientID Network.ClientID
+
+--- @class Events.E.LocalServerMessage.Data : Events.E.ServerMessage.Data
+--- @field clientSlot integer
+--- @field serverSlot integer
+
+--- @class Events.E.RUDPServerMessage.Data : Events.E.ServerMessage.Data
+--- @field host string
+--- @field port integer
+
+--- @class Events.E.ServerMessage
+--- @field data Events.E.ServerMessage.Data
+
+--- @class Events.E.LocalServerMessage
+--- @field data Events.E.LocalServerMessage.Data
+
+--- @class Events.E.RUDPServerMessage
+--- @field data Events.E.RUDPServerMessage.Data
 
 --- @alias Events.Event string | Events.EventID
 --- @alias Events.Event "ClientConnect"

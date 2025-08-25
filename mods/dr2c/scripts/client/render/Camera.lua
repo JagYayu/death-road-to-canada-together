@@ -37,7 +37,7 @@ local renderTargetWidth = 1280
 local renderTargetHeight = 720
 
 function Camera.newLayer(z)
-	-- layers[#layers+1] = 
+	-- layers[#layers+1] =
 end
 
 function Camera.getRenderTarget()
@@ -48,7 +48,7 @@ local eventRenderCamera = events:new(N_("RenderCamera"), {
 	"Sprites",
 })
 
-events:add(N_("RenderGame"), function(e)
+events:add(N_("CRender"), function(e)
 	--
 end, N_("updateCamera"), "Camera")
 

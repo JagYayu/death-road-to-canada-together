@@ -11,18 +11,16 @@
 
 #pragma once
 
-#include "exception/Exception.hpp"
+#include "exception/EventHandlerException.hpp"
 #include "program/Context.hpp"
 #include "util/Definitions.hpp"
 
 namespace tudov
 {
-	class EventHandlerAddException : public Exception
+	class EventHandlerAddException : public ScriptException
 	{
 	  public:
 		EventID eventID;
-		ScriptID scriptID;
-		std::string traceback;
 
 		explicit EventHandlerAddException(Context &context, EventID eventID, ScriptID scriptID, std::string traceback) noexcept;
 		~EventHandlerAddException() noexcept override = default;

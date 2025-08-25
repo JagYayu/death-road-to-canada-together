@@ -71,9 +71,9 @@ void DebugScripts::UpdateCaches(IWindow &window) noexcept
 
 	_providedScriptsCache.clear();
 
-	for (const auto &[scriptID, entry] : scriptProvider)
+	for (const auto &entry : scriptProvider)
 	{
-		_providedScriptsCache.emplace_back(scriptID, entry.name);
+		_providedScriptsCache.emplace_back(entry.scriptID, entry.name);
 	}
 
 	std::sort(_providedScriptsCache.begin(), _providedScriptsCache.end(), [](const LoadedScriptEntry &l, const LoadedScriptEntry &r) -> bool

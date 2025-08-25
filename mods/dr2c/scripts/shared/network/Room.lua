@@ -1,5 +1,3 @@
 local GRoom = {}
 
-
-
 return GRoom

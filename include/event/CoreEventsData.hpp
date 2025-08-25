@@ -21,7 +21,6 @@ struct _ENetPeer;
 
 namespace tudov
 {
-	enum class EDisconnectionCode : std::int32_t;
 	enum class ESocketType : std::uint8_t;
 
 	struct CoreEventData
@@ -55,9 +54,9 @@ namespace tudov
 	struct EventLocalServerConnectData : public CoreEventData
 	{
 		ESocketType socketType;
+		ClientSessionID clientID;
 		NetworkSessionSlot clientSlot;
 		NetworkSessionSlot serverSlot;
-		EDisconnectionCode disconnect;
 	};
 
 	struct EventLocalServerDisconnectData : public CoreEventData
@@ -103,7 +102,6 @@ namespace tudov
 		ClientSessionID clientID;
 		std::string_view host;
 		std::uint16_t port;
-		EDisconnectionCode disconnect;
 	};
 
 	struct EventReliableUDPServerDisconnectData : public CoreEventData

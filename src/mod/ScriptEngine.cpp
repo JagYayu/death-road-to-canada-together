@@ -81,10 +81,16 @@ constexpr const char *modCopyGlobals[] = {
     "table.clear",
     "table.new",
     // C++ enum classes
-    "ELogVerbosity",
+    "EClientSessionState",
     "EEventInvocation",
+    "ELogVerbosity",
     "EPathListOption",
+    "EServerSessionState",
     "EScanCode",
+    "ESocketType",
+    // C++ static classes
+    "RandomDevice",
+    "Time",
     // C++ exports
     "binaries",
     "engine",

@@ -23,7 +23,7 @@ end
 --- @param target string
 --- @param source string
 function CComponents.addDependency(target, source)
-	events:add(N_("EntitySchemaLoadComponents"), function(e)
+	events:add(N_("CEntitySchemaLoadComponents"), function(e)
 		e.dependencies = e.dependencies or {}
 
 		local dependencies = e.dependencies

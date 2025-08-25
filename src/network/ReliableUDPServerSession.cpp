@@ -39,7 +39,7 @@ using namespace tudov;
 
 ReliableUDPServerSession::ReliableUDPServerSession(INetworkManager &network, NetworkSessionSlot serverSlot) noexcept
     : _networkManager(network),
-      _serverSlot(serverSlot),
+      _serverSessionSlot(serverSlot),
       _eNetHost(nullptr),
       _nextClientSessionID(1)
 {
@@ -178,35 +178,27 @@ bool ReliableUDPServerSession::Update() noexcept
 			    .clientID = clientID,
 			    .host = std::string_view(hostName.data()),
 			    .port = event.peer->address.port,
-			    .disconnect = EDisconnectionCode::None,
 			};
 
 			TE_TRACE("Connect event, host: {}, port: {}", eventData.host, eventData.port);
 
 			coreEvents.ServerConnect().Invoke(&eventData, _serverSessionSlot, EEventInvocation::None);
 
-			if (eventData.disconnect != EDisconnectionCode::None)
-			{
-				enet_peer_disconnect_later(event.peer, static_cast<int>(eventData.disconnect));
-			}
-			else
-			{
-				_clientIDPeerBimap[clientID] = event.peer;
-				++_nextClientSessionID;
+			_clientIDPeerBimap[clientID] = event.peer;
+			++_nextClientSessionID;
 
-				// ClientSessionID clientID = NewID();
+			// ClientSessionID clientID = NewID();
 
-				// NetworkSessionDataContentServerConnection content{
-				//     .clientSessionID = clientID,
-				// };
-				// std::vector<std::byte> buffer;
-				// bitsery::quickSerialization(buffer, content);
+			// NetworkSessionDataContentServerConnection content{
+			//     .clientSessionID = clientID,
+			// };
+			// std::vector<std::byte> buffer;
+			// bitsery::quickSerialization(buffer, content);
 
-				// NetworkSessionData data;
-				// data.bytes = buffer;
-				// data.channelID = event.channelID;
-				// BroadcastReliable(data);
-			}
+			// NetworkSessionData data;
+			// data.bytes = buffer;
+			// data.channelID = event.channelID;
+			// BroadcastReliable(data);
 
 			break;
 		}
