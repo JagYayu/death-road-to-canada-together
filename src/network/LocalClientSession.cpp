@@ -28,7 +28,6 @@
 
 #include <memory>
 #include <stdexcept>
-#include <tuple>
 #include <type_traits>
 #include <vector>
 
@@ -90,21 +89,30 @@ void LocalClientSession::Connect(const IClientSession::ConnectArgs &baseArgs)
 	_clientSessionState = EClientSessionState::Connected;
 }
 
-void LocalClientSession::Disconnect()
+void LocalClientSession::Disconnect(EDisconnectionCode code)
 {
 	_clientSessionState = EClientSessionState::Disconnecting;
+
+	EventLocalServerDisconnectData data{
+	    .socketType = ESocketType::Local,
+	    .code = code,
+	    .clientSlot = _clientSessionSlot,
+	    .serverSlot = _localServer->_serverSessionSlot,
+	};
 	_localServer = nullptr;
+	GetEventManager().GetCoreEvents().ClientDisconnect().Invoke(&data, {}, EEventInvocation::None);
+
 	_clientSessionState = EClientSessionState::Disconnected;
 }
 
-bool LocalClientSession::TryDisconnect()
+bool LocalClientSession::TryDisconnect(EDisconnectionCode code)
 {
 	if (GetSessionState() == EClientSessionState::Disconnected)
 	{
 		return false;
 	}
 
-	Disconnect();
+	Disconnect(code);
 	return true;
 }
 
@@ -118,7 +126,7 @@ void LocalClientSession::SendReliable(const NetworkSessionData &data)
 	LocalSessionMessage message{
 	    .event = ESessionEvent::Receive,
 	    .source = ELocalSessionSource::SendReliable,
-	    .bytes = std::vector<std::byte>(data.bytes.begin(), data.bytes.end()),
+	    .variant = {std::vector<std::byte>(data.bytes.begin(), data.bytes.end())},
 	    .clientID = _clientSessionID,
 	    .clientSlot = _clientSessionSlot,
 	    .serverSlot = _localServer->_serverSessionSlot,
@@ -158,7 +166,7 @@ bool LocalClientSession::Update()
 		}
 		case ESessionEvent::Receive:
 		{
-			sol::string_view message{reinterpret_cast<char *>(messageEntry.bytes.data()), messageEntry.bytes.size()};
+			sol::string_view message{reinterpret_cast<char *>(messageEntry.variant.bytes.data()), messageEntry.variant.bytes.size()};
 
 			EventLocalClientMessageData data{
 			    .socketType = ESocketType::Local,
@@ -176,6 +184,7 @@ bool LocalClientSession::Update()
 		{
 			EventLocalClientDisconnectData data{
 			    .socketType = ESocketType::Local,
+			    .code = messageEntry.variant.code,
 			    .clientID = messageEntry.clientID,
 			    .clientSlot = messageEntry.clientSlot,
 			    .serverSlot = messageEntry.serverSlot,

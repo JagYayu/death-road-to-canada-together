@@ -1,9 +1,125 @@
+local GClient = require("dr2c.shared.network.Client")
 local GMessage = require("dr2c.shared.network.Message")
 
 --- @class dr2c.SServer
 local SServer = {}
 
 SServer.sessionSlot = 0
+
+--- @return Network.Server?
+function SServer.getNetworkSession()
+	return network:getServer(SServer.sessionSlot)
+end
+
+--- @param clientID Network.ClientID
+--- @param disconnectionCode dr2c.DisconnectionCode
+--- @return boolean
+function SServer.disconnect(clientID, disconnectionCode)
+	local session = SServer.getNetworkSession()
+	if session then
+		--- @diagnostic disable-next-line: cast-type-mismatch
+		--- @cast disconnectionCode EDisconnectionCode
+		session:disconnect(clientID, disconnectionCode)
+
+		return true
+	else
+		return false
+	end
+end
+
+--- @param clientID Network.ClientID
+--- @param messageType dr2c.MessageType
+--- @param messageContent any?
+--- @param channel dr2c.MessageChannel
+--- @return boolean
+function SServer.sendReliable(clientID, messageType, messageContent, channel)
+	local session = SServer.getNetworkSession()
+	if session then
+		local data = GMessage.pack(messageType, messageContent)
+
+		if log.canTrace() then
+			log.trace(("Send reliable message to client %d: %s"):format(clientID, data))
+		end
+
+		channel = channel or GMessage.Channel.Main
+		--- @diagnostic disable-next-line: param-type-mismatch
+		session:sendReliable(clientID, data, channel)
+
+		return true
+	else
+		return false
+	end
+end
+
+--- @param clientID Network.ClientID
+--- @param messageType dr2c.MessageType
+--- @param messageContent any?
+--- @param channel dr2c.MessageChannel
+--- @return boolean
+function SServer.sendUnreliable(clientID, messageType, messageContent, channel)
+	local session = SServer.getNetworkSession()
+	if session then
+		local data = GMessage.pack(messageType, messageContent)
+
+		if log.canTrace() then
+			log.trace(("Send unreliable message to client %d: %s"):format(clientID, data))
+		end
+
+		channel = channel or GMessage.Channel.Main
+		--- @diagnostic disable-next-line: param-type-mismatch
+		session:sendUnreliable(clientID, data, channel)
+
+		return true
+	else
+		return false
+	end
+end
+
+--- @param messageType dr2c.MessageType
+--- @param messageContent any?
+--- @param channel dr2c.MessageChannel?
+--- @return boolean
+function SServer.broadcastReliable(messageType, messageContent, channel)
+	local session = SServer.getNetworkSession()
+	if session then
+		local data = GMessage.pack(messageType, messageContent)
+
+		if log.canTrace() then
+			log.trace(("Broadcast reliable message: %s"):format(data))
+		end
+
+		channel = channel or GMessage.Channel.Main
+		--- @diagnostic disable-next-line: param-type-mismatch
+		session:broadcastReliable(data, channel)
+
+		return true
+	else
+		return false
+	end
+end
+
+--- @param messageType dr2c.MessageType
+--- @param messageContent any?
+--- @param channel dr2c.MessageChannel?
+--- @return boolean
+function SServer.broadcastUnreliable(messageType, messageContent, channel)
+	local session = SServer.getNetworkSession()
+	if session then
+		local data = GMessage.pack(messageType, messageContent)
+
+		if log.canTrace() then
+			log.trace(("Broadcast unreliable message: %s"):format(data))
+		end
+
+		channel = channel or GMessage.Channel.Main
+		--- @diagnostic disable-next-line: param-type-mismatch
+		session:broadcastUnreliable(data, channel)
+
+		return true
+	else
+		return false
+	end
+end
 
 SServer.eventServerConnect = events:new(N_("SConnect"), {
 	"Clients",
@@ -17,6 +133,7 @@ SServer.eventServerDisconnect = events:new(N_("SDisconnect"), {
 SServer.eventServerMessage = events:new(N_("SMessage"), {
 	"Overrides",
 	"Receive",
+	"Broadcast",
 })
 
 --- @param clientID Network.ClientID
@@ -51,25 +168,54 @@ end)
 
 --- @param messageContent any?
 --- @param messageType dr2c.MessageType
-local function invokeEventServerMessage(messageContent, messageType)
+local function invokeEventServerMessage(clientID, messageContent, messageType)
 	--- @class dr2c.E.ServerMessage
+	--- @field broadcast table?
 	local e = {
+		clientID = clientID,
 		content = messageContent,
 		type = messageType,
 	}
 
+	--- @diagnostic disable-next-line: param-type-mismatch
 	events:invoke(SServer.eventServerMessage, e, messageType)
 end
 
 --- @param e Events.E.ServerMessage
 events:add("ServerMessage", function(e)
-	if type(e.data) ~= "userdata" then
-		return
+	local messageType, messageContent = GMessage.unpack(e.data.message)
+	if GMessage.isUnessential(messageType) then
+		-- Let the engine broadcast the message directly if message type is unessential.
+		e.data.broadcast = e.data.message
+	else
+		invokeEventServerMessage(e.data.clientID, messageContent, messageType)
+	end
+end, "ServerMessage", nil, SServer.sessionSlot)
+
+--- @param e dr2c.E.ServerConnect
+events:add(SServer.eventServerConnect, function(e)
+	local clientID = e.clientID
+
+	if log.canTrace() then
+		log.trace(("Broadcast client %s connect message & public attribute state"):format(clientID))
 	end
 
-	local messageType, messageContent = GMessage.unpack(e.data)
+	SServer.broadcastReliable(GMessage.Type.ClientConnect, {
+		clientID = clientID,
+	})
 
-	invokeEventServerMessage(messageContent, messageType)
-end, "ServerMessage", nil, SServer.sessionSlot)
+	SServer.broadcastReliable(GMessage.Type.ClientPublicAttribute, {
+		clientID = clientID,
+		attribute = GClient.PublicAttribute.State,
+		value = GClient.State.Verifying,
+	})
+end, "BroadcastClientConnectState", "Clients")
+
+--- @param e dr2c.E.ServerMessage
+events:add(SServer.eventServerMessage, function(e)
+	if e.broadcast then
+		SServer.broadcastReliable(e.type, e.broadcast)
+	end
+end, "BroadcastServerMessage", "Broadcast")
 
 return SServer

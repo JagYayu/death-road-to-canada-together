@@ -10,10 +10,11 @@
  */
 
 #include "event/CoreEventsData.hpp"
-#include "mod/LuaAPI.hpp"
 
+#include "mod/LuaAPI.hpp"
 #include "network/ClientSession.hpp"
 #include "network/ClientSessionState.hpp"
+#include "network/DisconnectionCode.hpp"
 #include "network/NetworkManager.hpp"
 #include "network/ServerSession.hpp"
 #include "network/ServerSessionState.hpp"
@@ -31,6 +32,13 @@ void LuaAPI::InstallNetwork(sol::state &lua, Context &context) noexcept
 	            {"Connecting", EClientSessionState::Connecting},
 	            {"Connected", EClientSessionState::Connected},
 	            {"Disconnecting", EClientSessionState::Disconnecting},
+	        });
+
+	TE_ENUM(EDisconnectionCode,
+	        {
+	            {"Unknown", EDisconnectionCode::Unknown},
+	            {"ClientClosed", EDisconnectionCode::ClientClosed},
+	            {"ServerClosed", EDisconnectionCode::ServerClosed},
 	        });
 
 	TE_ENUM(EServerSessionState,
@@ -123,14 +131,14 @@ void LuaAPI::InstallNetwork(sol::state &lua, Context &context) noexcept
 	            "socketType", &EventReliableUDPServerMessageData::socketType,
 	            "clientID", &EventReliableUDPServerMessageData::clientID,
 	            "message", &EventReliableUDPServerMessageData::message,
-	            "messageOverride", &EventReliableUDPServerMessageData::messageOverride,
+	            "messageOverride", &EventReliableUDPServerMessageData::broadcast,
 	            "host", &EventReliableUDPServerMessageData::host,
 	            "port", &EventReliableUDPServerMessageData::port);
 
 	TE_USERTYPE(IClientSession,
 	            "getSessionID", &IClientSession::GetSessionID,
 	            "connect", &IClientSession::LuaConnect,
-	            "disconnect", &IClientSession::Disconnect,
+	            "disconnect", &IClientSession::LuaDisconnect,
 	            "getSessionState", &IClientSession::GetSessionState,
 	            "sendReliable", &IClientSession::LuaSendReliable,
 	            "sendUnreliable", &IClientSession::LuaSendUnreliable,
@@ -139,6 +147,7 @@ void LuaAPI::InstallNetwork(sol::state &lua, Context &context) noexcept
 	TE_USERTYPE(IServerSession,
 	            "broadcastReliable", &IServerSession::LuaBroadcastReliable,
 	            "broadcastUnreliable", &IServerSession::LuaBroadcastUnreliable,
+	            "disconnect", &IServerSession::LuaDisconnect,
 	            "getSessionState", &IServerSession::GetSessionState,
 	            "host", &IServerSession::LuaHost,
 	            "sendReliable", &IServerSession::LuaSendReliable,

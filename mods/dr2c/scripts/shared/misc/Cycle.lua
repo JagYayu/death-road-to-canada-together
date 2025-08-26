@@ -1,8 +1,8 @@
 --- @class dr2c.GCycle
 local GCycle = {}
 
-local tick
-tick = persist("tick", 0, function()
+local tick = 0
+tick = persist("tick", function()
 	return tick
 end)
 

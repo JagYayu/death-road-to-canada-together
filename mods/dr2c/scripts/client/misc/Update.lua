@@ -7,6 +7,10 @@ local eventClientUpdate = events:new(N_("CUpdate"), {
 	"ClearCaches",
 })
 
-events:add("TickUpdate", function(e)
-	events:invoke(eventClientUpdate, e)
+events:add(N_("GUpdate"), function(e)
+	--- @class dr2c.E.ClientUpdate : Events.E.TickUpdate
+	--- @field networkThrottle boolean?
+	local e_ = e
+
+	events:invoke(eventClientUpdate, e_)
 end, N_("ClientUpdate"), nil, "Main")

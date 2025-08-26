@@ -15,8 +15,7 @@
 #include "i18n/Language.hpp"
 #include "i18n/TranslationPack.hpp"
 #include "util/Utils.hpp"
-
-
+#include <string_view>
 
 using namespace tudov;
 
@@ -85,4 +84,11 @@ std::string_view Localization::GetTextUncached(std::string_view key) const noexc
 	}
 
 	return BuiltinTexts::GetFallbackText(key);
+}
+
+sol::string_view Localization::LuaGetText(sol::object key) const noexcept
+{
+	auto key_ = key.as<std::string_view>();
+
+	return GetText(key_);
 }

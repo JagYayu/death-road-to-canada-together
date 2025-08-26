@@ -13,8 +13,9 @@
 
 #include "Language.hpp"
 #include "TranslationPack.hpp"
+#include "sol/forward.hpp"
+#include "sol/string_view.hpp"
 #include "system/Log.hpp"
-
 
 #include <format>
 #include <memory>
@@ -75,5 +76,8 @@ namespace tudov
 
 	  private:
 		std::string_view GetTextUncached(std::string_view key) const noexcept;
+
+	  private:
+		sol::string_view LuaGetText(sol::object key) const noexcept;
 	};
 } // namespace tudov

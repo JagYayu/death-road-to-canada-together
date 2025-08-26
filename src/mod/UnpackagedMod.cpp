@@ -21,11 +21,10 @@
 #include "resource/FontResources.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/TextResources.hpp"
+#include "system/LogMicros.hpp"
 #include "util/FileChangeType.hpp"
 #include "util/FileSystemWatch.hpp"
-#include "system/LogMicros.hpp"
 #include "util/StringUtils.hpp"
-
 
 #include <filesystem>
 #include <format>
@@ -97,7 +96,7 @@ inline bool RegexPatternMatch(std::string_view file, const std::vector<std::rege
 
 bool UnpackagedMod::IsScript(std::string_view file) const
 {
-	return RegexPatternMatch(file, _scriptFilePatterns);
+	return RegexPatternMatch(file, _scriptFilePatterns) && StringUtils::IsSubpath(_directory / _config.scripts.directory, file);
 }
 
 bool UnpackagedMod::IsFont(std::string_view file) const
@@ -364,6 +363,7 @@ void UnpackagedMod::ScriptAdded(const std::filesystem::path &file) noexcept
 {
 	std::filesystem::path &&relative = std::filesystem::relative(file, _directory);
 	relative = std::filesystem::relative(relative, _config.scripts.directory);
+
 	std::string filePathStr = file.generic_string();
 	std::string relativePath = relative.generic_string();
 	std::string scriptName = FilePathToLuaScriptName(std::format("{}.{}", _config.namespace_, relativePath));

@@ -6,23 +6,44 @@ local GClient = {}
 
 GClient.State = Enum.sequence({
 	Disconnected = 0,
-	LoggingIn = 1,
-	Synchronizing = 2,
-	Playing = 3,
+	Verifying = 1,
+	Verified = 2,
+})
+
+--- @enum dr2c.ClientAttributeTrait
+GClient.AttributeTrait = Enum.immutable({
+	-- 客户端可随时修改该属性（默认值）
+	Editable = 0,
+	-- 客户端只能在验证时期修改
+	Validation = 1,
+	-- 客户端不允许修改
+	Authoritative = 2,
 })
 
 --- @enum dr2c.ClientPublicAttribute
 GClient.PublicAttribute = Enum.sequence({
+	-- 存储ClientID
 	ID = 0,
+	-- 当前连接状态
 	State = 1,
+	-- 游戏平台
 	Platform = 2,
+	-- 游戏平台账户ID
 	PlatformID = 3,
-	Statistics = 4,
-	DisplayName = 5,
-	ServerRoom = 6,
-	Version = 7,
-	ContentHash = 8,
-	ModsHash = 9,
+	-- 操作系统
+	OperatingSystem = 4,
+	-- 账户资料
+	Statistics = 5,
+	-- 昵称（覆盖账户名）
+	DisplayName = 6,
+	-- 所在服务器房间
+	ServerRoom = 7,
+	-- 游戏版本
+	Version = 8,
+	-- 游戏文件哈希值，用于判断游戏的核心文件是否和服务器一致
+	ContentHash = 9,
+	-- 游戏模组哈希值，用于判断必要的模组是否和服务器一致
+	ModsHash = 10,
 })
 
 --- @enum dr2c.ClientPrivateAttribute
@@ -30,6 +51,34 @@ GClient.PrivateAttribute = Enum.sequence({
 	SecretToken = 1,
 	SecretStatistics = 2,
 })
+
+local publicAttributeTraits = {
+	[GClient.PublicAttribute.ID] = GClient.AttributeTrait.Authoritative,
+	[GClient.PublicAttribute.State] = GClient.AttributeTrait.Validation,
+	[GClient.PublicAttribute.Platform] = GClient.AttributeTrait.Validation,
+	[GClient.PublicAttribute.PlatformID] = GClient.AttributeTrait.Validation,
+	[GClient.PublicAttribute.OperatingSystem] = GClient.AttributeTrait.Validation,
+	[GClient.PublicAttribute.ServerRoom] = GClient.AttributeTrait.Authoritative,
+	[GClient.PublicAttribute.Version] = GClient.AttributeTrait.Validation,
+	[GClient.PublicAttribute.ContentHash] = GClient.AttributeTrait.Validation,
+	[GClient.PublicAttribute.ModsHash] = GClient.AttributeTrait.Validation,
+}
+
+local privateAttributeTraits = {
+	[GClient.PrivateAttribute.SecretToken] = GClient.AttributeTrait.Authoritative,
+}
+
+--- @param attribute dr2c.ClientPublicAttribute
+--- @return dr2c.ClientAttributeTrait trait
+function GClient.getPublicAttributeTrait(attribute)
+	return publicAttributeTraits[attribute] or GClient.AttributeTrait.Editable
+end
+
+--- @param attribute dr2c.ClientPrivateAttribute
+--- @return dr2c.ClientAttributeTrait trait
+function GClient.getPrivateAttributeTrait(attribute)
+	return privateAttributeTraits[attribute] or GClient.AttributeTrait.Editable
+end
 
 --- @type table<dr2c.ClientPublicAttribute, fun(value: any): boolean?>
 local publicAttributeValidators = {

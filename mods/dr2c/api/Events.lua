@@ -1,6 +1,9 @@
+--- @meta
+error("this is a lua library module")
 
 --- @diagnostic disable: duplicate-doc-alias
 
+--- @alias N_Hint "CCollectVerifyAttributes"
 --- @alias N_Hint "CConnect"
 --- @alias N_Hint "CContentLoad"
 --- @alias N_Hint "CDisconnect"
@@ -19,6 +22,7 @@
 --- @alias N_Hint "SLoad"
 --- @alias N_Hint "SUpdate"
 
+--- @alias Events.Event "dr2c_CCollectVerifyAttributes"
 --- @alias Events.Event "dr2c_CConnect"
 --- @alias Events.Event "dr2c_CContentLoad"
 --- @alias Events.Event "dr2c_CDisconnect"

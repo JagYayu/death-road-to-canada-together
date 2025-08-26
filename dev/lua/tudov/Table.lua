@@ -227,11 +227,13 @@ function Table.listRemoveFirst(list, value)
 end
 
 --- @generic T
+--- @generic TArgs
 --- @param list T[]
---- @param func fun(value: T, index: integer): boolean
-function Table.listRemoveFirstIf(list, func)
+--- @param func fun(value: T, index: integer, ...: TArgs): boolean
+--- @param ... TArgs
+function Table.listRemoveFirstIf(list, func, ...)
 	for pos, val in ipairs(list) do
-		if func(val, pos) then
+		if func(val, pos, ...) then
 			return remove(list, pos)
 		end
 	end
@@ -625,8 +627,9 @@ local function tableToReadonly(tbl, seen)
 end
 
 --- Create a readonly proxy table, which is readonly to original table.
---- @param tbl table
---- @return table
+--- @generic T : table
+--- @param tbl T
+--- @return T
 function Table.readonly(tbl)
 	return tableToReadonly(tbl, {})
 end

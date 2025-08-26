@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "DisconnectionCode.hpp"
 #include "util/Definitions.hpp"
 
 #include <cstddef>
@@ -30,10 +31,18 @@ namespace tudov
 
 	struct LocalSessionMessage
 	{
+		struct Variant
+		{
+			// SessionEvent is Receive
+			std::vector<std::byte> bytes;
+			// SessionEvent is Disconnect
+			EDisconnectionCode code;
+		};
+
 		ESessionEvent event;
 
 		ELocalSessionSource source;
-		std::vector<std::byte> bytes;
+		Variant variant;
 		ClientSessionID clientID;
 
 		NetworkSessionSlot clientSlot;

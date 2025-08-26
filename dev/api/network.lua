@@ -21,6 +21,13 @@ EServerSessionState = {
 	Stopping = 3,
 }
 
+--- @enum EDisconnectionCode
+EDisconnectionCode = {
+	Unknown = 0,
+	ClientClosed = 1,
+	ServerClosed = 2,
+}
+
 --- @enum ESocketType
 ESocketType = {
 	Local = 0,
@@ -37,7 +44,7 @@ network = {}
 function network:getClient(clientSessionSlot) end
 
 --- @param serverSessionSlot integer?
---- @return Network.Server
+--- @return Network.Server?
 function network:getServer(serverSessionSlot) end
 
 --- @class Network.ClientConnectArgs
@@ -55,15 +62,19 @@ function client:getSessionState() end
 --- @param args Network.ClientConnectArgs
 function client:connect(args) end
 
-function client:disconnect() end
+--- @param code EDisconnectionCode
+function client:disconnect(code) end
+
+--- @param code EDisconnectionCode
+function client:tryDisconnect(code) end
 
 --- @param data string
-function client:sendReliable(data) end
+--- @param channel integer
+function client:sendReliable(data, channel) end
 
 --- @param data string
-function client:sendUnreliable(data) end
-
-function client:tryDisconnect() end
+--- @param channel integer
+function client:sendUnreliable(data, channel) end
 
 --- @class Network.ServerHostArgs
 --- @field title string
@@ -73,27 +84,37 @@ function client:tryDisconnect() end
 --- @class Network.Server
 local server = {}
 
+function server:connect() end
+
+--- @param clientID Network.ClientID
+--- @param code EDisconnectionCode
+function server:disconnect(clientID, code) end
+
 --- @return Network.ServerID
 function server:getSessionID() end
 
 --- @return EServerSessionState
 function server:getSessionState() end
 
---- @param data string
-function server:broadcastReliable(data) end
-
---- @param data string
-function server:broadcastUnreliable(data) end
-
 --- @param args Network.ServerHostArgs
 function server:host(args) end
 
---- @param clientID Network.ClientID
---- @param data string
-function server:sendReliable(clientID, data) end
-
---- @param clientID Network.ClientID
---- @param data string
-function server:sendUnreliable(clientID, data) end
-
 function server:shutdown() end
+
+--- @param clientID Network.ClientID
+--- @param data string
+--- @param channel integer
+function server:sendReliable(clientID, data, channel) end
+
+--- @param clientID Network.ClientID
+--- @param data string
+--- @param channel integer
+function server:sendUnreliable(clientID, data, channel) end
+
+--- @param data string
+--- @param channel integer
+function server:broadcastReliable(data, channel) end
+
+--- @param data string
+--- @param channel integer
+function server:broadcastUnreliable(data, channel) end

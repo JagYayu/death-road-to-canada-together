@@ -70,6 +70,7 @@ namespace tudov
 		std::optional<std::string_view> GetTitle() const noexcept override;
 		std::optional<std::string_view> GetPassword() const noexcept override;
 		std::optional<std::size_t> GetMaxClients() const noexcept override;
+		void Disconnect(ClientSessionID clientID, EDisconnectionCode code) noexcept override;
 		void SendReliable(std::uint64_t clientID, const NetworkSessionData &data) override;
 		void SendUnreliable(std::uint64_t clientID, const NetworkSessionData &data) override;
 		void BroadcastReliable(const NetworkSessionData &data) override;

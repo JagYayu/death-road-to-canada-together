@@ -16,11 +16,13 @@
 
 #include "sol/forward.hpp"
 
+#include <cmath>
 #include <string_view>
 
 namespace tudov
 {
 	enum class EClientSessionState : std::uint8_t;
+	enum class EDisconnectionCode : std::uint32_t;
 	struct NetworkSessionData;
 	class LuaAPI;
 
@@ -40,14 +42,15 @@ namespace tudov
 		virtual ClientSessionID GetSessionID() const noexcept = 0;
 		virtual EClientSessionState GetSessionState() const noexcept = 0;
 		virtual void Connect(const ConnectArgs &address) = 0;
-		virtual void Disconnect() = 0;
-		virtual bool TryDisconnect() = 0;
+		virtual void Disconnect(EDisconnectionCode code) = 0;
+		virtual bool TryDisconnect(EDisconnectionCode code) = 0;
 		virtual void SendReliable(const NetworkSessionData &data) = 0;
 		virtual void SendUnreliable(const NetworkSessionData &data) = 0;
 
 	  private:
-		void LuaConnect(sol::object args);
-		void LuaSendReliable(sol::object data, sol::object channelID);
-		void LuaSendUnreliable(sol::object data, sol::object channelID);
+		void LuaConnect(sol::object args) noexcept;
+		void LuaDisconnect(sol::object code) noexcept;
+		void LuaSendReliable(sol::object data, sol::object channelID) noexcept;
+		void LuaSendUnreliable(sol::object data, sol::object channelID) noexcept;
 	};
 } // namespace tudov

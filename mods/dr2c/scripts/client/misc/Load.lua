@@ -5,4 +5,4 @@ local eventClientContentLoad = events:new(N_("CContentLoad"), {
 
 events:add(N_("GLoad"), function(e)
 	events:invoke(eventClientContentLoad, e)
-end, N_("clientContentLoad"), "Client")
+end, N_("ClientContentLoad"), "Client")

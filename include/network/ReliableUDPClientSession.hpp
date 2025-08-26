@@ -43,7 +43,7 @@ namespace tudov
 		bool _isConnecting;
 
 	  public:
-		explicit ReliableUDPClientSession(INetworkManager &networkManager,NetworkSessionSlot clientSlot) noexcept;
+		explicit ReliableUDPClientSession(INetworkManager &networkManager, NetworkSessionSlot clientSlot) noexcept;
 		~ReliableUDPClientSession() noexcept;
 
 	  private:
@@ -61,8 +61,8 @@ namespace tudov
 		ClientSessionID GetSessionID() const noexcept override;
 		EClientSessionState GetSessionState() const noexcept override;
 		void Connect(const IClientSession::ConnectArgs &address) override;
-		void Disconnect() override;
-		bool TryDisconnect() override;
+		void Disconnect(EDisconnectionCode code) override;
+		bool TryDisconnect(EDisconnectionCode code) override;
 		void SendReliable(const NetworkSessionData &data) override;
 		void SendUnreliable(const NetworkSessionData &data) override;
 

@@ -17,6 +17,7 @@
 #include "graphic/Camera2D.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/Renderer.hpp"
+#include "i18n/Localization.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "network/ClientSession.hpp"
@@ -205,6 +206,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 
 	lua["engine"] = &context.GetEngine();
 	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
+	lua["localization"] = &dynamic_cast<Localization &>(context.GetLocalization());
 	lua["mods"] = &dynamic_cast<ModManager &>(context.GetModManager());
 	lua["network"] = &dynamic_cast<NetworkManager &>(context.GetNetworkManager());
 	lua["scriptLoader"] = &dynamic_cast<ScriptLoader &>(context.GetScriptLoader());

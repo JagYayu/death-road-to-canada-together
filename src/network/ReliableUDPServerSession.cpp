@@ -24,11 +24,8 @@
 #include "program/Tudov.hpp"
 #include "system/LogMicros.hpp"
 
-#include "bitsery/adapter/buffer.h"
-#include "bitsery/bitsery.h"
-#include "bitsery/deserializer.h"
-#include "bitsery/serializer.h"
 #include "enet/enet.h"
+#include "util/Definitions.hpp"
 
 #include <span>
 #include <stdexcept>
@@ -172,6 +169,8 @@ bool ReliableUDPServerSession::Update() noexcept
 			enet_address_get_host(&event.peer->address, hostName.data(), hostName.size());
 
 			ClientSessionID clientID = _nextClientSessionID;
+			++_nextClientSessionID;
+			_clientIDPeerBimap[clientID] = event.peer;
 
 			EventReliableUDPServerConnectData eventData{
 			    .socketType = ESocketType::RUDP,
@@ -182,23 +181,17 @@ bool ReliableUDPServerSession::Update() noexcept
 
 			TE_TRACE("Connect event, host: {}, port: {}", eventData.host, eventData.port);
 
+			{
+				// Send connected client's session id
+				std::string data;
+				data.push_back('\0');
+				data.push_back(static_cast<char>(clientID));
+
+				ENetPacket *packet = enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE);
+				enet_peer_send(event.peer, 0, packet);
+			}
+
 			coreEvents.ServerConnect().Invoke(&eventData, _serverSessionSlot, EEventInvocation::None);
-
-			_clientIDPeerBimap[clientID] = event.peer;
-			++_nextClientSessionID;
-
-			// ClientSessionID clientID = NewID();
-
-			// NetworkSessionDataContentServerConnection content{
-			//     .clientSessionID = clientID,
-			// };
-			// std::vector<std::byte> buffer;
-			// bitsery::quickSerialization(buffer, content);
-
-			// NetworkSessionData data;
-			// data.bytes = buffer;
-			// data.channelID = event.channelID;
-			// BroadcastReliable(data);
 
 			break;
 		}
@@ -217,11 +210,6 @@ bool ReliableUDPServerSession::Update() noexcept
 			TE_TRACE("Disconnect event, host: {}, port: {}", eventData.host, eventData.port);
 
 			coreEvents.ServerDisconnect().Invoke(&eventData, _serverSessionSlot, EEventInvocation::None);
-
-			NetworkSessionData data;
-			data.bytes = {};
-			data.channelID = event.channelID;
-			BroadcastReliable(data);
 
 			TE_ASSERT(_clientIDPeerBimap.EraseByValue(event.peer));
 
@@ -256,8 +244,8 @@ void ReliableUDPServerSession::UpdateENetReceive(_ENetEvent &event) noexcept
 	EventReliableUDPServerMessageData eventData{
 	    .socketType = ESocketType::RUDP,
 	    .clientID = _clientIDPeerBimap.AtValue(event.peer),
-	    .message = std::string_view(reinterpret_cast<const char *>(event.packet->data)),
-	    .messageOverride = "",
+	    .message = std::string_view(reinterpret_cast<const char *>(event.packet->data), event.packet->dataLength),
+	    .broadcast = "",
 	    .host = std::string_view(hostName.data()),
 	    .port = event.peer->address.port,
 	};
@@ -266,65 +254,36 @@ void ReliableUDPServerSession::UpdateENetReceive(_ENetEvent &event) noexcept
 
 	GetEventManager().GetCoreEvents().ServerMessage().Invoke(&eventData, _serverSessionSlot, EEventInvocation::None);
 
-	NetworkSessionData data;
-	if (eventData.messageOverride != "")
+	if (eventData.broadcast != "")
 	{
+		NetworkSessionData data;
 		data.bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(event.packet->data), event.packet->dataLength);
+		data.channelID = event.channelID;
+		BroadcastReliable(data);
 	}
-	else
-	{
-		data.bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(eventData.message.data()), eventData.message.size());
-	}
-	data.channelID = event.channelID;
-	BroadcastReliable(data);
-
-	// auto head = static_cast<ENetworkSessionDataHead>(event.packet->data[0]);
-	// switch (head)
-	// {
-	// case ENetworkSessionDataHead::Custom:
-	// {
-	// 	EventReliableUDPServerMessageData eventData{
-	// 	    .socketType = ESocketType::RUDP,
-	// 	    .clientID = _clientIDPeerBimap.AtValue(event.peer),
-	// 	    .message = std::string_view(reinterpret_cast<const char *>(event.packet->data)),
-	// 	    .messageOverride = "",
-	// 	    .host = std::string_view(hostName.data()),
-	// 	    .port = event.peer->address.port,
-	// 	};
-
-	// 	TE_TRACE("Received custom event, host: {}, port: {}", eventData.host, eventData.port);
-
-	// 	GetEventManager().GetCoreEvents().ServerMessage().Invoke(&eventData, eventData.socketType, EEventInvocation::None);
-
-	// 	NetworkSessionData data;
-	// 	if (eventData.messageOverride != "")
-	// 	{
-	// 		data.bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(event.packet->data), event.packet->dataLength + 1);
-	// 	}
-	// 	else
-	// 	{
-	// 		data.bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(eventData.message.data()), eventData.message.size() + 1);
-	// 	}
-	// 	data.channelID = event.channelID;
-	// 	BroadcastReliable(data);
-
-	// 	break;
-	// }
-	// default:
-	// {
-	// 	break;
-	// }
-	// }
 }
 
 _ENetPeer *ReliableUDPServerSession::GetPeerByID(ClientSessionID clientSessionID) noexcept
 {
-	return _clientIDPeerBimap.AtKey(clientSessionID);
+	_ENetPeer **peer = _clientIDPeerBimap.FindByKey(clientSessionID);
+	return peer != nullptr ? *peer : nullptr;
 }
 
 ClientSessionID ReliableUDPServerSession::GetIDByPeer(_ENetPeer *peer) noexcept
 {
-	return _clientIDPeerBimap.AtValue(peer);
+	ClientSessionID *id = _clientIDPeerBimap.FindByValue(peer);
+	return id != nullptr ? *id : 0;
+}
+
+void ReliableUDPServerSession::Disconnect(ClientSessionID clientID, EDisconnectionCode code) noexcept
+{
+	_ENetPeer *peer = GetPeerByID(clientID);
+	if (peer != nullptr)
+	{
+		TE_TRACE("Disconnect client ID: {}, code: {}", clientID, static_cast<std::underlying_type_t<EDisconnectionCode>>(code));
+
+		enet_peer_disconnect(peer, static_cast<std::uint32_t>(code));
+	}
 }
 
 void ReliableUDPServerSession::Send(ClientSessionID clientSessionID, const NetworkSessionData &data, bool reliable)

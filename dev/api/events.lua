@@ -144,6 +144,8 @@ error("this is a lua library module")
 --- @class Events.E.ServerMessage.Data : userdata
 --- @field socketType ESocketType
 --- @field clientID Network.ClientID
+--- @field message string
+--- @field broadcast string?
 
 --- @class Events.E.LocalServerMessage.Data : Events.E.ServerMessage.Data
 --- @field clientSlot integer

@@ -34,3 +34,21 @@ std::string StringUtils::FilePathToLuaScriptName(std::string_view filePath) noex
 
 	return result;
 }
+
+bool StringUtils::IsSubpath(const std::filesystem::path &parent, const std::filesystem::path &child) noexcept
+{
+	auto p = std::filesystem::weakly_canonical(parent).lexically_normal();
+	auto c = std::filesystem::weakly_canonical(child).lexically_normal();
+
+	auto pIt = p.begin();
+	auto cIt = c.begin();
+	for (; pIt != p.end() && cIt != c.end(); ++pIt, ++cIt)
+	{
+		if (*pIt != *cIt)
+		{
+			return false;
+		}
+	}
+
+	return pIt == p.end();
+}

@@ -30,7 +30,6 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
-#include <type_traits>
 #include <vector>
 
 using namespace tudov;
@@ -126,6 +125,18 @@ std::optional<std::size_t> LocalServerSession::GetMaxClients() const noexcept
 	return _hostInfo != nullptr ? std::make_optional(_hostInfo->maximumClients) : std::nullopt;
 }
 
+void LocalServerSession::Disconnect(ClientSessionID clientSessionID, EDisconnectionCode code)
+{
+	auto it = _hostInfo->localClients.find(clientSessionID);
+	if (it == _hostInfo->localClients.end()) [[unlikely]]
+	{
+		throw std::runtime_error("client not found");
+	}
+
+	it->second.lock()->Disconnect(code);
+	_hostInfo->localClients.erase(clientSessionID);
+}
+
 void LocalServerSession::SendReliable(ClientSessionID clientSessionID, const NetworkSessionData &data)
 {
 	EnqueueMessage(clientSessionID, data, ELocalSessionSource::SendReliable);
@@ -156,8 +167,8 @@ void LocalServerSession::EnqueueMessage(ClientSessionID clientSessionID, const N
 
 	LocalSessionMessage message{
 	    .event = ESessionEvent::Receive,
-	    .source = ELocalSessionSource::SendReliable,
-	    .bytes = std::vector<std::byte>(data.bytes.begin(), data.bytes.end()),
+	    .source = source,
+	    .variant = {std::vector<std::byte>(data.bytes.begin(), data.bytes.end())},
 	    .clientID = it->second.lock()->GetSessionID(),
 	    .clientSlot = it->second.lock()->GetClientSlot(),
 	    .serverSlot = _serverSessionSlot,

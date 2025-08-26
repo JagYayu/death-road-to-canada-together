@@ -325,7 +325,7 @@ void NetworkManager::ProvideDebug(IDebugManager &debugManager) noexcept
 			try
 			{
 				NetworkSessionData data{
-				    .bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(arg.data()), arg.size() + 1),
+				    .bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(arg.data()), arg.size()),
 				    .channelID = 0,
 				};
 				_clients.at(_debugClientSlot)->SendReliable(data);

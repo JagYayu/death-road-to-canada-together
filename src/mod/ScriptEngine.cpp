@@ -82,6 +82,7 @@ constexpr const char *modCopyGlobals[] = {
     "table.new",
     // C++ enum classes
     "EClientSessionState",
+    "EDisconnectionCode",
     "EEventInvocation",
     "ELogVerbosity",
     "EPathListOption",
@@ -504,14 +505,28 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 
 	scriptGlobals["log"] = Log::Get(scriptName);
 
-	scriptGlobals.set_function("persist", [this, scriptName](std::string_view key, sol::object defaultValue, const sol::function &getter)
+	scriptGlobals.set_function("persist", [this, scriptName](sol::string_view key, sol::object defaultValue, sol::object getter)
 	{
-		if (defaultValue == sol::nil) [[unlikely]]
+		if (getter.is<sol::function>())
 		{
-			GetScriptEngine().ThrowError("Default value could not be nil");
-		}
+			if (defaultValue == sol::nil) [[unlikely]]
+			{
+				GetScriptEngine().ThrowError("Default value could not be nil");
+			}
 
-		return RegisterPersistVariable(scriptName, key, defaultValue, getter);
+			return RegisterPersistVariable(scriptName, key, defaultValue, getter.as<sol::function>());
+		}
+		else if (defaultValue.is<sol::function>())
+		{
+			sol::function getter_ = defaultValue.as<sol::function>();
+			defaultValue = getter_();
+
+			return RegisterPersistVariable(scriptName, key, defaultValue, getter_);
+		}
+		else [[unlikely]]
+		{
+			GetScriptEngine().ThrowError("Invalid function call");
+		}
 	});
 
 	scriptGlobals.set_function("print", [this, scriptName](const sol::variadic_args &args)

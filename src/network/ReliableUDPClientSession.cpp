@@ -17,13 +17,13 @@
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
 #include "network/ClientSessionState.hpp"
+#include "network/DisconnectionCode.hpp"
 #include "network/NetworkManager.hpp"
 #include "network/NetworkSessionData.hpp"
 #include "network/ReliableUDPSession.hpp"
 #include "network/SocketType.hpp"
 #include "system/LogMicros.hpp"
 
-#include "bitsery/adapter/buffer.h"
 #include "enet/enet.h"
 
 #include <array>
@@ -44,7 +44,7 @@ ReliableUDPClientSession::ReliableUDPClientSession(INetworkManager &networkManag
 
 ReliableUDPClientSession::~ReliableUDPClientSession() noexcept
 {
-	TryDisconnect();
+	TryDisconnect(EDisconnectionCode::ClientClosed);
 
 	ReliableUDPSession::OnENetSessionDeinitialize();
 }
@@ -135,9 +135,9 @@ void ReliableUDPClientSession::Connect(const IClientSession::ConnectArgs &baseAr
 	}
 }
 
-void ReliableUDPClientSession::Disconnect()
+void ReliableUDPClientSession::Disconnect(EDisconnectionCode code)
 {
-	enet_peer_disconnect_now(_eNetPeer, 0);
+	enet_peer_disconnect_now(_eNetPeer, static_cast<std::uint32_t>(code));
 	enet_peer_reset(_eNetPeer);
 	enet_host_destroy(_eNetHost);
 
@@ -145,14 +145,14 @@ void ReliableUDPClientSession::Disconnect()
 	_eNetHost = nullptr;
 }
 
-bool ReliableUDPClientSession::TryDisconnect()
+bool ReliableUDPClientSession::TryDisconnect(EDisconnectionCode code)
 {
 	if (GetSessionState() == EClientSessionState::Disconnected)
 	{
 		return false;
 	}
 
-	Disconnect();
+	Disconnect(code);
 	return true;
 }
 
@@ -223,6 +223,8 @@ bool ReliableUDPClientSession::Update()
 
 			coreEvents.ClientMessage().Invoke(&eventData, _clientSessionSlot, EEventInvocation::None);
 
+			_clientSessionID = 0;
+
 			break;
 		}
 		case ENET_EVENT_TYPE_RECEIVE:
@@ -257,48 +259,17 @@ void ReliableUDPClientSession::UpdateENetReceive(_ENetEvent &event) noexcept
 
 	TE_TRACE("Receive event, host: {}, port: {}, message: {}B", data.host, data.port, data.message.size());
 
-	GetEventManager().GetCoreEvents().ClientMessage().Invoke(&data, _clientSessionSlot, EEventInvocation::None);
+	if (receivedData.size() == 2 && receivedData[0] == '\0')
+	{
+		// receive client's session id
+		_clientSessionID = static_cast<ClientSessionID>(receivedData[1]);
+
+		TE_TRACE("Received client session id {} from server", _clientSessionID);
+	}
+	else
+	{
+		GetEventManager().GetCoreEvents().ClientMessage().Invoke(&data, _clientSessionSlot, EEventInvocation::None);
+	}
 
 	enet_packet_destroy(event.packet);
-
-	// auto head = static_cast<ENetworkSessionDataHead>(event.packet->data[0]);
-	// switch (head)
-	// {
-	// case ENetworkSessionDataHead::ServerConnection:
-	// {
-	// 	NetworkSessionDataContentServerConnection content;
-	// 	auto state = bitsery::quickDeserialization<bitsery::InputBufferAdapter<enet_uint8 *>>({event.packet->data, event.packet->dataLength}, content);
-
-	// 	if (state.first == bitsery::ReaderError::NoError)
-	// 	{
-	// 		content.clientSessionID;
-	// 	}
-	// 	else
-	// 	{
-	// 		TE_ERROR("Deserialization failed: {}", static_cast<std::underlying_type_t<decltype(state.first)>>(state.first));
-	// 	}
-
-	// 	break;
-	// }
-	// default:
-	// {
-	// 	std::array<char, 45> hostName;
-	// 	enet_address_get_host(&event.peer->address, hostName.data(), hostName.size());
-
-	// 	std::string_view receivedData{reinterpret_cast<const char *>(event.packet->data), event.packet->dataLength};
-
-	// 	EventReliableUDPClientMessageData data{
-	// 	    .socketType = ESocketType::RUDP,
-	// 	    .message = receivedData,
-	// 	    .host = std::string_view(hostName.data()),
-	// 	    .port = event.peer->address.port,
-	// 	};
-
-	// 	TE_TRACE("Receive event, host: {}, port: {}, message: {}B", data.host, data.port, data.message);
-
-	// 	GetEventManager().GetCoreEvents().ClientMessage().Invoke(&data, {}, EEventInvocation::None);
-
-	// 	enet_packet_destroy(event.packet);
-	// }
-	// }
 }

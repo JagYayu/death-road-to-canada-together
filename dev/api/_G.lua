@@ -27,6 +27,7 @@ error("this is a lua library module")
 function N_(str) end
 
 --- *Mod Scope*
+--- Register a persistent value. Lifespan is the whole application, which even longer than global variables.
 --- @generic T : NotNil
 --- @param key string
 --- @param defaultValue T
@@ -34,6 +35,14 @@ function N_(str) end
 --- @return T
 --- @nodiscard
 function persist(key, defaultValue, getter) end
+
+--- @see persist
+--- @generic T : NotNil
+--- @param key string
+--- @param getter fun(): T
+--- @return T
+--- @nodiscard
+function persist(key, getter) end
 
 --- *Mod Scope*
 --- You can also assess this value via `modConfig`.

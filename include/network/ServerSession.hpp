@@ -17,11 +17,13 @@
 
 #include "sol/forward.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <span>
 
 namespace tudov
 {
+	enum class EDisconnectionCode : std::uint32_t;
 	enum class EServerSessionState : std::uint8_t;
 	struct NetworkSessionData;
 	class LuaAPI;
@@ -48,6 +50,7 @@ namespace tudov
 		virtual std::optional<std::string_view> GetTitle() const noexcept = 0;
 		virtual std::optional<std::string_view> GetPassword() const noexcept = 0;
 		virtual std::optional<std::size_t> GetMaxClients() const noexcept = 0;
+		virtual void Disconnect(ClientSessionID clientSessionID, EDisconnectionCode code) = 0;
 		virtual void SendReliable(ClientSessionID clientSessionID, const NetworkSessionData &data) = 0;
 		virtual void SendUnreliable(ClientSessionID clientSessionID, const NetworkSessionData &data) = 0;
 		virtual void BroadcastReliable(const NetworkSessionData &data) = 0;
@@ -55,6 +58,7 @@ namespace tudov
 
 	  private:
 		void LuaHost(sol::object args) noexcept;
+		void LuaDisconnect(sol::object clientID, sol::object code) noexcept;
 		void LuaSendReliable(sol::object clientID, sol::object data, sol::object channelID) noexcept;
 		void LuaSendUnreliable(sol::object clientID, sol::object data, sol::object channelID) noexcept;
 		void LuaBroadcastReliable(sol::object data, sol::object channelID) noexcept;

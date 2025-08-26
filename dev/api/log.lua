@@ -20,19 +20,23 @@ log = {}
 
 --- Import from lua
 --- @return boolean
-function log.canDebug(...) end
+function log.canDebug() end
 
 --- Import from lua
 --- @return boolean
-function log.canInfo(...) end
+function log.canInfo() end
 
 --- Import from lua
 --- @return boolean
-function log.canTrace(...) end
+function log.canTrace() end
 
 --- Import from lua
 --- @return boolean
-function log.canWarn(...) end
+function log.canWarn() end
+
+--- Import from lua
+--- @return boolean
+function log.canError() end
 
 --- Import from lua
 --- @param ... any
@@ -49,6 +53,10 @@ function log.trace(...) end
 --- Import from lua
 --- @param ... any
 function log.warn(...) end
+
+--- Import from lua
+--- @param ... any
+function log.error(...) end
 
 --- Import from cpp
 --- @param verb string

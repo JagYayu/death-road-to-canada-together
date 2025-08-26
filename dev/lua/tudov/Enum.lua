@@ -35,6 +35,7 @@ end
 
 local function makeBitFlags(defaults, extend)
 	error("NOT IMPLEMENT YET")
+	return {}
 end
 
 local function makeIntegers(defaults, extend, valueCanBeString)
@@ -137,34 +138,44 @@ local function extendSequence(metadata, key) end
 
 local function extendProtocol(metadata, key) end
 
+--- @param defaults Enum.Defaults
+--- @return table enum
+--- @nodiscard
 function Enum.flags(defaults)
 	return makeBitFlags(defaults, extendBitFlags)
 end
 
+--- @param defaults Enum.Defaults
+--- @return table enum
+--- @nodiscard
 function Enum.bits(defaults)
 	return makeBitFlags(defaults)
 end
 
 --- @param defaults Enum.Defaults
 --- @return table enum
+--- @nodiscard
 function Enum.sequence(defaults)
 	return makeIntegers(defaults, extendSequence)
 end
 
 --- @param defaults Enum.Defaults
 --- @return table enum
+--- @nodiscard
 function Enum.immutable(defaults)
 	return makeIntegers(defaults)
 end
 
 --- @param defaults Enum.Defaults
 --- @return table enum
+--- @nodiscard
 function Enum.protocol(defaults)
 	return makeIntegers(defaults, extendProtocol, true)
 end
 
 --- @param enum table
 --- @return boolean
+--- @nodiscard
 function Enum.isValid(enum)
 	return not not enumerationsMetadata[enum]
 end
@@ -200,6 +211,14 @@ function Enum.hasKey(enum, key)
 end
 
 --- @param enum table
+--- @param value integer | string
+--- @return boolean
+function Enum.hasValue(enum, value)
+	local metadata = getMetadata(enum)
+	return not not metadata.value2keys[value]
+end
+
+--- @param enum table
 function Enum.iterateKeyValues(enum)
 	local metadata = getMetadata(enum)
 	return pairs(metadata.key2value)
@@ -218,9 +237,23 @@ function Enum.iterateValues(enum)
 end
 
 --- @param enum table
+--- @param key string
+--- @param fallback (integer | string)?
+--- @return (integer | string)? value
+function Enum.resolveKey(enum, key, fallback)
+	local metadata = getMetadata(enum)
+	local value = metadata.key2value[key]
+	if value ~= nil then
+		return value
+	else
+		return fallback
+	end
+end
+
+--- @param enum table
 --- @param value integer | string
 --- @param fallback string?
---- @return string?
+--- @return string? key
 function Enum.resolveValue(enum, value, fallback)
 	local metadata = getMetadata(enum)
 	local keys = metadata.value2keys[value]
@@ -253,6 +286,6 @@ end
 
 events:add("DebugSnapshot", function(e)
 	e.enumerationsMetadata = enumerationsMetadata
-end, nil, nil, scriptName)
+end, nil, nil, "#tudov.Enum")
 
 return Enum

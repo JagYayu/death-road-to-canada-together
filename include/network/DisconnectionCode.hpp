@@ -4,9 +4,10 @@
 
 namespace tudov
 {
-	enum class EDisconnectionCode : std::int32_t
+	enum class EDisconnectionCode : std::uint32_t
 	{
-		None = 0,
-		Rejected = 1,
+		Unknown = 0,
+		ClientClosed = 1,
+		ServerClosed = 2,
 	};
 }

@@ -143,6 +143,58 @@ local function postProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals)
 	end
 end
 
+local function generateCanOutputFunction(scriptGlobals, rawLog, verb)
+	return function()
+		return rawLog:canOutput(verb)
+	end
+end
+
+local function generateOutputFunction(scriptGlobals, rawLog, verb)
+	return function(...)
+		local inspect = scriptGlobals.require("inspect")
+
+		local args = { ... }
+		for index, arg in ipairs(args) do
+			args[index] = inspect(arg)
+		end
+
+		rawLog:output(verb, table_concat(args, "\t"))
+	end
+end
+
+local function wrapScriptGlobalsLog(scriptGlobals)
+	local rawLog = scriptGlobals.log
+
+	local function index(self, k)
+		if not self._generated then
+			rawset(self, "canTrace", generateCanOutputFunction("Trace"))
+			rawset(self, "canDebug", generateCanOutputFunction("Debug"))
+			rawset(self, "canInfo", generateCanOutputFunction("Info"))
+			rawset(self, "canWarn", generateCanOutputFunction("Warn"))
+			rawset(self, "canError", generateCanOutputFunction("Error"))
+			rawset(self, "trace", generateOutputFunction("Trace"))
+			rawset(self, "debug", generateOutputFunction("Debug"))
+			rawset(self, "info", generateOutputFunction("Info"))
+			rawset(self, "warn", generateOutputFunction("Warn"))
+			rawset(self, "error", generateOutputFunction("Error"))
+
+			self._generated = true
+
+			if self[k] ~= nil then
+				return self[k]
+			end
+		end
+
+		return rawLog[k]
+	end
+
+	scriptGlobals.log = setmetatable({
+		_generated = true,
+	}, {
+		__index = index,
+	})
+end
+
 local function postProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed, func, scriptGlobals, luaGlobals)
 	assert(scriptGlobals.scriptID == nil, "`_G.scriptID` is not nil")
 	assert(scriptGlobals.scriptName == nil, "`_G.scriptName` is not nil")
@@ -150,45 +202,7 @@ local function postProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed,
 	scriptGlobals.scriptID = scriptID
 	scriptGlobals.scriptName = scriptName
 
-	--#region wrap log table
-
-	local log = scriptGlobals.log
-
-	local function generateCanOutputFunction(verb)
-		return function()
-			return log:canOutput(verb)
-		end
-	end
-
-	local function generateOutputFunction(verb)
-		return function(...)
-			local inspect = scriptGlobals.require("inspect")
-
-			local args = { ... }
-			for index, arg in ipairs(args) do
-				args[index] = inspect(arg)
-			end
-
-			log:output(verb, table_concat(args, "\t"))
-		end
-	end
-
-	scriptGlobals.log = setmetatable({
-		canTrace = generateCanOutputFunction("Trace"),
-		canDebug = generateCanOutputFunction("Debug"),
-		canInfo = generateCanOutputFunction("Info"),
-		canWarn = generateCanOutputFunction("Warn"),
-		trace = generateOutputFunction("Trace"),
-		debug = generateOutputFunction("Debug"),
-		info = generateOutputFunction("Info"),
-		warn = generateOutputFunction("Warn"),
-	}, {
-		__index = function(_, k)
-			return log[k]
-		end,
-	})
-
-	--#endregion
+	wrapScriptGlobalsLog(scriptGlobals)
 end
 
 return {

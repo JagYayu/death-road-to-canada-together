@@ -1,0 +1,3 @@
+local CStatistics = {}
+
+return CStatistics

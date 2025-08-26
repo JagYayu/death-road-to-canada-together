@@ -31,19 +31,8 @@ namespace tudov
 {
 	class EngineData;
 
-	struct IGameScripts;
-	struct ILuaAPI;
-	struct INetworkManager;
-	struct IGlobalStorageManager;
-	struct IGraphicDevice;
-	struct IAssetsManager;
-	struct IWindow;
-	struct ILocalization;
 	class Context;
 	class Log;
-	class GlobalResourcesCollection;
-	class VirtualFileSystem;
-	class WindowManager;
 
 	/**
 	 * @brief Tudov game engine
@@ -55,7 +44,7 @@ namespace tudov
 		friend LuaAPI;
 
 	  public:
-		enum class ELoadingState
+		enum class ELoadingState : std::uint8_t
 		{
 			// Load done, set by loading thread.
 			Done,

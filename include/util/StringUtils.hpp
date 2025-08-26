@@ -12,8 +12,10 @@
 #pragma once
 
 #include "Micros.hpp"
+
 #include <algorithm>
 #include <cstddef>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <stdexcept>
@@ -179,5 +181,7 @@ namespace tudov
 		 * "dr2c/scripts/test/HelloWorld.lua" -> "dr2c.test.HelloWorld"
 		 */
 		static std::string FilePathToLuaScriptName(std::string_view filePath) noexcept;
+
+		static bool IsSubpath(const std::filesystem::path &parent, const std::filesystem::path &child) noexcept;
 	};
 } // namespace tudov

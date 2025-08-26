@@ -23,16 +23,31 @@ void IServerSession::LuaHost(sol::object args) noexcept
 	TE_ASSERT(false, "Not implement yet");
 }
 
+void IServerSession::LuaDisconnect(sol::object clientID, sol::object code) noexcept
+{
+	if (!clientID.is<std::double_t>()) [[unlikely]]
+	{
+		GetScriptEngine().ThrowError("Bad argument to #1 '{}' (number expected, got %s)", TE_NAMEOF(clientID), GetLuaTypeStringView(clientID.get_type()));
+	}
+
+	if (!code.is<std::int32_t>()) [[unlikely]]
+	{
+		GetScriptEngine().ThrowError("Bad argument to #2 '{}' (number expected, got %s)", TE_NAMEOF(code), GetLuaTypeStringView(code.get_type()));
+	}
+
+	Disconnect(clientID.as<std::double_t>(), code.as<EDisconnectionCode>());
+}
+
 void IServerSession::LuaSendReliable(sol::object clientID, sol::object data, sol::object channelID) noexcept
 {
 	if (!clientID.is<std::double_t>()) [[unlikely]]
 	{
-		GetScriptEngine().ThrowError("bad argument to #1 '{}' (number expected, got %s)", TE_NAMEOF(clientID), GetLuaTypeStringView(clientID.get_type()));
+		GetScriptEngine().ThrowError("Bad argument to #1 '{}' (number expected, got %s)", TE_NAMEOF(clientID), GetLuaTypeStringView(clientID.get_type()));
 	}
 
 	if (!data.is<sol::string_view>()) [[unlikely]]
 	{
-		GetScriptEngine().ThrowError("bad argument to #2 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
+		GetScriptEngine().ThrowError("Bad argument to #2 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
 	}
 
 	auto str = data.as<sol::string_view>();
@@ -48,12 +63,12 @@ void IServerSession::LuaSendUnreliable(sol::object clientID, sol::object data, s
 {
 	if (!clientID.is<std::double_t>()) [[unlikely]]
 	{
-		GetScriptEngine().ThrowError("bad argument to #1 '{}' (number expected, got %s)", TE_NAMEOF(clientID), GetLuaTypeStringView(clientID.get_type()));
+		GetScriptEngine().ThrowError("Bad argument to #1 '{}' (number expected, got %s)", TE_NAMEOF(clientID), GetLuaTypeStringView(clientID.get_type()));
 	}
 
 	if (!data.is<sol::string_view>()) [[unlikely]]
 	{
-		GetScriptEngine().ThrowError("bad argument to #2 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
+		GetScriptEngine().ThrowError("Bad argument to #2 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
 	}
 
 	auto str = data.as<sol::string_view>();
@@ -69,7 +84,7 @@ void IServerSession::LuaBroadcastReliable(sol::object data, sol::object channelI
 {
 	if (!data.is<sol::string_view>()) [[unlikely]]
 	{
-		GetScriptEngine().ThrowError("bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
+		GetScriptEngine().ThrowError("Bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
 	}
 
 	auto str = data.as<sol::string_view>();
@@ -85,7 +100,7 @@ void IServerSession::LuaBroadcastUnreliable(sol::object data, sol::object channe
 {
 	if (!data.is<sol::string_view>()) [[unlikely]]
 	{
-		GetScriptEngine().ThrowError("bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
+		GetScriptEngine().ThrowError("Bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
 	}
 
 	auto str = data.as<sol::string_view>();

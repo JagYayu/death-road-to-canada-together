@@ -61,6 +61,8 @@ namespace tudov
 		[[nodiscard]] virtual RuntimeEvent &DebugSnapshot() noexcept = 0;
 
 		// Other events.
+
+		// [[nodiscard]] virtual RuntimeEvent &LocalizationUpdateTexts() noexcept = 0;
 	};
 
 	class EventManager;
