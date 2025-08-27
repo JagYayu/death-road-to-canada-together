@@ -11,25 +11,11 @@ local stringBuffer_decode = stringBuffer.decode
 local stringBuffer_encode = stringBuffer.encode
 local stringBuffer_new = stringBuffer.new
 
---- @param obj (number | string | table)?
---- @return string
-function String.bufferEncode(obj)
-	--- @diagnostic disable-next-line: param-type-mismatch
-	return stringBuffer_encode(obj)
-end
+String.bufferEncode = stringBuffer_encode
 
---- @param bufStr string
---- @return (number | string | table)?
-function String.bufferDecode(bufStr)
-	--- @diagnostic disable-next-line: return-type-mismatch
-	return stringBuffer_decode(bufStr)
-end
+String.bufferDecode = stringBuffer_decode
 
---- @param size integer?
---- @param options string.buffer.serialization.opts
-function String.bufferNew(size, options)
-	return stringBuffer_new(size, options)
-end
+String.bufferNew = stringBuffer_new
 
 function String.capitalizeFirst(str)
 	return stringUpper(stringChar(stringByte(str))) .. stringSub(str, 2)

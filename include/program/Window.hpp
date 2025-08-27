@@ -12,10 +12,12 @@
 #pragma once
 
 #include "program/Context.hpp"
+#include "sol/types.hpp"
 #include "system/Log.hpp"
 
 #include <memory>
 #include <tuple>
+#include <variant>
 
 union SDL_Event;
 struct SDL_KeyboardEvent;
@@ -50,6 +52,8 @@ namespace tudov
 	 */
 	class Window : public IWindow
 	{
+		friend LuaAPI;
+
 	  protected:
 		// static ILuaAPI::TInstallation windowLuaAPIInstallation;
 
@@ -79,15 +83,17 @@ namespace tudov
 		void HandleEvents() noexcept override;
 		bool HandleEvent(SDL_Event &event) noexcept override;
 		void Render() noexcept override;
+		
+		SDL_Window *GetSDLWindowHandle() noexcept;
 
 		virtual EventHandleKey GetKey() const noexcept;
-
-		SDL_Window *GetSDLWindowHandle() noexcept;
 
 	  protected:
 		bool RenderPreImpl() noexcept;
 
 	  private:
 		bool HandleEventKey(SDL_KeyboardEvent &e) noexcept;
+
+		std::variant<sol::nil_t, std::double_t, sol::string_view> LuaGetKey() const noexcept;
 	};
 } // namespace tudov

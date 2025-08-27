@@ -15,7 +15,6 @@
 #include "event/OverrideHandlerArgs.hpp"
 #include "event/RuntimeEvent.hpp"
 #include "util/Definitions.hpp"
-#include "system/LogMicros.hpp"
 
 #include <variant>
 
@@ -28,6 +27,10 @@ LoadtimeEvent::LoadtimeEvent(IEventManager &eventManager, EventID eventID, Scrip
       _keys(),
       _operations()
 {
+	if (scriptID != 0)
+	{
+		_scriptTraceback = GetScriptEngine().DebugTraceback();
+	}
 }
 
 LoadtimeEvent::LoadtimeEvent(IEventManager &eventManager, EventID eventID, ScriptID scriptID, const std::vector<std::string> &orders, const std::vector<EventHandleKey> &keys) noexcept
@@ -37,6 +40,10 @@ LoadtimeEvent::LoadtimeEvent(IEventManager &eventManager, EventID eventID, Scrip
       _keys(keys),
       _operations()
 {
+	if (scriptID != 0)
+	{
+		_scriptTraceback = GetScriptEngine().DebugTraceback();
+	}
 }
 
 LoadtimeEvent::~LoadtimeEvent() noexcept
@@ -97,4 +104,9 @@ RuntimeEvent LoadtimeEvent::ToRuntime() const
 	}
 
 	return event;
+}
+
+std::string_view LoadtimeEvent::GetScriptTraceBack() const noexcept
+{
+	return _scriptTraceback;
 }

@@ -18,9 +18,9 @@ error("this is a lua library module")
 --- @field keyCode integer
 --- @field mod integer
 
---- @class Events.E.KeyRepeat
+--- @alias Events.E.KeyRepeat Events.E.KeyDown
 
---- @class Events.E.KeyUp
+--- @alias Events.E.KeyUp Events.E.KeyDown
 
 --- @class Events.E.MouseButtonDown
 
@@ -35,6 +35,8 @@ error("this is a lua library module")
 --- @class Events.E.TickRender
 
 --- @class Events.E.TickUpdate
+
+--- @class Events.E.ScriptsLoaded
 
 --- @class Events.E.ClientConnect
 --- @field data Events.E.ClientConnect.Data
@@ -176,6 +178,7 @@ error("this is a lua library module")
 --- @alias Events.Event "MouseButtonUp"
 --- @alias Events.Event "MouseMove"
 --- @alias Events.Event "MouseWheel"
+--- @alias Events.Event "ScriptsLoaded"
 --- @alias Events.Event "ServerConnect"
 --- @alias Events.Event "ServerDisconnect"
 --- @alias Events.Event "ServerMessage"
@@ -201,6 +204,12 @@ EEventInvocation = {
 	-- Trace event invocation progression.
 	TrackProgression = 4,
 }
+
+--- @class RuntimeEvent
+local RuntimeEvent = {}
+
+--- @return integer scriptID
+function RuntimeEvent.getInvokingScriptID() end
 
 --- @class Events
 events = {}
@@ -234,5 +243,3 @@ function events:invoke(event, e, key, options) end
 --- @param keys (number|string)[]?
 --- @return Events.EventID
 function events:new(event, orders, keys) end
-
-return events

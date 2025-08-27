@@ -42,7 +42,8 @@ using namespace tudov;
 EventManager::EventManager(Context &context) noexcept
     : _context(context),
       _log(Log::Get("EventManager")),
-      _latestEventID()
+      _latestEventID(),
+      _invokingEvent(0)
 {
 	_coreEvents = std::make_unique<CoreEvents>(*this);
 }
@@ -109,7 +110,9 @@ void EventManager::OnScriptsLoaded()
 			std::string_view eventName = _eventID2Name[eventID];
 			ScriptID scriptID = loadtimeEvent->GetScriptID();
 			std::string_view scriptName = scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
+
 			TE_ERROR("Attempt to add handlers to non-exist event <{}>\"{}\", source script <{}>\"{}\"", eventID, eventName, scriptID, scriptName);
+			GetScriptErrors().AddLoadtimeError(scriptID, std::format("Attempt to add handlers to non-exist event <{}>\"{}\"{}", eventID, eventName, loadtimeEvent->GetScriptTraceBack()));
 		}
 	}
 
@@ -185,6 +188,11 @@ Context &EventManager::GetContext() noexcept
 Log &EventManager::GetLog() noexcept
 {
 	return *_log;
+}
+
+RuntimeEvent *EventManager::GetInvokingEvent() noexcept
+{
+	return _invokingEvent;
 }
 
 ICoreEvents &EventManager::GetCoreEvents() noexcept
@@ -656,7 +664,10 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 
 		TE_ASSERT(eventInstance != nullptr);
 
+		RuntimeEvent *previousInvokingEvent = _invokingEvent;
+		_invokingEvent = eventInstance;
 		eventInstance->Invoke(args, key_, options_);
+		_invokingEvent = previousInvokingEvent;
 	}
 	catch (const std::exception &e)
 	{

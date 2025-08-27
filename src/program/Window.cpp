@@ -22,9 +22,13 @@
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"
+#include "sol/string_view.hpp"
+#include "sol/types.hpp"
 
 #include <cmath>
 #include <memory>
+#include <string_view>
+#include <variant>
 
 using namespace tudov;
 
@@ -63,7 +67,7 @@ bool Window::ShouldClose() noexcept
 
 EventHandleKey Window::GetKey() const noexcept
 {
-	return {};
+	return nullptr;
 }
 
 void Window::HandleEvents() noexcept
@@ -152,11 +156,10 @@ bool Window::RenderPreImpl() noexcept
 	}
 
 	auto &&args = GetScriptEngine().CreateTable(0, 3);
-	auto &&key = GetKey();
 	args["isMain"] = GetContext().GetWindowManager().GetMainWindow().get() == this;
-	args["key"] = &key;
 	args["window"] = this;
-	GetEventManager().GetCoreEvents().TickRender().Invoke(args, key, EEventInvocation::None);
+	args["key"] = LuaGetKey();
+	GetEventManager().GetCoreEvents().TickRender().Invoke(args, GetKey(), EEventInvocation::None);
 
 	return true;
 }
@@ -197,4 +200,21 @@ std::float_t Window::GetGUIScale() const noexcept
 	std::int32_t w, h;
 	SDL_GetWindowSize(_sdlWindow, &w, &h);
 	return std::min(w, h) / 720.0f;
+}
+
+std::variant<sol::nil_t, std::double_t, sol::string_view> Window::LuaGetKey() const noexcept
+{
+	auto &&key = GetKey();
+	if (std::holds_alternative<std::double_t>(key.value))
+	{
+		return std::get<std::double_t>(key.value);
+	}
+	else if (std::holds_alternative<std::string_view>(key.value))
+	{
+		return std::get<std::string_view>(key.value);
+	}
+	else
+	{
+		return sol::nil;
+	}
 }

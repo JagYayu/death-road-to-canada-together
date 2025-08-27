@@ -183,5 +183,7 @@ namespace tudov
 		static std::string FilePathToLuaScriptName(std::string_view filePath) noexcept;
 
 		static bool IsSubpath(const std::filesystem::path &parent, const std::filesystem::path &child) noexcept;
+
+		static std::string Unescape(std::string_view s) noexcept;
 	};
 } // namespace tudov

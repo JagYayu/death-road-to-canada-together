@@ -62,6 +62,8 @@ namespace tudov
 
 		// Other events.
 
+		[[nodiscard]] virtual RuntimeEvent &ScriptsLoaded() noexcept = 0;
+
 		// [[nodiscard]] virtual RuntimeEvent &LocalizationUpdateTexts() noexcept = 0;
 	};
 
@@ -88,6 +90,7 @@ namespace tudov
 		TRuntimeEvent _mouseButtonDown;
 		TRuntimeEvent _mouseButtonUp;
 		TRuntimeEvent _mouseWheel;
+		TRuntimeEvent _scriptsLoaded;
 		TRuntimeEvent _serverAuthenticate;
 		TRuntimeEvent _serverConnect;
 		TRuntimeEvent _serverDisconnect;
@@ -111,6 +114,7 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &MouseButtonDown() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseButtonUp() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseWheel() noexcept override;
+		[[nodiscard]] RuntimeEvent &ScriptsLoaded() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerAuthenticate() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerConnect() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerDisconnect() noexcept override;

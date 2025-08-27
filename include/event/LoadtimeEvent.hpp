@@ -27,6 +27,7 @@ namespace tudov
 		std::vector<std::string> _orders;
 		std::vector<EventHandleKey> _keys;
 		std::vector<Operation> _operations;
+		std::string _scriptTraceback;
 
 	  public:
 		explicit LoadtimeEvent(IEventManager &eventManager, EventID eventID, ScriptID scriptID) noexcept;
@@ -41,5 +42,6 @@ namespace tudov
 		 */
 		bool TryBuild(ScriptID scriptID, const std::vector<std::string> &orders, const std::vector<EventHandleKey> &keys) noexcept;
 		RuntimeEvent ToRuntime() const;
+		std::string_view GetScriptTraceBack() const noexcept;
 	};
 } // namespace tudov

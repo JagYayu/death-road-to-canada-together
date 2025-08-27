@@ -153,4 +153,10 @@ void LuaAPI::InstallNetwork(sol::state &lua, Context &context) noexcept
 	            "sendReliable", &IServerSession::LuaSendReliable,
 	            "sendUnreliable", &IServerSession::LuaSendUnreliable,
 	            "shutdown", &IServerSession::Shutdown);
+
+	TE_USERTYPE(NetworkManager,
+	            "getClient", &NetworkManager::LuaGetClient,
+	            "getServer", &NetworkManager::LuaGetServer);
+
+	lua["network"] = &dynamic_cast<NetworkManager &>(context.GetNetworkManager());
 }

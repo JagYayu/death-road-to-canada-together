@@ -21,9 +21,9 @@
 #include "mod/UnpackagedMod.hpp"
 #include "program/Context.hpp"
 #include "program/Engine.hpp"
+#include "system/LogMicros.hpp"
 #include "util/Definitions.hpp"
 #include "util/EnumFlag.hpp"
-#include "system/LogMicros.hpp"
 #include "util/Version.hpp"
 
 #include <memory>

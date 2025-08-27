@@ -53,7 +53,6 @@ constexpr const char *modCopyGlobals[] = {
     "_VERSION",
     "assert",
     "bit",
-    "collectgarbage",
     "coroutine",
     "error",
     "getmetatable",
@@ -100,6 +99,10 @@ constexpr const char *modCopyGlobals[] = {
     "images",
     "mods",
     "network",
+    "scriptEngine",
+    "scriptErrors",
+    "scriptLoader",
+    "scriptProvider",
     "vfs",
 };
 

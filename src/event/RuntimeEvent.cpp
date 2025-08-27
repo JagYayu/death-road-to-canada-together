@@ -13,7 +13,6 @@
 
 #include "debug/EventProfiler.hpp"
 #include "event/AbstractEvent.hpp"
-#include "event/CoreEventsData.hpp"
 #include "event/EventHandler.hpp"
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
@@ -27,7 +26,6 @@
 #include "util/EnumFlag.hpp"
 
 #include <algorithm>
-
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
@@ -40,7 +38,8 @@ RuntimeEvent::RuntimeEvent(IEventManager &eventManager, EventID eventID, const s
       _log(Log::Get("RuntimeEvent")),
       _orders(orders),
       _keys(keys),
-      _invocationTrackID(0)
+      _invocationTrackID(0),
+      _invokingScriptID(0)
 {
 	if (_orders.empty())
 	{
@@ -91,6 +90,22 @@ void RuntimeEvent::EnableProfiler(bool traceHandlers) noexcept
 void RuntimeEvent::DisableProfiler() noexcept
 {
 	_profile = nullptr;
+}
+
+RuntimeEvent::ProgressionID RuntimeEvent::GetNextTrackID() const noexcept
+{
+	return _invocationTrackID + 1;
+}
+
+std::tuple<std::size_t, std::size_t> RuntimeEvent::GetProgression() const noexcept
+{
+	TE_ASSERT(false, "NOT IMPLEMENT YET");
+	return {};
+}
+
+ScriptID RuntimeEvent::GetInvokingScriptID() const noexcept
+{
+	return _invokingScriptID;
 }
 
 void RuntimeEvent::Add(const AddHandlerArgs &args)
@@ -178,11 +193,15 @@ struct PCallHandlerObject
 {
 	const std::shared_ptr<Log> &log;
 	IEventManager &eventManager;
+	ScriptID &invokingScriptID;
 };
 
 template <typename... TArgs>
 TE_FORCEINLINE void PCallHandler(const PCallHandlerObject &obj, EventHandler &handler, TArgs &&...args) noexcept
 {
+	ScriptID previousScriptID = obj.invokingScriptID;
+	obj.invokingScriptID = handler.scriptID;
+
 	try
 	{
 		handler.function(std::forward<TArgs>(args)...);
@@ -196,6 +215,8 @@ TE_FORCEINLINE void PCallHandler(const PCallHandlerObject &obj, EventHandler &ha
 			obj.eventManager.GetScriptErrors().AddRuntimeError(handler.scriptID, e.what());
 		}
 	}
+
+	obj.invokingScriptID = previousScriptID;
 }
 
 void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvocation options)
@@ -221,6 +242,7 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 	PCallHandlerObject obj{
 	    _log,
 	    eventManager,
+	    _invokingScriptID,
 	};
 
 	bool anyKey = key.IsAny();

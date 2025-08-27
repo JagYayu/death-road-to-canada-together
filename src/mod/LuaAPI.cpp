@@ -12,17 +12,11 @@
 #include "mod/LuaAPI.hpp"
 
 #include "data/VirtualFileSystem.hpp"
-#include "event/EventInvocation.hpp"
-#include "event/EventManager.hpp"
+
 #include "graphic/Camera2D.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/Renderer.hpp"
 #include "i18n/Localization.hpp"
-#include "mod/ModManager.hpp"
-#include "mod/ScriptLoader.hpp"
-#include "network/ClientSession.hpp"
-#include "network/NetworkManager.hpp"
-#include "network/ServerSession.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
 #include "program/WindowManager.hpp"
@@ -30,11 +24,9 @@
 #include "resource/ImageResources.hpp"
 #include "system/RandomDevice.hpp"
 #include "system/Time.hpp"
-#include "util/LuaUtils.hpp"
 
 #include "sol/forward.hpp"
 #include "sol/property.hpp"
-#include "sol/string_view.hpp"
 
 using namespace tudov;
 
@@ -72,18 +64,10 @@ decltype(auto) GetMainWindowFromContext(Context &context)
 
 void LuaAPI::Install(sol::state &lua, Context &context)
 {
+	InstallEvent(lua, context);
+	InstallMod(lua, context);
 	InstallNetwork(lua, context);
 	InstallScanCode(lua, context);
-
-	TE_ENUM(EEventInvocation,
-	        {
-	            {"All", EEventInvocation::All},
-	            {"None", EEventInvocation::None},
-	            {"CacheHandlers", EEventInvocation::CacheHandlers},
-	            {"NoProfiler", EEventInvocation::NoProfiler},
-	            {"TrackProgression", EEventInvocation::TrackProgression},
-	            {"Default", EEventInvocation::Default},
-	        });
 
 	TE_ENUM(ELogVerbosity,
 	        {
@@ -113,42 +97,22 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "quit", &Engine::Quit,
 	            "triggerLoadPending", &Engine::TriggerLoadPending);
 
-	TE_USERTYPE(EventManager,
-	            "add", &EventManager::LuaAdd,
-	            "new", &EventManager::LuaNew,
-	            "invoke", &EventManager::LuaInvoke);
-
 	TE_USERTYPE(ImageResources,
 	            "getID", &ImageResources::LuaGetID,
 	            "getPath", &ImageResources::LuaGetPath);
 
 	TE_USERTYPE(Log,
 	            "canOutput", &Log::CanOutput,
-	            "output", &Log::Output);
-
-	TE_USERTYPE(NetworkManager,
-	            "getClient", &NetworkManager::LuaGetClient,
-	            "getServer", &NetworkManager::LuaGetServer);
-
-	TE_USERTYPE(ModConfig,
-	            "author", &ModConfig::author,
-	            "description", &ModConfig::description,
-	            "distribution", &ModConfig::distribution,
-	            "name", &ModConfig::name,
-	            "namespace", &ModConfig::namespace_,
-	            "uid", &ModConfig::uid);
-
-	TE_USERTYPE(ModManager,
-	            "loadMods", &ModManager::LoadModsDeferred,
-	            "unloadMods", &ModManager::UnloadModsDeferred);
+	            "output", &Log::LuaOutput);
 
 	TE_USERTYPE(Window,
 	            "renderer", &Window::renderer,
 	            "close", &Window::Close,
-	            "shouldClose", &Window::ShouldClose,
-	            "getWidth", &Window::GetWidth,
 	            "getHeight", &Window::GetHeight,
-	            "getSize", &Window::GetSize);
+	            "getKey", &Window::LuaGetKey,
+	            "getSize", &Window::GetSize,
+	            "getWidth", &Window::GetWidth,
+	            "shouldClose", &Window::ShouldClose);
 
 	TE_USERTYPE(Renderer,
 	            "beginTarget", &Renderer::LuaBeginTarget,
@@ -178,14 +142,6 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "snapCameraScale", &RenderTarget::SnapCameraScale,
 	            "update", &RenderTarget::Update);
 
-	TE_USERTYPE(ScriptLoader,
-	            "addReverseDependency", &ScriptLoader::LuaAddReverseDependency,
-	            "getLoadingScriptID", &ScriptLoader::GetLoadingScriptID,
-	            "getLoadingScriptName", &ScriptLoader::GetLoadingScriptName);
-
-	TE_USERTYPE(ScriptProvider,
-	            "getScriptTextID", &ScriptProvider::GetScriptTextID);
-
 	TE_USERTYPE(VirtualFileSystem,
 	            "exists", &VirtualFileSystem::LuaExists,
 	            "list", &VirtualFileSystem::LuaList,
@@ -205,12 +161,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	                       "getSystemTime", &Time::GetSystemTime);
 
 	lua["engine"] = &context.GetEngine();
-	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
 	lua["localization"] = &dynamic_cast<Localization &>(context.GetLocalization());
-	lua["mods"] = &dynamic_cast<ModManager &>(context.GetModManager());
-	lua["network"] = &dynamic_cast<NetworkManager &>(context.GetNetworkManager());
-	lua["scriptLoader"] = &dynamic_cast<ScriptLoader &>(context.GetScriptLoader());
-	lua["scriptProvider"] = &dynamic_cast<ScriptProvider &>(context.GetScriptProvider());
 	lua["vfs"] = &dynamic_cast<VirtualFileSystem &>(context.GetVirtualFileSystem());
 
 	auto &collection = context.GetGlobalResourcesCollection();
@@ -218,10 +169,4 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	lua["fonts"] = collection.GetFontResources();
 	lua["images"] = collection.GetImageResources();
 	lua["texts"] = collection.GetTextResources();
-
-	lua.set_function("getModConfig", [this, &context](sol::string_view modUID) -> ModConfig *
-	{
-		std::shared_ptr<Mod> mod = context.GetModManager().FindLoadedMod(modUID);
-		return mod == nullptr ? nullptr : &mod->GetConfig();
-	});
 }

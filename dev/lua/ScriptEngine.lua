@@ -1,4 +1,5 @@
 local ffi = require("ffi")
+local inspect = require("inspect")
 local jit_util = require("jit.util")
 
 local type = type
@@ -78,7 +79,9 @@ local function estimateMemorySize(value, extraArgs)
 	estimateMemorySizeImpl(value, extraArgs)
 end
 
-local function initialize() end
+local function initialize()
+	jit.off()
+end
 
 local lockedTables = setmetatable({}, { __mode = "k" })
 
@@ -137,7 +140,24 @@ local function postProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals)
 
 			return setmetatable(table, metatable)
 		end
+
+		modGlobals.debug = {
+			traceback = function(message, level)
+				level = tonumber(level) or 2
+
+				if level < 2 then
+					error("You're not allowed to visit lua stack, make 'level' >= 2", 2)
+				end
+
+				luaGlobals.debug.traceback(message, level)
+			end,
+		}
 	else
+		modGlobals.collectgarbage = luaGlobals.collectgarbage
+		modGlobals.debug = luaGlobals.debug
+		modGlobals.io = luaGlobals.io
+		modGlobals.os = luaGlobals.os
+		modGlobals.package = luaGlobals.package
 		modGlobals["jit.profile"] = luaGlobals["jit.profile"]
 		modGlobals["jit.util"] = luaGlobals["jit.util"]
 	end
@@ -150,35 +170,36 @@ local function generateCanOutputFunction(scriptGlobals, rawLog, verb)
 end
 
 local function generateOutputFunction(scriptGlobals, rawLog, verb)
-	return function(...)
-		local inspect = scriptGlobals.require("inspect")
-
+	local func = function(...)
 		local args = { ... }
 		for index, arg in ipairs(args) do
-			args[index] = inspect(arg)
+			args[index] = inspect.inspect(arg)
 		end
 
-		rawLog:output(verb, table_concat(args, "\t"))
+		rawLog:output(verb, args)
 	end
+
+	return func
 end
 
 local function wrapScriptGlobalsLog(scriptGlobals)
 	local rawLog = scriptGlobals.log
+	local generated = false
 
 	local function index(self, k)
-		if not self._generated then
-			rawset(self, "canTrace", generateCanOutputFunction("Trace"))
-			rawset(self, "canDebug", generateCanOutputFunction("Debug"))
-			rawset(self, "canInfo", generateCanOutputFunction("Info"))
-			rawset(self, "canWarn", generateCanOutputFunction("Warn"))
-			rawset(self, "canError", generateCanOutputFunction("Error"))
-			rawset(self, "trace", generateOutputFunction("Trace"))
-			rawset(self, "debug", generateOutputFunction("Debug"))
-			rawset(self, "info", generateOutputFunction("Info"))
-			rawset(self, "warn", generateOutputFunction("Warn"))
-			rawset(self, "error", generateOutputFunction("Error"))
+		if not generated then
+			rawset(self, "canTrace", generateCanOutputFunction(self, rawLog, "Trace"))
+			rawset(self, "canDebug", generateCanOutputFunction(self, rawLog, "Debug"))
+			rawset(self, "canInfo", generateCanOutputFunction(self, rawLog, "Info"))
+			rawset(self, "canWarn", generateCanOutputFunction(self, rawLog, "Warn"))
+			rawset(self, "canError", generateCanOutputFunction(self, rawLog, "Error"))
+			rawset(self, "trace", generateOutputFunction(self, rawLog, "Trace"))
+			rawset(self, "debug", generateOutputFunction(self, rawLog, "Debug"))
+			rawset(self, "info", generateOutputFunction(self, rawLog, "Info"))
+			rawset(self, "warn", generateOutputFunction(self, rawLog, "Warn"))
+			rawset(self, "error", generateOutputFunction(self, rawLog, "Error"))
 
-			self._generated = true
+			generated = true
 
 			if self[k] ~= nil then
 				return self[k]
@@ -188,9 +209,7 @@ local function wrapScriptGlobalsLog(scriptGlobals)
 		return rawLog[k]
 	end
 
-	scriptGlobals.log = setmetatable({
-		_generated = true,
-	}, {
+	scriptGlobals.log = setmetatable({}, {
 		__index = index,
 	})
 end

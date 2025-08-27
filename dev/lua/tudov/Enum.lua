@@ -104,11 +104,14 @@ local function makeIntegers(defaults, extend, valueCanBeString)
 
 			local might = String.didYouMean(k, metadata.keys)
 			if might then
-				local fmt =
-					"Invalid enum key '%s'. Did you mean '%s'? Or are you try accessing an extended enum during load time?"
+				local fmt = extend
+						and "Invalid enum key '%s'. Did you mean '%s'? Or are you try accessing an extended enum during load time?"
+					or "Invalid enum key '%s'. Did you mean '%s'?"
 				error(fmt:format(k, might), 2)
 			else
-				error(("Invalid enum key '%s'. Are you try accessing an extended enum during load time?"):format(k), 2)
+				local fmt = extend and "Invalid enum key '%s'. Are you try accessing an extended enum during load time?"
+					or "Invalid enum key '%s'."
+				error(fmt:format(k), 2)
 			end
 		end,
 	})

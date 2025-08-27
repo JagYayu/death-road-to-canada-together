@@ -37,6 +37,7 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 	TE_CORE_EVENTS_GEN_INIT(_mouseButtonDown, "MouseButtonDown");
 	TE_CORE_EVENTS_GEN_INIT(_mouseButtonUp, "MouseButtonUp");
 	TE_CORE_EVENTS_GEN_INIT(_mouseWheel, "MouseWheel");
+	TE_CORE_EVENTS_GEN_INIT(_scriptsLoaded, "ScriptsLoaded");
 	TE_CORE_EVENTS_GEN_INIT(_serverAuthenticate, "ServerAuthenticate");
 	TE_CORE_EVENTS_GEN_INIT(_serverConnect, "ServerConnect");
 	TE_CORE_EVENTS_GEN_INIT(_serverDisconnect, "ServerDisconnect");
@@ -65,6 +66,7 @@ TE_CORE_EVENTS_GEN_GETTER(MouseMove, _mouseMove);
 TE_CORE_EVENTS_GEN_GETTER(MouseButtonDown, _mouseButtonDown);
 TE_CORE_EVENTS_GEN_GETTER(MouseButtonUp, _mouseButtonUp);
 TE_CORE_EVENTS_GEN_GETTER(MouseWheel, _mouseWheel);
+TE_CORE_EVENTS_GEN_GETTER(ScriptsLoaded, _scriptsLoaded);
 TE_CORE_EVENTS_GEN_GETTER(ServerAuthenticate, _serverAuthenticate);
 TE_CORE_EVENTS_GEN_GETTER(ServerConnect, _serverConnect);
 TE_CORE_EVENTS_GEN_GETTER(ServerDisconnect, _serverDisconnect);

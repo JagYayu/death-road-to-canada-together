@@ -24,6 +24,9 @@ namespace tudov
 {
 	class Engine;
 
+	/**
+	 * A lua api binding class.
+	 */
 	struct ILuaAPI
 	{
 		using TInstallation = std::function<void(sol::state &)>;
@@ -46,6 +49,8 @@ namespace tudov
 		void Install(sol::state &lua, Context &context) override;
 
 	  private:
+		void InstallEvent(sol::state &lua, Context &context) noexcept;
+		void InstallMod(sol::state &lua, Context &context) noexcept;
 		void InstallNetwork(sol::state &lua, Context &context) noexcept;
 		void InstallScanCode(sol::state &lua, Context &context) noexcept;
 	};

@@ -157,10 +157,10 @@ void DebugScripts::UpdateAndRenderErrorsArea(IWindow &window, const ErrorsArea &
 		std::float_t scale = window.GetGUIScale();
 
 		ImGui::Columns(4, "loadErrorColumns");
-		ImGui::SetColumnWidth(0, 100 * scale);
-		ImGui::SetColumnWidth(1, 200 * scale);
-		ImGui::SetColumnWidth(2, 50 * scale);
-		ImGui::SetColumnWidth(3, ImGui::GetWindowWidth() - 300 * scale);
+		// ImGui::SetColumnWidth(0, 100);
+		// ImGui::SetColumnWidth(1, 200);
+		// ImGui::SetColumnWidth(2, 50);
+		// ImGui::SetColumnWidth(3, ImGui::GetWindowWidth() - 300);
 
 		ImGui::Text("Time");
 		ImGui::NextColumn();

@@ -27,6 +27,7 @@ error("this is a lua library module")
 function N_(str) end
 
 --- *Mod Scope*
+--- Import from engine
 --- Register a persistent value. Lifespan is the whole application, which even longer than global variables.
 --- @generic T : NotNil
 --- @param key string
@@ -45,28 +46,33 @@ function persist(key, defaultValue, getter) end
 function persist(key, getter) end
 
 --- *Mod Scope*
+--- Import from lua
 --- You can also assess this value via `modConfig`.
 --- e.g. "dr2c"
 --- @type string
 modNamespace = nil
 
 --- *Mod Scope*
+--- Import from lua
 --- You can also assess this value via `modConfig`.
 --- @type boolean
 modSandboxed = nil
 
 --- *Mod Scope*
+--- Import from lua
 --- You can also assess this value via `modConfig`.
 --- @type string
 modUID = nil
 
 --- *Script Scope*
+--- Import from lua
 --- Current script's internal id.
 --- e.g. 32
 --- @type integer
 scriptID = nil
 
 --- *Script Scope*
+--- Import from lua
 --- Current script's name.
 --- e.g. "dr2c.client.test.Test"
 --- @type string

@@ -36,14 +36,22 @@ namespace tudov
 	{
 		~IEventManager() noexcept override = default;
 
-		virtual ICoreEvents &GetCoreEvents() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent *GetInvokingEvent() noexcept = 0;
+
+		[[nodiscard]] virtual ICoreEvents &GetCoreEvents() noexcept = 0;
+
 		[[nodiscard]] virtual ScriptID GetEventIDByName(std::string_view scriptName) const noexcept = 0;
+
 		[[nodiscard]] virtual std::optional<std::string_view> GetEventNameByID(EventID eventID) const noexcept = 0;
+
 		[[nodiscard]] virtual bool IsValidEventID(EventID eventID) const noexcept = 0;
+
 		virtual void ClearInvalidScriptEvents() noexcept = 0;
 
 		[[nodiscard]] virtual std::size_t GetRuntimeEventsCount() const noexcept = 0;
+
 		[[nodiscard]] virtual std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator BeginRuntimeEvents() const = 0;
+
 		[[nodiscard]] virtual std::unordered_map<EventID, std::shared_ptr<RuntimeEvent>>::const_iterator EndRuntimeEvents() const = 0;
 
 		inline const ICoreEvents &GetCoreEvents() const noexcept
@@ -70,6 +78,7 @@ namespace tudov
 		std::unique_ptr<CoreEvents> _coreEvents;
 
 		EventID _latestEventID;
+		RuntimeEvent *_invokingEvent;
 		std::unordered_map<std::string_view, EventID> _eventName2ID;
 		std::unordered_map<EventID, std::string> _eventID2Name;
 		std::map<EventID, std::shared_ptr<LoadtimeEvent>> _loadtimeEvents;
@@ -87,14 +96,15 @@ namespace tudov
 		~EventManager() noexcept override;
 
 	  public:
-		Context &GetContext() noexcept override;
-		Log &GetLog() noexcept override;
+		[[nodiscard]] Context &GetContext() noexcept override;
+		[[nodiscard]] Log &GetLog() noexcept override;
 		void PreInitialize() noexcept override;
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
 		void PostDeinitialize() noexcept override;
 
-		ICoreEvents &GetCoreEvents() noexcept override;
+		[[nodiscard]] RuntimeEvent *GetInvokingEvent() noexcept override;
+		[[nodiscard]] ICoreEvents &GetCoreEvents() noexcept override;
 		void InstallToScriptEngine(IScriptEngine &scriptEngine);
 		void UninstallFromScriptEngine(IScriptEngine &scriptEngine);
 

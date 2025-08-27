@@ -2,15 +2,18 @@ local CECSSchema = require("dr2c.client.ecs.ECSSchema")
 local Table = require("tudov.Table")
 local String = require("tudov.String")
 
-local CECSSchema_getComponentTypeID = CECSSchema.getComponentTypeID
-local CECSSchema_getComponentTrait = CECSSchema.getComponentTrait
 local CECSSchema_ComponentTrait_Constant = CECSSchema.ComponentTrait.Constant
 local CECSSchema_ComponentTrait_Mutable = CECSSchema.ComponentTrait.Mutable
 local CECSSchema_ComponentTrait_Serializable = CECSSchema.ComponentTrait.Serializable
 local CECSSchema_ComponentTrait_Shared = CECSSchema.ComponentTrait.Shared
+local CECSSchema_entityHasAllComponents = CECSSchema.entityHasAllComponents
+local CECSSchema_entityHasNonComponents = CECSSchema.entityHasNonComponents
+local CECSSchema_getComponentTypeID = CECSSchema.getComponentTypeID
+local CECSSchema_getComponentTrait = CECSSchema.getComponentTrait
 local Table_deepEquals = Table.deepEquals
 local assert = assert
 local pairs = pairs
+local setmetatable = setmetatable
 local type = type
 
 --- @class dr2c.ECS
@@ -30,6 +33,7 @@ local entitiesLatestID = 0
 local entitiesSorted = true
 --- @type table<dr2c.EntityID, dr2c.Entity>
 local entitiesID2EntityMap = {}
+--- @type table
 local entitiesOperations = {}
 
 --- @class dr2c.Component
@@ -50,11 +54,6 @@ local componentsPoolSerializable = {}
 --- @type dr2c.ComponentPoolTypeBased
 local componentsPoolShared = {}
 
---- @type table<dr2c.ComponentTypeID, table<dr2c.EntityID, table>>
--- local entityComponents = {}
-
--- local entityComponentsWrappers = {}
-
 --- @class dr2c.EntityFilterToken : {}
 
 --- @class dr2c.EntityFilterKey : string
@@ -66,10 +65,40 @@ local componentsPoolShared = {}
 --- @field [string] dr2c.EntityFilter
 --- @field [dr2c.EntityFilterToken] dr2c.EntityFilter
 
+--- @class dr2c.EntityIterationState
+--- @field [1] dr2c.EntityFilter
+--- @field [2] integer
+
 --- @type dr2c.EntityFilters
 local entityFilters = {}
-local entityFilterLatestID = 0
-local entityFilterIterating = false
+
+entities = persist("entities", function()
+	return entities
+end)
+entitiesLatestID = persist("entitiesLatestID", function()
+	return entitiesLatestID
+end)
+entitiesSorted = persist("entitiesSorted", function()
+	return entitiesSorted
+end)
+entitiesID2EntityMap = persist("entitiesID2EntityMap", function()
+	return entitiesID2EntityMap
+end)
+entitiesOperations = persist("entitiesOperations", function()
+	return entitiesOperations
+end)
+componentsPoolConstant = persist("componentsPoolConstant", function()
+	return componentsPoolConstant
+end)
+componentsPoolMutable = persist("componentsPoolMutable", function()
+	return componentsPoolMutable
+end)
+componentsPoolSerializable = persist("componentsPoolSerializable", function()
+	return componentsPoolSerializable
+end)
+componentsPoolShared = persist("componentsPoolShared", function()
+	return componentsPoolShared
+end)
 
 local eventEntitySpawned = events:new(N_("EntitySpawn"), {
 	"",
@@ -177,20 +206,15 @@ local function spawnEntityImpl(entry)
 	entities[#entities + 1] = entity
 	entitiesSorted = false
 
-	do
-		local decode = String.bufferDecode
-
-		for _, component in ipairs(assert(CECSSchema.getEntityComponentsMutable(entity[1]))) do
-			local fieldsBuffer = component.fields
-			--- @cast fieldsBuffer string
-			componentsPoolMutable[entityID] = decode(fieldsBuffer)
-		end
+	for _, component in ipairs(assert(CECSSchema.getEntityComponentsEntityTransient(entity[2]))) do
+		componentsPoolMutable[entityID] = setmetatable({}, {
+			__index = component.mergedFields,
+		})
 	end
 
-	for _, component in ipairs(assert(CECSSchema.getEntityComponentsSerializable(entity[1]))) do
-		local fields = {}
-		componentsPoolSerializable[entityID] = setmetatable(fields, {
-			__index = component.fields,
+	for _, component in ipairs(assert(CECSSchema.getEntityComponentsEntitySerializable(entity[2]))) do
+		componentsPoolSerializable[entityID] = setmetatable({}, {
+			__index = component.mergedFields,
 		})
 	end
 
@@ -292,14 +316,24 @@ function CECS.getComponentByType(entityID, componentType)
 end
 
 --- @param key string
---- @param requires string[]
---- @param excludes string[]
+--- @param requires (dr2c.ComponentType | dr2c.ComponentTypeID)[]
+--- @param excludes (dr2c.ComponentType | dr2c.ComponentTypeID)[]
 --- @return dr2c.EntityFilter
 local function createEntityFilter(key, requires, excludes)
 	--- @class dr2c.EntityFilter
 	local entityFilter = {}
 
 	entityFilter.key = key
+
+	if log.canWarn() then
+		entityFilter.validation = {
+			requires = requires,
+			excludes = excludes,
+			traceback = debug.traceback("", 3),
+		}
+	else
+		entityFilter.validation = nil
+	end
 
 	--- @type boolean[]
 	local filterEntityTypeIDCache = Table.new(CECSSchema.getComponentsCount(), 0)
@@ -308,10 +342,11 @@ local function createEntityFilter(key, requires, excludes)
 	--- @return boolean
 	function entityFilter.check(entityTypeID)
 		local result = filterEntityTypeIDCache[entityTypeID]
+
 		if result == nil then
 			result = not not (
-				CECSSchema.entityHasAllComponents(entityTypeID, requires)
-				and CECSSchema.entityHasNonComponents(entityTypeID, excludes)
+				CECSSchema_entityHasAllComponents(entityTypeID, requires)
+				and CECSSchema_entityHasNonComponents(entityTypeID, excludes)
 			)
 			filterEntityTypeIDCache[entityTypeID] = result
 		end --- @cast result boolean
@@ -322,6 +357,9 @@ local function createEntityFilter(key, requires, excludes)
 	return entityFilter
 end
 
+--- @param requiredComponents (dr2c.ComponentType | dr2c.ComponentTypeID)[]?
+--- @param excludedComponents (dr2c.ComponentType | dr2c.ComponentTypeID)[]?
+--- @return dr2c.EntityFilter
 function CECS.filter(requiredComponents, excludedComponents)
 	requiredComponents = requiredComponents or {}
 	excludedComponents = excludedComponents or {}
@@ -350,47 +388,104 @@ function CECS.filter(requiredComponents, excludedComponents)
 end
 
 --- @param entitiesList dr2c.Entity[]
---- @param entityFilter dr2c.EntityFilter
-local function entitiesIterator(entitiesList, entityFilter, index)
-	local check = entityFilter.check
+--- @param iterationState dr2c.EntityIterationState
+local function entitiesIterator(entitiesList, iterationState)
+	local check = iterationState[1].check
+	local index = iterationState[2] + 1
 
-	index = index + 1
 	local entity = entitiesList[index]
 	while entity do
 		if check(entity[2]) then
-			return index, entity[1], entity[2]
+			iterationState[2] = index
+			return iterationState, entity[1], entity[2]
 		else
 			index = index + 1
 			entity = entitiesList[index]
 		end
 	end
+
+	iterationState[2] = index
 end
 
 --- Iterate over entities that match the given filter.
 --- @param entityFilter dr2c.EntityFilter
 --- @return function
 --- @return dr2c.Entity[]
---- @return dr2c.EntityFilter
+--- @return dr2c.EntityIterationState
 function CECS.iterateEntities(entityFilter)
-	return entitiesIterator, getSortedEntities(), entityFilter
+	return entitiesIterator, getSortedEntities(), { entityFilter, 0 }
 end
 
+--- Iterate over entities and return the entity counts.
+--- @param entityFilter dr2c.EntityFilter
+function CECS.countEntities(entityFilter)
+	local counter = 0
+	local check = entityFilter.check
+
+	for _, entity in ipairs(getSortedEntities()) do
+		if check(entity[2]) then
+			counter = counter + 1
+		end
+	end
+
+	return counter
+end
+
+--- @return table
 function CECS.getSerialTable()
 	CECS.update()
 
 	return {
 		entities = getSortedEntities(),
 		entitiesLatestID = entitiesLatestID,
-		components = componentsPoolSerializable,
+		componentsPoolSerializable = componentsPoolSerializable,
 	}
 end
 
+--- @param data table
 function CECS.setSerialTable(data)
 	entities = data.entities
 	entitiesLatestID = data.entitiesLatestID
-	componentsPools[CECSSchema.ComponentTrait.Serializable] = data.components
+	componentsPoolSerializable = data.componentsPoolSerializable
 end
 
--- events:add(event, func, name?, order?, key?, sequence?)
+events:add(N_("CUpdate"), function(e)
+	CECS.update()
+end, "UpdateECS", "ECS")
+
+events:add(N_("CSnapshotCollect"), function(e)
+	e.snapshot.ecs = CECS.getSerialTable()
+end, "CollectECSSerialTable", "ECS")
+
+events:add(N_("CSnapshotDispense"), function(e)
+	CECS.setSerialTable(e.snapshot.ecs)
+end, "DispenseECSSerialTable", "ECS")
+
+--- @param e dr2c.E.CLoad
+events:add(N_("CLoad"), function(e)
+	if not e.ecsSchema or not log.canWarn() then
+		return
+	end
+
+	local componentsSchema = e.ecsSchema.components
+
+	local function validate(validation, list, schema)
+		for _, componentTypeOrID in ipairs(list) do
+			if not componentsSchema[componentTypeOrID] then
+				local fmt = "Invalid component '%s' detected in entity filter%s"
+				log.warn(fmt:format(componentTypeOrID, validation.traceback))
+			end
+		end
+	end
+
+	for _, entityFilter in ipairs(entityFilters) do
+		if entityFilter.validation then
+			validate(entityFilter.validation, entityFilter.validation.requires)
+			validate(entityFilter.validation, entityFilter.validation.excludes)
+
+			entityFilter.validation = nil
+		end
+	end
+end, "ValidateEntityFilters", "Validate")
 
 return CECS

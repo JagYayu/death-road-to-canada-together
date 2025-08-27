@@ -212,11 +212,14 @@ bool Engine::Tick() noexcept
 		}
 	}
 
-	if (ELoadingState expected = ELoadingState::Done; _loadingState.compare_exchange_strong(expected, ELoadingState::Locked))
 	{
-		_loadingState.store(ELoadingState::Done);
+		std::lock_guard<std::timed_mutex> guard{_loadingMutex};
+		if (ELoadingState expected = ELoadingState::Done; _loadingState.compare_exchange_strong(expected, ELoadingState::Locked))
+		{
+			_loadingState.store(ELoadingState::Done);
 
-		ProcessTick();
+			ProcessTick();
+		}
 	}
 	ProcessRender();
 
@@ -434,7 +437,7 @@ void Engine::SetLoadingInfo(const LoadingInfoArgs &loadingInfo) noexcept
 
 void Engine::TriggerLoadPending() noexcept
 {
-	if (_loadingState.load() != ELoadingState::InProgress)
+	if (ELoadingState expected = ELoadingState::Done; _loadingState.compare_exchange_strong(expected, ELoadingState::Locked))
 	{
 		_loadingState.store(ELoadingState::Pending);
 	}

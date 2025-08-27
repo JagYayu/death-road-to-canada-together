@@ -12,6 +12,7 @@
 #include "system/Log.hpp"
 #include "system/LogVerbosity.hpp"
 #include "util/EnumFlag.hpp"
+#include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
 
 #include "json.hpp"
@@ -297,10 +298,13 @@ void Log::Process() noexcept
 				                                  entry.message);
 
 				PrintToConsole(message, entry);
-				fileStream << message << std::endl;
+				fileStream << message;
 
 				lock.lock();
 			}
+
+			fileStream.flush();
+			std::cout.flush();
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -327,11 +331,11 @@ void Log::PrintToConsole(std::string_view message, const Entry &entry) noexcept
 
 	if (color != "")
 	{
-		std::cout << color << message << "\033[0m" << std::endl;
+		std::cout << color << message << "\033[0m\n";
 	}
 	else
 	{
-		std::cout << message << std::endl;
+		std::cout << message << '\n';
 	}
 }
 
@@ -376,4 +380,27 @@ void Log::OutputImpl(std::string_view module, std::string_view verb, std::string
 
 		_cv.notify_one();
 	}
+}
+
+void Log::LuaOutput(sol::object verb, sol::table args) const noexcept
+{
+	static std::string buffer;
+
+	for (std::uint8_t i = 1; i <= 9; ++i)
+	{
+		auto value = args[i];
+		if (value.valid())
+		{
+			auto &&str = StringUtils::Unescape(value.get<std::string_view>());
+			buffer.append(str);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	Output(verb.as<std::string_view>(), buffer.c_str());
+
+	buffer.clear();
 }

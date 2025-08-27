@@ -71,6 +71,7 @@ namespace tudov
 		std::vector<EventHandler> _handlers;
 		ProgressionID _invocationTrackID;
 		std::unordered_map<ProgressionID, Progression> _invocationTracks;
+		ScriptID _invokingScriptID;
 
 	  public:
 		explicit RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = {""}, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys = {}, ScriptID scriptID = false);
@@ -86,15 +87,14 @@ namespace tudov
 		void EnableProfiler(bool traceHandlers) noexcept;
 		void DisableProfiler() noexcept;
 
-		ProgressionID GetNextTrackID() noexcept;
-		std::tuple<std::size_t, std::size_t> GetProgression() noexcept;
+		ProgressionID GetNextTrackID() const noexcept;
+		std::tuple<std::size_t, std::size_t> GetProgression() const noexcept;
+		ScriptID GetInvokingScriptID() const noexcept;
 
 		void Add(const AddHandlerArgs &args) override;
 
 		void Invoke(sol::object e = {}, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
 		[[deprecated]] void InvokeUncached(sol::object e = sol::lua_nil, const EventHandleKey &key = {});
-
-		ProgressionID GetNextInvocationID() noexcept;
 
 		void ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider);
 		void ClearSpecificScriptHandlers(const IScriptProvider &scriptProvider, ScriptID scriptID);

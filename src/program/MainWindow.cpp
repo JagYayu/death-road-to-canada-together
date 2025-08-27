@@ -257,7 +257,8 @@ void MainWindow::SetShowLoadingFrame(bool value) noexcept
 
 EventHandleKey MainWindow::GetKey() const noexcept
 {
-	return "Main";
+	static EventHandleKey key = "Main";
+	return key;
 }
 
 bool MainWindow::HandleEvent(SDL_Event &event) noexcept

@@ -11,6 +11,8 @@
 
 #include "mod/ScriptLoader.hpp"
 
+#include "event/CoreEvents.hpp"
+#include "event/RuntimeEvent.hpp"
 #include "misc/Text.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"
@@ -242,9 +244,9 @@ void ScriptLoader::LoadAllScripts()
 
 	_onPostLoadAllScripts();
 
-	TE_DEBUG("{}", "Loaded provided scripts");
+	PostLoadScripts();
 
-	Log::CleanupExpired();
+	TE_DEBUG("{}", "Loaded provided scripts");
 }
 
 std::shared_ptr<IScriptModule> ScriptLoader::Load(std::string_view scriptName)
@@ -420,7 +422,6 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 	}
 
 	_scriptReversedDependencies.erase(scriptID);
-
 	for (auto &&[_, dependencies] : _scriptReversedDependencies)
 	{
 		dependencies.erase(scriptID);
@@ -464,9 +465,9 @@ void ScriptLoader::HotReloadScripts(const std::vector<ScriptID> &scriptIDs)
 
 	_onPostHotReloadScripts(scriptIDs);
 
-	TE_DEBUG("{}", "Hot reloaded scripts");
+	PostLoadScripts();
 
-	Log::CleanupExpired();
+	TE_DEBUG("{}", "Hot reloaded scripts");
 }
 
 void ScriptLoader::ProcessFullLoads()
@@ -491,6 +492,13 @@ void ScriptLoader::ProcessFullLoads()
 	}
 
 	TE_DEBUG("{}", "Processed full loads");
+}
+
+void ScriptLoader::PostLoadScripts()
+{
+	GetEventManager().GetCoreEvents().ScriptsLoaded().Invoke();
+
+	Log::CleanupExpired();
 }
 
 void ScriptLoader::LuaAddReverseDependency(sol::object source, sol::object target) noexcept

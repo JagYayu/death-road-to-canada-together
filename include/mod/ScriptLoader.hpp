@@ -18,7 +18,6 @@
 #include "util/Definitions.hpp"
 #include "util/Micros.hpp"
 
-
 #include <sol/table.hpp>
 
 #include <memory>
@@ -294,6 +293,7 @@ namespace tudov
 	  protected:
 		std::shared_ptr<ScriptModule> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
 		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
+		void PostLoadScripts();
 
 	  private:
 		void LuaAddReverseDependency(sol::object source, sol::object target) noexcept;

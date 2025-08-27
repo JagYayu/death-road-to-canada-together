@@ -63,6 +63,22 @@ function CSprites.registerSpritesFromJsonFile(filePath, noLog)
 	end)
 end
 
+function CSprites.registerSpritesFromJsonDirectory(path, options)
+	if not vfs:exists(path) then
+		error(('Directory "%s" does not exist!'):format(path))
+	end
+
+	options = options
+		or bit.bor(EPathListOption.File, EPathListOption.Recursed, EPathListOption.Sorted, EPathListOption.FullPath)
+	local entries = vfs:list(path, options)
+
+	for _, entry in ipairs(entries) do
+		CSprites.registerSpritesFromJsonFile(entry.path, false)
+	end
+end
+
+CSprites.registerSpritesFromJsonDirectory("mods/dr2c/data/sprites")
+
 function CSprites.reloadImmediately()
 	local e = {
 		new = {},
@@ -84,25 +100,11 @@ end
 
 CSprites.reload()
 
-events:add(N_("CContentLoad"), function(e)
+events:add(N_("CLoad"), function(e)
 	if reloadPending then
 		CSprites.reloadImmediately()
 	end
 end, "loadSprites", "Sprites")
-
-local defaultSpritesDirectory = "mods/dr2c/data/sprites"
-if vfs:exists(defaultSpritesDirectory) then
-	local entries = vfs:list(
-		defaultSpritesDirectory,
-		bit.bor(EPathListOption.File, EPathListOption.Recursed, EPathListOption.Sorted, EPathListOption.FullPath)
-	)
-
-	for _, entry in ipairs(entries) do
-		CSprites.registerSpritesFromJsonFile(entry.path, false)
-	end
-else
-	error(('builtin directory "%s" does not exist!'):format(defaultSpritesDirectory))
-end
 
 --- @param spriteName string
 --- @param spriteIndex integer?

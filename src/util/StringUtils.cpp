@@ -52,3 +52,48 @@ bool StringUtils::IsSubpath(const std::filesystem::path &parent, const std::file
 
 	return pIt == p.end();
 }
+
+std::string StringUtils::Unescape(std::string_view s) noexcept
+{
+	std::string result;
+	result.reserve(s.size());
+
+	for (std::size_t i = 0; i < s.size(); ++i)
+	{
+		if (s[i] == '\\' && i + 1 < s.size())
+		{
+			switch (s[i + 1])
+			{
+			case 'n':
+				result.push_back('\n');
+				++i;
+				break;
+			case 'r':
+				result.push_back('\r');
+				++i;
+				break;
+			case 't':
+				result.push_back('\t');
+				++i;
+				break;
+			case '\\':
+				result.push_back('\\');
+				++i;
+				break;
+			case '"':
+				result.push_back('"');
+				++i;
+				break;
+			default:
+				result.push_back(s[i]);
+				break;
+			}
+		}
+		else
+		{
+			result.push_back(s[i]);
+		}
+	}
+
+	return result;
+}

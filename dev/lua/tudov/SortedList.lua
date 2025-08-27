@@ -1,15 +1,14 @@
-
---- @class dr2c.SortedList.Data
+--- @class SortedList.Data
 --- @field compare fun(l: any, r: any): boolean?
 
---- @class dr2c.SortedList
+--- @class SortedList
 local SortedList = {}
 
 function SortedList:insert()
 	--
 end
 
---- @return dr2c.SortedList.Data
+--- @return SortedList.Data
 function SortedList.create(compare)
 	return {
 		compare = compare,

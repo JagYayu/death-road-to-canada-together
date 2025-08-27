@@ -16,23 +16,32 @@ local CommonOrders = {
 }
 
 local eventGameUpdate = events:new(N_("GUpdate"), CommonOrders)
+local eventGameRender = events:new(N_("GRender"), CommonOrders)
+local eventGameLoad = events:new(N_("GLoad"), CommonOrders)
+local eventGameKeyDown = events:new(N_("GKeyDown"), CommonOrders)
+local eventGameKeyUp = events:new(N_("GKeyUp"), CommonOrders)
 
 events:add("TickUpdate", function(e)
 	tick = tick + 1
+
 	events:invoke(eventGameUpdate, e, nil, EEventInvocation.None)
 end, N_("GameUpdate"))
 
-local eventGameRender = events:new(N_("GRender"), CommonOrders)
-
 events:add("TickRender", function(e)
 	events:invoke(eventGameRender, e)
-end, N_("GameRender"))
-
-local eventGameLoad = events:new(N_("GLoad"), CommonOrders)
+end, N_("GameRender"), nil)
 
 events:add("TickLoad", function(e)
 	events:invoke(eventGameLoad, e)
 end, N_("GameLoad"))
+
+events:add("KeyDown", function(e)
+	events:invoke(eventGameKeyDown, e)
+end, N_("GameKeyDown"))
+
+events:add("KeyUp", function(e)
+	events:invoke(eventGameKeyUp, e)
+end, N_("GameGameKeyUp"))
 
 engine:triggerLoadPending()
 

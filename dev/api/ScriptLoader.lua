@@ -5,7 +5,7 @@ error("this is a lua library module")
 scriptLoader = {}
 
 --- @return integer
-function scriptLoader.getLoadingScriptID() end
+function scriptLoader:getLoadingScriptID() end
 
 --- @return string
-function scriptLoader.getLoadingScriptName() end
+function scriptLoader:getLoadingScriptName() end

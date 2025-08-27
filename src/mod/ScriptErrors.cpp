@@ -12,9 +12,12 @@
 #include "mod/ScriptErrors.hpp"
 
 #include "mod/ScriptLoader.hpp"
+#include "sol/string_view.hpp"
+#include "util/Definitions.hpp"
 
 #include <algorithm>
 
+#include <cmath>
 #include <memory>
 #include <optional>
 #include <regex>
@@ -221,4 +224,30 @@ void ScriptErrors::ClearRuntimeErrors() noexcept
 {
 	_scriptRuntimeErrors.clear();
 	ClearCaches();
+}
+
+void ScriptErrors::LuaAddLoadtimeError(sol::object scriptID, sol::object traceback) noexcept
+{
+	auto scriptID_ = static_cast<ScriptID>(scriptID.as<std::double_t>());
+	std::string_view traceback_ = traceback.as<sol::string_view>();
+
+	IScriptErrors::AddLoadtimeError(scriptID_, traceback_);
+}
+
+void ScriptErrors::LuaAddRuntimeError(sol::object scriptID, sol::object traceback) noexcept
+{
+	auto scriptID_ = static_cast<ScriptID>(scriptID.as<std::double_t>());
+	std::string_view traceback_ = traceback.as<sol::string_view>();
+
+	IScriptErrors::AddRuntimeError(scriptID_, traceback_);
+}
+
+bool ScriptErrors::LuaRemoveLoadtimeError(sol::object scriptID) noexcept
+{
+	return RemoveLoadtimeError(scriptID.as<ScriptID>());
+}
+
+bool ScriptErrors::LuaRemoveRuntimeError(sol::object scriptID) noexcept
+{
+	return RemoveRuntimeError(scriptID.as<ScriptID>());
 }

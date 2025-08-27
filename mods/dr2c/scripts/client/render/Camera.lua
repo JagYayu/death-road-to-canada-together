@@ -36,20 +36,64 @@ local renderTarget
 local renderTargetWidth = 1280
 local renderTargetHeight = 720
 
-function Camera.newLayer(z)
-	-- layers[#layers+1] =
-end
-
 function Camera.getRenderTarget()
 	return renderTarget
 end
 
+local imageID = images:getID("gfx/cars/cars_unique_110x96.png")
+
+local renderTargetWidth, renderTargetHeight = 960, 640
+
 local eventRenderCamera = events:new(N_("RenderCamera"), {
+	"Begin",
 	"Sprites",
+	"DebugObjects",
+	"End",
 })
 
 events:add(N_("CRender"), function(e)
-	--
-end, N_("updateCamera"), "Camera")
+	local snapScale
+	local renderer = e.window.renderer
+	if not renderTarget then
+		renderTarget = renderer:newRenderTarget(renderTargetWidth, renderTargetHeight)
+		snapScale = true
+	elseif renderTarget:resizeToFit() then
+		snapScale = true
+	end
+	renderTarget:update()
+
+	events:invoke(eventRenderCamera, e)
+
+	if snapScale then
+		renderTarget:snapCameraScale()
+	end
+
+	renderer:beginTarget(renderTarget)
+	renderer:clear()
+
+	local width, height = e.window:getSize()
+
+	local scale = math.max(width / renderTargetWidth, height / renderTargetHeight)
+	renderTarget:setCameraTargetPosition(300, 0)
+	renderTarget:setCameraTargetScale(scale, scale)
+
+	for x = -1, 2 do
+		renderer:draw({
+			image = imageID,
+			destination = { x * 100, x * 100, 80, 57 },
+			source = { 14, 302, 80, 57 },
+		})
+	end
+
+	renderer:draw({
+		renderTarget = renderer:endTarget(),
+		destination = {
+			0,
+			0,
+			width,
+			height,
+		},
+	})
+end, N_("RenderCamera"), "Camera")
 
 return Camera

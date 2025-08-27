@@ -157,7 +157,7 @@ local function receiveClientAttribute(e, validate, clientsAttributes)
 		attributes[attribute] = value
 	end
 
-	if Utility.isIndexKey(content.requestID) then
+	if Utility.canBeIndex(content.requestID) then
 		privateAttributeRequests[content.requestID] = nil
 	end
 end

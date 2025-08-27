@@ -41,12 +41,12 @@ namespace tudov
 				}
 				else
 				{
-					return std::hash<std::string>{}(std::get<std::string>(key.value));
+					return std::hash<std::string_view>{}(std::get<std::string_view>(key.value));
 				}
 			}
 		};
 
-		std::variant<std::nullptr_t, std::double_t, std::string> value;
+		std::variant<std::nullptr_t, std::double_t, std::string_view> value;
 
 		inline bool operator==(const EventHandleKey &other) const
 		{
@@ -63,18 +63,13 @@ namespace tudov
 		{
 		}
 
-		inline explicit EventHandleKey(const std::string &string) noexcept
-		    : value(string)
-		{
-		}
-
 		inline explicit EventHandleKey(std::string_view stringView) noexcept
-		    : value(std::string(stringView))
+		    : value(stringView)
 		{
 		}
 
 		inline EventHandleKey(const char *str) noexcept
-		    : value(std::string(str))
+		    : value(str)
 		{
 		}
 
@@ -102,9 +97,9 @@ namespace tudov
 			{
 				return std::to_string(std::get<std::double_t>(value));
 			}
-			else if (std::holds_alternative<std::string>(value))
+			else if (std::holds_alternative<std::string_view>(value))
 			{
-				return std::format("\"{}\"", std::get<std::string>(value));
+				return std::format("\"{}\"", std::get<std::string_view>(value));
 			}
 			else
 			{

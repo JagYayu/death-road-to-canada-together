@@ -13,6 +13,7 @@
 
 #include "LogVerbosity.hpp"
 #include "program/Tudov.hpp"
+#include "sol/table.hpp"
 #include "util/Micros.hpp"
 
 #include <atomic>
@@ -119,7 +120,7 @@ namespace tudov
 	  private:
 		std::string _module;
 
-		bool CanOutput(ELogVerbosity flag) const noexcept;
+		[[nodiscard]] bool CanOutput(ELogVerbosity flag) const noexcept;
 		void Output(std::string_view verb, std::string_view str) const noexcept;
 
 	  public:
@@ -128,32 +129,32 @@ namespace tudov
 
 		std::string_view GetModule() const;
 
-		TE_FORCEINLINE ELogVerbosity GetVerbosities() const noexcept
+		[[nodiscard]] TE_FORCEINLINE ELogVerbosity GetVerbosities() const noexcept
 		{
 			return GetVerbosities(_module);
 		}
 
-		TE_FORCEINLINE bool CanTrace() const noexcept
+		[[nodiscard]] TE_FORCEINLINE bool CanTrace() const noexcept
 		{
 			return CanOutput(ELogVerbosity::Trace);
 		}
-		TE_FORCEINLINE bool CanInfo() const noexcept
+		[[nodiscard]] TE_FORCEINLINE bool CanInfo() const noexcept
 		{
 			return CanOutput(ELogVerbosity::Info);
 		}
-		TE_FORCEINLINE bool CanDebug() const noexcept
+		[[nodiscard]] TE_FORCEINLINE bool CanDebug() const noexcept
 		{
 			return CanOutput(ELogVerbosity::Debug);
 		}
-		TE_FORCEINLINE bool CanWarn() const noexcept
+		[[nodiscard]] TE_FORCEINLINE bool CanWarn() const noexcept
 		{
 			return CanOutput(ELogVerbosity::Warn);
 		}
-		TE_FORCEINLINE bool CanError() const noexcept
+		[[nodiscard]] TE_FORCEINLINE bool CanError() const noexcept
 		{
 			return CanOutput(ELogVerbosity::Error);
 		}
-		TE_FORCEINLINE constexpr bool CanFatal() const noexcept
+		[[nodiscard]] TE_FORCEINLINE constexpr bool CanFatal() const noexcept
 		{
 			return true;
 		}
@@ -193,47 +194,50 @@ namespace tudov
 			Output(VerbFatal, str);
 			Tudov::FatalError(str);
 		}
+
+	  private:
+		void LuaOutput(sol::object verb, sol::table args) const noexcept;
 	};
 
 	struct ILogProvider
 	{
 		virtual ~ILogProvider() noexcept = default;
 
-		virtual Log &GetLog() noexcept = 0;
+		[[nodiscard]] virtual Log &GetLog() noexcept = 0;
 
-		const Log &GetLog() const noexcept
+		[[nodiscard]] const Log &GetLog() const noexcept
 		{
 			return const_cast<ILogProvider *>(this)->GetLog();
 		}
 
-		const std::string &GetModule() const;
+		[[nodiscard]] const std::string &GetModule() const;
 
-		TE_FORCEINLINE ELogVerbosity GetVerbosity() const
+		[[nodiscard]] TE_FORCEINLINE ELogVerbosity GetVerbosity() const
 		{
 			return GetLog().GetVerbosities();
 		}
 
-		TE_FORCEINLINE bool CanTrace() const noexcept
+		[[nodiscard]] TE_FORCEINLINE bool CanTrace() const noexcept
 		{
 			return GetLog().CanTrace();
 		}
-		TE_FORCEINLINE bool CanInfo() const noexcept
+		[[nodiscard]] TE_FORCEINLINE bool CanInfo() const noexcept
 		{
 			return GetLog().CanInfo();
 		}
-		TE_FORCEINLINE bool CanDebug() const noexcept
+		[[nodiscard]] TE_FORCEINLINE bool CanDebug() const noexcept
 		{
 			return GetLog().CanDebug();
 		}
-		TE_FORCEINLINE bool CanWarn() const noexcept
+		[[nodiscard]] TE_FORCEINLINE bool CanWarn() const noexcept
 		{
 			return GetLog().CanWarn();
 		}
-		TE_FORCEINLINE bool CanError() const noexcept
+		[[nodiscard]] TE_FORCEINLINE bool CanError() const noexcept
 		{
 			return GetLog().CanError();
 		}
-		TE_FORCEINLINE constexpr bool CanFatal() const noexcept
+		[[nodiscard]] TE_FORCEINLINE constexpr bool CanFatal() const noexcept
 		{
 			return true;
 		}

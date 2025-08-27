@@ -12,6 +12,7 @@
 #pragma once
 
 #include "program/EngineComponent.hpp"
+#include "sol/forward.hpp"
 #include "util/Definitions.hpp"
 #include "util/Micros.hpp"
 
@@ -28,6 +29,8 @@
 
 namespace tudov
 {
+	class LuaAPI;
+
 	struct ScriptError
 	{
 		std::chrono::time_point<std::chrono::system_clock> time;
@@ -79,6 +82,8 @@ namespace tudov
 
 	class ScriptErrors : public IScriptErrors
 	{
+		friend LuaAPI;
+
 	  protected:
 		Context &_context;
 		std::unordered_map<ScriptID, std::shared_ptr<ScriptError>> _scriptLoadtimeErrors;
@@ -119,5 +124,11 @@ namespace tudov
 
 		void ClearLoadtimeErrors() noexcept override;
 		void ClearRuntimeErrors() noexcept override;
+
+	  private:
+		void LuaAddLoadtimeError(sol::object scriptID, sol::object traceback) noexcept;
+		void LuaAddRuntimeError(sol::object scriptID, sol::object traceback) noexcept;
+		bool LuaRemoveLoadtimeError(sol::object scriptID) noexcept;
+		bool LuaRemoveRuntimeError(sol::object scriptID) noexcept;
 	};
 } // namespace tudov
