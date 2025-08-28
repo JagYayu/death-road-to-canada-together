@@ -80,15 +80,22 @@ EServerSessionState LocalServerSession::GetSessionState() const noexcept
 	return _sessionState;
 }
 
+std::size_t LocalServerSession::GetClients() const noexcept
+{
+	return _hostInfo->localClients.size();
+}
+
 void LocalServerSession::Host(const HostArgs &args)
 {
 	_sessionState = EServerSessionState::Starting;
 
-	_hostInfo = std::make_unique<HostInfo>(HostInfo{
-	    .title = args.title,
-	    .password = args.password,
-	    .maximumClients = args.maximumClients,
-	});
+	_hostInfo = std::make_unique<HostInfo>(args.title, args.password, args.maximumClients);
+
+	EventLocalServerHostData data{
+	    .socketType = ESocketType::Local,
+	    .serverSlot = _serverSessionSlot,
+	};
+	GetEventManager().GetCoreEvents().ServerHost().Invoke(&data, {}, EEventInvocation::None);
 
 	_sessionState = EServerSessionState::Hosting;
 }
@@ -96,7 +103,15 @@ void LocalServerSession::Host(const HostArgs &args)
 void LocalServerSession::Shutdown()
 {
 	_sessionState = EServerSessionState::Stopping;
+
 	_hostInfo = nullptr;
+
+	EventLocalServerShutdownData data{
+	    .socketType = ESocketType::Local,
+	    .serverSlot = _serverSessionSlot,
+	};
+	GetEventManager().GetCoreEvents().ServerHost().Invoke(&data, {}, EEventInvocation::None);
+
 	_sessionState = EServerSessionState::Shutdown;
 }
 

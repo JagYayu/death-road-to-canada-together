@@ -205,4 +205,8 @@ namespace tudov
 	{
 		log->Fatal("Unhandled C++ exception occurred: {}", e.what());
 	}
+
+	std::vector<std::byte> CompressData(const std::vector<std::byte> &input);
+
+	std::vector<std::byte> DecompressData(const std::vector<std::byte> &input, std::size_t originalSize);
 } // namespace tudov

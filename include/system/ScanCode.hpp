@@ -123,10 +123,10 @@ namespace tudov
 		End = SDL_SCANCODE_END,           // End
 		PageDown = SDL_SCANCODE_PAGEDOWN, // Page Down
 
-		Right = SDL_SCANCODE_RIGHT, // →
-		Left = SDL_SCANCODE_LEFT,   // ←
-		Down = SDL_SCANCODE_DOWN,   // ↓
-		Up = SDL_SCANCODE_UP,       // ↑
+		Right = SDL_SCANCODE_RIGHT,
+		Left = SDL_SCANCODE_LEFT,
+		Down = SDL_SCANCODE_DOWN,
+		Up = SDL_SCANCODE_UP,
 
 		// Key Pad Area
 

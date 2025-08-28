@@ -47,87 +47,87 @@ namespace tudov
 		~Context() noexcept = default;
 
 	  public:
-		Engine &GetEngine();
-		IEventManager &GetEventManager();
-		ILuaAPI &GetLuaAPI();
-		IModManager &GetModManager();
-		IScriptEngine &GetScriptEngine();
-		IScriptErrors &GetScriptErrors();
-		IScriptLoader &GetScriptLoader();
-		IScriptProvider &GetScriptProvider();
-		IGlobalStorageManager &GetGlobalStorageManager();
-		ILocalization &GetLocalization();
-		INetworkManager &GetNetworkManager();
-		GlobalResourcesCollection &GetGlobalResourcesCollection();
-		VirtualFileSystem &GetVirtualFileSystem();
-		WindowManager &GetWindowManager();
+		[[nodiscard]] Engine &GetEngine();
+		[[nodiscard]] IEventManager &GetEventManager();
+		[[nodiscard]] ILuaAPI &GetLuaAPI();
+		[[nodiscard]] IModManager &GetModManager();
+		[[nodiscard]] IScriptEngine &GetScriptEngine();
+		[[nodiscard]] IScriptErrors &GetScriptErrors();
+		[[nodiscard]] IScriptLoader &GetScriptLoader();
+		[[nodiscard]] IScriptProvider &GetScriptProvider();
+		[[nodiscard]] IGlobalStorageManager &GetGlobalStorageManager();
+		[[nodiscard]] ILocalization &GetLocalization();
+		[[nodiscard]] INetworkManager &GetNetworkManager();
+		[[nodiscard]] GlobalResourcesCollection &GetGlobalResourcesCollection();
+		[[nodiscard]] VirtualFileSystem &GetVirtualFileSystem();
+		[[nodiscard]] WindowManager &GetWindowManager();
 
-		TE_FORCEINLINE const Engine &GetEngine() const
+		[[nodiscard]] TE_FORCEINLINE const Engine &GetEngine() const
 		{
 			return const_cast<Context *>(this)->GetEngine();
 		}
 
-		TE_FORCEINLINE const IEventManager &GetEventManager() const
+		[[nodiscard]] TE_FORCEINLINE const IEventManager &GetEventManager() const
 		{
 			return This()->GetEventManager();
 		}
 
-		TE_FORCEINLINE ILuaAPI &GetLuaAPI() const
+		[[nodiscard]] TE_FORCEINLINE ILuaAPI &GetLuaAPI() const
 		{
 			return This()->GetLuaAPI();
 		}
 
-		TE_FORCEINLINE const IModManager &GetModManager() const
+		[[nodiscard]] TE_FORCEINLINE const IModManager &GetModManager() const
 		{
 			return This()->GetModManager();
 		}
 
-		TE_FORCEINLINE const IScriptEngine &GetScriptEngine() const
+		[[nodiscard]] TE_FORCEINLINE const IScriptEngine &GetScriptEngine() const
 		{
 			return This()->GetScriptEngine();
 		}
 
-		TE_FORCEINLINE const IScriptErrors &GetScriptErrors() const
+		[[nodiscard]] TE_FORCEINLINE const IScriptErrors &GetScriptErrors() const
 		{
 			return This()->GetScriptErrors();
 		}
 
-		TE_FORCEINLINE const IScriptLoader &GetScriptLoader() const
+		[[nodiscard]] TE_FORCEINLINE const IScriptLoader &GetScriptLoader() const
 		{
 			return This()->GetScriptLoader();
 		}
 
-		TE_FORCEINLINE const IScriptProvider &GetScriptProvider() const
+		[[nodiscard]] TE_FORCEINLINE const IScriptProvider &GetScriptProvider() const
 		{
 			return This()->GetScriptProvider();
 		}
 
-		TE_FORCEINLINE const IGlobalStorageManager &GetGlobalStorageManager() const
+		[[nodiscard]] TE_FORCEINLINE const IGlobalStorageManager &GetGlobalStorageManager() const
 		{
 			return This()->GetGlobalStorageManager();
 		}
 
-		TE_FORCEINLINE const ILocalization &GetLocalization() const
+		[[nodiscard]] TE_FORCEINLINE const ILocalization &GetLocalization() const
 		{
 			return This()->GetLocalization();
 		}
 
-		TE_FORCEINLINE const INetworkManager &GetNetworkManager() const
+		[[nodiscard]] TE_FORCEINLINE const INetworkManager &GetNetworkManager() const
 		{
 			return const_cast<Context *>(this)->GetNetworkManager();
 		}
 
-		TE_FORCEINLINE const GlobalResourcesCollection &GetGlobalResourcesCollection() const
+		[[nodiscard]] TE_FORCEINLINE const GlobalResourcesCollection &GetGlobalResourcesCollection() const
 		{
 			return const_cast<Context *>(this)->GetGlobalResourcesCollection();
 		}
 
-		TE_FORCEINLINE const VirtualFileSystem &GetVirtualFileSystem() const
+		[[nodiscard]] TE_FORCEINLINE const VirtualFileSystem &GetVirtualFileSystem() const
 		{
 			return const_cast<Context *>(this)->GetVirtualFileSystem();
 		}
 
-		TE_FORCEINLINE const WindowManager &GetWindowManager() const
+		[[nodiscard]] TE_FORCEINLINE const WindowManager &GetWindowManager() const
 		{
 			return const_cast<Context *>(this)->GetWindowManager();
 		}
@@ -146,149 +146,149 @@ namespace tudov
 	{
 		virtual ~IContextProvider() noexcept = default;
 
-		virtual Context &GetContext() noexcept = 0;
+		[[nodiscard]] virtual Context &GetContext() noexcept = 0;
 
-		TE_FORCEINLINE const Context &GetContext() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const Context &GetContext() const noexcept
 		{
 			return const_cast<IContextProvider *>(this)->GetContext();
 		}
 
-		TE_FORCEINLINE Engine &GetEngine() noexcept
+		[[nodiscard]] TE_FORCEINLINE Engine &GetEngine() noexcept
 		{
 			return GetContext().GetEngine();
 		}
 
-		TE_FORCEINLINE const Engine &GetEngine() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const Engine &GetEngine() const noexcept
 		{
 			return GetContext().GetEngine();
 		}
 
-		TE_FORCEINLINE IEventManager &GetEventManager() noexcept
+		[[nodiscard]] TE_FORCEINLINE IEventManager &GetEventManager() noexcept
 		{
 			return GetContext().GetEventManager();
 		}
 
-		TE_FORCEINLINE const IEventManager &GetEventManager() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const IEventManager &GetEventManager() const noexcept
 		{
 			return GetContext().GetEventManager();
 		}
 
-		TE_FORCEINLINE ILuaAPI &GetLuaAPI() noexcept
+		[[nodiscard]] TE_FORCEINLINE ILuaAPI &GetLuaAPI() noexcept
 		{
 			return GetContext().GetLuaAPI();
 		}
 
-		TE_FORCEINLINE const ILuaAPI &GetLuaAPI() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const ILuaAPI &GetLuaAPI() const noexcept
 		{
 			return GetContext().GetLuaAPI();
 		}
 
-		TE_FORCEINLINE IModManager &GetModManager() noexcept
+		[[nodiscard]] TE_FORCEINLINE IModManager &GetModManager() noexcept
 		{
 			return GetContext().GetModManager();
 		}
 
-		TE_FORCEINLINE const IModManager &GetModManager() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const IModManager &GetModManager() const noexcept
 		{
 			return GetContext().GetModManager();
 		}
 
-		TE_FORCEINLINE IScriptEngine &GetScriptEngine() noexcept
+		[[nodiscard]] TE_FORCEINLINE IScriptEngine &GetScriptEngine() noexcept
 		{
 			return GetContext().GetScriptEngine();
 		}
 
-		TE_FORCEINLINE const IScriptEngine &GetScriptEngine() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const IScriptEngine &GetScriptEngine() const noexcept
 		{
 			return GetContext().GetScriptEngine();
 		}
 
-		TE_FORCEINLINE IScriptErrors &GetScriptErrors() noexcept
+		[[nodiscard]] TE_FORCEINLINE IScriptErrors &GetScriptErrors() noexcept
 		{
 			return GetContext().GetScriptErrors();
 		}
 
-		TE_FORCEINLINE const IScriptErrors &GetScriptErrors() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const IScriptErrors &GetScriptErrors() const noexcept
 		{
 			return GetContext().GetScriptErrors();
 		}
 
-		TE_FORCEINLINE IScriptLoader &GetScriptLoader() noexcept
+		[[nodiscard]] TE_FORCEINLINE IScriptLoader &GetScriptLoader() noexcept
 		{
 			return GetContext().GetScriptLoader();
 		}
 
-		TE_FORCEINLINE const IScriptLoader &GetScriptLoader() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const IScriptLoader &GetScriptLoader() const noexcept
 		{
 			return GetContext().GetScriptLoader();
 		}
 
-		TE_FORCEINLINE IScriptProvider &GetScriptProvider() noexcept
+		[[nodiscard]] TE_FORCEINLINE IScriptProvider &GetScriptProvider() noexcept
 		{
 			return GetContext().GetScriptProvider();
 		}
 
-		TE_FORCEINLINE const IScriptProvider &GetScriptProvider() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const IScriptProvider &GetScriptProvider() const noexcept
 		{
 			return GetContext().GetScriptProvider();
 		}
 
-		TE_FORCEINLINE IGlobalStorageManager &GetGlobalStorageManager() noexcept
+		[[nodiscard]] TE_FORCEINLINE IGlobalStorageManager &GetGlobalStorageManager() noexcept
 		{
 			return GetContext().GetGlobalStorageManager();
 		}
 
-		ILocalization &GetLocalization() noexcept
+		[[nodiscard]] ILocalization &GetLocalization() noexcept
 		{
 			return GetContext().GetLocalization();
 		}
 
-		const ILocalization &GetLocalization() const noexcept
+		[[nodiscard]] const ILocalization &GetLocalization() const noexcept
 		{
 			return GetContext().GetLocalization();
 		}
 
-		INetworkManager &GetNetworkManager() noexcept
+		[[nodiscard]] INetworkManager &GetNetworkManager() noexcept
 		{
 			return GetContext().GetNetworkManager();
 		}
 
-		const INetworkManager &GetNetworkManager() const noexcept
+		[[nodiscard]] const INetworkManager &GetNetworkManager() const noexcept
 		{
 			return GetContext().GetNetworkManager();
 		}
 
-		TE_FORCEINLINE const IGlobalStorageManager &GetGlobalStorageManager() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const IGlobalStorageManager &GetGlobalStorageManager() const noexcept
 		{
 			return GetContext().GetGlobalStorageManager();
 		}
 
-		TE_FORCEINLINE GlobalResourcesCollection &GetGlobalResourcesCollection() noexcept
+		[[nodiscard]] TE_FORCEINLINE GlobalResourcesCollection &GetGlobalResourcesCollection() noexcept
 		{
 			return GetContext().GetGlobalResourcesCollection();
 		}
 
-		TE_FORCEINLINE const GlobalResourcesCollection &GetGlobalResourcesCollection() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const GlobalResourcesCollection &GetGlobalResourcesCollection() const noexcept
 		{
 			return GetContext().GetGlobalResourcesCollection();
 		}
 
-		TE_FORCEINLINE VirtualFileSystem &GetVirtualFileSystem() noexcept
+		[[nodiscard]] TE_FORCEINLINE VirtualFileSystem &GetVirtualFileSystem() noexcept
 		{
 			return GetContext().GetVirtualFileSystem();
 		}
 
-		TE_FORCEINLINE const VirtualFileSystem &GetVirtualFileSystem() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const VirtualFileSystem &GetVirtualFileSystem() const noexcept
 		{
 			return GetContext().GetVirtualFileSystem();
 		}
 
-		WindowManager &GetWindowManager() noexcept
+		[[nodiscard]] WindowManager &GetWindowManager() noexcept
 		{
 			return GetContext().GetWindowManager();
 		}
 
-		const WindowManager &GetWindowManager() const noexcept
+		[[nodiscard]] const WindowManager &GetWindowManager() const noexcept
 		{
 			return GetContext().GetWindowManager();
 		}

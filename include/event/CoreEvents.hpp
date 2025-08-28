@@ -50,11 +50,16 @@ namespace tudov
 		[[nodiscard]] virtual RuntimeEvent &ServerAuthenticate() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ServerConnect() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ServerDisconnect() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &ServerHost() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ServerMessage() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &ServerShutdown() noexcept = 0;
 
 		// Debug events.
 
-		[[nodiscard]] virtual RuntimeEvent &DebugCommand() noexcept = 0;
+		/**
+		 * Provide debug elements / commands from lua modules.
+		 */
+		[[nodiscard]] virtual RuntimeEvent &DebugProvide() noexcept = 0;
 		/**
 		 * Generate snapshot tables from lua modules to inspect data and memory.
 		 */
@@ -81,7 +86,7 @@ namespace tudov
 		TRuntimeEvent _clientConnect;
 		TRuntimeEvent _clientDisconnect;
 		TRuntimeEvent _clientMessage;
-		TRuntimeEvent _debugCommand;
+		TRuntimeEvent _debugProvide;
 		TRuntimeEvent _debugSnapshot;
 		TRuntimeEvent _keyDown;
 		TRuntimeEvent _keyRepeat;
@@ -94,7 +99,9 @@ namespace tudov
 		TRuntimeEvent _serverAuthenticate;
 		TRuntimeEvent _serverConnect;
 		TRuntimeEvent _serverDisconnect;
+		TRuntimeEvent _serverHost;
 		TRuntimeEvent _serverMessage;
+		TRuntimeEvent _serverShutdown;
 		TRuntimeEvent _tickLoad;
 		TRuntimeEvent _tickRender;
 		TRuntimeEvent _tickUpdate;
@@ -105,7 +112,7 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &ClientConnect() noexcept override;
 		[[nodiscard]] RuntimeEvent &ClientDisconnect() noexcept override;
 		[[nodiscard]] RuntimeEvent &ClientMessage() noexcept override;
-		[[nodiscard]] RuntimeEvent &DebugCommand() noexcept override;
+		[[nodiscard]] RuntimeEvent &DebugProvide() noexcept override;
 		[[nodiscard]] RuntimeEvent &DebugSnapshot() noexcept override;
 		[[nodiscard]] RuntimeEvent &KeyDown() noexcept override;
 		[[nodiscard]] RuntimeEvent &KeyRepeat() noexcept override;
@@ -118,7 +125,9 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &ServerAuthenticate() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerConnect() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerDisconnect() noexcept override;
+		[[nodiscard]] RuntimeEvent &ServerHost() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerMessage() noexcept override;
+		[[nodiscard]] RuntimeEvent &ServerShutdown() noexcept override;
 		[[nodiscard]] RuntimeEvent &TickLoad() noexcept override;
 		[[nodiscard]] RuntimeEvent &TickRender() noexcept override;
 		[[nodiscard]] RuntimeEvent &TickUpdate() noexcept override;

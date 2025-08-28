@@ -21,6 +21,8 @@ namespace tudov
 	{
 		TE_STATIC_CLASS(Time);
 
+		static std::double_t GetStartupTime() noexcept;
+
 		static std::double_t GetSystemTime() noexcept;
 	};
 } // namespace tudov

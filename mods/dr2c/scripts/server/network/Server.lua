@@ -1,15 +1,43 @@
 local GClient = require("dr2c.shared.network.Client")
 local GMessage = require("dr2c.shared.network.Message")
+local GServer = require("dr2c.shared.network.Server")
+local SRoom = require("dr2c.server.network.Room")
 
 --- @class dr2c.SServer
 local SServer = {}
 
 SServer.sessionSlot = 0
 
+--- @type table<dr2c.ServerAttribute, Serializable>
+local serverAttributes
+
 --- @return Network.Server?
 function SServer.getNetworkSession()
 	return network:getServer(SServer.sessionSlot)
 end
+
+events:add(N_("SUpdate"), function()
+	if serverAttributes then
+		return
+	end
+
+	local session = SServer.getNetworkSession()
+	if not session then
+		return
+	end
+
+	serverAttributes = {
+		[GServer.Attribute.DisplayName] = session:getTitle(),
+		[GServer.Attribute.Clients] = session:getClients(),
+		[GServer.Attribute.MaxClients] = session:getMaxClients(),
+		[GServer.Attribute.StartupTime] = Time.getStartupTime(),
+		[GServer.Attribute.Version] = engine:getVersion(),
+		[GServer.Attribute.Mods] = {}, -- TODO get from mod manager
+		[GServer.Attribute.HasPassword] = session:getPassword() ~= "",
+		[GServer.Attribute.Rooms] = { SRoom.defaultRoomID },
+		[GServer.Attribute.SocketType] = session:getSocketType(),
+	}
+end, "InitializeServerAttributes", "Network")
 
 --- @param clientID Network.ClientID
 --- @param disconnectionCode dr2c.DisconnectionCode
@@ -55,7 +83,7 @@ end
 --- @param messageType dr2c.MessageType
 --- @param messageContent any?
 --- @param channel dr2c.MessageChannel
---- @return boolean
+--- @return boolean success
 function SServer.sendUnreliable(clientID, messageType, messageContent, channel)
 	local session = SServer.getNetworkSession()
 	if session then
@@ -78,7 +106,7 @@ end
 --- @param messageType dr2c.MessageType
 --- @param messageContent any?
 --- @param channel dr2c.MessageChannel?
---- @return boolean
+--- @return boolean success
 function SServer.broadcastReliable(messageType, messageContent, channel)
 	local session = SServer.getNetworkSession()
 	if session then
@@ -101,7 +129,7 @@ end
 --- @param messageType dr2c.MessageType
 --- @param messageContent any?
 --- @param channel dr2c.MessageChannel?
---- @return boolean
+--- @return boolean success
 function SServer.broadcastUnreliable(messageType, messageContent, channel)
 	local session = SServer.getNetworkSession()
 	if session then

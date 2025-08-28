@@ -353,11 +353,11 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 			eventID = AllocEventID(eventName);
 		}
 
-		if (!func.valid() || !func.is<sol::function>())
+		if (!func.valid() || !func.is<sol::protected_function>())
 		{
 			GetScriptEngine().ThrowError("Failed to add event handler: invalid arg#2 `func` type, expected function, got {}", GetLuaTypeStringView(func.get_type()));
 		}
-		sol::function func_ = func.as<sol::function>();
+		sol::protected_function func_ = func.as<sol::protected_function>();
 
 		std::optional<std::string> name_;
 		if (name.is<sol::nil_t>())

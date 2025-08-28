@@ -28,7 +28,7 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 	TE_CORE_EVENTS_GEN_INIT(_clientConnect, "ClientConnect");
 	TE_CORE_EVENTS_GEN_INIT(_clientDisconnect, "ClientDisconnect");
 	TE_CORE_EVENTS_GEN_INIT(_clientMessage, "ClientMessage");
-	TE_CORE_EVENTS_GEN_INIT(_debugCommand, "DebugCommand");
+	TE_CORE_EVENTS_GEN_INIT(_debugProvide, "DebugProvide");
 	TE_CORE_EVENTS_GEN_INIT(_debugSnapshot, "DebugSnapshot");
 	TE_CORE_EVENTS_GEN_INIT(_keyDown, "KeyDown");
 	TE_CORE_EVENTS_GEN_INIT(_keyRepeat, "KeyRepeat");
@@ -41,7 +41,9 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 	TE_CORE_EVENTS_GEN_INIT(_serverAuthenticate, "ServerAuthenticate");
 	TE_CORE_EVENTS_GEN_INIT(_serverConnect, "ServerConnect");
 	TE_CORE_EVENTS_GEN_INIT(_serverDisconnect, "ServerDisconnect");
+	TE_CORE_EVENTS_GEN_INIT(_serverHost, "ServerHost");
 	TE_CORE_EVENTS_GEN_INIT(_serverMessage, "ServerMessage");
+	TE_CORE_EVENTS_GEN_INIT(_serverShutdown, "ServerShutdown");
 	TE_CORE_EVENTS_GEN_INIT(_tickLoad, "TickLoad");
 	TE_CORE_EVENTS_GEN_INIT(_tickRender, "TickRender");
 	TE_CORE_EVENTS_GEN_INIT(_tickUpdate, "TickUpdate");
@@ -57,7 +59,7 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 TE_CORE_EVENTS_GEN_GETTER(ClientConnect, _clientConnect);
 TE_CORE_EVENTS_GEN_GETTER(ClientDisconnect, _clientDisconnect);
 TE_CORE_EVENTS_GEN_GETTER(ClientMessage, _clientMessage);
-TE_CORE_EVENTS_GEN_GETTER(DebugCommand, _debugCommand);
+TE_CORE_EVENTS_GEN_GETTER(DebugProvide, _debugProvide);
 TE_CORE_EVENTS_GEN_GETTER(DebugSnapshot, _debugSnapshot);
 TE_CORE_EVENTS_GEN_GETTER(KeyDown, _keyDown);
 TE_CORE_EVENTS_GEN_GETTER(KeyRepeat, _keyRepeat);
@@ -70,7 +72,9 @@ TE_CORE_EVENTS_GEN_GETTER(ScriptsLoaded, _scriptsLoaded);
 TE_CORE_EVENTS_GEN_GETTER(ServerAuthenticate, _serverAuthenticate);
 TE_CORE_EVENTS_GEN_GETTER(ServerConnect, _serverConnect);
 TE_CORE_EVENTS_GEN_GETTER(ServerDisconnect, _serverDisconnect);
+TE_CORE_EVENTS_GEN_GETTER(ServerHost, _serverHost);
 TE_CORE_EVENTS_GEN_GETTER(ServerMessage, _serverMessage);
+TE_CORE_EVENTS_GEN_GETTER(ServerShutdown, _serverShutdown);
 TE_CORE_EVENTS_GEN_GETTER(TickLoad, _tickLoad);
 TE_CORE_EVENTS_GEN_GETTER(TickUpdate, _tickUpdate);
 TE_CORE_EVENTS_GEN_GETTER(TickRender, _tickRender);

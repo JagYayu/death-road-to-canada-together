@@ -9,20 +9,24 @@ local filterTest = CECS.filter({
 })
 
 events:add(N_("CUpdate"), function(e)
-	for _ = 1, 9999 do
-		if CECS.countEntities(filterTest) >= 1000 then
+	for _ = 1, 100 do
+		local zombieCount = CECS.countEntitiesByType("Zombie")
+		if zombieCount >= 1000 then
 			break
 		end
 
 		CECS.spawnEntity("Zombie")
-		-- print("count", CECS.countEntities(filterTest))
 	end
 
-	-- local getComponentByType = CECS.getComponentByType
-	-- local random = math.random
+	if CECS.countEntitiesByType("Character") < 1 then
+		CECS.spawnEntity("Character")
+	end
+
+	local getComponent = CECS.getComponent
+	local random = math.random
 	-- for state, id, typeID in CECS.iterateEntities(filterTest) do
-	-- 	local gameObject = getComponentByType(id, "GameObject")
-	-- 	gameObject.x = random(1, 100)
-	-- 	gameObject.y = random(1, 100)
+	-- 	local gameObject = getComponent(id, "GameObject")
+	-- 	gameObject.x = gameObject.x + random(-5, 5)
+	-- 	gameObject.y = gameObject.y + random(-5, 5)
 	-- end
-end, "TestSpan1000ZombieEntities", "Control")
+end, "TestSpawnEntities", "Control")

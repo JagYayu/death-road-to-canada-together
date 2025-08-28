@@ -282,11 +282,10 @@ ModConfig UnpackagedMod::LoadConfig(const std::filesystem::path &directory)
 		return ModConfig();
 	}
 
-	nlohmann::json json;
-	file >> json;
 	ModConfig config;
 	try
 	{
+		nlohmann::json json = nlohmann::json::parse(file, nullptr, true, true, true);
 		config = json.get<tudov::ModConfig>();
 	}
 	catch (...)

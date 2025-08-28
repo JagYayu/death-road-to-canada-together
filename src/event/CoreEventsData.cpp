@@ -11,6 +11,95 @@
 
 #include "event/CoreEventsData.hpp"
 
-#include "enet/enet.h"
+#include "debug/Debug.hpp"
+#include "debug/DebugConsole.hpp"
+#include "debug/DebugManager.hpp"
+#include "mod/ScriptEngine.hpp"
+#include "program/Context.hpp"
+
+#include "sol/forward.hpp"
+#include "sol/protected_function_result.hpp"
 
 using namespace tudov;
+
+EventDebugProvideData::EventDebugProvideData(Context &context, IDebugManager &debugManager) noexcept
+    : context(context),
+      debugManager(debugManager)
+{
+}
+
+void EventDebugProvideData::LuaAddElement(sol::table args) noexcept
+{
+	// debugManager->AddElement();
+}
+
+void EventDebugProvideData::LuaSetDebugCommand(sol::table args) noexcept
+{
+	DebugConsole *debugConsole = debugManager.GetElement<DebugConsole>();
+	if (debugConsole == nullptr)
+	{
+		return;
+	}
+
+	auto &scriptEngine = context.GetScriptEngine();
+	scriptEngine.DebugTraceback();
+
+	auto name = args["name"];
+	auto help = args["help"];
+	auto func = args["func"];
+	if (!name.valid() or !name.is<sol::string_view>()) [[unlikely]]
+	{
+		scriptEngine.ThrowError("Bad field 'name': string expected", 2);
+	}
+	else if (!help.valid() or !help.is<sol::string_view>()) [[unlikely]]
+	{
+		scriptEngine.ThrowError("Bad field 'help': string expected", 2);
+	}
+	else if (!func.valid() or !func.is<sol::protected_function>()) [[unlikely]]
+	{
+		scriptEngine.ThrowError("Bad field 'help': function expected", 2);
+	}
+
+	auto luaFunc = func.get<sol::protected_function>();
+	auto &&cmdFunc = [luaFunc](std::string_view arg) -> std::vector<DebugConsoleResult>
+	{
+		std::vector<DebugConsoleResult> results;
+
+		sol::protected_function_result result = luaFunc(arg);
+		if (!result.valid())
+		{
+			sol::error err = result;
+			results.emplace_back(std::string(err.what()), EDebugConsoleCode::Failure);
+		}
+		else
+		{
+			auto list = result.get<sol::table>();
+			if (!list.valid())
+			{
+				results.emplace_back("Bad return value, table expected!", EDebugConsoleCode::Failure);
+			}
+			else
+			{
+				for (std::size_t i = 1;;)
+				{
+					if (!list[i].valid() || !list[i].is<sol::string_view>() || !list[i + 1].valid() || !list[i + 1].is<std::double_t>())
+					{
+						break;
+					}
+
+					results.emplace_back(std::string(list[i].get<sol::string_view>()), static_cast<EDebugConsoleCode>(list[i + 1].get<std::double_t>()));
+					i += 2;
+				}
+			}
+		}
+
+		return results;
+	};
+
+	DebugConsole::Command command{
+	    std::string(name.get<std::string_view>()),
+	    std::string(help.get<std::string_view>()),
+	    cmdFunc,
+	};
+	debugConsole->SetCommand(command);
+}

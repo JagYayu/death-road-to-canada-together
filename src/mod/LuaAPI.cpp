@@ -93,6 +93,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	        });
 
 	TE_USERTYPE(Engine,
+	            "getVersion", &Engine::LuaGetVersion,
 	            "mainWindow", GetMainWindowFromContext(context),
 	            "quit", &Engine::Quit,
 	            "triggerLoadPending", &Engine::TriggerLoadPending);
@@ -158,6 +159,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	                       "generate", &RandomDevice::LuaGenerate);
 
 	lua.create_named_table(TE_NAMEOF(Time),
+	                       "getStartupTime", &Time::GetStartupTime,
 	                       "getSystemTime", &Time::GetSystemTime);
 
 	lua["engine"] = &context.GetEngine();

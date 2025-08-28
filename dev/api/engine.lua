@@ -6,6 +6,9 @@ engine = {}
 
 engine.mainWindow = nil
 
+--- @return string
+function engine:getVersion() end
+
 function engine:quit() end
 
 function engine:triggerLoadPending() end

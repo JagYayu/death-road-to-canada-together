@@ -15,11 +15,10 @@
 #include "util/StringUtils.hpp"
 #include "util/Utils.hpp"
 
-#include "json.hpp"
-
 #include <chrono>
 #include <format>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <thread>
@@ -281,33 +280,31 @@ void Log::Process() noexcept
 
 	while (!_exit)
 	{
+		std::unique_lock<std::mutex> lock{_mutex};
+		_cv.wait(lock, pred);
+
+		while (!_queue.empty())
 		{
-			std::unique_lock<std::mutex> lock{_mutex};
-			_cv.wait(lock, pred);
+			auto entry = std::move(_queue.front());
+			_queue.pop();
+			lock.unlock();
 
-			while (!_queue.empty())
-			{
-				auto entry = std::move(_queue.front());
-				_queue.pop();
-				lock.unlock();
+			std::string message = std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}",
+			                                  std::chrono::zoned_time(std::chrono::current_zone(), entry.time),
+			                                  entry.module,
+			                                  entry.verbosity,
+			                                  entry.message);
 
-				std::string message = std::format("[{:%Y-%m-%d %H:%M:%S}] [{}] [{}] {}",
-				                                  std::chrono::zoned_time(std::chrono::current_zone(), entry.time),
-				                                  entry.module,
-				                                  entry.verbosity,
-				                                  entry.message);
+			PrintToConsole(message, entry);
 
-				PrintToConsole(message, entry);
-				fileStream << message;
-
-				lock.lock();
-			}
-
-			fileStream.flush();
-			std::cout.flush();
+			fileStream << message << '\n';
+			lock.lock();
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		fileStream.flush();
+		std::cout.flush();
+
+		_queue = std::queue<Log::Entry>();
 	}
 }
 
@@ -385,6 +382,7 @@ void Log::OutputImpl(std::string_view module, std::string_view verb, std::string
 void Log::LuaOutput(sol::object verb, sol::table args) const noexcept
 {
 	static std::string buffer;
+	const auto bufferMaxSize = 1024;
 
 	for (std::uint8_t i = 1; i <= 9; ++i)
 	{

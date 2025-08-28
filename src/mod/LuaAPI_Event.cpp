@@ -9,6 +9,7 @@
  *
  */
 
+#include "event/CoreEventsData.hpp"
 #include "event/EventInvocation.hpp"
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
@@ -34,6 +35,9 @@ void LuaAPI::InstallEvent(sol::state &lua, Context &context) noexcept
 	TE_USERTYPE(RuntimeEvent,
 	            "getInvokingScriptID", &RuntimeEvent::GetInvokingScriptID,
 	            "getNextTrackID", &RuntimeEvent::GetNextTrackID);
+
+	TE_USERTYPE(EventDebugProvideData,
+	            "setDebugCommand", &EventDebugProvideData::LuaSetDebugCommand);
 
 	TE_USERTYPE(EventManager,
 	            "add", &EventManager::LuaAdd,

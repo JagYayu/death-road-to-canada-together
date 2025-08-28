@@ -3,8 +3,10 @@ local Enum = require("tudov.Enum")
 
 local CClients = require("dr2c.client.network.Clients")
 local GClient = require("dr2c.shared.network.Client")
-local GThrottle = require("dr2c.shared.utils.Throttle")
 local GMessage = require("dr2c.shared.network.Message")
+local GOperatingSystem = require("dr2c.shared.system.OperatingSystem")
+local GPlatform = require("dr2c.client.network.Platform")
+local GThrottle = require("dr2c.shared.utils.Throttle")
 
 local network = network
 
@@ -19,6 +21,45 @@ function CClient.getNetworkSession()
 	return network:getClient(CClient.sessionSlot)
 end
 
+--- @return Network.ClientID?
+function CClient.getClientID()
+	local session = CClient.getNetworkSession()
+	return session and session:getSessionID()
+end
+
+events:add(N_("CUpdate"), function(e)
+	local session = CClient.getNetworkSession()
+	if not session then
+		return
+	end
+
+	local clientID = session:getSessionID()
+	if not clientID or CClients.hasClient(clientID) then
+		return
+	end
+
+	local PublicAttribute = GClient.PublicAttribute
+	local PrivateAttribute = GClient.PrivateAttribute
+	local setPublicAttribute = CClients.setPublicAttribute
+	local setPrivateAttribute = CClients.setPrivateAttribute
+
+	CClients.addClient(clientID)
+	setPublicAttribute(clientID, PublicAttribute.ID, clientID)
+	setPublicAttribute(clientID, PublicAttribute.State, GClient.State.Disconnected)
+	setPublicAttribute(clientID, PublicAttribute.Platform, GPlatform.getType())
+	setPublicAttribute(clientID, PublicAttribute.PlatformID, nil)
+	setPublicAttribute(clientID, PublicAttribute.OperatingSystem, GOperatingSystem.getType())
+	setPublicAttribute(clientID, PublicAttribute.Statistics, {})
+	setPublicAttribute(clientID, PublicAttribute.DisplayName, nil)
+	setPublicAttribute(clientID, PublicAttribute.Room, nil)
+	setPublicAttribute(clientID, PublicAttribute.Version, engine:getVersion())
+	setPublicAttribute(clientID, PublicAttribute.ContentHash, 0)
+	setPublicAttribute(clientID, PublicAttribute.ModsHash, 0)
+	setPublicAttribute(clientID, PublicAttribute.SocketType, session:getSocketType())
+	setPrivateAttribute(clientID, PrivateAttribute.SecretToken, nil)
+	setPrivateAttribute(clientID, PrivateAttribute.SecretStatistics, nil)
+end, N_("InitializeLocalClientAttributes"), "Network")
+
 CClient.eventCConnect = events:new(N_("CConnect"), {
 	"Initialize",
 })
@@ -31,12 +72,6 @@ CClient.eventCMessage = events:new(N_("CMessage"), {
 	"Overrides",
 	"Receive",
 }, Enum.eventKeys(GMessage.Type))
-
---- @return Network.ClientID?
-function CClient.getClientID()
-	local session = CClient.getNetworkSession()
-	return session and session:getSessionID()
-end
 
 --- @param messageType dr2c.MessageType
 --- @param messageContent any?
@@ -206,5 +241,7 @@ events:add(N_("CUpdate"), function(e)
 
 	sendClientVerifyingAttributesTime = time + 5
 end, "SendClientVerifyingAttributes", "Network")
+
+function CClient.getRoom() end
 
 return CClient

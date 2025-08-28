@@ -347,37 +347,43 @@ do
 	end
 end
 
-do
-	local function sortedPairsIterator(tbl, state)
-		local index = state[2]
-		index = index + 1
-		state[2] = index
+--- @generic TK, TV
+--- @param tbl table<TK, TV>
+--- @param state { [1]: TK[], [2]: integer }
+--- @return { [1]: TK[], [2]: integer }? state
+--- @return TK key
+--- @return TV value
+local function sortedPairsIterator(tbl, state)
+	local index = state[2]
+	index = index + 1
+	state[2] = index
 
-		local key = state[1][index]
-		if key ~= nil then
-			return state, key, tbl[key]
-		end
+	local key = state[1][index]
+	if key ~= nil then
+		return state, key, tbl[key]
+	else
+		return nil, nil, nil
+	end
+end
+
+--- @generic TK, TV
+--- @param tbl table<TK, TV>
+--- @param sort fun(comp: (fun(a: TK, b: TK): boolean)?)?
+--- @param comp (fun(a: TK, b: TK): boolean)?
+--- @return fun(): TK, TV
+--- @return table<TK, TV> tbl
+--- @return { [1]: TK[], [2]: integer } state @readonly
+function Table.sortedPairs(tbl, sort, comp)
+	local keyList = Table.getKeyList(tbl)
+
+	do
+		(sort or table.sort)(keyList, comp)
 	end
 
-	--- @generic TK, TV
-	--- @param tbl table<TK, TV>
-	--- @param sort fun(comp: (fun(a: TK, b: TK): boolean)?)?
-	--- @param comp (fun(a: TK, b: TK): boolean)?
-	--- @return fun(): TK, TV
-	--- @return table<TK, TV> tbl
-	--- @return { [1]: TK[], [2]: integer } state @readonly
-	function Table.sortedPairs(tbl, sort, comp)
-		local keyList = Table.getKeyList(tbl)
-
-		do
-			(sort or table.sort)(keyList, comp)
-		end
-
-		return sortedPairsIterator, tbl, {
-			keyList,
-			0,
-		}
-	end
+	return sortedPairsIterator, tbl, {
+		keyList,
+		0,
+	}
 end
 
 --- @generic T

@@ -33,6 +33,7 @@ namespace tudov
 
 	class Context;
 	class Log;
+	class LuaAPI;
 
 	/**
 	 * @brief Tudov game engine
@@ -123,6 +124,7 @@ namespace tudov
 		~Engine() noexcept override;
 
 	  public:
+		Version GetAppVersion() const noexcept override;
 		void Initialize() noexcept override;
 		bool Tick() noexcept override;
 		void Event(SDL_Event &event) noexcept override;
@@ -189,5 +191,8 @@ namespace tudov
 			SetLoadingInfo(LoadingInfoArgs{.description = std::string(description)});
 			return *this;
 		}
+
+	  private:
+		sol::string_view LuaGetVersion() const noexcept;
 	};
 } // namespace tudov

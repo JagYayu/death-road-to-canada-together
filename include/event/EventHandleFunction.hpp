@@ -23,18 +23,18 @@ namespace tudov
 {
 	struct EventHandleFunction
 	{
-		std::variant<sol::function, int> function;
+		std::variant<sol::protected_function, int> function;
 
-		explicit EventHandleFunction(const sol::function &function)
+		explicit EventHandleFunction(const sol::protected_function &function)
 		    : function(function)
 		{
 		}
 
 		void operator()(sol::object obj) const
 		{
-			if (std::holds_alternative<sol::function>(function))
+			if (std::holds_alternative<sol::protected_function>(function))
 			{
-				const auto &func = std::get<sol::function>(function);
+				const auto &func = std::get<sol::protected_function>(function);
 				if (func.valid())
 				{
 					sol::protected_function_result result = func(obj);
@@ -54,7 +54,7 @@ namespace tudov
 
 		void operator()(sol::object obj, const EventHandleKey &key) const
 		{
-			if (auto &&func = std::get_if<sol::function>(&function); func != nullptr)
+			if (auto &&func = std::get_if<sol::protected_function>(&function); func != nullptr)
 			{
 				auto &&result = (*func)(obj, key);
 				if (!result.valid()) [[unlikely]]

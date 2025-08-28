@@ -9,6 +9,9 @@ GOperatingSystem.Type = {
 	IOS = 5,
 }
 
+function GOperatingSystem.getType()
+	return GOperatingSystem.Type.Unknown
+end
 
 function GOperatingSystem.isPC()
 	--

@@ -68,8 +68,12 @@ namespace tudov
 		struct DirectoryNode : public CommonNode
 		{
 			std::map<std::string, Node> children;
+			mutable bool cached;
+			mutable size_t cachedSize;
 
 			explicit DirectoryNode(const std::map<std::string, Node> &children = {}) noexcept;
+
+			size_t GetSize() const noexcept;
 		};
 
 		struct FileNode : public CommonNode
@@ -114,12 +118,14 @@ namespace tudov
 		std::chrono::time_point<std::chrono::system_clock> GetPathDateModified(const std::filesystem::path &path);
 		std::span<std::byte> GetFileBytes(const std::filesystem::path &file);
 		EResourceType GetFileResourceType(const std::filesystem::path &file);
+		std::size_t GetPathSize(const std::filesystem::path &file) const;
 
 		std::vector<ListEntry> List(const std::filesystem::path &directory, EPathListOption options = EPathListOption::Default) const;
 
 	  protected:
 		Node *FindNode(const std::filesystem::path &path) noexcept;
 		void CollectListEntries(std::vector<ListEntry> &entries, const std::filesystem::path &directory, const DirectoryNode *directoryNode, EPathListOption options, std::uint32_t depth) const noexcept;
+		void ClearParentDirectoriesCache(const std::filesystem::path &path) const;
 
 	  private:
 		bool LuaExists(sol::object path);

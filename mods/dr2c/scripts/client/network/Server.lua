@@ -6,6 +6,8 @@ local CServer = {}
 
 local serverAttributes = {}
 
+--- @param attribute dr2c.ServerAttribute
+--- @return any?
 function CServer.getAttribute(attribute)
 	return serverAttributes[attribute]
 end

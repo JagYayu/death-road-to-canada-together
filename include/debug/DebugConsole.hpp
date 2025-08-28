@@ -26,7 +26,7 @@ namespace tudov
 	class DebugConsole : public IDebugElement
 	{
 	  public:
-		using Code = DebugConsoleCode;
+		using Code = EDebugConsoleCode;
 		using Result = DebugConsoleResult;
 
 		struct Command

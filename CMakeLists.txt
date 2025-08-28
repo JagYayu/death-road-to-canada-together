@@ -16,16 +16,15 @@ endif()
 
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui-1.91.9b/*.cpp"
 )
 add_executable(tudov ${SRC_FILES})
 
-set_target_properties(tudov PROPERTIES
-    MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Debug>:MultiThreadedDebugDLL>$<$<CONFIG:Release>:MultiThreadedDLL>"
-)
-
 target_include_directories(tudov PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui-1.91.9b
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui-1.91.9b/backends
 )
 
 # LuaJIT - from vcpkg dir
@@ -58,10 +57,6 @@ find_package(unofficial-enet CONFIG REQUIRED)
 target_link_libraries(tudov PRIVATE unofficial::enet::enet)
 target_link_libraries(tudov PRIVATE ws2_32)
 target_link_libraries(tudov PRIVATE winmm)
-
-# imgui - from vcpkg
-find_package(imgui CONFIG REQUIRED)
-target_link_libraries(tudov PRIVATE imgui::imgui)
 
 # minizip - from vcpkg
 find_package(unofficial-minizip CONFIG REQUIRED)

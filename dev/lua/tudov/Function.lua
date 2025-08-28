@@ -1,3 +1,4 @@
+--- @class Function
 local Function = {}
 
 function Function.empty() end
@@ -71,19 +72,70 @@ function Function.generateIsType(typeName)
 	end
 end
 
+--- @param typeName string
+--- @return function
+function Function.generateIsOrNilType(typeName)
+	--- @param value any
+	--- @return boolean
+	return function(value)
+		return typeName == nil or type(value) == typeName
+	end
+end
+
 Function.isTypeBoolean = Function.generateIsType("boolean")
-
 Function.isTypeNumber = Function.generateIsType("number")
-
 Function.isTypeString = Function.generateIsType("string")
-
 Function.isTypeTable = Function.generateIsType("table")
+Function.isTypeBooleanOrNil = Function.generateIsOrNilType("boolean")
+Function.isTypeNumberOrNil = Function.generateIsOrNilType("number")
+Function.isTypeStringOrNil = Function.generateIsOrNilType("string")
+Function.isTypeTableOrNil = Function.generateIsOrNilType("table")
 
---- @param value any?
---- @return boolean?
-function Function.isTypeInteger(value)
-	if type(value) == "number" then
-		return math.floor(value) == value
+function Function._Enum(Enum)
+	Function._Enum = nil
+
+	--- @param value any?
+	--- @return boolean?
+	function Function.isTypeInteger(value)
+		if type(value) == "number" then
+			return math.floor(value) == value
+		end
+	end
+
+	--- @param value any?
+	--- @return boolean?
+	function Function.isTypeIntegerOrNil(value)
+		if value == nil then
+			return true
+		elseif type(value) == "number" then
+			return math.floor(value) == value
+		end
+	end
+
+	--- @param enum table
+	--- @return fun(key: string): boolean
+	function Function.generateIsEnumKey(enum)
+		if not Enum.isValid(enum) then
+			error("Not a valid enumeration", 2)
+		end
+
+		--- @param key string
+		return function(key)
+			return Enum.hasKey(enum, key)
+		end
+	end
+
+	--- @param enum table
+	--- @return fun(value: integer | string): boolean
+	function Function.generateIsEnumValue(enum)
+		if not Enum.isValid(enum) then
+			error("Not a valid enumeration", 2)
+		end
+
+		--- @param value integer | string
+		return function(value)
+			return Enum.hasValue(enum, value)
+		end
 	end
 end
 

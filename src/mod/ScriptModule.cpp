@@ -114,9 +114,9 @@ void CopyTableMetatableFields(sol::table dst, sol::table src)
 	for (const char *key : keys)
 	{
 		sol::object field = srcMt[key];
-		if (field.valid() && field.is<sol::function>())
+		if (field.valid() && field.is<sol::protected_function>())
 		{
-			auto f = field.as<sol::function>();
+			auto f = field.as<sol::protected_function>();
 			dstMt[key] = [f, src](const sol::this_state &ts, sol::object, sol::variadic_args vargs)
 			{
 				return f(src, vargs);

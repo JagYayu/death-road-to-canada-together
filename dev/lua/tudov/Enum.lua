@@ -1,5 +1,6 @@
-local Table = require("tudov.Table")
+local Function = require("tudov.Function")
 local String = require("tudov.String")
+local Table = require("tudov.Table")
 local inspect = require("inspect")
 
 --- @class Enum.Defaults
@@ -290,5 +291,7 @@ end
 events:add("DebugSnapshot", function(e)
 	e.enumerationsMetadata = enumerationsMetadata
 end, nil, nil, "#tudov.Enum")
+
+Function._Enum(Enum)
 
 return Enum

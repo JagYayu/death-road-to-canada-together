@@ -103,23 +103,18 @@ std::shared_ptr<RenderTarget> Renderer::NewRenderTarget(std::int32_t width, std:
 
 std::shared_ptr<Texture> Renderer::GetOrCreateImageTexture(ImageID imageID)
 {
-	if (!imageID) [[unlikely]]
-	{
-		return nullptr;
-	}
-
 	TextureID textureID;
 	if (auto it = _imageTextureMap.find(imageID); it != _imageTextureMap.end()) [[likely]]
 	{
 		textureID = it->second;
 	}
-	else [[unlikely]]
+	else
 	{
 		auto &&imageResources = _window.GetGlobalResourcesCollection().GetImageResources();
 		auto &&image = imageResources.GetResource(imageID);
 		if (!image)
 		{
-			return nullptr;
+			image = imageResources.GetResource(imageResources.GetResourceID("app/gfx/PlaceHolder.png"));
 		}
 
 		std::string_view path = imageResources.GetResourcePath(imageID);

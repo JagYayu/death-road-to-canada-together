@@ -1,7 +1,7 @@
+local stringBuffer = require("string.buffer")
+
 --- @class Tudov.String
 local String = {}
-local Table = require("tudov.Table")
-local stringBuffer = require("string.buffer")
 
 local stringByte = string.byte
 local stringChar = string.char

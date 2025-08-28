@@ -37,13 +37,15 @@ GClient.PublicAttribute = Enum.sequence({
 	-- 昵称（覆盖账户名）
 	DisplayName = 6,
 	-- 所在服务器房间
-	ServerRoom = 7,
-	-- 游戏版本
+	Room = 7,
+	-- app版本
 	Version = 8,
 	-- 游戏文件哈希值，用于判断游戏的核心文件是否和服务器一致
 	ContentHash = 9,
 	-- 游戏模组哈希值，用于判断必要的模组是否和服务器一致
 	ModsHash = 10,
+	-- 套接口类型
+	SocketType = 11,
 })
 
 --- @enum dr2c.ClientPrivateAttribute
@@ -58,7 +60,7 @@ local publicAttributeTraits = {
 	[GClient.PublicAttribute.Platform] = GClient.AttributeTrait.Validation,
 	[GClient.PublicAttribute.PlatformID] = GClient.AttributeTrait.Validation,
 	[GClient.PublicAttribute.OperatingSystem] = GClient.AttributeTrait.Validation,
-	[GClient.PublicAttribute.ServerRoom] = GClient.AttributeTrait.Authoritative,
+	[GClient.PublicAttribute.Room] = GClient.AttributeTrait.Authoritative,
 	[GClient.PublicAttribute.Version] = GClient.AttributeTrait.Validation,
 	[GClient.PublicAttribute.ContentHash] = GClient.AttributeTrait.Validation,
 	[GClient.PublicAttribute.ModsHash] = GClient.AttributeTrait.Validation,
@@ -84,11 +86,11 @@ end
 local publicAttributeValidators = {
 	[GClient.PublicAttribute.ID] = Function.isTypeInteger,
 	[GClient.PublicAttribute.State] = Function.isTypeInteger,
-	[GClient.PublicAttribute.Platform] = Function.isTypeString,
-	[GClient.PublicAttribute.PlatformID] = Function.isTypeString,
+	[GClient.PublicAttribute.Platform] = Function.isTypeNumber,
+	[GClient.PublicAttribute.PlatformID] = Function.isTypeStringOrNil,
 	[GClient.PublicAttribute.Statistics] = Function.isTypeTable,
-	[GClient.PublicAttribute.DisplayName] = Function.isTypeString,
-	[GClient.PublicAttribute.ServerRoom] = Function.isTypeTable,
+	[GClient.PublicAttribute.DisplayName] = Function.isTypeStringOrNil,
+	[GClient.PublicAttribute.Room] = Function.isTypeIntegerOrNil,
 	[GClient.PublicAttribute.Version] = Function.isTypeString,
 	[GClient.PublicAttribute.ContentHash] = Function.isTypeNumber,
 	[GClient.PublicAttribute.ModsHash] = Function.isTypeNumber,
@@ -96,14 +98,20 @@ local publicAttributeValidators = {
 
 --- @type table<dr2c.ClientPrivateAttribute, fun(value: any): boolean?>
 local privateAttributeValidators = {
-	[GClient.PrivateAttribute.SecretToken] = Function.isTypeNumber,
+	[GClient.PrivateAttribute.SecretToken] = Function.isTypeNumberOrNil,
 	[GClient.PrivateAttribute.SecretStatistics] = Function.isTypeTable,
 }
 
+--- @param attribute dr2c.ClientPublicAttribute
+--- @param value integer | string
+--- @return boolean
 function GClient.validatePublicAttribute(attribute, value)
 	return not not (publicAttributeValidators[attribute] or Function.alwaysTrue)(value)
 end
 
+--- @param attribute dr2c.ClientPrivateAttribute
+--- @param value integer | string
+--- @return boolean
 function GClient.validatePrivateAttribute(attribute, value)
 	return not not (privateAttributeValidators[attribute] or Function.alwaysTrue)(value)
 end

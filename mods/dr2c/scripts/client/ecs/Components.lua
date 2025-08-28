@@ -1,9 +1,14 @@
 local CECSSchema = require("dr2c.client.ecs.ECSSchema")
 
---- @class dr2c.Components
+--- @class dr2c.CComponents
 local CComponents = {}
 
-local function registerImpl(trait, name, fields, ...)
+--- @param trait string
+--- @param name string
+--- @param fields table<Serializable, Serializable>
+--- @param dependencies (table<string, any> | string[])?
+--- @param ... unknown
+local function registerImpl(trait, name, fields, dependencies, ...)
 	local extras = { ... }
 
 	events:add(CECSSchema.eventEntitySchemaLoadComponents, function(e)
@@ -12,53 +17,70 @@ local function registerImpl(trait, name, fields, ...)
 		e.new[name] = {
 			fields = fields,
 			trait = CEntitySchema.ComponentTrait[trait],
+			dependencies = dependencies,
 			unpack(extras),
 		}
-	end, N_("registerComponent" .. name), "Register")
-end
-
---- @param name string
---- @param fields table<Serializable, Serializable>
-function CComponents.registerConstant(name, fields, ...)
-	return registerImpl("Constant", name, fields, ...)
-end
-
---- @param name string
---- @param fields table<Serializable, Serializable>
-function CComponents.registerMutable(name, fields, ...)
-	return registerImpl("Mutable", name, fields, ...)
-end
-
---- @param name string
---- @param fields table<Serializable, Serializable>
-function CComponents.registerSerializable(name, fields, ...)
-	return registerImpl("Serializable", name, fields, ...)
-end
-
---- @param name string
---- @param fields table<Serializable, Serializable>
-function CComponents.registerShared(name, fields, ...)
-	return registerImpl("Shared", name, fields, ...)
-end
-
---- target component depends on source component.
---- @param target string
---- @param source string
-function CComponents.addDependency(target, source)
-	events:add(N_("CEntitySchemaLoadComponents"), function(e)
-		e.dependencies = e.dependencies or {}
-
-		local dependencies = e.dependencies
-		dependencies[target] = dependencies[target] or {}
-
-		dependencies[source] = true
 	end, nil, "Register")
 end
 
-function CComponents.registerComponentFromJsonFile()
-	--
+--- @param name string
+--- @param fields table<Serializable, Serializable>
+--- @param dependencies (table<string, any> | string[])?
+function CComponents.registerArchetypeConstant(name, fields, dependencies, ...)
+	return registerImpl("ArchetypeConstant", name, fields, dependencies, ...)
 end
 
+--- @param name string
+--- @param fields table<Serializable, Serializable>
+--- @param dependencies (table<string, any> | string[])?
+function CComponents.registerArchetypeSerializable(name, fields, dependencies, ...)
+	return registerImpl("ArchetypeSerializable", name, fields, dependencies, ...)
+end
+
+--- @param name string
+--- @param fields table<Serializable, Serializable>
+--- @param dependencies (table<string, any> | string[])?
+function CComponents.registerArchetypeTransient(name, fields, dependencies, ...)
+	return registerImpl("ArchetypeTransient", name, fields, dependencies, ...)
+end
+
+--- @param name string
+--- @param fields table<Serializable, Serializable>
+--- @param dependencies (table<string, any> | string[])?
+function CComponents.registerEntitySerializable(name, fields, dependencies, ...)
+	return registerImpl("EntitySerializable", name, fields, dependencies, ...)
+end
+
+--- @param name string
+--- @param fields table<Serializable, Serializable>
+--- @param dependencies (table<string, any> | string[])?
+function CComponents.registerEntityTransient(name, fields, dependencies, ...)
+	return registerImpl("EntityTransient", name, fields, dependencies, ...)
+end
+
+--- `target` component depends on `source` component.
+--- @param target string
+--- @param source string
+function CComponents.addDependency(target, source)
+	--- @param e dr2c.E.ClientEntitySchemaLoadComponents
+	events:add(N_("CEntitySchemaLoadComponents"), function(e)
+		--- @class dr2c.E.ClientEntitySchemaLoadComponents
+		--- @field dependencies table<string, table<string, true>>
+
+		local dependencies = e.dependencies
+		e.dependencies = dependencies or {}
+
+		dependencies[target] = dependencies[target] or {}
+		dependencies[target][source] = true
+	end, nil, "Register")
+end
+
+function CComponents.registerComponentFromJsonFile() end
+
 function CComponents.registerComponentFromJsonDirectory() end
+
+function CComponents.registerComponentFromLuaFile() end
+
+function CComponents.registerComponentFromLuaDirectory() end
 
 return CComponents

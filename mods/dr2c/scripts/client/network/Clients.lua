@@ -109,6 +109,32 @@ function CClients.requestPrivateAttribute(clientID, clientPrivateAttribute, call
 	end
 end
 
+--- @warn Do not modify attributes other than local client as possible.
+--- @param clientID Network.ClientID
+--- @param clientPublicAttribute dr2c.ClientPublicAttribute
+--- @param attributeValue any
+function CClients.setPublicAttribute(clientID, clientPublicAttribute, attributeValue)
+	local attributes = clientsPublicAttributes[clientID]
+	if not attributes then
+		error(("Client %s does not exists"):format(clientID), 2)
+	end
+
+	attributes[clientPublicAttribute] = attributeValue
+end
+
+--- @warn Do not modify attributes other than local client as possible.
+--- @param clientID Network.ClientID
+--- @param clientPrivateAttribute dr2c.ClientPrivateAttribute
+--- @param attributeValue any
+function CClients.setPrivateAttribute(clientID, clientPrivateAttribute, attributeValue)
+	local attributes = clientsPrivateAttributes[clientID]
+	if not attributes then
+		error(("Client %s does not exists"):format(clientID), 2)
+	end
+
+	attributes[clientPrivateAttribute] = attributeValue
+end
+
 events:add(N_("CDisconnect"), function(e)
 	clientsPublicAttributes = {}
 	clientsPrivateAttributes = {}

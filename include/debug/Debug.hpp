@@ -17,7 +17,7 @@ namespace tudov
 {
 	struct IDebugManager;
 
-	enum class DebugConsoleCode
+	enum class EDebugConsoleCode
 	{
 		None,
 		Failure,
@@ -28,7 +28,7 @@ namespace tudov
 	struct DebugConsoleResult
 	{
 		std::string message;
-		DebugConsoleCode code = DebugConsoleCode::None;
+		EDebugConsoleCode code = EDebugConsoleCode::None;
 	};
 
 	struct IDebugProvider

@@ -13,6 +13,7 @@
 
 #include "data/PathType.hpp"
 #include "mod/ScriptEngine.hpp"
+#include "program/Tudov.hpp"
 #include "resource/ResourceType.hpp"
 #include "sol/string_view.hpp"
 #include "system/LogMicros.hpp"
@@ -53,8 +54,35 @@ VirtualFileSystem::CommonNode::CommonNode() noexcept
 
 VirtualFileSystem::DirectoryNode::DirectoryNode(const std::map<std::string, Node> &children) noexcept
     : children(children),
+      cached(false),
+      cachedSize(0),
       CommonNode()
 {
+}
+
+size_t VirtualFileSystem::DirectoryNode::GetSize() const noexcept
+{
+	if (!cached) [[unlikely]]
+	{
+		cachedSize = 0;
+
+		for (auto &[childPath, childNode] : children)
+		{
+			if (std::holds_alternative<FileNode>(childNode))
+			{
+				cachedSize += std::get<FileNode>(childNode).bytes.size();
+			}
+			else if (std::holds_alternative<DirectoryNode>(childNode))
+			{
+				cachedSize += std::get<DirectoryNode>(childNode).GetSize();
+			}
+			else [[unlikely]]
+			{
+			}
+		}
+	}
+
+	return cachedSize;
 }
 
 VirtualFileSystem::FileNode::FileNode(const std::vector<std::byte> &bytes, EResourceType resourceType) noexcept
@@ -145,24 +173,24 @@ void VirtualFileSystem::MountFile(const std::filesystem::path &path, std::span<c
 
 	DirectoryNode *currentDirectory = &std::get<DirectoryNode>(_rootNode);
 
+	bool mounted = false;
 	for (const auto &part : path)
 	{
 		const std::string &partStr = part.generic_string();
 
 		if (part.has_extension()) // TODO or this is the last part, then we assume it is a file ... right?
 		{
-			FileNode fileNode{
-			    std::vector<std::byte>(bytes.begin(), bytes.end()),
-			    EResourceType::Unknown,
-			};
-			auto result = currentDirectory->children.emplace(partStr, fileNode);
+			auto result = currentDirectory->children.emplace(
+			    partStr,
+			    FileNode(std::vector<std::byte>(bytes.begin(), bytes.end()), EResourceType::Unknown));
 			if (!result.second) [[unlikely]]
 			{
 				TE_FATAL("Failed to add child node \"{}\"", partStr);
 			}
 
-			auto &node = std::get<FileNode>(result.first->second);
-			_onMountFile.Invoke(path, node.bytes, node.resourceType);
+			auto &fileNode_ = std::get<FileNode>(result.first->second);
+			_onMountFile.Invoke(path, fileNode_.bytes, fileNode_.resourceType);
+			ClearParentDirectoriesCache(path);
 
 			break;
 		}
@@ -261,6 +289,7 @@ bool VirtualFileSystem::RemountFile(const std::filesystem::path &path, const std
 		fileNode.resourceType = EResourceType::Unknown;
 
 		_onRemountFile.Invoke(path, fileNode.bytes, oldBytes, fileNode.resourceType);
+		ClearParentDirectoriesCache(path);
 
 		return true;
 	}
@@ -347,6 +376,28 @@ EResourceType VirtualFileSystem::GetFileResourceType(const std::filesystem::path
 	}
 
 	return std::get<FileNode>(*node).resourceType;
+}
+
+std::size_t VirtualFileSystem::GetPathSize(const std::filesystem::path &file) const
+{
+	const Node *node = FindNode(file);
+	if (node == nullptr) [[unlikely]]
+	{
+		throw std::runtime_error("file not found");
+	}
+
+	if (std::holds_alternative<FileNode>(*node))
+	{
+		return std::get<FileNode>(*node).bytes.size();
+	}
+	else if (std::holds_alternative<DirectoryNode>(*node))
+	{
+		return std::get<DirectoryNode>(*node).GetSize();
+	}
+	else [[unlikely]]
+	{
+		return 0;
+	}
 }
 
 std::vector<VirtualFileSystem::ListEntry> VirtualFileSystem::List(const std::filesystem::path &directory, EPathListOption options) const
@@ -437,6 +488,22 @@ VirtualFileSystem::Node *VirtualFileSystem::FindNode(const std::filesystem::path
 	}
 
 	return currentNode;
+}
+
+void VirtualFileSystem::ClearParentDirectoriesCache(const std::filesystem::path &path) const
+{
+	std::filesystem::path directory = path.parent_path();
+
+	while (!directory.empty() && directory != directory.root_path())
+	{
+		auto *node = FindNode(directory);
+		TE_ASSERT(node != nullptr);
+		TE_ASSERT(std::holds_alternative<DirectoryNode>(*node));
+		auto directoryNode = std::get<DirectoryNode>(*node);
+		directoryNode.cached = false;
+
+		directory = directory.parent_path();
+	}
 }
 
 bool VirtualFileSystem::LuaExists(sol::object path)

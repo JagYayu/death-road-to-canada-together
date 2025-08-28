@@ -12,6 +12,7 @@
 #pragma once
 
 #include "sol/string_view.hpp"
+#include "sol/table.hpp"
 #include "util/Definitions.hpp"
 
 #include <cstdint>
@@ -23,9 +24,23 @@ namespace tudov
 {
 	enum class EDisconnectionCode : std::uint32_t;
 	enum class ESocketType : std::uint8_t;
+	class Context;
+	class IDebugManager;
 
 	struct CoreEventData
 	{
+	};
+
+	struct EventDebugProvideData : public CoreEventData
+	{
+		Context &context;
+		IDebugManager &debugManager;
+
+		explicit EventDebugProvideData(Context &context, IDebugManager &debugManager) noexcept;
+
+		void LuaAddElement(sol::table args) noexcept;
+
+		void LuaSetDebugCommand(sol::table args) noexcept;
 	};
 
 	struct EventLocalClientConnectData : public CoreEventData
@@ -69,6 +84,12 @@ namespace tudov
 		NetworkSessionSlot serverSlot;
 	};
 
+	struct EventLocalServerHostData : public CoreEventData
+	{
+		ESocketType socketType;
+		NetworkSessionSlot serverSlot;
+	};
+
 	struct EventLocalServerMessageData : public CoreEventData
 	{
 		ESocketType socketType;
@@ -76,6 +97,12 @@ namespace tudov
 		std::string_view message;
 		sol::string_view broadcast;
 		NetworkSessionSlot clientSlot;
+		NetworkSessionSlot serverSlot;
+	};
+
+	struct EventLocalServerShutdownData : public CoreEventData
+	{
+		ESocketType socketType;
 		NetworkSessionSlot serverSlot;
 	};
 
@@ -119,6 +146,12 @@ namespace tudov
 		std::uint16_t port;
 	};
 
+	struct EventReliableUDPServerHostData : public CoreEventData
+	{
+		ESocketType socketType;
+		NetworkSessionSlot serverSlot;
+	};
+
 	struct EventReliableUDPServerMessageData : public CoreEventData
 	{
 		ESocketType socketType;
@@ -127,5 +160,11 @@ namespace tudov
 		sol::string_view broadcast;
 		std::string_view host;
 		std::uint16_t port;
+	};
+
+	struct EventReliableUDPServerShutdownData : public CoreEventData
+	{
+		ESocketType socketType;
+		NetworkSessionSlot serverSlot;
 	};
 } // namespace tudov

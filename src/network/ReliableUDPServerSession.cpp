@@ -86,6 +86,11 @@ EServerSessionState ReliableUDPServerSession::GetSessionState() const noexcept
 	return EServerSessionState::Shutdown;
 }
 
+std::size_t ReliableUDPServerSession::GetClients() const noexcept
+{
+	return _clientIDPeerBimap.Size();
+}
+
 void ReliableUDPServerSession::Host(const IServerSession::HostArgs &baseArgs)
 {
 	if (GetSessionState() != EServerSessionState::Shutdown)

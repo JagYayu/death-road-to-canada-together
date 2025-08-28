@@ -25,24 +25,15 @@ function Camera.getTargetCenterPosition()
 	return centerX, centerY
 end
 
-local timer = 0
-
--- Events.add("KeyDown", function(e)
--- 	print(e)
--- end)
-
-local layers = {}
 local renderTarget
-local renderTargetWidth = 1280
-local renderTargetHeight = 720
+local renderTargetWidth = 960
+local renderTargetHeight = 640
 
 function Camera.getRenderTarget()
 	return renderTarget
 end
 
 local imageID = images:getID("gfx/cars/cars_unique_110x96.png")
-
-local renderTargetWidth, renderTargetHeight = 960, 640
 
 local eventRenderCamera = events:new(N_("RenderCamera"), {
 	"Begin",
@@ -51,9 +42,10 @@ local eventRenderCamera = events:new(N_("RenderCamera"), {
 	"End",
 })
 
+--- @param e dr2c.E.ClientRender
 events:add(N_("CRender"), function(e)
 	local snapScale
-	local renderer = e.window.renderer
+	local renderer = e.renderer
 	if not renderTarget then
 		renderTarget = renderer:newRenderTarget(renderTargetWidth, renderTargetHeight)
 		snapScale = true
@@ -61,8 +53,6 @@ events:add(N_("CRender"), function(e)
 		snapScale = true
 	end
 	renderTarget:update()
-
-	events:invoke(eventRenderCamera, e)
 
 	if snapScale then
 		renderTarget:snapCameraScale()
@@ -74,8 +64,10 @@ events:add(N_("CRender"), function(e)
 	local width, height = e.window:getSize()
 
 	local scale = math.max(width / renderTargetWidth, height / renderTargetHeight)
-	renderTarget:setCameraTargetPosition(300, 0)
+	renderTarget:setCameraTargetPosition(0, 0)
 	renderTarget:setCameraTargetScale(scale, scale)
+
+	events:invoke(eventRenderCamera, e)
 
 	for x = -1, 2 do
 		renderer:draw({

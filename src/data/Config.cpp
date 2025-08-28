@@ -13,12 +13,12 @@
 
 #include "data/Constants.hpp"
 #include "data/PathType.hpp"
-#include "util/FileSystemWatch.hpp"
 #include "system/Log.hpp"
+#include "system/LogMicros.hpp"
+#include "util/FileSystemWatch.hpp"
 
 #include "SDL3/SDL_properties.h"
-#include "system/LogMicros.hpp"
-#include <json.hpp>
+#include "json.hpp"
 
 #include <fstream>
 
@@ -151,7 +151,7 @@ void Config::Load() noexcept
 		std::ifstream in{AppConfigFile};
 		if (in.is_open())
 		{
-			_config = nlohmann::json::parse(in);
+			_config = nlohmann::json::parse(in, nullptr, true, true, true);
 			in.close();
 		}
 		else

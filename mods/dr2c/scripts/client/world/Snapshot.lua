@@ -1,6 +1,8 @@
 local String = require("tudov.String")
 local Utility = require("tudov.Utility")
 
+--- @class dr2c.SnapshotID : integer
+
 --- Do not inject metatables/functions/threads... that are not serializable by LJBuffer into snapshot table.
 --- Especially circular referenced table and
 --- @class dr2c.CSnapshot
@@ -23,9 +25,15 @@ function CSnapshot.getAll()
 	return savedSnapshots
 end
 
+--- @param snapshotID dr2c.SnapshotID
+--- @return any?
+function CSnapshot.get(snapshotID)
+	return savedSnapshots[snapshotID]
+end
+
 --- @param name string
 --- @param default any?
---- @return integer snapshotID
+--- @return dr2c.SnapshotID snapshotID
 function CSnapshot.register(name, default)
 	local scriptName = scriptLoader:getLoadingScriptName()
 	if scriptName then
@@ -58,7 +66,7 @@ function CSnapshot.register(name, default)
 end
 
 function CSnapshot.serialize()
-	-- Utility.assertRuntime()
+	Utility.assertRuntime()
 
 	local collection = {}
 	events:invoke(eventClientSnapshotCollect, {
@@ -74,7 +82,7 @@ function CSnapshot.serialize()
 end
 
 function CSnapshot.deserialize(data)
-	-- Utility.assertRuntime()
+	Utility.assertRuntime()
 
 	local success, collection = pcall(String.bufferDecode, data)
 	if not success then

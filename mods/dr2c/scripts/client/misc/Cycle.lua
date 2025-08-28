@@ -1,7 +1,9 @@
 local eventClientUpdate = events:new(N_("CUpdate"), {
 	"Network",
+	"Inputs",
 	"Control",
-	"WorldTick",
+	"Rollback",
+	"World",
 	"ECS",
 	"ClearCaches",
 })
@@ -19,7 +21,15 @@ local eventClientRender = events:new(N_("CRender"), {
 	"UI",
 })
 
+--- @param e Events.E.TickRender
 events:add(N_("GRender"), function(e)
+	--- @class dr2c.E.ClientRender : Events.E.TickRender
+	--- @field renderer Renderer
+
+	--- @cast e dr2c.E.ClientRender
+
+	e.renderer = e.window.renderer
+
 	events:invoke(eventClientRender, e)
 end, N_("ClientRender"), nil, "Main")
 

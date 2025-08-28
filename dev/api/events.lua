@@ -33,6 +33,7 @@ error("this is a lua library module")
 --- @class Events.E.TickLoad
 
 --- @class Events.E.TickRender
+--- @field window Window
 
 --- @class Events.E.TickUpdate
 

@@ -4,7 +4,7 @@ local Table = require("tudov.Table")
 --- @class dr2c.CInput
 local CInput = {}
 
-local defaultWindowKey = "MainWindow"
+local defaultWindowKey = "Main"
 
 --- @type table<string, { list: EKeyCode[], set: table<EKeyCode, integer> }>
 local windowKey2HoldingKeyCodes = {}
@@ -99,21 +99,5 @@ events:add(N_("CKeyUp"), function(e)
 	removeHoldingCode(e.window, windowKey2HoldingKeyCodes, e.keyCode, "Key")
 	removeHoldingCode(e.window, windowKey2HoldingScanCodes, e.scanCode, "Scan")
 end)
-
--- local dx = 0
--- local dy = 0
-
--- if e.scanCode == EScanCode.A then
--- 	dx = dx - 1
--- end
--- if e.scanCode == EScanCode.D then
--- 	dx = dx + 1
--- end
--- if e.scanCode == EScanCode.W then
--- 	dy = dy - 1
--- end
--- if e.scanCode == EScanCode.S then
--- 	dy = dy + 1
--- end
 
 return CInput

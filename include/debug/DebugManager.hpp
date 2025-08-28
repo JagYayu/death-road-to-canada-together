@@ -25,8 +25,11 @@ namespace tudov
 		virtual ~IDebugManager() noexcept = default;
 
 		virtual IDebugElement *GetElement(std::string_view elementName) noexcept = 0;
+
 		virtual void AddElement(const std::shared_ptr<IDebugElement> &element) noexcept = 0;
+
 		virtual bool RemoveElement(std::string_view elementName) noexcept = 0;
+
 		virtual void UpdateAndRender(IWindow &window) noexcept = 0;
 
 		inline const IDebugElement *GetElement(std::string_view elementName) const noexcept

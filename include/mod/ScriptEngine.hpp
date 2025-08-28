@@ -91,7 +91,7 @@ namespace tudov
 
 		virtual sol::table &GetModGlobals(std::string_view sandboxKey, bool sandboxed) noexcept = 0;
 
-		virtual sol::object RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter) = 0;
+		virtual sol::object RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::protected_function &getter) = 0;
 
 		virtual std::unordered_map<std::string_view, sol::object> GetScriptPersistVariables(std::string_view scriptName) noexcept = 0;
 
@@ -128,7 +128,7 @@ namespace tudov
 		struct PersistVariable
 		{
 			sol::object value;
-			sol::function getter;
+			sol::protected_function getter;
 
 			void Save() noexcept;
 		};
@@ -142,12 +142,12 @@ namespace tudov
 		std::map<std::string, std::map<std::string, PersistVariable>> _persistVariables;
 		std::map<std::string_view, sol::table> _modGlobals;
 
-		sol::function _luaThrowModifyReadonlyGlobalError;
-		sol::function _luaInspect;
-		sol::function _luaPostProcessModGlobals;
-		sol::function _luaPostProcessScriptGlobals;
-		sol::function _luaMarkAsLocked;
-		sol::function _luaSTDRequire;
+		sol::protected_function _luaThrowModifyReadonlyGlobalError;
+		sol::protected_function _luaInspect;
+		sol::protected_function _luaPostProcessModGlobals;
+		sol::protected_function _luaPostProcessScriptGlobals;
+		sol::protected_function _luaMarkAsLocked;
+		sol::protected_function _luaSTDRequire;
 
 		std::vector<std::shared_ptr<ScriptError>> _scriptRuntimeErrors;
 
@@ -187,7 +187,7 @@ namespace tudov
 		void ThrowError(std::string &message) noexcept override;
 		void SetReadonlyGlobal(const std::string_view &key, sol::object value) override;
 		sol::table &GetModGlobals(std::string_view sandboxKey, bool sandboxed) noexcept override;
-		sol::object RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter) override;
+		sol::object RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::protected_function &getter) override;
 		std::unordered_map<std::string_view, sol::object> GetScriptPersistVariables(std::string_view scriptName) noexcept override;
 		void SaveScriptPersistVariables(std::string_view scriptName) noexcept override;
 		void SavePersistVariables() noexcept override;

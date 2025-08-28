@@ -1,0 +1,1 @@
+--- @class dr2c.PlayerID : integer

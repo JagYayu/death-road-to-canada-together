@@ -13,8 +13,9 @@
 
 #include "util/Micros.hpp"
 
+#include "json.hpp"
+
 #include <cstdint>
-#include <json.hpp>
 
 namespace tudov
 {

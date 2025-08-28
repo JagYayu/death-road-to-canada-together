@@ -21,7 +21,6 @@
 
 #include <algorithm>
 #include <filesystem>
-#include <span>
 #include <vector>
 
 using namespace tudov;
@@ -142,14 +141,7 @@ void DebugFileSystem::UpdateAndRender(IWindow &window) noexcept
 			ImGui::TextUnformatted(entry.dateModified.data());
 
 			ImGui::TableSetColumnIndex(2);
-			if (entry.isDirectory)
-			{
-				ImGui::TextUnformatted("-");
-			}
-			else
-			{
-				ImGui::Text("%.2f", entry.sizeKB);
-			}
+			ImGui::Text("%.2f", entry.sizeKB);
 
 			ImGui::TableSetColumnIndex(3);
 			ImGui::TextUnformatted(entry.type.data());
@@ -190,7 +182,7 @@ void DebugFileSystem::Refresh(VirtualFileSystem &vfs) noexcept
 		std::filesystem::path fullPath = _currentPath / path;
 		std::string dateModified;
 		std::string type;
-		std::size_t bytes;
+		std::size_t bytes = vfs.GetPathSize(fullPath);
 
 		{
 			auto seconds = std::chrono::time_point_cast<std::chrono::seconds>(vfs.GetPathDateModified(fullPath));
@@ -199,13 +191,11 @@ void DebugFileSystem::Refresh(VirtualFileSystem &vfs) noexcept
 
 		if (isDirectory)
 		{
-			type = "Folder",
-			bytes = 0;
+			type = "Folder";
 		}
 		else
 		{
 			type = ResourceType::ToString(vfs.GetFileResourceType(fullPath)) + " File";
-			bytes = vfs.GetFileBytes(fullPath).size_bytes();
 		}
 
 		_entries.emplace_back(

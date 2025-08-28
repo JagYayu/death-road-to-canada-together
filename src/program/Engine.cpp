@@ -16,6 +16,7 @@
 #include "debug/DebugConsole.hpp"
 #include "debug/DebugManager.hpp"
 #include "event/CoreEvents.hpp"
+#include "event/CoreEventsData.hpp"
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
 #include "mod/LuaAPI.hpp"
@@ -143,6 +144,11 @@ bool Engine::ShouldQuit() noexcept
 	return _data->_windowManager->IsEmpty();
 }
 
+Version Engine::GetAppVersion() const noexcept
+{
+	return Version(0, 1, 0);
+}
+
 void Engine::Initialize() noexcept
 {
 	TE_DEBUG("{}", "Initializing engine ...");
@@ -238,6 +244,7 @@ void Engine::ProcessLoad() noexcept
 {
 	_data->_modManager->Update();
 	_data->_eventManager->GetCoreEvents().TickLoad().Invoke();
+	ProvideDebug(*_data->_windowManager->GetDebugManager());
 }
 
 void Engine::ProcessTick() noexcept
@@ -351,6 +358,11 @@ Log &Engine::GetLog() noexcept
 
 void Engine::ProvideDebug(IDebugManager &debugManager) noexcept
 {
+	{
+		EventDebugProvideData data{context, debugManager};
+		_data->_eventManager->GetCoreEvents().DebugProvide().Invoke(&data, {}, EEventInvocation::None);
+	}
+
 	if (auto &&debugConsole = debugManager.GetElement<DebugConsole>(); debugConsole != nullptr)
 	{
 		auto &&quit = [this](std::string_view)
@@ -441,4 +453,9 @@ void Engine::TriggerLoadPending() noexcept
 	{
 		_loadingState.store(ELoadingState::Pending);
 	}
+}
+
+sol::string_view Engine::LuaGetVersion() const noexcept
+{
+	return "0.1.0";
 }

@@ -185,7 +185,7 @@ void ScriptEngine::Initialize() noexcept
 
 	IScriptLoader &scriptLoader = GetScriptLoader();
 
-	_luaThrowModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::function>();
+	_luaThrowModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::protected_function>();
 
 	{
 		auto &&inspectModule = scriptLoader.Load("#inspect");
@@ -205,13 +205,13 @@ void ScriptEngine::Initialize() noexcept
 		auto &&scriptEngine = scriptLoader.Load("#ScriptEngine");
 		if (scriptEngine != nullptr)
 		{
-			auto &&scriptEngineModule = scriptEngine->GetTable();
+			auto scriptEngineModule = scriptEngine->GetTable();
 
-			scriptEngineModule.get<sol::function>("initialize")();
+			scriptEngineModule.get<sol::protected_function>("initialize")(_lua.globals());
 
-			_luaMarkAsLocked = scriptEngineModule.get<sol::function>("markAsLocked");
-			_luaPostProcessModGlobals = scriptEngineModule.get<sol::function>("postProcessModGlobals");
-			_luaPostProcessScriptGlobals = scriptEngineModule.get<sol::function>("postProcessScriptGlobals");
+			_luaMarkAsLocked = scriptEngineModule.get<sol::protected_function>("markAsLocked");
+			_luaPostProcessModGlobals = scriptEngineModule.get<sol::protected_function>("postProcessModGlobals");
+			_luaPostProcessScriptGlobals = scriptEngineModule.get<sol::protected_function>("postProcessScriptGlobals");
 
 			AssertLuaValue(_luaMarkAsLocked, "#ScriptEngine.markAsLocked");
 			AssertLuaValue(_luaPostProcessModGlobals, "#ScriptEngine.postProcessModGlobals");
@@ -510,18 +510,18 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 
 	scriptGlobals.set_function("persist", [this, scriptName](sol::string_view key, sol::object defaultValue, sol::object getter)
 	{
-		if (getter.is<sol::function>())
+		if (getter.is<sol::protected_function>())
 		{
 			if (defaultValue == sol::nil) [[unlikely]]
 			{
 				GetScriptEngine().ThrowError("Default value could not be nil");
 			}
 
-			return RegisterPersistVariable(scriptName, key, defaultValue, getter.as<sol::function>());
+			return RegisterPersistVariable(scriptName, key, defaultValue, getter.as<sol::protected_function>());
 		}
-		else if (defaultValue.is<sol::function>())
+		else if (defaultValue.is<sol::protected_function>())
 		{
-			sol::function getter_ = defaultValue.as<sol::function>();
+			sol::protected_function getter_ = defaultValue.as<sol::protected_function>();
 			defaultValue = getter_();
 
 			return RegisterPersistVariable(scriptName, key, defaultValue, getter_);
@@ -604,7 +604,7 @@ void ScriptEngine::SavePersistVariables() noexcept
 	}
 }
 
-sol::object ScriptEngine::RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::function &getter)
+sol::object ScriptEngine::RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::protected_function &getter)
 {
 	if (defaultValue == sol::nil) [[unlikely]]
 	{

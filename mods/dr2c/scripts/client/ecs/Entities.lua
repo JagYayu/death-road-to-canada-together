@@ -3,7 +3,7 @@ local CECSSchema = require("dr2c.client.ecs.ECSSchema")
 local CEntities = {}
 
 --- @param name string
---- @param components dr2c.Components
+--- @param components dr2c.CComponents
 function CEntities.registerEntity(name, components, mergeDepth, ...)
 	local extras = { ... }
 

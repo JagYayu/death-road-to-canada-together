@@ -59,6 +59,9 @@ function client:getSessionID() end
 --- @return EClientSessionState
 function client:getSessionState() end
 
+--- @return ESocketType
+function client:getSocketType() end
+
 --- @param args Network.ClientConnectArgs
 function client:connect(args) end
 
@@ -90,11 +93,26 @@ function server:connect() end
 --- @param code EDisconnectionCode
 function server:disconnect(clientID, code) end
 
+--- @return integer
+function server:getClients() end
+
+--- @return integer
+function server:getMaxClients() end
+
+--- @return string
+function server:getPassword() end
+
 --- @return Network.ServerID
 function server:getSessionID() end
 
 --- @return EServerSessionState
 function server:getSessionState() end
+
+--- @return ESocketType
+function server:getSocketType() end
+
+--- @return string
+function server:getTitle() end
 
 --- @param args Network.ServerHostArgs
 function server:host(args) end

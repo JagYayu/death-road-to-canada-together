@@ -44,6 +44,7 @@ namespace tudov
 		~IServerSession() noexcept override = default;
 
 		virtual EServerSessionState GetSessionState() const noexcept = 0;
+		virtual std::size_t GetClients() const noexcept = 0;
 		virtual void Host(const HostArgs &args) = 0;
 		virtual void Shutdown() = 0;
 		virtual bool TryShutdown() = 0;
