@@ -6,7 +6,6 @@ local GServer = {}
 
 --- @alias dr2c.ServerAttributeRooms dr2c.RoomID[]
 
---- @enum dr2c.ServerAttribute
 GServer.Attribute = Enum.sequence({
 	-- 服务器名
 	DisplayName = 1,
@@ -28,7 +27,7 @@ GServer.Attribute = Enum.sequence({
 	SocketType = 9,
 })
 
---- @type table<dr2c.ClientPrivateAttribute, fun(value: any): boolean?>
+--- @type table<dr2c.GClient.PrivateAttribute, fun(value: any): boolean?>
 local attributeValidators = {
 	[GServer.Attribute.DisplayName] = Function.isTypeString,
 	[GServer.Attribute.Clients] = Function.isTypeInteger,

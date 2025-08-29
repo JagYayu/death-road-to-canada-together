@@ -39,7 +39,7 @@ function CWorldTick.process(targetTick)
 		error("target tick must be an integer number", 2)
 	end
 
-	-- print(CPlayerInputBuffers.collectInputsInRange(1))
+	-- print(CPlayerInputBuffers.collectPlayersInputsInRange())
 end
 
 --- @param e dr2c.CUpdate

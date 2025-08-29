@@ -10,7 +10,6 @@ GClient.State = Enum.sequence({
 	Verified = 2,
 })
 
---- @enum dr2c.ClientAttributeTrait
 GClient.AttributeTrait = Enum.immutable({
 	-- 客户端可随时修改该属性（默认值）
 	Editable = 0,
@@ -20,7 +19,6 @@ GClient.AttributeTrait = Enum.immutable({
 	Authoritative = 2,
 })
 
---- @enum dr2c.ClientPublicAttribute
 GClient.PublicAttribute = Enum.sequence({
 	-- 存储ClientID
 	ID = 0,
@@ -48,7 +46,6 @@ GClient.PublicAttribute = Enum.sequence({
 	SocketType = 11,
 })
 
---- @enum dr2c.ClientPrivateAttribute
 GClient.PrivateAttribute = Enum.sequence({
 	SecretToken = 1,
 	SecretStatistics = 2,
@@ -70,19 +67,19 @@ local privateAttributeTraits = {
 	[GClient.PrivateAttribute.SecretToken] = GClient.AttributeTrait.Authoritative,
 }
 
---- @param attribute dr2c.ClientPublicAttribute
---- @return dr2c.ClientAttributeTrait trait
+--- @param attribute dr2c.GClient.PublicAttribute
+--- @return dr2c.GClient.AttributeTrait trait
 function GClient.getPublicAttributeTrait(attribute)
 	return publicAttributeTraits[attribute] or GClient.AttributeTrait.Editable
 end
 
---- @param attribute dr2c.ClientPrivateAttribute
---- @return dr2c.ClientAttributeTrait trait
+--- @param attribute dr2c.GClient.PrivateAttribute
+--- @return dr2c.GClient.AttributeTrait trait
 function GClient.getPrivateAttributeTrait(attribute)
 	return privateAttributeTraits[attribute] or GClient.AttributeTrait.Editable
 end
 
---- @type table<dr2c.ClientPublicAttribute, fun(value: any): boolean?>
+--- @type table<dr2c.GClient.PublicAttribute, fun(value: any): boolean?>
 local publicAttributeValidators = {
 	[GClient.PublicAttribute.ID] = Function.isTypeInteger,
 	[GClient.PublicAttribute.State] = Function.isTypeInteger,
@@ -96,20 +93,20 @@ local publicAttributeValidators = {
 	[GClient.PublicAttribute.ModsHash] = Function.isTypeNumber,
 }
 
---- @type table<dr2c.ClientPrivateAttribute, fun(value: any): boolean?>
+--- @type table<dr2c.GClient.PrivateAttribute, fun(value: any): boolean?>
 local privateAttributeValidators = {
 	[GClient.PrivateAttribute.SecretToken] = Function.isTypeNumberOrNil,
 	[GClient.PrivateAttribute.SecretStatistics] = Function.isTypeTable,
 }
 
---- @param attribute dr2c.ClientPublicAttribute
+--- @param attribute dr2c.GClient.PublicAttribute
 --- @param value integer | string
 --- @return boolean
 function GClient.validatePublicAttribute(attribute, value)
 	return not not (publicAttributeValidators[attribute] or Function.alwaysTrue)(value)
 end
 
---- @param attribute dr2c.ClientPrivateAttribute
+--- @param attribute dr2c.GClient.PrivateAttribute
 --- @param value integer | string
 --- @return boolean
 function GClient.validatePrivateAttribute(attribute, value)

@@ -19,13 +19,13 @@ unverifiedClients = persist("unverifiedClients", {}, function()
 	return unverifiedClients
 end)
 
---- @type table<Network.ClientID, table<dr2c.ClientPublicAttribute, any>>
+--- @type table<Network.ClientID, table<dr2c.GClient.PublicAttribute, any>>
 local clientsPublicAttributes
 clientsPublicAttributes = persist("clientsPublicAttributes", {}, function()
 	return clientsPublicAttributes
 end)
 
---- @type table<Network.ClientID, table<dr2c.ClientPublicAttribute, any>>
+--- @type table<Network.ClientID, table<dr2c.GClient.PublicAttribute, any>>
 local clientsPrivateAttributes
 clientsPrivateAttributes = persist("clientsPrivateAttributes", {}, function()
 	return clientsPrivateAttributes

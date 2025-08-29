@@ -2,8 +2,7 @@ local Enum = require("tudov.Enum")
 
 local GPlatform = {}
 
---- @enum dr2c.PlatformType
-GPlatform.Type = Enum.immutable({
+GPlatform.Type = Enum.sequence({
 	Standalone = 0,
 	ItchIO = 1,
 	Steam = 2,
@@ -11,7 +10,7 @@ GPlatform.Type = Enum.immutable({
 	Epic = 4,
 })
 
---- @return dr2c.PlatformType
+--- @return Enum.Defaults
 function GPlatform.getPlatformType()
 	return GPlatform.Type.Standalone
 end

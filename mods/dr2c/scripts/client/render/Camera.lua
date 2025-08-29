@@ -35,7 +35,7 @@ end
 
 local imageID = images:getID("gfx/cars/cars_unique_110x96.png")
 
-local eventRenderCamera = events:new(N_("RenderCamera"), {
+local eventRenderCamera = events:new(N_("CRenderCamera"), {
 	"Begin",
 	"Sprites",
 	"DebugObjects",

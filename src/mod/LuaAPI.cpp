@@ -22,6 +22,7 @@
 #include "program/WindowManager.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/ImageResources.hpp"
+#include "system/OperatingSystem.hpp"
 #include "system/RandomDevice.hpp"
 #include "system/Time.hpp"
 
@@ -148,11 +149,10 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "list", &VirtualFileSystem::LuaList,
 	            "readFile", &VirtualFileSystem::LuaReadFile);
 
-	// TE_USERTYPE(Version,
-	//             "major", &Version::Major,
-	//             "minor", &Version::Minor,
-	//             "parts", &Version::_parts,
-	//             "patch", &Version::Patch);
+	lua.create_named_table(TE_NAMEOF(OperatingSystem),
+	                       "getType", &OperatingSystem::GetType,
+	                       "isMobile", &OperatingSystem::IsMobile,
+	                       "isPC", &OperatingSystem::IsPC);
 
 	lua.create_named_table(TE_NAMEOF(RandomDevice),
 	                       "entropy", &RandomDevice::Entropy,

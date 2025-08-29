@@ -11,8 +11,9 @@
 
 #pragma once
 
-#include "sol/forward.hpp"
 #include "util/Micros.hpp"
+
+#include "sol/forward.hpp"
 
 #include <cmath>
 #include <limits>

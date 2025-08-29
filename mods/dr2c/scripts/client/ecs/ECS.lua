@@ -523,7 +523,7 @@ function CECS.countEntities(entityFilter)
 	local counter = 0
 	local check = entityFilter.check
 
-	for _, entity in ipairs(entities) do
+	for _, entity in ipairs(getSortedEntities()) do
 		if check(entity[2]) then
 			counter = counter + 1
 		end
@@ -539,7 +539,7 @@ function CECS.countEntitiesByType(entityTypeOrID)
 	local counter = 0
 	local entityTypeID = toEntityTypeID(entityTypeOrID)
 
-	for _, entity in ipairs(entities) do
+	for _, entity in ipairs(getSortedEntities()) do
 		if entity[2] == entityTypeID then
 			counter = counter + 1
 		end

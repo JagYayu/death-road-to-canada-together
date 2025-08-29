@@ -56,9 +56,9 @@ function SServer.disconnect(clientID, disconnectionCode)
 end
 
 --- @param clientID Network.ClientID
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.GMessage.Type
 --- @param messageContent any?
---- @param channel dr2c.MessageChannel
+--- @param channel dr2c.GMessage.Channel
 --- @return boolean
 function SServer.sendReliable(clientID, messageType, messageContent, channel)
 	local session = SServer.getNetworkSession()
@@ -80,9 +80,9 @@ function SServer.sendReliable(clientID, messageType, messageContent, channel)
 end
 
 --- @param clientID Network.ClientID
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.GMessage.Type
 --- @param messageContent any?
---- @param channel dr2c.MessageChannel
+--- @param channel dr2c.GMessage.Channel
 --- @return boolean success
 function SServer.sendUnreliable(clientID, messageType, messageContent, channel)
 	local session = SServer.getNetworkSession()
@@ -103,9 +103,9 @@ function SServer.sendUnreliable(clientID, messageType, messageContent, channel)
 	end
 end
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.GMessage.Type
 --- @param messageContent any?
---- @param channel dr2c.MessageChannel?
+--- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
 function SServer.broadcastReliable(messageType, messageContent, channel)
 	local session = SServer.getNetworkSession()
@@ -126,9 +126,9 @@ function SServer.broadcastReliable(messageType, messageContent, channel)
 	end
 end
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.GMessage.Type
 --- @param messageContent any?
---- @param channel dr2c.MessageChannel?
+--- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
 function SServer.broadcastUnreliable(messageType, messageContent, channel)
 	local session = SServer.getNetworkSession()
@@ -195,7 +195,7 @@ events:add("ServerDisconnect", function(e)
 end)
 
 --- @param messageContent any?
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.GMessage.Type
 local function invokeEventServerMessage(clientID, messageContent, messageType)
 	--- @class dr2c.E.ServerMessage
 	--- @field broadcast table?

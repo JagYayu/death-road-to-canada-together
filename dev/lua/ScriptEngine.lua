@@ -80,6 +80,7 @@ end
 
 local function initialize(luaGlobals)
 	jit.off()
+	-- jit.opt.start("maxtrace=8000", "maxrecord=16000", "maxmcode=40960")
 
 	--- @param mt metatable
 	--- @return boolean

@@ -15,12 +15,16 @@ events:add(N_("CUpdate"), function(e)
 			break
 		end
 
+		print("Spawn a Zombie")
 		CECS.spawnEntity("Zombie")
 	end
 
 	if CECS.countEntitiesByType("Character") < 1 then
+		print("Spawn a Character")
 		CECS.spawnEntity("Character")
 	end
+
+	CECS.update()
 
 	local getComponent = CECS.getComponent
 	local random = math.random

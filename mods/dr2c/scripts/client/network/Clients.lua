@@ -8,7 +8,7 @@ local GClient = require("dr2c.shared.network.Client")
 local GMessage = require("dr2c.shared.network.Message")
 
 --- @class dr2c.ClientPrivateRequestEntry
---- @field attribute dr2c.ClientPrivateAttribute
+--- @field attribute dr2c.GClient.PrivateAttribute
 --- @field callback fun(success: boolean, attribute: any)
 --- @field expireTime number
 
@@ -21,13 +21,13 @@ secretToken2ClientID = persist("secretToken2ClientID", function()
 	return secretToken2ClientID
 end)
 
---- @type table<Network.ClientID, table<dr2c.ClientPublicAttribute, any>>
+--- @type table<Network.ClientID, table<dr2c.GClient.PublicAttribute, any>>
 local clientsPublicAttributes = {}
 clientsPublicAttributes = persist("clientsPublicAttributes", function()
 	return clientsPublicAttributes
 end)
 
---- @type table<Network.ClientID, table<dr2c.ClientPublicAttribute, any>>
+--- @type table<Network.ClientID, table<dr2c.GClient.PublicAttribute, any>>
 local clientsPrivateAttributes = {}
 clientsPrivateAttributes = persist("clientsPrivateAttributes", function()
 	return clientsPrivateAttributes
@@ -72,7 +72,7 @@ function CClients.removeClient(clientID)
 end
 
 --- @param clientID Network.ClientID
---- @param clientPublicAttribute dr2c.ClientPublicAttribute
+--- @param clientPublicAttribute dr2c.GClient.PublicAttribute
 --- @return any?
 --- @nodiscard
 function CClients.getPublicAttribute(clientID, clientPublicAttribute)
@@ -83,7 +83,7 @@ function CClients.getPublicAttribute(clientID, clientPublicAttribute)
 end
 
 --- @param clientID Network.ClientID
---- @param clientPrivateAttribute dr2c.ClientPrivateAttribute
+--- @param clientPrivateAttribute dr2c.GClient.PrivateAttribute
 --- @param callback fun(success: boolean, attribute: any)
 function CClients.requestPrivateAttribute(clientID, clientPrivateAttribute, callback)
 	local attributes = clientsPublicAttributes[clientID]
@@ -111,7 +111,7 @@ end
 
 --- @warn Do not modify attributes other than local client as possible.
 --- @param clientID Network.ClientID
---- @param clientPublicAttribute dr2c.ClientPublicAttribute
+--- @param clientPublicAttribute dr2c.GClient.PublicAttribute
 --- @param attributeValue any
 function CClients.setPublicAttribute(clientID, clientPublicAttribute, attributeValue)
 	local attributes = clientsPublicAttributes[clientID]
@@ -124,7 +124,7 @@ end
 
 --- @warn Do not modify attributes other than local client as possible.
 --- @param clientID Network.ClientID
---- @param clientPrivateAttribute dr2c.ClientPrivateAttribute
+--- @param clientPrivateAttribute dr2c.GClient.PrivateAttribute
 --- @param attributeValue any
 function CClients.setPrivateAttribute(clientID, clientPrivateAttribute, attributeValue)
 	local attributes = clientsPrivateAttributes[clientID]

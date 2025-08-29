@@ -4,7 +4,6 @@ local Enum = require("tudov.Enum")
 --- @class dr2c.GMessage
 local GMessage = {}
 
---- @enum dr2c.MessageType
 GMessage.Type = Enum.sequence({
 	Unknown = 0,
 	-- Server ==> Client
@@ -21,7 +20,6 @@ GMessage.Type = Enum.sequence({
 	"ServerAttribute",
 })
 
---- @enum dr2c.MessageChannel
 GMessage.Channel = Enum.immutable({
 	Main = 0,
 	_1 = 1,
@@ -33,21 +31,21 @@ GMessage.Channel = Enum.immutable({
 	_7 = 7,
 })
 
---- @type table<dr2c.MessageType, true>
+--- @type table<dr2c.GMessage.Type, true>
 local unessentialMessageTypes = {}
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.GMessage.Type
 function GMessage.markAsUnessential(messageType)
 	unessentialMessageTypes[messageType] = true
 end
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.GMessage.Type
 --- @return boolean
 function GMessage.isUnessential(messageType)
 	return unessentialMessageTypes[messageType] or false
 end
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.GMessage.Type
 --- @param messageContent any?
 --- @return string
 function GMessage.pack(messageType, messageContent)
@@ -64,7 +62,7 @@ local function unpackImpl(message)
 end
 
 --- @param message string
---- @return dr2c.MessageType
+--- @return dr2c.GMessage.Type
 --- @return any?
 function GMessage.unpack(message)
 	local success, messageType, messageContent = pcall(unpackImpl, message)

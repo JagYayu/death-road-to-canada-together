@@ -89,6 +89,7 @@ constexpr const char *modCopyGlobals[] = {
     "EScanCode",
     "ESocketType",
     // C++ static classes
+	"OperatingSystem",
     "RandomDevice",
     "Time",
     // C++ exports

@@ -33,16 +33,20 @@ function CPlayerInputBuffers.hasPlayer(playerID)
 	return not not playerInputBuffers[playerID]
 end
 
---- @param playerID dr2c.PlayerID
---- @param worldTickID integer
---- @param playerInputID dr2c.PlayerInputID
---- @param playerInputArg Serializable
-function CPlayerInputBuffers.addInput(playerID, worldTickID, playerInputID, playerInputArg)
+local function checkWorldTickID(worldTickID)
 	if type(worldTickID) ~= "number" then
 		error("'worldTickID' number expected", 2)
 	elseif worldTickID <= 0 then
 		error("'worldTickID' should be greater than 0", 2)
 	end
+end
+
+--- @param playerID dr2c.PlayerID
+--- @param worldTickID integer
+--- @param playerInputID dr2c.PlayerInputID
+--- @param playerInputArg Serializable
+function CPlayerInputBuffers.addInput(playerID, worldTickID, playerInputID, playerInputArg)
+	checkWorldTickID(worldTickID)
 
 	local inputBuffer = playerInputBuffers[playerID]
 	if not inputBuffer then
@@ -83,7 +87,17 @@ end
 
 --- @param playerID dr2c.PlayerID
 --- @param worldTickID integer
-function CPlayerInputBuffers.removeInput(playerID, worldTickID) end
+function CPlayerInputBuffers.removeInput(playerID, worldTickID)
+	checkWorldTickID(worldTickID)
+
+	local inputBuffer = playerInputBuffers[playerID]
+	if not inputBuffer then
+		inputBuffer = {}
+		playerInputBuffers[playerID] = inputBuffer
+	else
+		inputBuffer[worldTickID] = nil
+	end
+end
 
 --- @param playerInputBuffer dr2c.PlayerInputBuffer
 --- @param beginWorldTick integer
@@ -134,7 +148,7 @@ end
 function CPlayerInputBuffers.collectInputsInRange(playerID, beginWorldTick, endWorldTick)
 	local inputBuffer = playerInputBuffers[playerID]
 	if not inputBuffer then
-		return {}
+		return Table.empty
 	end
 
 	return collectInputsInRangeImpl(inputBuffer, beginWorldTick, endWorldTick)

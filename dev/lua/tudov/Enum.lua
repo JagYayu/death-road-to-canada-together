@@ -292,6 +292,8 @@ events:add("DebugSnapshot", function(e)
 	e.enumerationsMetadata = enumerationsMetadata
 end, nil, nil, "#tudov.Enum")
 
-Function._Enum(Enum)
+if Function._Enum then
+	Function._Enum(Enum)
+end
 
 return Enum

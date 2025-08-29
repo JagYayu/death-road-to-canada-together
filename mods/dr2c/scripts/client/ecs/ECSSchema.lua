@@ -49,7 +49,6 @@ local Table = require("tudov.Table")
 --- @class dr2c.ECSSchema
 local CECSSchema = {}
 
---- @enum dr2c.ComponentTrait
 CECSSchema.ComponentTrait = Enum.immutable({
 	ArchetypeConstant = 0,
 	ArchetypeSerializable = 1,

@@ -5,12 +5,10 @@ local GPlayerInput = {}
 
 GPlayerInput.InputQueueMaxSize = 8
 
---- @enum dr2c.PlayerInputID
 GPlayerInput.ID = Enum.sequence({
 	"Move",
 })
 
---- @enum dr2c.PlayerInputType
 GPlayerInput.Type = Enum.immutable({
 	Discrete = 0,
 	--- Serve as a predictive value for the client.

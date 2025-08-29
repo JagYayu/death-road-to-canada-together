@@ -4,7 +4,6 @@ local Enum = require("tudov.Enum")
 local CClients = require("dr2c.client.network.Clients")
 local GClient = require("dr2c.shared.network.Client")
 local GMessage = require("dr2c.shared.network.Message")
-local GOperatingSystem = require("dr2c.shared.system.OperatingSystem")
 local GPlatform = require("dr2c.client.network.Platform")
 local GThrottle = require("dr2c.shared.utils.Throttle")
 
@@ -38,6 +37,8 @@ events:add(N_("CUpdate"), function(e)
 		return
 	end
 
+	print("Initialize local client attributes")
+
 	local PublicAttribute = GClient.PublicAttribute
 	local PrivateAttribute = GClient.PrivateAttribute
 	local setPublicAttribute = CClients.setPublicAttribute
@@ -48,7 +49,7 @@ events:add(N_("CUpdate"), function(e)
 	setPublicAttribute(clientID, PublicAttribute.State, GClient.State.Disconnected)
 	setPublicAttribute(clientID, PublicAttribute.Platform, GPlatform.getType())
 	setPublicAttribute(clientID, PublicAttribute.PlatformID, nil)
-	setPublicAttribute(clientID, PublicAttribute.OperatingSystem, GOperatingSystem.getType())
+	setPublicAttribute(clientID, PublicAttribute.OperatingSystem, OperatingSystem.getType())
 	setPublicAttribute(clientID, PublicAttribute.Statistics, {})
 	setPublicAttribute(clientID, PublicAttribute.DisplayName, nil)
 	setPublicAttribute(clientID, PublicAttribute.Room, nil)
@@ -73,9 +74,9 @@ CClient.eventCMessage = events:new(N_("CMessage"), {
 	"Receive",
 }, Enum.eventKeys(GMessage.Type))
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.GMessage.Type
 --- @param messageContent any?
---- @param channel dr2c.MessageChannel?
+--- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
 function CClient.sendReliable(messageType, messageContent, channel)
 	local session = CClient.getNetworkSession()
@@ -96,9 +97,9 @@ function CClient.sendReliable(messageType, messageContent, channel)
 	end
 end
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.GMessage.Type
 --- @param messageContent any?
---- @param channel dr2c.MessageChannel?
+--- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
 function CClient.sendUnreliable(messageType, messageContent, channel)
 	local session = CClient.getNetworkSession()
@@ -143,8 +144,12 @@ events:add("ClientDisconnect", function(e)
 	invokeEventClientDisconnect()
 end)
 
+--- @param messageContent any?
+--- @param messageType dr2c.GMessage
 local function invokeEventClientMessage(messageContent, messageType)
 	--- @class dr2c.E.ClientMessage
+	--- @field content any?
+	--- @field type dr2c.GMessage
 	local e = {
 		content = messageContent,
 		type = messageType,
@@ -230,6 +235,8 @@ events:add(N_("CUpdate"), function(e)
 	end
 
 	local publicEntries, privateEntries = invokeEventCCollectVerifyAttributes(e)
+
+	print("Send client verifying attributes")
 
 	for _, entry in ipairs(privateEntries) do
 		CClient.sendReliable(GMessage.Type.ClientPrivateAttribute, entry)
