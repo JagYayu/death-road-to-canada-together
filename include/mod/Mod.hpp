@@ -74,6 +74,6 @@ namespace tudov
 		ModManager &GetModManager() noexcept override;
 		ModConfig &GetConfig() noexcept override;
 
-		bool ShouldScriptLoad(std::string_view relativePath) noexcept;
+		[[nodiscard]] bool ShouldScriptLoad(std::string_view relativePath) noexcept;
 	};
 } // namespace tudov

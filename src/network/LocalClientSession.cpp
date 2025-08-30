@@ -28,7 +28,6 @@
 
 #include <memory>
 #include <stdexcept>
-#include <type_traits>
 #include <vector>
 
 using namespace tudov;
@@ -83,8 +82,9 @@ void LocalClientSession::Connect(const IClientSession::ConnectArgs &baseArgs)
 	{
 		throw std::runtime_error("No local server provided");
 	}
+	_messageQueue.emplace(LocalSessionMessage::Connect(shared_from_this()), _clientSessionSlot, _localServer->GetSessionSlot());
 
-	_localServer->AddClient(_clientSessionSlot, shared_from_this());
+	_localServer->ConnectClient(_clientSessionSlot, shared_from_this());
 
 	_clientSessionState = EClientSessionState::Connected;
 }
@@ -99,7 +99,9 @@ void LocalClientSession::Disconnect(EDisconnectionCode code)
 	    .clientSlot = _clientSessionSlot,
 	    .serverSlot = _localServer->_serverSessionSlot,
 	};
+	_localServer->Disconnect(_clientSessionID, code);
 	_localServer = nullptr;
+
 	GetEventManager().GetCoreEvents().ClientDisconnect().Invoke(&data, {}, EEventInvocation::None);
 
 	_clientSessionState = EClientSessionState::Disconnected;
@@ -124,14 +126,15 @@ void LocalClientSession::SendReliable(const NetworkSessionData &data)
 	}
 
 	LocalSessionMessage message{
-	    .event = ESessionEvent::Receive,
-	    .source = ELocalSessionSource::SendReliable,
-	    .variant = {std::vector<std::byte>(data.bytes.begin(), data.bytes.end())},
-	    .clientID = _clientSessionID,
+	    .variant = LocalSessionMessage::Receive{
+	        .source = ELocalSessionSource::SendReliable,
+	        .bytes = std::vector<std::byte>(data.bytes.begin(), data.bytes.end()),
+	        .clientID = _clientSessionID,
+	    },
 	    .clientSlot = _clientSessionSlot,
 	    .serverSlot = _localServer->_serverSessionSlot,
 	};
-	_localServer->Receive(message);
+	_localServer->ReceiveFromClient(message);
 }
 
 void LocalClientSession::SendUnreliable(const NetworkSessionData &data)
@@ -150,9 +153,8 @@ bool LocalClientSession::Update()
 		updated = true;
 
 		auto &messageEntry = _messageQueue.front();
-		switch (messageEntry.event)
-		{
-		case ESessionEvent::Connect:
+
+		if (std::holds_alternative<LocalSessionMessage::Connect>(messageEntry.variant))
 		{
 			EventLocalClientConnectData data{
 			    .socketType = ESocketType::Local,
@@ -161,46 +163,60 @@ bool LocalClientSession::Update()
 			};
 
 			coreEvents.ClientConnect().Invoke(&data, data.socketType, EEventInvocation::None);
-
-			break;
 		}
-		case ESessionEvent::Receive:
+		else if (std::holds_alternative<LocalSessionMessage::Disconnect>(messageEntry.variant))
 		{
-			sol::string_view message{reinterpret_cast<char *>(messageEntry.variant.bytes.data()), messageEntry.variant.bytes.size()};
+			auto &event = std::get<LocalSessionMessage::Disconnect>(messageEntry.variant);
 
-			EventLocalClientMessageData data{
-			    .socketType = ESocketType::Local,
-			    .clientID = messageEntry.clientID,
-			    .message = message,
-			    .clientSlot = messageEntry.clientSlot,
-			    .serverSlot = messageEntry.serverSlot,
-			};
-
-			coreEvents.ClientMessage().Invoke(&data, data.socketType, EEventInvocation::None);
-
-			break;
-		}
-		case ESessionEvent::Disconnect:
-		{
 			EventLocalClientDisconnectData data{
 			    .socketType = ESocketType::Local,
-			    .code = messageEntry.variant.code,
-			    .clientID = messageEntry.clientID,
+			    .code = event.code,
+			    .clientID = event.clientID,
 			    .clientSlot = messageEntry.clientSlot,
 			    .serverSlot = messageEntry.serverSlot,
 			};
 
 			coreEvents.ClientDisconnect().Invoke(&data, data.socketType, EEventInvocation::None);
+		}
+		else if (std::holds_alternative<LocalSessionMessage::Receive>(messageEntry.variant))
+		{
+			UpdateReceive(messageEntry);
+		}
+		else
+		{
+		}
 
-			break;
-		}
-		default:
-			TE_WARN("Unknown session event: {}", static_cast<std::underlying_type_t<ESessionEvent>>(messageEntry.event));
-			break;
-		}
+		_messageQueue.pop();
 	}
 
 	return updated;
+}
+
+void LocalClientSession::UpdateReceive(LocalSessionMessage &messageEntry) noexcept
+{
+	auto &event = std::get<LocalSessionMessage::Receive>(messageEntry.variant);
+
+	sol::string_view received{reinterpret_cast<char *>(event.bytes.data()), event.bytes.size()};
+
+	EventLocalClientMessageData data{
+	    .socketType = ESocketType::Local,
+	    .clientID = event.clientID,
+	    .message = received,
+	    .clientSlot = messageEntry.clientSlot,
+	    .serverSlot = messageEntry.serverSlot,
+	};
+
+	if (received.size() == 2 && received[0] == '\0') [[unlikely]]
+	{
+		// Special case: receive client's session id
+		_clientSessionID = static_cast<ClientSessionID>(received[1]);
+
+		TE_TRACE("Received client session id {} from server", _clientSessionID);
+	}
+	else
+	{
+		GetEventManager().GetCoreEvents().ClientMessage().Invoke(&data, data.socketType, EEventInvocation::None);
+	}
 }
 
 std::uint32_t LocalClientSession::GetClientSlot() noexcept
@@ -208,7 +224,7 @@ std::uint32_t LocalClientSession::GetClientSlot() noexcept
 	return _clientSessionSlot;
 }
 
-void LocalClientSession::Receive(const LocalSessionMessage &message) noexcept
+void LocalClientSession::ReceiveFromServer(const LocalSessionMessage &message) noexcept
 {
 	_messageQueue.emplace(message);
 }

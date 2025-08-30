@@ -164,8 +164,6 @@ end, "ReceiveClientDisconnect", "Receive", GMessage.Type.ClientDisconnect)
 
 --- @param e dr2c.E.ClientMessage
 local function receiveClientAttribute(e, validate, clientsAttributes)
-	print("receiveClientAttribute", e)
-
 	local content = e.content
 	if type(content) ~= "table" then
 		return

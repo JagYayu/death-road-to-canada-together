@@ -16,14 +16,14 @@
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
+#include "system/LogMicros.hpp"
+#include "util/Utils.hpp"
+
 #include "sol/forward.hpp"
-#include "sol/optional_implementation.hpp"
 #include "sol/protected_function_result.hpp"
 #include "sol/types.hpp"
 #include "sol/variadic_args.hpp"
-#include "system/LogMicros.hpp"
-#include "util/Utils.hpp"
-#include <exception>
+
 #include <memory>
 #include <stdexcept>
 
@@ -87,6 +87,9 @@ sol::table &ScriptModule::GetTable()
 	return _table;
 }
 
+/**
+ * Copy some common metatable fields to mimic the behavior of the original returned table.
+ */
 void CopyTableMetatableFields(sol::table dst, sol::table src)
 {
 	if (!dst.valid() || !src.valid())
@@ -108,7 +111,18 @@ void CopyTableMetatableFields(sol::table dst, sol::table src)
 	}
 
 	constexpr const char *keys[] = {
+	    "__add",
 	    "__call",
+	    "__concat",
+	    "__div",
+	    "__eq",
+	    "__le",
+	    "__lt",
+	    "__mod",
+	    "__mul",
+	    "__sub",
+	    "__tostring",
+	    "__unm",
 	};
 
 	for (const char *key : keys)

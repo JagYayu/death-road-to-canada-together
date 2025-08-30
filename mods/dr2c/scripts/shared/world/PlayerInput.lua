@@ -1,12 +1,15 @@
 local Enum = require("tudov.Enum")
 
+--- @alias dr2c.PlayerInputID dr2c.GPlayerInput.ID
+--- @alias dr2c.PlayerInputType dr2c.GPlayerInput.Type
+
 --- @class dr2c.PlayerInput : integer
 local GPlayerInput = {}
 
 GPlayerInput.InputQueueMaxSize = 8
 
 GPlayerInput.ID = Enum.sequence({
-	"Move",
+	Move = 1,
 })
 
 GPlayerInput.Type = Enum.immutable({

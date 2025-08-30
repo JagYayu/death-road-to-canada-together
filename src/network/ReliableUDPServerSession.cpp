@@ -186,11 +186,11 @@ bool ReliableUDPServerSession::Update() noexcept
 
 			TE_TRACE("Connect event, host: {}, port: {}", eventData.host, eventData.port);
 
-			{
-				// Send connected client's session id
-				std::string data;
-				data.push_back('\0');
-				data.push_back(static_cast<char>(clientID));
+			{ // Send connected client's session id
+				std::string data{
+				    '\0',
+				    static_cast<char>(clientID),
+				};
 
 				ENetPacket *packet = enet_packet_create(data.data(), data.size(), ENET_PACKET_FLAG_RELIABLE);
 				enet_peer_send(event.peer, 0, packet);
@@ -262,7 +262,7 @@ void ReliableUDPServerSession::UpdateENetReceive(_ENetEvent &event) noexcept
 	if (eventData.broadcast != "")
 	{
 		NetworkSessionData data;
-		data.bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(event.packet->data), event.packet->dataLength);
+		data.bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(eventData.broadcast.data()), eventData.broadcast.size());
 		data.channelID = event.channelID;
 		BroadcastReliable(data);
 	}

@@ -40,10 +40,12 @@ GClient.PublicAttribute = Enum.sequence({
 	Version = 8,
 	-- 游戏文件哈希值，用于判断游戏的核心文件是否和服务器一致
 	ContentHash = 9,
-	-- 游戏模组哈希值，用于判断必要的模组是否和服务器一致
+	-- 游戏模组哈希值，用于判断模组是否和服务器一致
 	ModsHash = 10,
 	-- 套接口类型
 	SocketType = 11,
+	-- 是否含有客户端模组
+	HasClientOnlyMods = 12,
 })
 
 GClient.PrivateAttribute = Enum.sequence({

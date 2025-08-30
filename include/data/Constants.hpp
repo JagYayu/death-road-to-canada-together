@@ -17,6 +17,7 @@ namespace tudov
 {
 	struct Constants
 	{
+		TE_CONSTANT AppCoreMod = "dr2c_e0c8375e09d74bb9aa704d4a3c4afa79";
 		TE_CONSTANT AppName = "DR2CT";
 		TE_CONSTANT AppOrganization = "Tudov";
 		TE_CONSTANT DataConfigFile = "Config.json";

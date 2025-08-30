@@ -85,6 +85,7 @@ void LuaAPI::InstallNetwork(sol::state &lua, Context &context) noexcept
 
 	TE_USERTYPE(EventLocalServerConnectData,
 	            "socketType", &EventLocalServerConnectData::socketType,
+	            "clientID", &EventLocalServerConnectData::clientID,
 	            "clientSlot", &EventLocalServerConnectData::clientSlot,
 	            "serverSlot", &EventLocalServerConnectData::serverSlot);
 
@@ -94,10 +95,11 @@ void LuaAPI::InstallNetwork(sol::state &lua, Context &context) noexcept
 	            "serverSlot", &EventLocalServerDisconnectData::serverSlot);
 
 	TE_USERTYPE(EventLocalServerMessageData,
-	            "socketType", &EventLocalServerMessageData::socketType,
-	            "message", &EventLocalServerMessageData::message,
+	            "clientID", &EventLocalServerMessageData::clientID,
 	            "clientSlot", &EventLocalServerMessageData::clientSlot,
-	            "serverSlot", &EventLocalServerMessageData::serverSlot);
+	            "message", &EventLocalServerMessageData::message,
+	            "serverSlot", &EventLocalServerMessageData::serverSlot,
+	            "socketType", &EventLocalServerMessageData::socketType);
 
 	TE_USERTYPE(EventReliableUDPClientConnectData,
 	            "socketType", &EventReliableUDPClientConnectData::socketType,

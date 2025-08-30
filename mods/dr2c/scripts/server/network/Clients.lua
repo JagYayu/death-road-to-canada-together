@@ -14,20 +14,20 @@ local SServer = require("dr2c.server.network.Server")
 local SClients = {}
 
 --- @type dr2c.ServerUnverifiedClient[]
-local unverifiedClients
-unverifiedClients = persist("unverifiedClients", {}, function()
+local unverifiedClients = {}
+unverifiedClients = persist("unverifiedClients", function()
 	return unverifiedClients
 end)
 
 --- @type table<Network.ClientID, table<dr2c.GClient.PublicAttribute, any>>
-local clientsPublicAttributes
-clientsPublicAttributes = persist("clientsPublicAttributes", {}, function()
+local clientsPublicAttributes = {}
+clientsPublicAttributes = persist("clientsPublicAttributes", function()
 	return clientsPublicAttributes
 end)
 
 --- @type table<Network.ClientID, table<dr2c.GClient.PublicAttribute, any>>
-local clientsPrivateAttributes
-clientsPrivateAttributes = persist("clientsPrivateAttributes", {}, function()
+local clientsPrivateAttributes = {}
+clientsPrivateAttributes = persist("clientsPrivateAttributes", function()
 	return clientsPrivateAttributes
 end)
 

@@ -1,10 +1,12 @@
 local Enum = require("tudov.Enum")
 local Function = require("tudov.Function")
 
---- @class dr2c.GServer
-local GServer = {}
+--- @alias dr2c.ServerAttribute dr2c.GServer.Attribute
 
 --- @alias dr2c.ServerAttributeRooms dr2c.RoomID[]
+
+--- @class dr2c.GServer
+local GServer = {}
 
 GServer.Attribute = Enum.sequence({
 	-- 服务器名
@@ -25,6 +27,8 @@ GServer.Attribute = Enum.sequence({
 	Rooms = 8,
 	-- 套接口类型
 	SocketType = 9,
+	-- 是否含有服务端模组
+	HasServerOnlyMods = 10,
 })
 
 --- @type table<dr2c.GClient.PrivateAttribute, fun(value: any): boolean?>

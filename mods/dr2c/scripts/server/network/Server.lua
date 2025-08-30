@@ -45,8 +45,6 @@ end, "InitializeServerAttributes", "Network")
 function SServer.disconnect(clientID, disconnectionCode)
 	local session = SServer.getNetworkSession()
 	if session then
-		--- @diagnostic disable-next-line: cast-type-mismatch
-		--- @cast disconnectionCode EDisconnectionCode
 		session:disconnect(clientID, disconnectionCode)
 
 		return true
@@ -56,7 +54,7 @@ function SServer.disconnect(clientID, disconnectionCode)
 end
 
 --- @param clientID Network.ClientID
---- @param messageType dr2c.GMessage.Type
+--- @param messageType dr2c.MessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel
 --- @return boolean
@@ -80,7 +78,7 @@ function SServer.sendReliable(clientID, messageType, messageContent, channel)
 end
 
 --- @param clientID Network.ClientID
---- @param messageType dr2c.GMessage.Type
+--- @param messageType dr2c.MessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel
 --- @return boolean success
@@ -103,7 +101,8 @@ function SServer.sendUnreliable(clientID, messageType, messageContent, channel)
 	end
 end
 
---- @param messageType dr2c.GMessage.Type
+--- Broadcast message to all clients in this server.
+--- @param messageType dr2c.MessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
@@ -126,7 +125,7 @@ function SServer.broadcastReliable(messageType, messageContent, channel)
 	end
 end
 
---- @param messageType dr2c.GMessage.Type
+--- @param messageType dr2c.MessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
@@ -195,7 +194,7 @@ events:add("ServerDisconnect", function(e)
 end)
 
 --- @param messageContent any?
---- @param messageType dr2c.GMessage.Type
+--- @param messageType dr2c.MessageType
 local function invokeEventServerMessage(clientID, messageContent, messageType)
 	--- @class dr2c.E.ServerMessage
 	--- @field broadcast table?
@@ -212,6 +211,7 @@ end
 --- @param e Events.E.ServerMessage
 events:add("ServerMessage", function(e)
 	local messageType, messageContent = GMessage.unpack(e.data.message)
+
 	if GMessage.isUnessential(messageType) then
 		-- Let the engine broadcast the message directly if message type is unessential.
 		e.data.broadcast = e.data.message

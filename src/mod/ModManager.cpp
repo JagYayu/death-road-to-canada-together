@@ -12,6 +12,7 @@
 #include "mod/ModManager.hpp"
 
 #include "Debug/DebugManager.hpp"
+#include "data/Constants.hpp"
 #include "debug/DebugConsole.hpp"
 #include "debug/DebugUtils.hpp"
 #include "mod/ModRequirement.hpp"
@@ -65,7 +66,7 @@ void ModManager::Initialize() noexcept
 	};
 
 	_requiredMods = {
-	    ModRequirement("dr2c_e0c8375e09d74bb9aa704d4a3c4afa79", Version(1, 0, 0), 0),
+	    ModRequirement(Constants::AppCoreMod, Version(1, 0, 0), 0),
 	};
 
 	_updateScriptsPending = nullptr;
@@ -239,6 +240,11 @@ std::vector<ModRequirement> &ModManager::GetRequiredMods() noexcept
 const std::vector<ModRequirement> &ModManager::GetRequiredMods() const noexcept
 {
 	return _requiredMods;
+}
+
+bool ModManager::HasUpdateScriptPending() noexcept
+{
+	return _updateScriptsPending != nullptr;
 }
 
 void ModManager::UpdateScriptPending(std::string_view scriptName, TextID scriptTextID, std::string_view scriptModUID)

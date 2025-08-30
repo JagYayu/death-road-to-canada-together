@@ -58,8 +58,8 @@ namespace tudov
 		void Connect(const IClientSession::ConnectArgs &args) override;
 		void Disconnect(EDisconnectionCode code) override;
 		bool TryDisconnect(EDisconnectionCode code) override;
-		void SendReliable(const NetworkSessionData& data) override;
-		void SendUnreliable(const NetworkSessionData& data) override;
+		void SendReliable(const NetworkSessionData &data) override;
+		void SendUnreliable(const NetworkSessionData &data) override;
 
 		bool Update() override;
 
@@ -68,11 +68,14 @@ namespace tudov
 		/**
 		 * Receive data from `LocalServerSession`.
 		 */
-		void Receive(const LocalSessionMessage &message) noexcept;
+		void ReceiveFromServer(const LocalSessionMessage &message) noexcept;
 
 		inline void Connect(const ConnectArgs &args)
 		{
 			Connect(static_cast<const IClientSession::ConnectArgs &>(args));
 		}
+
+	  private:
+		void UpdateReceive(LocalSessionMessage &messageEntry) noexcept;
 	};
 } // namespace tudov

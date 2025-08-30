@@ -248,21 +248,21 @@ void ReliableUDPClientSession::UpdateENetReceive(_ENetEvent &event) noexcept
 	std::array<char, 45> hostName;
 	enet_address_get_host(&event.peer->address, hostName.data(), hostName.size());
 
-	std::string_view receivedData{reinterpret_cast<const char *>(event.packet->data), event.packet->dataLength};
+	std::string_view received{reinterpret_cast<const char *>(event.packet->data), event.packet->dataLength};
 
 	EventReliableUDPClientMessageData data{
 	    .socketType = ESocketType::RUDP,
-	    .message = receivedData,
+	    .message = received,
 	    .host = std::string_view(hostName.data()),
 	    .port = event.peer->address.port,
 	};
 
 	TE_TRACE("Receive event, host: {}, port: {}, message: {}B", data.host, data.port, data.message.size());
 
-	if (receivedData.size() == 2 && receivedData[0] == '\0')
+	if (received.size() == 2 && received[0] == '\0') [[unlikely]]
 	{
-		// receive client's session id
-		_clientSessionID = static_cast<ClientSessionID>(receivedData[1]);
+		// Special case: receive client's session id
+		_clientSessionID = static_cast<ClientSessionID>(received[1]);
 
 		TE_TRACE("Received client session id {} from server", _clientSessionID);
 	}

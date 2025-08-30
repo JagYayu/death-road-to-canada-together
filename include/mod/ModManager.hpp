@@ -36,23 +36,24 @@ namespace tudov
 		virtual void Initialize() noexcept = 0;
 		virtual void Deinitialize() noexcept = 0;
 
-		virtual bool IsNoModMatch() const = 0;
-		virtual bool IsModMatched(const Mod &mod) const = 0;
+		[[nodiscard]] virtual bool IsNoModMatch() const = 0;
+		[[nodiscard]] virtual bool IsModMatched(const Mod &mod) const = 0;
 
 		virtual void LoadMods() = 0;
 		virtual void LoadModsDeferred() = 0;
 		virtual void UnloadMods() = 0;
 		virtual void UnloadModsDeferred() = 0;
 
-		virtual bool IsModAvailable(std::string_view modUID) const noexcept = 0;
-		virtual bool IsModAvailable(std::string_view modUID, const Version &version) const noexcept = 0;
-		virtual std::vector<ModListedEntry> ListAvailableMods() const noexcept = 0;
+		[[nodiscard]] virtual bool IsModAvailable(std::string_view modUID) const noexcept = 0;
+		[[nodiscard]] virtual bool IsModAvailable(std::string_view modUID, const Version &version) const noexcept = 0;
+		[[nodiscard]] virtual std::vector<ModListedEntry> ListAvailableMods() const noexcept = 0;
 
-		virtual std::shared_ptr<Mod> FindLoadedMod(std::string_view modUID) noexcept = 0;
+		[[nodiscard]] virtual std::shared_ptr<Mod> FindLoadedMod(std::string_view modUID) noexcept = 0;
 
-		virtual std::vector<ModRequirement> &GetRequiredMods() noexcept = 0;
-		virtual const std::vector<ModRequirement> &GetRequiredMods() const noexcept = 0;
+		[[nodiscard]] virtual std::vector<ModRequirement> &GetRequiredMods() noexcept = 0;
+		[[nodiscard]] virtual const std::vector<ModRequirement> &GetRequiredMods() const noexcept = 0;
 
+		[[nodiscard]] virtual bool HasUpdateScriptPending() noexcept = 0;
 		virtual void UpdateScriptPending(std::string_view scriptName, TextID scriptTextID, std::string_view scriptModUID) = 0;
 
 		virtual void Update() = 0;
@@ -109,23 +110,24 @@ namespace tudov
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
 
-		bool IsNoModMatch() const override;
-		bool IsModMatched(const Mod &mod) const override;
+		[[nodiscard]] bool IsNoModMatch() const override;
+		[[nodiscard]] bool IsModMatched(const Mod &mod) const override;
 
 		void LoadMods() override;
 		void LoadModsDeferred() noexcept override;
 		void UnloadMods() override;
 		void UnloadModsDeferred() noexcept override;
 
-		bool IsModAvailable(std::string_view modUID) const noexcept override;
-		bool IsModAvailable(std::string_view modUID, const Version &version) const noexcept override;
-		std::vector<ModListedEntry> ListAvailableMods() const noexcept override;
+		[[nodiscard]] bool IsModAvailable(std::string_view modUID) const noexcept override;
+		[[nodiscard]] bool IsModAvailable(std::string_view modUID, const Version &version) const noexcept override;
+		[[nodiscard]] std::vector<ModListedEntry> ListAvailableMods() const noexcept override;
 
-		std::shared_ptr<Mod> FindLoadedMod(std::string_view namespace_) noexcept override;
+		[[nodiscard]] std::shared_ptr<Mod> FindLoadedMod(std::string_view namespace_) noexcept override;
 
-		std::vector<ModRequirement> &GetRequiredMods() noexcept override;
-		const std::vector<ModRequirement> &GetRequiredMods() const noexcept override;
+		[[nodiscard]] std::vector<ModRequirement> &GetRequiredMods() noexcept override;
+		[[nodiscard]] const std::vector<ModRequirement> &GetRequiredMods() const noexcept override;
 
+		[[nodiscard]] virtual bool HasUpdateScriptPending() noexcept override;
 		void UpdateScriptPending(std::string_view scriptName, TextID scriptTextID, std::string_view scriptModUID) override;
 
 		void Update() override;

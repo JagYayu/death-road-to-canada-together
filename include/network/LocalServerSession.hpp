@@ -18,13 +18,13 @@
 #include "system/Log.hpp"
 #include "util/Definitions.hpp"
 
-#include <cstdint>
 #include <memory>
 #include <queue>
 #include <unordered_map>
 
 namespace tudov
 {
+	enum class EDisconnectionCode : std::uint32_t;
 	struct INetworkManager;
 	struct INetworkManager;
 	struct NetworkSessionData;
@@ -52,26 +52,26 @@ namespace tudov
 		NetworkSessionSlot _serverSessionSlot;
 		std::unique_ptr<HostInfo> _hostInfo;
 		std::queue<LocalSessionMessage> _messageQueue;
-		ClientSessionID _latestID;
+		ClientSessionID _latestClientSessionID;
 
 	  public:
 		explicit LocalServerSession(INetworkManager &networkManager, NetworkSessionSlot serverSlot) noexcept;
 		~LocalServerSession() noexcept override = default;
 
 	  public:
-		INetworkManager &GetNetworkManager() noexcept override;
-		NetworkSessionSlot GetSessionSlot() noexcept override;
-		ESocketType GetSocketType() const noexcept override;
-		Log &GetLog() noexcept override;
+		[[nodiscard]] INetworkManager &GetNetworkManager() noexcept override;
+		[[nodiscard]] NetworkSessionSlot GetSessionSlot() noexcept override;
+		[[nodiscard]] ESocketType GetSocketType() const noexcept override;
+		[[nodiscard]] Log &GetLog() noexcept override;
 
-		EServerSessionState GetSessionState() const noexcept override;
-		std::size_t GetClients() const noexcept override;
+		[[nodiscard]] EServerSessionState GetSessionState() const noexcept override;
+		[[nodiscard]] std::size_t GetClients() const noexcept override;
 		void Host(const HostArgs &args) override;
 		void Shutdown() override;
 		bool TryShutdown() override;
-		std::optional<std::string_view> GetTitle() const noexcept override;
-		std::optional<std::string_view> GetPassword() const noexcept override;
-		std::optional<std::size_t> GetMaxClients() const noexcept override;
+		[[nodiscard]] std::optional<std::string_view> GetTitle() const noexcept override;
+		[[nodiscard]] std::optional<std::string_view> GetPassword() const noexcept override;
+		[[nodiscard]] std::optional<std::size_t> GetMaxClients() const noexcept override;
 		void Disconnect(ClientSessionID clientSessionID, EDisconnectionCode code) override;
 		void SendReliable(ClientSessionID clientSessionID, const NetworkSessionData &data) override;
 		void SendUnreliable(ClientSessionID clientSessionID, const NetworkSessionData &data) override;
@@ -80,14 +80,15 @@ namespace tudov
 
 		bool Update() override;
 
-		ClientSessionID ClientSlotToClientID(NetworkSessionSlot clientSlot) const noexcept;
+		[[deprecated]] ClientSessionID ClientSlotToClientID(NetworkSessionSlot clientSlot) const noexcept;
 
-		void Receive(const LocalSessionMessage &message) noexcept;
-
-		void AddClient(NetworkSessionSlot clientSlot, std::weak_ptr<LocalClientSession> localClient);
+		void ConnectClient(NetworkSessionSlot clientSlot, std::weak_ptr<LocalClientSession> localClient);
+		void ReceiveFromClient(const LocalSessionMessage &message) noexcept;
 
 	  protected:
-		ClientSessionID NewID() noexcept;
+		[[deprecated]] ClientSessionID NewID() noexcept;
 		void EnqueueMessage(ClientSessionID clientSessionID, const NetworkSessionData &data, ELocalSessionSource source);
+		void Send(ClientSessionID clientSessionID, const NetworkSessionData &data, ELocalSessionSource source);
+		void Broadcast(const NetworkSessionData &data, ELocalSessionSource source);
 	};
 } // namespace tudov

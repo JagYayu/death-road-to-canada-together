@@ -10,7 +10,7 @@
 --- @field type dr2c.ComponentType
 --- @field typeID dr2c.ComponentTypeID
 --- @field fields dr2c.ECSSchema.Fields
---- @field trait dr2c.ComponentTrait
+--- @field trait dr2c.CECSSchema.ComponentTrait
 
 --- @class dr2c.ECSSchema.Components
 --- @field [dr2c.ComponentType] dr2c.ECSSchema.Component
@@ -142,7 +142,7 @@ function CECSSchema.getComponentFields(componentTypeOrID)
 end
 
 --- @param componentTypeOrID dr2c.ComponentType | dr2c.EntityTypeID
---- @return dr2c.ComponentTrait?
+--- @return dr2c.CECSSchema.ComponentTrait?
 function CECSSchema.getComponentTrait(componentTypeOrID)
 	local componentSchema = componentsSchema[componentTypeOrID]
 	return componentSchema and componentSchema.trait or nil
@@ -273,7 +273,7 @@ local function reloadComponentsSchema(oldComponentsSchema)
 	local tempComponentsSchema = {}
 
 	--- @class dr2c.E.EntitySchemaLoadComponents
-	--- @field new table<string, { fields: table, trait: dr2c.ComponentTrait, [...]: any }>
+	--- @field new table<string, { fields: table, trait: dr2c.CECSSchema.ComponentTrait, [...]: any }>
 	--- @field dependencies table?
 	local e = {
 		new = {},
@@ -288,14 +288,14 @@ local function reloadComponentsSchema(oldComponentsSchema)
 
 		local fields
 		if type(entry.fields) == "table" then
-			fields = entry.fields
+			fields = Table.fastCopy(entry.fields)
 		else
 			fields = {}
 		end
 
 		local componentTrait = tonumber(entry.trait) or CECSSchema.ComponentTrait.EntitySerializable
 		--- @diagnostic disable-next-line: cast-type-mismatch
-		--- @cast componentTrait dr2c.ComponentTrait
+		--- @cast componentTrait dr2c.CECSSchema.ComponentTrait
 
 		--- @type dr2c.ECSSchema.Component
 		local componentSchema = {

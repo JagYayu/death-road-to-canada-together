@@ -37,7 +37,9 @@ events:add(N_("CUpdate"), function(e)
 		return
 	end
 
-	print("Initialize local client attributes")
+	if log.canTrace() then
+		log.trace(("Initialize local client %s's attributes"):format(clientID))
+	end
 
 	local PublicAttribute = GClient.PublicAttribute
 	local PrivateAttribute = GClient.PrivateAttribute
@@ -46,7 +48,7 @@ events:add(N_("CUpdate"), function(e)
 
 	CClients.addClient(clientID)
 	setPublicAttribute(clientID, PublicAttribute.ID, clientID)
-	setPublicAttribute(clientID, PublicAttribute.State, GClient.State.Disconnected)
+	setPublicAttribute(clientID, PublicAttribute.State, GClient.State.Verifying)
 	setPublicAttribute(clientID, PublicAttribute.Platform, GPlatform.getType())
 	setPublicAttribute(clientID, PublicAttribute.PlatformID, nil)
 	setPublicAttribute(clientID, PublicAttribute.OperatingSystem, OperatingSystem.getType())
@@ -61,20 +63,20 @@ events:add(N_("CUpdate"), function(e)
 	setPrivateAttribute(clientID, PrivateAttribute.SecretStatistics, nil)
 end, N_("InitializeLocalClientAttributes"), "Network")
 
-CClient.eventCConnect = events:new(N_("CConnect"), {
+CClient.eventClientConnect = events:new(N_("CConnect"), {
 	"Initialize",
 })
 
-CClient.eventCDisconnect = events:new(N_("CDisconnect"), {
+CClient.eventClientDisconnect = events:new(N_("CDisconnect"), {
 	"Reset",
 })
 
-CClient.eventCMessage = events:new(N_("CMessage"), {
+CClient.eventClientMessage = events:new(N_("CMessage"), {
 	"Overrides",
 	"Receive",
 }, Enum.eventKeys(GMessage.Type))
 
---- @param messageType dr2c.GMessage.Type
+--- @param messageType dr2c.MessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
@@ -97,7 +99,7 @@ function CClient.sendReliable(messageType, messageContent, channel)
 	end
 end
 
---- @param messageType dr2c.GMessage.Type
+--- @param messageType dr2c.MessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
@@ -120,42 +122,46 @@ function CClient.sendUnreliable(messageType, messageContent, channel)
 	end
 end
 
-local function invokeEventClientConnect()
+local function invokeEventClientConnect(clientID)
 	--- @class dr2c.E.ClientConnect
-	local e = {}
+	local e = {
+		clientID = clientID,
+	}
 
-	events:invoke(CClient.eventCConnect, e)
+	events:invoke(CClient.eventClientConnect, e)
 end
 
 --- @param e Events.E.ClientConnect
 events:add("ClientConnect", function(e)
-	invokeEventClientConnect()
+	invokeEventClientConnect(e.data.clientID)
 end)
 
-local function invokeEventClientDisconnect()
+local function invokeEventClientDisconnect(clientID)
 	--- @class dr2c.E.ClientDisconnect
-	local e = {}
+	local e = {
+		clientID = clientID,
+	}
 
-	events:invoke(CClient.eventCDisconnect, e)
+	events:invoke(CClient.eventClientDisconnect, e)
 end
 
 --- @param e Events.E.ClientConnect
 events:add("ClientDisconnect", function(e)
-	invokeEventClientDisconnect()
+	invokeEventClientDisconnect(e.data.clientID)
 end)
 
 --- @param messageContent any?
---- @param messageType dr2c.GMessage
+--- @param messageType dr2c.MessageType
 local function invokeEventClientMessage(messageContent, messageType)
 	--- @class dr2c.E.ClientMessage
 	--- @field content any?
-	--- @field type dr2c.GMessage
+	--- @field type dr2c.MessageType
 	local e = {
 		content = messageContent,
 		type = messageType,
 	}
 
-	events:invoke(CClient.eventCMessage, e, messageType)
+	events:invoke(CClient.eventClientMessage, e, messageType)
 end
 
 --- @param e Events.E.ClientMessage
@@ -165,7 +171,6 @@ events:add("ClientMessage", function(e)
 	end
 
 	local messageType, messageContent = GMessage.unpack(e.data.message)
-	print(e.data.message)
 
 	invokeEventClientMessage(messageContent, messageType)
 end, "clientMessage", nil, CClient.sessionSlot)
@@ -193,7 +198,7 @@ events:add(N_("CCollectVerifyAttributes"), function(e)
 end, "SendState", "State")
 
 --- @param pe dr2c.E.ClientUpdate
-local function invokeEventCCollectVerifyAttributes(pe)
+local function invokeEventClientCollectVerifyAttributes(pe)
 	local public = {}
 	local private = {}
 
@@ -234,7 +239,7 @@ events:add(N_("CUpdate"), function(e)
 		return
 	end
 
-	local publicEntries, privateEntries = invokeEventCCollectVerifyAttributes(e)
+	local publicEntries, privateEntries = invokeEventClientCollectVerifyAttributes(e)
 
 	print("Send client verifying attributes")
 

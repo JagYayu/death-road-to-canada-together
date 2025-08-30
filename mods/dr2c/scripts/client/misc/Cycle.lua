@@ -1,7 +1,7 @@
 local eventClientUpdate = events:new(N_("CUpdate"), {
-	"Network",
 	"Inputs",
-	"Control",
+	"Network",
+	"Control", -- depreciated
 	"Rollback",
 	"World",
 	"ECS",

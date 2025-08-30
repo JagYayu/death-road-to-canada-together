@@ -15,11 +15,14 @@
 #include "util/Definitions.hpp"
 
 #include <cstddef>
+#include <memory>
+#include <variant>
 #include <vector>
 
 namespace tudov
 {
 	enum class ESessionEvent : std::uint8_t;
+	class LocalClientSession;
 
 	enum class ELocalSessionSource
 	{
@@ -31,20 +34,25 @@ namespace tudov
 
 	struct LocalSessionMessage
 	{
-		struct Variant
+		struct Connect
 		{
-			// SessionEvent is Receive
-			std::vector<std::byte> bytes;
-			// SessionEvent is Disconnect
-			EDisconnectionCode code;
+			std::weak_ptr<LocalClientSession> localClient;
 		};
 
-		ESessionEvent event;
+		struct Disconnect
+		{
+			EDisconnectionCode code;
+			ClientSessionID clientID;
+		};
 
-		ELocalSessionSource source;
-		Variant variant;
-		ClientSessionID clientID;
+		struct Receive
+		{
+			ELocalSessionSource source;
+			std::vector<std::byte> bytes;
+			ClientSessionID clientID;
+		};
 
+		std::variant<Connect, Disconnect, Receive> variant;
 		NetworkSessionSlot clientSlot;
 		NetworkSessionSlot serverSlot;
 	};

@@ -36,8 +36,7 @@ local entitiesSorted = true
 --- @type table
 local entitiesOperations = {}
 
---- @class dr2c.Component
---- @field [Serializable] Serializable
+--- @alias dr2c.Component dr2c.ECSSchema.Fields
 
 --- @class dr2c.ComponentPoolTypeBased
 --- @field [dr2c.EntityType] dr2c.Component
@@ -45,11 +44,6 @@ local entitiesOperations = {}
 --- @class dr2c.ComponentPoolIDBased
 --- @field [dr2c.EntityTypeID] dr2c.Component
 
--- ArchetypeConstant
--- ArchetypeSerializable
--- ArchetypeTransient
--- EntityTransient
--- EntitySerializable
 --- @type dr2c.ComponentPoolTypeBased
 local componentsPoolArchetypeConstant = {}
 --- @type dr2c.ComponentPoolTypeBased

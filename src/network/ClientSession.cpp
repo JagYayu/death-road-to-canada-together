@@ -39,7 +39,7 @@ void IClientSession::LuaSendReliable(sol::object data, sol::object channelID) no
 {
 	if (!data.is<sol::string_view>()) [[unlikely]]
 	{
-		GetScriptEngine().ThrowError("bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
+		GetScriptEngine().ThrowError("Bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
 	}
 
 	auto str = data.as<sol::string_view>();
@@ -55,7 +55,7 @@ void IClientSession::LuaSendUnreliable(sol::object data, sol::object channelID) 
 {
 	if (!data.is<sol::string_view>()) [[unlikely]]
 	{
-		GetScriptEngine().ThrowError("bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
+		GetScriptEngine().ThrowError("Bad argument to #1 '{}' (string expected, got %s)", TE_NAMEOF(data), GetLuaTypeStringView(data.get_type()));
 	}
 
 	auto str = data.as<sol::string_view>();

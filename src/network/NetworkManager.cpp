@@ -15,6 +15,7 @@
 #include "debug/DebugManager.hpp"
 #include "exception/BadEnumException.hpp"
 #include "exception/Exception.hpp"
+#include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "network/LocalClientSession.hpp"
 #include "network/LocalServerSession.hpp"
@@ -506,6 +507,7 @@ bool NetworkManager::SetServer(ESocketType socketType, NetworkSessionSlot server
 		_servers[serverSlot] = std::make_shared<ReliableUDPServerSession>(*this, serverSlot);
 		break;
 	case ESocketType::Steam:
+		// TODO
 		// _servers[uid] = std::make_shared<SteamServer>(*this);
 		// break;
 	[[unlikely]] default:
@@ -517,12 +519,16 @@ bool NetworkManager::SetServer(ESocketType socketType, NetworkSessionSlot server
 
 bool NetworkManager::Update() noexcept
 {
-	if (INetworkManager::Update())
+	if (!GetModManager().HasUpdateScriptPending() && INetworkManager::Update())
 	{
 		_log->Warn("Update rate times has achieved limit {}, probably has infinite loop?", GetLimitsPerUpdate());
+
 		return true;
 	}
-	return false;
+	else
+	{
+		return false;
+	}
 }
 
 IClientSession *NetworkManager::LuaGetClient(sol::object uid) noexcept
