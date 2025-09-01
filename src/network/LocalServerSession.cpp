@@ -101,11 +101,18 @@ void LocalServerSession::Host(const HostArgs &args)
 	_sessionState = EServerSessionState::Hosting;
 }
 
+void LocalServerSession::HostAsync(const HostArgs &args, const ServerHostErrorHandler &handler) noexcept
+{
+	// handler(args, nullptr);
+}
+
 void LocalServerSession::Shutdown()
 {
 	_sessionState = EServerSessionState::Stopping;
 
 	_hostInfo = nullptr;
+
+	TE_TRACE("Shutting down server");
 
 	EventLocalServerShutdownData data{
 	    .socketType = ESocketType::Local,
@@ -321,8 +328,6 @@ bool LocalServerSession::Update()
 			    .clientSlot = messageEntry.clientSlot,
 			    .serverSlot = messageEntry.serverSlot,
 			};
-
-			TE_TRACE("Received event, clientSlot: {}", messageEntry.clientSlot);
 
 			GetEventManager().GetCoreEvents().ServerMessage().Invoke(&eventData, _serverSessionSlot, EEventInvocation::None);
 

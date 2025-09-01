@@ -1,21 +1,20 @@
 local Number = require("tudov.Number")
 
 local indexNan = Number.nan
-local scriptLoader_getLoadingScriptID = scriptLoader.getLoadingScriptID
 
 --- @class Utility
 local Utility = {}
 
 --- @param levelOverride integer? @default: 3
 function Utility.assertLoadtime(levelOverride)
-	if scriptLoader_getLoadingScriptID() == 0 then
+	if scriptLoader:getLoadingScriptID() == 0 then
 		error("Function must be called in script run time!", levelOverride or 3)
 	end
 end
 
 --- @param levelOverride integer? @default: 3
 function Utility.assertRuntime(levelOverride)
-	if scriptLoader_getLoadingScriptID() ~= 0 then
+	if scriptLoader:getLoadingScriptID() ~= 0 then
 		error("Function must be called in script run time!", levelOverride or 3)
 	end
 end

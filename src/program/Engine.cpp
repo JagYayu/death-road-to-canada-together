@@ -56,6 +56,7 @@ Engine::Engine() noexcept
       _previousTick(0),
       _framerate(0),
       _firstTick(false),
+	  _logicThread(),
       _loadingState(ELoadingState::Done),
       _loadingThread()
 {
@@ -63,12 +64,16 @@ Engine::Engine() noexcept
 
 	_data = std::make_unique<EngineData>(context);
 
-	_loadingThread = std::thread(std::bind(&Engine::BackgroundLoadingThread, this));
+	// _logicThread = std::thread(std::bind(&Engine::LogicThread, this));
+	_loadingThread = std::thread(std::bind(&Engine::LoadingThread, this));
 }
 
-static std::atomic_int a = 0;
+void Engine::LogicThread() noexcept
+{
+	//
+}
 
-void Engine::BackgroundLoadingThread() noexcept
+void Engine::LoadingThread() noexcept
 {
 	LoadingInfoArgs args{
 	    .progressTotal = 1.0f,

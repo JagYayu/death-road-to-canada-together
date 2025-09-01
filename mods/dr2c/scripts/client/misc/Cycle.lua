@@ -19,6 +19,7 @@ end, N_("ClientUpdate"), nil, "Main")
 local eventClientRender = events:new(N_("CRender"), {
 	"Camera",
 	"UI",
+	"Debug",
 })
 
 --- @param e Events.E.TickRender

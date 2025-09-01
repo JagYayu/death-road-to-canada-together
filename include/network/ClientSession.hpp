@@ -16,7 +16,7 @@
 
 #include "sol/forward.hpp"
 
-#include <cmath>
+#include <functional>
 #include <string_view>
 
 namespace tudov
@@ -26,26 +26,32 @@ namespace tudov
 	struct NetworkSessionData;
 	class LuaAPI;
 
+	struct ClientSessionConnectArgs
+	{
+		virtual ~ClientSessionConnectArgs() noexcept = default;
+
+		std::string_view password = "";
+	};
+
+	using ClientHostErrorHandler = std::function<void(const ClientSessionConnectArgs &args, std::exception *e)>;
+
 	struct IClientSession : public INetworkSession
 	{
 		friend LuaAPI;
 
-		struct ConnectArgs
-		{
-			virtual ~ConnectArgs() noexcept = default;
-
-			std::string_view password = "";
-		};
+		using ConnectArgs = ClientSessionConnectArgs;
 
 		virtual ~IClientSession() noexcept override = default;
 
 		virtual ClientSessionID GetSessionID() const noexcept = 0;
 		virtual EClientSessionState GetSessionState() const noexcept = 0;
-		virtual void Connect(const ConnectArgs &address) = 0;
+		virtual void Connect(const ConnectArgs &args) = 0;
 		virtual void Disconnect(EDisconnectionCode code) = 0;
 		virtual bool TryDisconnect(EDisconnectionCode code) = 0;
 		virtual void SendReliable(const NetworkSessionData &data) = 0;
 		virtual void SendUnreliable(const NetworkSessionData &data) = 0;
+
+		virtual void ConnectAsync(const ConnectArgs &args, const ClientHostErrorHandler &handler) noexcept;
 
 	  private:
 		void LuaConnect(sol::object args) noexcept;

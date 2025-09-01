@@ -56,7 +56,7 @@ end
 --- @param clientID Network.ClientID
 --- @param messageType dr2c.MessageType
 --- @param messageContent any?
---- @param channel dr2c.GMessage.Channel
+--- @param channel dr2c.GMessage.Channel?
 --- @return boolean
 function SServer.sendReliable(clientID, messageType, messageContent, channel)
 	local session = SServer.getNetworkSession()
@@ -64,7 +64,7 @@ function SServer.sendReliable(clientID, messageType, messageContent, channel)
 		local data = GMessage.pack(messageType, messageContent)
 
 		if log.canTrace() then
-			log.trace(("Send reliable message to client %d: %s"):format(clientID, data))
+			log.trace(("Send reliable message to client %s: %s"):format(clientID, data))
 		end
 
 		channel = channel or GMessage.Channel.Main
@@ -80,7 +80,7 @@ end
 --- @param clientID Network.ClientID
 --- @param messageType dr2c.MessageType
 --- @param messageContent any?
---- @param channel dr2c.GMessage.Channel
+--- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
 function SServer.sendUnreliable(clientID, messageType, messageContent, channel)
 	local session = SServer.getNetworkSession()
@@ -197,6 +197,9 @@ end)
 --- @param messageType dr2c.MessageType
 local function invokeEventServerMessage(clientID, messageContent, messageType)
 	--- @class dr2c.E.ServerMessage
+	--- @field clientID Network.ClientID
+	--- @field content any
+	--- @field type dr2c.MessageType
 	--- @field broadcast table?
 	local e = {
 		clientID = clientID,

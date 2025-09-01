@@ -601,6 +601,8 @@ Did an error occurred while iterating entities? Or not calling iterators inside 
 	CECS.update()
 end, "UpdateECS", "ECS")
 
+events:add(N_("CDisconnect"), CECS.clearEntities, "ResetECS", "Reset")
+
 events:add(N_("CSnapshotCollect"), function(e)
 	e.snapshot.ecs = CECS.getSerialTable()
 end, "CollectECSSerialTable", "ECS")

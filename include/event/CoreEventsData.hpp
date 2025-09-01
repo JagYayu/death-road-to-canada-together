@@ -117,6 +117,7 @@ namespace tudov
 	{
 		ESocketType socketType;
 		EDisconnectionCode code;
+		ClientSessionID clientID;
 		std::string_view host;
 		std::uint16_t port;
 	};

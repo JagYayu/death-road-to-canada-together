@@ -640,10 +640,47 @@ function Table.readonly(tbl)
 	return tableToReadonly(tbl, {})
 end
 
---- TODO
+local function deepEqualsImpl(l, r, visited)
+	if l == r then
+		return true
+	end
+
+	do
+		local lt = type(l)
+		if lt ~= "table" then
+			return l == r
+		elseif lt ~= type(r) then
+			return false
+		end
+	end
+
+	if visited[l] and visited[l][r] then
+		return true
+	end
+
+	visited[l] = visited[l] or {}
+	visited[l][r] = true
+
+	for k, v in pairs(l) do
+		if not deepEqualsImpl(v, r[k], visited) then
+			return false
+		end
+	end
+
+	for k in pairs(r) do
+		if l[k] == nil then
+			return false
+		end
+	end
+
+	return true
+end
+
 --- @param l table
 --- @param r table
-function Table.deepEquals(l, r) end
+function Table.deepEquals(l, r)
+	return deepEqualsImpl(l, r, {})
+end
 
 Table.lockMetatable(Table.empty)
 

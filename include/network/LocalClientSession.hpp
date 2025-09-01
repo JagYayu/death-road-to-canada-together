@@ -16,7 +16,6 @@
 #include "system/Log.hpp"
 #include "util/Definitions.hpp"
 
-#include <cstddef>
 #include <memory>
 #include <queue>
 
@@ -71,6 +70,11 @@ namespace tudov
 		void ReceiveFromServer(const LocalSessionMessage &message) noexcept;
 
 		inline void Connect(const ConnectArgs &args)
+		{
+			Connect(static_cast<const IClientSession::ConnectArgs &>(args));
+		}
+
+		inline void ConnectAsync(const ConnectArgs &args, const ClientHostErrorHandler &handler) noexcept
 		{
 			Connect(static_cast<const IClientSession::ConnectArgs &>(args));
 		}

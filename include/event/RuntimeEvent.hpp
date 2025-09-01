@@ -110,7 +110,7 @@ namespace tudov
 
 	  public:
 		template <typename TData>
-		void Invoke(TData *data, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default)
+		void Invoke(TData *data, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default) noexcept
 		{
 			if (data != nullptr)
 			{

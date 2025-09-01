@@ -27,7 +27,7 @@
 
 using namespace tudov;
 
-constexpr bool SingleThread = false;
+constexpr bool SingleThread = true;
 
 static constexpr decltype(auto) defaultModule = "Log";
 static uint32_t logCount = 0;

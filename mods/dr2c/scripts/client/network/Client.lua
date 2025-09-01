@@ -74,6 +74,7 @@ CClient.eventClientDisconnect = events:new(N_("CDisconnect"), {
 CClient.eventClientMessage = events:new(N_("CMessage"), {
 	"Overrides",
 	"Receive",
+	"Rollback",
 }, Enum.eventKeys(GMessage.Type))
 
 --- @param messageType dr2c.MessageType
@@ -86,7 +87,7 @@ function CClient.sendReliable(messageType, messageContent, channel)
 		local data = GMessage.pack(messageType, messageContent)
 
 		if log.canTrace() then
-			log.trace(("Send reliable message to server: %s"):format(data))
+			-- log.trace(("Send reliable message to server: %s"):format(data))
 		end
 
 		channel = channel or GMessage.Channel.Main
@@ -109,7 +110,7 @@ function CClient.sendUnreliable(messageType, messageContent, channel)
 		local data = GMessage.pack(messageType, messageContent)
 
 		if log.canTrace() then
-			log.trace(("Send unreliable message to server: %s"):format(data))
+			-- log.trace(("Send unreliable message to server: %s"):format(data))
 		end
 
 		channel = channel or GMessage.Channel.Main

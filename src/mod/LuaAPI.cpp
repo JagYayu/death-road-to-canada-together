@@ -120,6 +120,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "beginTarget", &Renderer::LuaBeginTarget,
 	            "clear", &Renderer::LuaClear,
 	            "draw", &Renderer::LuaDraw,
+				"drawDebugText", &Renderer::LuaDrawDebugText,
 	            "endTarget", &Renderer::LuaEndTarget,
 	            "newRenderTarget", &Renderer::LuaNewRenderTarget,
 	            "render", &Renderer::Render);

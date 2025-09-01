@@ -6,7 +6,6 @@ local renderTarget = {}
 
 -- function renderTarget.() end
 
-
 --- @class Renderer : userdata
 local renderer = {}
 
@@ -23,4 +22,10 @@ function renderer:clear() end
 --- @return RenderTarget
 function renderer:newRenderTarget(width, height) end
 
+--- @param args table
 function renderer:draw(args) end
+
+--- @param x number
+--- @param y number
+--- @param text string
+function renderer:drawDebugText(x, y, text) end

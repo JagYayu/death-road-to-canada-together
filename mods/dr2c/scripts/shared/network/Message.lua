@@ -8,20 +8,29 @@ local GMessage = {}
 
 GMessage.Type = Enum.sequence({
 	Unknown = 0,
-	-- Server ==> Client
+	--- [Server ==> Client]
 	ClientConnect = 1,
-	-- Server ==> Client
+	--- [Server ==> Client]
 	ClientDisconnect = 2,
-	-- Client <-> Server
+	--- [Client <-> Server]
 	ClientPublicAttribute = 3,
-	-- Client <-> Server
+	--- [Client <-> Server]
 	ClientPrivateAttribute = 4,
-	-- Client ==> Server
+	--- [Client ==> Server]
 	ClientPrivateAttributeChanged = 5,
-	-- Server ==> Client
+	--- [Server ==> Client]
 	ServerAttribute = 6,
-	-- Server <-> Client
-	PlayerInputs = 7,
+	--- [Client <-> Server]
+	PlayerInput = 7,
+	--- [Client ==> Server]
+	SnapshotRequest = 8,
+	--- [Server ==> Client]
+	SnapshotResponse = 9,
+	--- [Client <-> Server]
+	Snapshots = 10,
+	--- [Client <-> Server]
+	--- Client ==> Server: Host client send latest snapshot to server
+	Snapshot = 11,
 })
 
 GMessage.Channel = Enum.immutable({
@@ -81,7 +90,11 @@ end
 function GMessage.unpack(message)
 	local success, messageType, messageContent = pcall(unpackImpl, message)
 	if not success then
-		print("Message unpack failed", messageType, message)
+		if log.canTrace() then
+			-- local str = debug.getinfo(1, "n")
+			--
+			-- print("Message unpack failed", messageType, message)
+		end
 
 		messageType = GMessage.Type.Unknown
 		messageContent = nil
@@ -89,5 +102,12 @@ function GMessage.unpack(message)
 
 	return messageType, messageContent
 end
+
+-- local function test()
+-- 	log.warn(debug.getinfo(1, "n"))
+-- end
+
+-- test()
+log.warn(debug.getinfo(1, "n"))
 
 return GMessage

@@ -26,7 +26,7 @@ namespace tudov
 	struct IClientSession;
 	struct IServerSession;
 
-	struct INetworkManager : public IEngineComponent, private ILogProvider
+	struct INetworkManager : public IEngineComponent
 	{
 		static constexpr std::int32_t DefaultSessionSlot = 0;
 
@@ -99,7 +99,7 @@ namespace tudov
 
 	class LuaAPI;
 
-	class NetworkManager : public INetworkManager, public IDebugProvider
+	class NetworkManager : public INetworkManager, public IDebugProvider, private ILogProvider
 	{
 		friend LuaAPI;
 

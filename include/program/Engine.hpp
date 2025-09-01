@@ -106,6 +106,7 @@ namespace tudov
 		std::vector<std::unique_ptr<SDL_Event>> _sdlEvents;
 		std::unique_ptr<EngineData> _data;
 
+		std::thread _logicThread;
 		// Background loading thread
 		std::atomic<ELoadingState> _loadingState;
 		std::thread _loadingThread;
@@ -152,7 +153,8 @@ namespace tudov
 		void TriggerLoadPending() noexcept;
 
 	  private:
-		void BackgroundLoadingThread() noexcept;
+		void LogicThread() noexcept;
+		void LoadingThread() noexcept;
 		bool ShouldQuit() noexcept;
 		[[deprecated]]
 		void InitializeMainWindow() noexcept;

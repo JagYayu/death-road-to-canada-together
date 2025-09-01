@@ -18,6 +18,7 @@
 #include "sol/forward.hpp"
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 
 namespace tudov
@@ -27,24 +28,29 @@ namespace tudov
 	struct NetworkSessionData;
 	class LuaAPI;
 
+	struct ServerSessionHostArgs
+	{
+		virtual ~ServerSessionHostArgs() noexcept = default;
+
+		std::string_view title = NetworkServerTitle;
+		std::string_view password = NetworkServerPassword;
+		std::uint32_t maximumClients = NetworkServerMaximumClients;
+	};
+
+	using ServerHostErrorHandler = std::function<void(const ServerSessionHostArgs &args, std::exception *e)>;
+
 	struct IServerSession : public INetworkSession
 	{
 		friend LuaAPI;
 
-		struct HostArgs
-		{
-			virtual ~HostArgs() noexcept = default;
-
-			std::string_view title = NetworkServerTitle;
-			std::string_view password = NetworkServerPassword;
-			std::uint32_t maximumClients = NetworkServerMaximumClients;
-		};
+		using HostArgs = ServerSessionHostArgs;
 
 		~IServerSession() noexcept override = default;
 
 		virtual EServerSessionState GetSessionState() const noexcept = 0;
 		virtual std::size_t GetClients() const noexcept = 0;
 		virtual void Host(const HostArgs &args) = 0;
+		virtual void HostAsync(const HostArgs &args, const ServerHostErrorHandler &handler) noexcept = 0;
 		virtual void Shutdown() = 0;
 		virtual bool TryShutdown() = 0;
 		virtual std::optional<std::string_view> GetTitle() const noexcept = 0;

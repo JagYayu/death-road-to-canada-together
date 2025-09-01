@@ -205,6 +205,14 @@ void Renderer::Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &ds
 	}
 }
 
+void Renderer::DrawDebugText(std::float_t x, std::float_t y, std::string_view text)
+{
+	if (!SDL_SetRenderDrawColor(_sdlRenderer, 255, 255, 255, 255) || !SDL_RenderDebugText(_sdlRenderer, x, y, text.data())) [[unlikely]]
+	{
+		throw std::runtime_error(SDL_GetError());
+	}
+}
+
 void Renderer::LuaDraw(sol::table args)
 {
 	try
@@ -255,7 +263,19 @@ void Renderer::LuaDraw(sol::table args)
 	}
 	catch (std::exception &e)
 	{
-		GetScriptEngine().ThrowError("C++ exception in `Renderer::DrawImage`: {}", e.what());
+		GetScriptEngine().ThrowError("C++ exception in `Renderer::Draw`: {}", e.what());
+	}
+}
+
+void Renderer::LuaDrawDebugText(std::double_t x, std::double_t y, sol::string_view text) noexcept
+{
+	try
+	{
+		DrawDebugText(x, y, text);
+	}
+	catch (std::exception &e)
+	{
+		GetScriptEngine().ThrowError("C++ exception in `Renderer::DrawDebugText`: {}", e.what());
 	}
 }
 

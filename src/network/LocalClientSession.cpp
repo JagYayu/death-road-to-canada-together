@@ -26,8 +26,10 @@
 #include "system/LogMicros.hpp"
 #include "util/Micros.hpp"
 
+#include <exception>
 #include <memory>
 #include <stdexcept>
+#include <thread>
 #include <vector>
 
 using namespace tudov;

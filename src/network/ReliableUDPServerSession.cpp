@@ -118,12 +118,24 @@ void ReliableUDPServerSession::Host(const IServerSession::HostArgs &baseArgs)
 	TE_DEBUG("Created host: {}, port: {}", hostName, _eNetHost->address.port);
 }
 
+void ReliableUDPServerSession::HostAsync(const IServerSession::HostArgs &args, const ServerHostErrorHandler &handler) noexcept
+{
+	// TODO
+}
+
 void ReliableUDPServerSession::Shutdown()
 {
+	enet_host_destroy(_eNetHost);
+	_eNetHost = nullptr;
 }
 
 bool ReliableUDPServerSession::TryShutdown()
 {
+	if (_eNetHost != nullptr)
+	{
+		Shutdown();
+		return true;
+	}
 	return false;
 }
 

@@ -16,8 +16,9 @@
 #include "mod/LuaAPI.hpp"
 #include "program/Context.hpp"
 #include "sol/forward.hpp"
-#include "util/Definitions.hpp"
 #include "system/Log.hpp"
+#include "util/Definitions.hpp"
+
 
 #include "SDL3/SDL_rect.h"
 #include "sol/table.hpp"
@@ -51,6 +52,7 @@ namespace tudov
 		virtual bool SetVSync(EVSyncMode mode) noexcept = 0;
 
 		virtual void Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src) = 0;
+		virtual void DrawDebugText(std::float_t x, std::float_t y, std::string_view text) = 0;
 
 		virtual void Clear(const SDL_Color &color = SDL_Color(0ui8, 0ui8, 0ui8, 0ui8)) noexcept = 0;
 		virtual void Reset() noexcept = 0;
@@ -116,6 +118,7 @@ namespace tudov
 		bool SetVSync(EVSyncMode mode) noexcept override;
 
 		void Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src) override;
+		void DrawDebugText(std::float_t x, std::float_t y, std::string_view text) override;
 
 		void Clear(const SDL_Color &color = SDL_Color(0ui8, 0ui8, 0ui8, 0ui8)) noexcept override;
 		void Reset() noexcept override;
@@ -136,6 +139,7 @@ namespace tudov
 		void LuaBeginTarget(sol::object renderTarget) noexcept;
 		std::shared_ptr<RenderTarget> LuaEndTarget() noexcept;
 		void LuaDraw(sol::table args);
+		void LuaDrawDebugText(std::double_t x, std::double_t y, sol::string_view text) noexcept;
 		std::shared_ptr<Texture> LuaDrawExtractTexture(sol::table args) noexcept;
 		std::shared_ptr<RenderTarget> LuaNewRenderTarget(sol::object width = sol::nil, sol::object height = sol::nil);
 		void LuaClear(std::uint32_t color) noexcept;

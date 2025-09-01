@@ -15,7 +15,6 @@
 #include "debug/DebugManager.hpp"
 #include "exception/BadEnumException.hpp"
 #include "exception/Exception.hpp"
-#include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "network/LocalClientSession.hpp"
 #include "network/LocalServerSession.hpp"
@@ -23,6 +22,7 @@
 #include "network/ReliableUDPClientSession.hpp"
 #include "network/ReliableUDPServerSession.hpp"
 #include "network/SocketType.hpp"
+#include "system/LogMicros.hpp"
 #include "util/Definitions.hpp"
 #include "util/Utils.hpp"
 
@@ -33,6 +33,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <vector>
 
 using namespace tudov;
@@ -138,6 +139,8 @@ std::vector<DebugConsoleResult> NetworkManager::DebugClientConnect(std::string_v
 		return results;
 	}
 
+	client->TryDisconnect(EDisconnectionCode::ClientClosed);
+
 	if (auto *localClient = dynamic_cast<LocalClientSession *>(client); localClient != nullptr)
 	{
 		try
@@ -234,6 +237,8 @@ std::vector<DebugConsoleResult> NetworkManager::DebugServerHost(std::string_view
 		return results;
 	}
 
+	server->TryShutdown();
+
 	if (auto &&localServer = dynamic_cast<LocalServerSession *>(server); localServer != nullptr)
 	{
 		LocalServerSession *server = nullptr;
@@ -241,8 +246,9 @@ std::vector<DebugConsoleResult> NetworkManager::DebugServerHost(std::string_view
 		{
 			server = dynamic_cast<LocalServerSession *>(GetServer(std::stoi(address.data())));
 		}
-		catch (std::exception &)
+		catch (std::exception &e)
 		{
+			TE_ERROR("{}", e.what());
 		}
 
 		LocalServerSession::HostArgs args;
@@ -329,11 +335,14 @@ void NetworkManager::ProvideDebug(IDebugManager &debugManager) noexcept
 				    .bytes = std::span<const std::byte>(reinterpret_cast<const std::byte *>(arg.data()), arg.size()),
 				    .channelID = 0,
 				};
-				_clients.at(_debugClientSlot)->SendReliable(data);
 
-				results.emplace_back(DebugConsole::Result{
-				    .message = std::format("Sent {} message to client {}: {}", "reliable", _debugClientSlot, arg),
-				    .code = DebugConsole::Code::Success});
+				const std::shared_ptr<IClientSession> &client = _clients.at(_debugClientSlot);
+
+				client->SendReliable(data);
+
+				auto &&msg = std::format("Client<{}>{} sent {} message to server: {}",
+				                         client->GetSessionSlot(), client->GetSessionID(), "reliable", arg);
+				results.emplace_back(msg, DebugConsole::Code::Success);
 			}
 			catch (const std::exception &e)
 			{
@@ -348,7 +357,7 @@ void NetworkManager::ProvideDebug(IDebugManager &debugManager) noexcept
 
 		console->SetCommand(DebugConsole::Command{
 		    .name = "clientSend",
-		    .help = "clientSend <message> [unreliable]: Send reliable/unreliable message to client",
+		    .help = "clientSend <message> [unreliable]: Send reliable/unreliable message to server",
 		    .func = clientSend,
 		});
 
@@ -389,14 +398,11 @@ void NetworkManager::Initialize() noexcept
 		return;
 	}
 
-	NetworkSessionSlot initClientSlot = DefaultSessionSlot;
-	NetworkSessionSlot initServerSlot = DefaultSessionSlot;
+	auto &&client = std::make_shared<LocalClientSession>(*this, DefaultSessionSlot);
+	auto &&server = std::make_shared<LocalServerSession>(*this, DefaultSessionSlot);
 
-	auto &&client = std::make_shared<LocalClientSession>(*this, initClientSlot);
-	auto &&server = std::make_shared<LocalServerSession>(*this, initServerSlot);
-
-	_clients[initClientSlot] = client;
-	_servers[initServerSlot] = server;
+	_clients[DefaultSessionSlot] = client;
+	_servers[DefaultSessionSlot] = server;
 
 	LocalServerSession::HostArgs hostArgs;
 	hostArgs.title = "Local Server";
@@ -519,7 +525,7 @@ bool NetworkManager::SetServer(ESocketType socketType, NetworkSessionSlot server
 
 bool NetworkManager::Update() noexcept
 {
-	if (!GetModManager().HasUpdateScriptPending() && INetworkManager::Update())
+	if (INetworkManager::Update())
 	{
 		_log->Warn("Update rate times has achieved limit {}, probably has infinite loop?", GetLimitsPerUpdate());
 

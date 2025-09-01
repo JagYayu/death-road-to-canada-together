@@ -35,12 +35,13 @@ function CPlayerInput.getPlayerMoveArg(playerID)
 		dy = dy + 1
 	end
 
-	return math.atan2(dy, dx)
+	return (dx ~= 0 or dy ~= 0) and math.atan2(dy, dx) or nil
 end
 
 --- @param e dr2c.E.ClientUpdate
 events:add(N_("CUpdate"), function(e)
-	if previousWorldTick <= 0 then
+	local nextWorldTick = CWorldTick.getNextTick()
+	if nextWorldTick <= 0 then
 		return
 	end
 
@@ -50,7 +51,7 @@ events:add(N_("CUpdate"), function(e)
 	end
 
 	if log.canTrace() then
-		log.trace("Adding players input")
+		-- log.trace("Adding players input")
 	end
 
 	local messageContent = {}
@@ -60,13 +61,13 @@ events:add(N_("CUpdate"), function(e)
 		local inputArg = CPlayerInput.getPlayerMoveArg(playerID)
 
 		messageContent[#messageContent + 1] = {
-			worldTick = previousWorldTick,
 			playerID = playerID,
 			playerInputID = inputID,
 			playerInputArg = inputArg,
+			worldTick = nextWorldTick,
 		}
 
-		CPlayerInputBuffers.addInput(playerID, previousWorldTick, inputID, inputArg)
+		CPlayerInputBuffers.addInput(playerID, nextWorldTick, inputID, inputArg)
 	end
 end, "HandlePlayersContinuousInputs", "Inputs")
 
@@ -82,15 +83,13 @@ events:add(N_("CUpdate"), function(e)
 		local worldTick = previousWorldTick + 1
 		previousWorldTick = worldTick
 
-		print("Send players inputs")
-
 		for _, playerID in ipairs(CPlayers.getPlayers(clientID)) do
 			local messageContent = {
 				worldTick = worldTick,
 				input = CPlayerInputBuffers.getPlayerInputEntry(playerID, worldTick),
 			}
 
-			CClient.sendReliable(GMessage.Type.PlayerInputs, messageContent)
+			-- CClient.sendReliable(GMessage.Type.PlayerInputs, messageContent)
 		end
 	end
 end, "SendPlayersInputs", "Inputs")

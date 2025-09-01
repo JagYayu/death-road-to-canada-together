@@ -103,7 +103,7 @@ void ReliableUDPClientSession::Connect(const IClientSession::ConnectArgs &baseAr
 		throw std::runtime_error("Client is already connected or connecting");
 	}
 
-	auto &args = dynamic_cast<const ConnectArgs &>(baseArgs);
+	auto &&args = dynamic_cast<const ConnectArgs &>(baseArgs);
 
 	ENetAddress enetAddress;
 	if (enet_address_set_host(&enetAddress, args.host.data()) != 0) [[unlikely]]
@@ -122,17 +122,17 @@ void ReliableUDPClientSession::Connect(const IClientSession::ConnectArgs &baseAr
 
 	TE_DEBUG("Connecting to server");
 
-	_ENetEvent event;
-	if (enet_host_service(_eNetHost, &event, 5000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT)
-	{
-		TE_DEBUG("Connected to server!");
-	}
-	else
-	{
-		enet_peer_reset(_eNetPeer);
-		_eNetPeer = nullptr;
-		TE_DEBUG("Connection failed");
-	}
+	// _ENetEvent event;
+	// if (enet_host_service(_eNetHost, &event, 5000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT)
+	// {
+	// 	TE_DEBUG("Connected to server!");
+	// }
+	// else
+	// {
+	// 	enet_peer_reset(_eNetPeer);
+	// 	_eNetPeer = nullptr;
+	// 	TE_DEBUG("Connection failed");
+	// }
 }
 
 void ReliableUDPClientSession::Disconnect(EDisconnectionCode code)
@@ -143,6 +143,7 @@ void ReliableUDPClientSession::Disconnect(EDisconnectionCode code)
 
 	_eNetPeer = nullptr;
 	_eNetHost = nullptr;
+	_clientSessionID = 0;
 }
 
 bool ReliableUDPClientSession::TryDisconnect(EDisconnectionCode code)
@@ -202,7 +203,7 @@ bool ReliableUDPClientSession::Update()
 			    .port = event.peer->address.port,
 			};
 
-			TE_TRACE("Connect event, host: {}, port: {}", data.host, data.port);
+			TE_TRACE("Connected to server! event, host: {}, port: {}", data.host, data.port);
 
 			coreEvents.ClientConnect().Invoke(&data, _clientSessionSlot, EEventInvocation::None);
 
@@ -215,11 +216,13 @@ bool ReliableUDPClientSession::Update()
 
 			EventReliableUDPClientDisconnectData eventData{
 			    .socketType = ESocketType::RUDP,
+			    .clientID = _clientSessionID,
+			    // .code TODO what is the code?
 			    .host = std::string_view(hostName.data()),
 			    .port = event.peer->address.port,
 			};
 
-			TE_TRACE("Disconnect event, host: {}, port: {}", eventData.host, eventData.port);
+			TE_TRACE("Disconnected from server! event, host: {}, port: {}", eventData.host, eventData.port);
 
 			coreEvents.ClientMessage().Invoke(&eventData, _clientSessionSlot, EEventInvocation::None);
 

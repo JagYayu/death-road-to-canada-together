@@ -96,7 +96,7 @@ events:add(N_("SMessage"), function(e)
 	end
 
 	if log.canTrace() then
-		local key = Enum.resolveValue(GClient.PublicAttribute, value)
+		local key = Enum.resolveValue(GClient.PublicAttribute, attribute)
 		log.trace(("Set client %s public attribute: <%s>%s = %s"):format(clientID, attribute, key, value))
 	end
 
@@ -125,6 +125,6 @@ end
 
 events:add(N_("SUpdate"), function(e)
 	Table.listRemoveIf(unverifiedClients, updateUnverifiedClientsFunc)
-end, N_("UpdateUnverifiedClients"), "Network")
+end, N_("UpdateUnverifiedClients"), "Network", nil, -1)
 
 return SClients

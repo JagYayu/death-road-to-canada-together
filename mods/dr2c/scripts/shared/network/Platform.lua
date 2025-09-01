@@ -1,5 +1,7 @@
 local Enum = require("tudov.Enum")
 
+--- @alias dr2c.PlatformType dr2c.GPlatform.Type
+
 local GPlatform = {}
 
 GPlatform.Type = Enum.sequence({
@@ -10,7 +12,7 @@ GPlatform.Type = Enum.sequence({
 	Epic = 4,
 })
 
---- @return Enum.Defaults
+--- @return dr2c.PlatformType
 function GPlatform.getPlatformType()
 	return GPlatform.Type.Standalone
 end

@@ -67,6 +67,7 @@ namespace tudov
 		[[nodiscard]] EServerSessionState GetSessionState() const noexcept override;
 		[[nodiscard]] std::size_t GetClients() const noexcept override;
 		void Host(const HostArgs &args) override;
+		void HostAsync(const HostArgs &args, const ServerHostErrorHandler &handler) noexcept override;
 		void Shutdown() override;
 		bool TryShutdown() override;
 		[[nodiscard]] std::optional<std::string_view> GetTitle() const noexcept override;

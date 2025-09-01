@@ -25,6 +25,22 @@
 
 using namespace tudov;
 
+void IClientSession::ConnectAsync(const ConnectArgs &args, const ClientHostErrorHandler &handler) noexcept
+{
+	std::thread([this, args, handler]()
+	{
+		try
+		{
+			Connect(args);
+		}
+		catch (std::exception &e)
+		{
+			handler(args, &e);
+		}
+		handler(args, nullptr);
+	}).detach();
+}
+
 void IClientSession::LuaConnect(sol::object args) noexcept
 {
 	// TODO

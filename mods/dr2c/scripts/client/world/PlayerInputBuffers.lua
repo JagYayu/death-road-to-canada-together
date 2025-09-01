@@ -9,7 +9,12 @@ local CPlayerInputBuffers = GPlayerInputBuffers.new()
 
 --- @param e dr2c.E.ClientMessage
 events:add(N_("CMessage"), function(e)
-	-- e.content
-end, "", "Receive", GMessage.Type.PlayerInputs)
+	local playerID = e.content.playerID
+	local inputID = e.content.playerInputID
+	local inputArg = e.content.playerInputArg
+	local worldTick = e.content.worldTick
+
+	CPlayerInputBuffers.addInput(playerID, worldTick, inputID, inputArg)
+end, "ReceivePlayerInput", "Receive", GMessage.Type.PlayerInput)
 
 return CPlayerInputBuffers

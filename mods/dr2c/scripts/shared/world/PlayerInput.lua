@@ -1,7 +1,6 @@
 local Enum = require("tudov.Enum")
 
 --- @alias dr2c.PlayerInputID dr2c.GPlayerInput.ID
---- @alias dr2c.PlayerInputType dr2c.GPlayerInput.Type
 
 --- @class dr2c.PlayerInput : integer
 local GPlayerInput = {}
@@ -23,10 +22,18 @@ local playerInputID2Type = {
 	[GPlayerInput.ID.Move] = GPlayerInput.Type.Continuous,
 }
 
---- @param playerInputID dr2c.PlayerInputID
---- @return dr2c.PlayerInputType
-function GPlayerInput.getType(playerInputID)
-	return playerInputID2Type[playerInputID] or GPlayerInput.Type.Discrete
+local continuousIDSet = {
+	[GPlayerInput.ID.Move] = true,
+}
+
+function GPlayerInput.isContinuous(playerInputID)
+	return not not continuousIDSet[playerInputID]
 end
+
+-- --- @param playerInputID dr2c.PlayerInputID
+-- --- @return dr2c.PlayerInputType
+-- function GPlayerInput.getType(playerInputID)
+-- 	return playerInputID2Type[playerInputID] or GPlayerInput.Type.Discrete
+-- end
 
 return GPlayerInput
