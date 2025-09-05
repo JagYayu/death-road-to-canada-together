@@ -1,0 +1,5 @@
+local CWorldLevel = {}
+
+
+
+return CWorldLevel

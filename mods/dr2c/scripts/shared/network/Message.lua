@@ -1,39 +1,67 @@
+--[[
+-- @module dr2c.shared.network.Message
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local String = require("tudov.String")
 local Enum = require("tudov.Enum")
 
---- @alias dr2c.MessageType dr2c.GMessage.Type
+--- @alias dr2c.NetworkMessageType dr2c.GNetworkMessage.Type
 
---- @class dr2c.GMessage
-local GMessage = {}
+--- @class dr2c.GNetworkMessage
+local GNetworkMessage = {}
 
-GMessage.Type = Enum.sequence({
+GNetworkMessage.Type = Enum.sequence({
 	Unknown = 0,
 	--- [Server ==> Client]
-	ClientConnect = 1,
+	--- Server send all existed client's public attributes to lately verified client.
+	Clients = 1,
 	--- [Server ==> Client]
-	ClientDisconnect = 2,
+	ClientConnect = 2,
+	--- [Server ==> Client]
+	ClientDisconnect = 3,
 	--- [Client <-> Server]
-	ClientPublicAttribute = 3,
+	--- Client ==> Server: A client changed a public attribute, send value to server.
+	--- Server ==> Client: Server broadcast a client's modified public attribute to all other clients.
+	ClientPublicAttribute = 4,
 	--- [Client <-> Server]
-	ClientPrivateAttribute = 4,
+	ClientPrivateAttribute = 5,
 	--- [Client ==> Server]
-	ClientPrivateAttributeChanged = 5,
+	ClientPrivateAttributeChanged = 6,
 	--- [Server ==> Client]
-	ServerAttribute = 6,
+	ServerAttribute = 7,
 	--- [Client <-> Server]
-	PlayerInput = 7,
+	Clock = 8,
+	--- [Client <-> Server]
+	PlayerInputs = 9,
 	--- [Client ==> Server]
-	SnapshotRequest = 8,
+	SnapshotRequest = 10,
 	--- [Server ==> Client]
-	SnapshotResponse = 9,
+	SnapshotResponse = 11,
 	--- [Client <-> Server]
-	Snapshots = 10,
+	Snapshots = 12,
 	--- [Client <-> Server]
 	--- Client ==> Server: Host client send latest snapshot to server
-	Snapshot = 11,
+	Snapshot = 13,
+	--- [Client <-> Server]
+	WorldSessionStart = 14,
+	--- [Client <-> Server]
+	WorldSessionRestart = 15,
+	--- [Client <-> Server]
+	WorldSessionFinish = 16,
+	--- [Client <-> Server]
+	WorldSessionPause = 17,
+	--- [Client <-> Server]
+	WorldSessionUnpause = 18,
 })
 
-GMessage.Channel = Enum.immutable({
+GNetworkMessage.Channel = Enum.immutable({
 	Main = 0,
 	Gameplay = 1,
 
@@ -54,40 +82,49 @@ GMessage.Channel = Enum.immutable({
 	_7 = 7,
 })
 
---- @type table<dr2c.MessageType, true>
+--- @type table<dr2c.NetworkMessageType, true>
 local unessentialMessageTypes = {}
 
---- @param messageType dr2c.MessageType
-function GMessage.markAsUnessential(messageType)
+--- @param messageType dr2c.NetworkMessageType
+function GNetworkMessage.markAsUnessential(messageType)
 	unessentialMessageTypes[messageType] = true
 end
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.NetworkMessageType
 --- @return boolean
-function GMessage.isUnessential(messageType)
+function GNetworkMessage.isUnessential(messageType)
 	return unessentialMessageTypes[messageType] or false
 end
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
 --- @return string
-function GMessage.pack(messageType, messageContent)
+function GNetworkMessage.pack(messageType, messageContent)
 	return String.bufferEncode({
-		tonumber(messageType) or GMessage.Type.Unknown,
+		tonumber(messageType) or GNetworkMessage.Type.Unknown,
 		messageContent or nil,
 	})
 end
 
+--- @param message string
+--- @return dr2c.NetworkMessageType
+--- @return any?
 local function unpackImpl(message)
 	local messageTable = String.bufferDecode(message)
 	--- @diagnostic disable-next-line: need-check-nil
-	return Enum.hasValue(GMessage.Type, messageTable[1]) and messageTable[1] or GMessage.Type.Unknown, messageTable[2]
+	local messageValue, messageType = messageTable[1], messageTable[2]
+
+	if Enum.hasValue(GNetworkMessage.Type, messageValue) then
+		return messageValue, messageType
+	else
+		return GNetworkMessage.Type.Unknown, messageType
+	end
 end
 
 --- @param message string
---- @return dr2c.MessageType
+--- @return dr2c.NetworkMessageType
 --- @return any?
-function GMessage.unpack(message)
+function GNetworkMessage.unpack(message)
 	local success, messageType, messageContent = pcall(unpackImpl, message)
 	if not success then
 		if log.canTrace() then
@@ -96,18 +133,11 @@ function GMessage.unpack(message)
 			-- print("Message unpack failed", messageType, message)
 		end
 
-		messageType = GMessage.Type.Unknown
+		messageType = GNetworkMessage.Type.Unknown
 		messageContent = nil
 	end
 
 	return messageType, messageContent
 end
 
--- local function test()
--- 	log.warn(debug.getinfo(1, "n"))
--- end
-
--- test()
-log.warn(debug.getinfo(1, "n"))
-
-return GMessage
+return GNetworkMessage

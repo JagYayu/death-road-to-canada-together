@@ -1,67 +1,67 @@
 {
 	"StreetGrass": [
-		[
-			"gfx/tiles/street.png",
-			0,
-			80,
-			16,
-			16
-		],
-		[
-			"gfx/tiles/street.png",
-			16,
-			80,
-			16,
-			16
-		],
-		[
-			"gfx/tiles/street.png",
-			32,
-			80,
-			16,
-			16
-		],
-		[
-			"gfx/tiles/street.png",
-			0,
-			96,
-			16,
-			16
-		],
-		[
-			"gfx/tiles/street.png",
-			16,
-			96,
-			16,
-			16
-		],
-		[
-			"gfx/tiles/street.png",
-			32,
-			96,
-			16,
-			16
-		],
-		[
-			"gfx/tiles/street.png",
-			0,
-			112,
-			16,
-			16
-		],
-		[
-			"gfx/tiles/street.png",
-			16,
-			112,
-			16,
-			16
-		],
-		[
-			"gfx/tiles/street.png",
-			32,
-			112,
-			16,
-			16
-		]
+		{
+			"image": "gfx/tiles/street.png",
+			"x": 0,
+			"y": 80,
+			"w": 16,
+			"h": 16
+		},
+		{
+			"image": "gfx/tiles/street.png",
+			"x": 16,
+			"y": 80,
+			"w": 16,
+			"h": 16
+		},
+		{
+			"image": "gfx/tiles/street.png",
+			"x": 32,
+			"y": 80,
+			"w": 16,
+			"h": 16
+		},
+		{
+			"image": "gfx/tiles/street.png",
+			"x": 0,
+			"y": 96,
+			"w": 16,
+			"h": 16
+		},
+		{
+			"image": "gfx/tiles/street.png",
+			"x": 16,
+			"y": 96,
+			"w": 16,
+			"h": 16
+		},
+		{
+			"image": "gfx/tiles/street.png",
+			"x": 32,
+			"y": 96,
+			"w": 16,
+			"h": 16
+		},
+		{
+			"image": "gfx/tiles/street.png",
+			"x": 0,
+			"y": 112,
+			"w": 16,
+			"h": 16
+		},
+		{
+			"image": "gfx/tiles/street.png",
+			"x": 16,
+			"y": 112,
+			"w": 16,
+			"h": 16
+		},
+		{
+			"image": "gfx/tiles/street.png",
+			"x": 32,
+			"y": 112,
+			"w": 16,
+			"h": 16
+		}
 	]
 }

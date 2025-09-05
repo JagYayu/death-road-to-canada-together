@@ -7,6 +7,9 @@ error("this is a lua library module")
 
 --- @class Events.E.DebugCommand
 
+--- @class Events.E.DebugCommand
+--- @field data Events.E.DebugCommand.Data
+
 --- @class Events.E.DebugSnapshot
 
 --- @class Events.E.KeyDown

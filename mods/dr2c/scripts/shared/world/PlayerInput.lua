@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.shared.world.PlayerInput
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local Enum = require("tudov.Enum")
 
 --- @alias dr2c.PlayerInputID dr2c.GPlayerInput.ID
@@ -5,7 +16,7 @@ local Enum = require("tudov.Enum")
 --- @class dr2c.PlayerInput : integer
 local GPlayerInput = {}
 
-GPlayerInput.InputQueueMaxSize = 8
+GPlayerInput.InputListMaxSize = 8
 
 GPlayerInput.ID = Enum.sequence({
 	Move = 1,

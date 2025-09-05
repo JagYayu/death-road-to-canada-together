@@ -13,6 +13,7 @@
 
 #include "data/VirtualFileSystem.hpp"
 
+#include "debug/Debug.hpp"
 #include "graphic/Camera2D.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/Renderer.hpp"
@@ -70,6 +71,14 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	InstallNetwork(lua, context);
 	InstallScanCode(lua, context);
 
+	TE_ENUM(EDebugConsoleCode,
+	        {
+	            {"None", EDebugConsoleCode::None},
+	            {"Failure", EDebugConsoleCode::Failure},
+	            {"Success", EDebugConsoleCode::Success},
+	            {"Warn", EDebugConsoleCode::Warn},
+	        });
+
 	TE_ENUM(ELogVerbosity,
 	        {
 	            {"All", ELogVerbosity::All},
@@ -120,7 +129,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "beginTarget", &Renderer::LuaBeginTarget,
 	            "clear", &Renderer::LuaClear,
 	            "draw", &Renderer::LuaDraw,
-				"drawDebugText", &Renderer::LuaDrawDebugText,
+	            "drawDebugText", &Renderer::LuaDrawDebugText,
 	            "endTarget", &Renderer::LuaEndTarget,
 	            "newRenderTarget", &Renderer::LuaNewRenderTarget,
 	            "render", &Renderer::Render);
@@ -150,6 +159,13 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "list", &VirtualFileSystem::LuaList,
 	            "readFile", &VirtualFileSystem::LuaReadFile);
 
+	TE_USERTYPE(Timer,
+	            sol::call_constructor, sol::constructors<Timer(), Timer(bool paused)>(),
+	            "getTime", &Timer::GetTime,
+	            "pause", &Timer::Pause,
+	            "reset", &Timer::Reset,
+	            "unpause", &Timer::Unpause);
+
 	lua.create_named_table(TE_NAMEOF(OperatingSystem),
 	                       "getType", &OperatingSystem::GetType,
 	                       "isMobile", &OperatingSystem::IsMobile,
@@ -172,4 +188,71 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	lua["fonts"] = collection.GetFontResources();
 	lua["images"] = collection.GetImageResources();
 	lua["texts"] = collection.GetTextResources();
+}
+
+const std::vector<std::string_view> &LuaAPI::GetModGlobalsMigration() const noexcept
+{
+	if (_modGlobalsMigration.empty()) [[unlikely]]
+	{
+		_modGlobalsMigration = {
+		    // luajit std
+		    "_VERSION",
+		    "assert",
+		    "bit",
+		    "coroutine",
+		    "error",
+		    "getmetatable",
+		    "ipairs",
+		    "math",
+		    "newproxy",
+		    "next",
+		    "pairs",
+		    "pcall",
+		    "print",
+		    "select",
+		    "setmetatable",
+		    "string",
+		    "table",
+		    "tonumber",
+		    "tostring",
+		    "type",
+		    "unpack",
+		    "utf8",
+		    "xpcall",
+		    // extensions
+		    "string.buffer",
+		    "table.clear",
+		    "table.new",
+		    // C++ enum classes
+		    "EClientSessionState",
+			"EDebugConsoleCode",
+		    "EDisconnectionCode",
+		    "EEventInvocation",
+		    "ELogVerbosity",
+		    "EPathListOption",
+		    "EServerSessionState",
+		    "EScanCode",
+		    "ESocketType",
+		    // C++ classes
+		    "Timer",
+		    // C++ static classes
+		    "OperatingSystem",
+		    "RandomDevice",
+		    "Time",
+		    // C++ exports
+		    "binaries",
+		    "engine",
+		    "events",
+		    "fonts",
+		    "images",
+		    "mods",
+		    "network",
+		    "scriptEngine",
+		    "scriptErrors",
+		    "scriptLoader",
+		    "scriptProvider",
+		    "vfs",
+		};
+	}
+	return _modGlobalsMigration;
 }

@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.client.ecs.ECSSchema
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 --- @class dr2c.EntityType : string
 --- @class dr2c.EntityTypeID : integer
 --- @alias dr2c.EntityTypeOrID dr2c.EntityType | dr2c.EntityTypeID
@@ -20,6 +31,7 @@
 --- @field componentSchema dr2c.ECSSchema.Component
 --- @field componentFields dr2c.Component
 --- @field mergedFields dr2c.Component
+--- @field mergedFieldsBuffer string
 --- @field metatable metatable
 
 -- --- @field fields dr2c.Component
@@ -348,6 +360,7 @@ local function processEntityComponents(entityComponents, tempComponentsSchema)
 			componentSchema = componentSchema,
 			componentFields = componentFields,
 			mergedFields = mergedFields,
+			mergedFieldsBuffer = String.bufferEncode(mergedFields),
 			metatable = {
 				__index = mergedFields,
 			},
@@ -414,7 +427,7 @@ local function reloadEntitiesSchema(oldEntitiesSchema, tempComponentsSchema)
 	return tempEntitiesSchema
 end
 
-CECSSchema.eventClientECSLoaded = events:new(N_("CEntitySchemaLoaded"), {
+CECSSchema.eventCECSLoaded = events:new(N_("CEntitySchemaLoaded"), {
 	"Components",
 	"Filters",
 })
@@ -426,7 +439,7 @@ function CECSSchema.reloadImmediately()
 	componentsSchema = tempComponentsSchema
 	entitiesSchema = tempEntitiesSchema
 
-	events:invoke(CECSSchema.eventClientECSLoaded, {})
+	events:invoke(CECSSchema.eventCECSLoaded, {})
 
 	reloadPending = false
 end

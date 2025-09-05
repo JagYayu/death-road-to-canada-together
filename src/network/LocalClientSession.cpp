@@ -95,18 +95,13 @@ void LocalClientSession::Disconnect(EDisconnectionCode code)
 {
 	_clientSessionState = EClientSessionState::Disconnecting;
 
-	EventLocalServerDisconnectData data{
-	    .socketType = ESocketType::Local,
-	    .code = code,
-	    .clientSlot = _clientSessionSlot,
-	    .serverSlot = _localServer->_serverSessionSlot,
-	};
-	_localServer->Disconnect(_clientSessionID, code);
-	_localServer = nullptr;
-
-	GetEventManager().GetCoreEvents().ClientDisconnect().Invoke(&data, {}, EEventInvocation::None);
+	_messageQueue.emplace(LocalSessionMessage::Disconnect(code, _clientSessionID), _clientSessionSlot, _localServer->GetSessionSlot());
 
 	_clientSessionState = EClientSessionState::Disconnected;
+
+	while (Update())
+	{
+	}
 }
 
 bool LocalClientSession::TryDisconnect(EDisconnectionCode code)

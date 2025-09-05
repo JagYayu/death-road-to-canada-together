@@ -1,23 +1,50 @@
+--[[
+-- @module dr2c.client.world.Snapshot
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local String = require("tudov.String")
 local Utility = require("tudov.Utility")
 
 local CClient = require("dr2c.client.network.Client")
 local CServer = require("dr2c.client.network.Server")
+
 local GMessage = require("dr2c.shared.network.Message")
+local GWorldSnapshot = require("dr2c.shared.world.Snapshot")
 
 local hasServer = pcall(require, "dr2c.server.world.Snapshot")
+
+local floor = math.floor
 
 --- @class dr2c.SnapshotID : integer
 
 --- Do not inject metatables/functions/threads... that are not serializable by LJBuffer into snapshot table.
 --- Especially notice tables that are circular referenced or with metatables.
---- @class dr2c.CSnapshot
-local CSnapshot = {}
+--- @class dr2c.CWorldSnapshot : dr2c.WorldSnapshot
+local CWorldSnapshot = GWorldSnapshot.new()
+
+local CWorldSnapshotGet = CWorldSnapshot.get
+local CWorldSnapshotSet = CWorldSnapshot.set
+CWorldSnapshot.get = nil
+CWorldSnapshot.set = nil
 
 local ticksPerSnapshot = 1
 
 local snapshotRegistrationLatestID = 0
 local snapshotRegistrationTable = {}
+
+snapshotRegistrationLatestID = persist("snapshotRegistrationLatestID", function()
+	return snapshotRegistrationLatestID
+end)
+snapshotRegistrationTable = persist("snapshotRegistrationTable", function()
+	return snapshotRegistrationTable
+end)
 
 --- @class dr2c.ClientSnapshots
 --- @field first dr2c.SnapshotID?
@@ -25,6 +52,10 @@ local snapshotRegistrationTable = {}
 local clientSnapshots = {
 	first = nil,
 }
+
+clientSnapshots = persist("clientSnapshots", function()
+	return clientSnapshots
+end)
 
 local eventClientSnapshotCollect = events:new(N_("CSnapshotCollect"), {
 	"ECS",
@@ -34,11 +65,11 @@ local eventClientSnapshotDispense = events:new(N_("CSnapshotDispense"), {
 	"ECS",
 })
 
-function CSnapshot.getAll()
+function CWorldSnapshot.getAll()
 	return clientSnapshots
 end
 
-function CSnapshot.clearAll()
+function CWorldSnapshot.clearAll()
 	clientSnapshots = {
 		first = nil,
 	}
@@ -46,7 +77,7 @@ end
 
 --- @param snapshotID dr2c.SnapshotID
 --- @return string?
-function CSnapshot.getSnapshot(snapshotID)
+function CWorldSnapshot.getSnapshot(snapshotID)
 	local firstID = clientSnapshots.first
 	if firstID then
 		return clientSnapshots[snapshotID - firstID + 1]
@@ -55,18 +86,18 @@ end
 
 --- @param index any
 --- @return nil
-function CSnapshot.getSnapshotID(index)
+function CWorldSnapshot.getSnapshotID(index)
 	local firstID = clientSnapshots.first
 	return firstID and (firstID + index - 1) or nil
 end
 
 --- @return dr2c.SnapshotID?
-function CSnapshot.getFirstSnapshotID()
+function CWorldSnapshot.getFirstSnapshotID()
 	return clientSnapshots.first
 end
 
 --- @return dr2c.SnapshotID?
-function CSnapshot.getLastSnapshotID()
+function CWorldSnapshot.getLastSnapshotID()
 	local firstID = clientSnapshots.first
 	return firstID and (firstID + #clientSnapshots - 1) or nil
 end
@@ -74,7 +105,7 @@ end
 --- @param name string
 --- @param default any?
 --- @return dr2c.SnapshotID snapshotID
-function CSnapshot.register(name, default)
+function CWorldSnapshot.registerVariable(name, default)
 	local scriptName = scriptLoader:getLoadingScriptName()
 	if scriptName then
 		name = ("%s_%s"):format(name, scriptName)
@@ -104,7 +135,11 @@ function CSnapshot.register(name, default)
 	return id
 end
 
-function CSnapshot.serialize()
+function CWorldSnapshot.registerCoroutine(name)
+	--
+end
+
+function CWorldSnapshot.serialize()
 	-- Utility.assertRuntime()
 
 	local collection = {}
@@ -120,7 +155,7 @@ function CSnapshot.serialize()
 	return data
 end
 
-function CSnapshot.deserialize(data)
+function CWorldSnapshot.deserialize(data)
 	-- Utility.assertRuntime()
 
 	local success, collection = pcall(String.bufferDecode, data)
@@ -140,7 +175,7 @@ end
 
 --- Request a snapshot from server.
 --- @param snapshotID dr2c.SnapshotID
-function CSnapshot.request(snapshotID)
+function CWorldSnapshot.request(snapshotID)
 	CClient.sendReliable(GMessage.Type.SnapshotRequest, {
 		snapshotID = snapshotID,
 	})
@@ -148,22 +183,22 @@ end
 
 --- Deliver snapshots to server.
 --- @deprecated
-function CSnapshot.deliver()
+function CWorldSnapshot.deliver()
 	-- CClient.sendReliable(GMessage.Type.Snapshot, clientSnapshots)
 end
 
 --- @param e dr2c.E.ClientMessage
 events:add(N_("CMessage"), function(e)
 	if hasServer then
-		CSnapshot.dropBackward(e.content.snapshotID)
+		CWorldSnapshot.dropBackward(e.content.snapshotID)
 
 		e.content.snapshotID = e.content.snapshot
 	end
 end, "ReceiveSnapshotResponse", "Receive", GMessage.Type.SnapshotResponse)
 
 --- @param snapshotID integer
-function CSnapshot.save(snapshotID)
-	clientSnapshots[snapshotID] = CSnapshot.serialize()
+function CWorldSnapshot.save(snapshotID)
+	clientSnapshots[snapshotID] = CWorldSnapshot.serialize()
 
 	if not clientSnapshots.first then
 		clientSnapshots.first = snapshotID
@@ -179,20 +214,27 @@ end
 
 --- @param snapshotID integer
 --- @return boolean
-function CSnapshot.load(snapshotID)
-	local savedData = clientSnapshots[snapshotID]
-	if savedData then
-		CSnapshot.deserialize(savedData)
+function CWorldSnapshot.load(snapshotID)
+	if snapshotID ~= floor(snapshotID) then
+		error("Must be integer", 2)
+	end
 
-		return true
-	else
+	local firstID = clientSnapshots.first
+	if not firstID then
+		return false
+	elseif snapshotID < firstID then
+		return false
+	elseif snapshotID >= firstID + #clientSnapshots then
 		return false
 	end
+
+	CWorldSnapshot.deserialize(clientSnapshots[snapshotID])
+	return true
 end
 
 --- Remove current and subsequent snapshots.
 --- @return integer count
-function CSnapshot.dropBackward(snapshotID)
+function CWorldSnapshot.dropBackward(snapshotID)
 	local firstID = clientSnapshots.first
 	if not firstID then
 		return 0
@@ -208,7 +250,7 @@ end
 
 --- Remove current and previous snapshots.
 --- @return integer count
-function CSnapshot.dropForward(snapshotID)
+function CWorldSnapshot.dropForward(snapshotID)
 	local firstID = clientSnapshots.first
 	if not firstID then
 		return 0
@@ -230,17 +272,33 @@ function CSnapshot.dropForward(snapshotID)
 	return diff + 1
 end
 
-events:add(N_("CDisconnect"), CSnapshot.clearAll, N_("ResetSnapshot"), "Reset")
+local function resetSnapshots()
+	CWorldSnapshot.clearAll()
+end
+
+events:add(N_("CConnect"), resetSnapshots, N_("ResetSnapshot"), "Reset")
+
+events:add(N_("CDisconnect"), resetSnapshots, N_("ResetSnapshot"), "Reset")
 
 events:add(N_("CWorldTickProcess"), function(e)
-	if true then
-		CSnapshot.save(e.tick)
-	end
-end, N_("SaveSnapshot"), "SnapshotSave")
+	-- Save snapshot every tick
+	CWorldSnapshot.save(e.tick)
+end, "SaveSnapshot", "SnapshotSave")
 
 events:add(N_("CWorldRollback"), function(e)
-	CSnapshot.load(e.tick)
-	CSnapshot.dropBackward(e.tick)
+	if e.suppressed then
+		return
+	end
+
+	if CWorldSnapshot.load(e.tick) then
+		CWorldSnapshot.dropBackward(e.tick)
+
+		if log.canTrace() then
+			-- log.trace("Rollback snapshot to tick " .. e.tick)
+		end
+	else
+		e.suppressed = true
+	end
 end, N_("UpdateSnapshots"), "Snapshot")
 
-return CSnapshot
+return CWorldSnapshot

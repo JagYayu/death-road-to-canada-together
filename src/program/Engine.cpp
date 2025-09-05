@@ -56,7 +56,7 @@ Engine::Engine() noexcept
       _previousTick(0),
       _framerate(0),
       _firstTick(false),
-	  _logicThread(),
+      _logicThread(),
       _loadingState(ELoadingState::Done),
       _loadingThread()
 {
@@ -254,12 +254,12 @@ void Engine::ProcessLoad() noexcept
 
 void Engine::ProcessTick() noexcept
 {
+	_data->_networkManager->Update();
+
 	if (!_data->_scriptErrors->HasLoadtimeError())
 	{
 		_data->_eventManager->GetCoreEvents().TickUpdate().Invoke();
 	}
-
-	_data->_networkManager->Update();
 
 	for (const std::unique_ptr<SDL_Event> &event : _sdlEvents)
 	{

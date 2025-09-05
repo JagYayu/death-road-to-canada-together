@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.client.network.Platform
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local GClient = require("dr2c.shared.network.Client")
 local GPlatform = require("dr2c.shared.network.Platform")
 

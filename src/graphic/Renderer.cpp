@@ -11,6 +11,7 @@
 
 #include "graphic/Renderer.hpp"
 
+#include "SDL3/SDL_oldnames.h"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/VSyncMode.hpp"
 #include "program/Engine.hpp"
@@ -23,6 +24,7 @@
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
+#include "SDL3_ttf/SDL_ttf.h"
 #include "sol/forward.hpp"
 #include "sol/table.hpp"
 
@@ -60,20 +62,27 @@ void Renderer::InitializeRenderer() noexcept
 	}
 
 	_sdlRenderer = SDL_CreateRenderer(_window.GetSDLWindowHandle(), nullptr);
-	if (_sdlRenderer != nullptr)
+	if (_sdlRenderer != nullptr) [[likely]]
 	{
 		auto [width, height] = _window.GetSize();
 		_sdlTextureMain = SDL_CreateTexture(_sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
 		_sdlTextureBackground = SDL_CreateTexture(_sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
 	}
-	else
+	else [[unlikely]]
 	{
-		TE_ERROR("{}", "Failed to create SDL3 Renderer");
+		TE_ERROR("Failed to create SDL3 Renderer");
+	}
+
+	_sdlTTFTextEngine = TTF_CreateRendererTextEngine(_sdlRenderer);
+	if (_sdlTTFTextEngine == nullptr) [[unlikely]]
+	{
+		TE_ERROR("Failed to create SDL3_TTF Text Engine");
 	}
 }
 
 void Renderer::DeinitializeRenderer() noexcept
 {
+
 	if (_sdlRenderer) [[likely]]
 	{
 		SDL_DestroyRenderer(_sdlRenderer);
@@ -184,30 +193,26 @@ SDL_FRect Renderer::ApplyTransform(const SDL_FRect &rect) noexcept
 	std::float_t scaleX = renderTarget->_cameraScaleX;
 	std::float_t scaleY = renderTarget->_cameraScaleY;
 
-	auto [w, h] = renderTarget->GetSize();
-
-	auto dst = rect;
-
-	dst.x = ((rect.x - x) * scaleX) + _window.GetWidth() * 0.5f;
-	dst.y = ((rect.y - y) * scaleY) + _window.GetHeight() * 0.5f;
-	dst.w = (rect.w * scaleX);
-	dst.h = (rect.h * scaleY);
-
-	return dst;
+	return {
+	    .x = ((rect.x - x) * scaleX) + _window.GetWidth() * 0.5f,
+	    .y = ((rect.y - y) * scaleY) + _window.GetHeight() * 0.5f,
+	    .w = (rect.w * scaleX),
+	    .h = (rect.h * scaleY),
+	};
 }
 
 void Renderer::Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src)
 {
-	auto tDst = ApplyTransform(dst);
+	SDL_FRect tDst = ApplyTransform(dst);
 	if (!SDL_RenderTexture(_sdlRenderer, texture->GetSDLTextureHandle(), &src, &tDst)) [[unlikely]]
 	{
 		throw std::runtime_error(SDL_GetError());
 	}
 }
 
-void Renderer::DrawDebugText(std::float_t x, std::float_t y, std::string_view text)
+void Renderer::DrawDebugText(std::float_t x, std::float_t y, std::string_view text, SDL_Color color)
 {
-	if (!SDL_SetRenderDrawColor(_sdlRenderer, 255, 255, 255, 255) || !SDL_RenderDebugText(_sdlRenderer, x, y, text.data())) [[unlikely]]
+	if (!SDL_SetRenderDrawColor(_sdlRenderer, color.r, color.g, color.b, color.a) || !SDL_RenderDebugText(_sdlRenderer, x, y, text.data())) [[unlikely]]
 	{
 		throw std::runtime_error(SDL_GetError());
 	}
@@ -223,14 +228,14 @@ void Renderer::LuaDraw(sol::table args)
 			throw std::runtime_error("Texture was not found");
 		}
 
-		if (!args["destination"].is<sol::table>()) [[unlikely]]
-		{
-			throw std::runtime_error("Failed to draw rect: missing parameter 'destination'");
-		}
-
 		SDL_FRect rectDst;
 		{
 			auto t = args["destination"].get<sol::table>();
+			if (!t.is<sol::table>()) [[unlikely]]
+			{
+				throw std::runtime_error("Failed to draw rect: missing parameter 'destination'");
+			}
+
 			rectDst.x = t.get_or<std::float_t>(1, 0);
 			rectDst.y = t.get_or<std::float_t>(2, 0);
 			rectDst.w = t.get_or<std::float_t>(3, 0);
@@ -238,7 +243,6 @@ void Renderer::LuaDraw(sol::table args)
 		}
 
 		SDL_FRect rectSrc;
-		if (texture != nullptr)
 		{
 			auto source = args["source"].get<sol::object>();
 			auto [tw, th] = texture->GetSize();

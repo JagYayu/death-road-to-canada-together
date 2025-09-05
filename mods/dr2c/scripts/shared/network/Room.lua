@@ -1,13 +1,26 @@
-local Enum = require "tudov.Enum"
+--[[
+-- @module dr2c.shared.network.Room
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
 
---- @class dr2c.RoomID : integer
+local Enum = require("tudov.Enum")
 
---- @class dr2c.GRoom
-local GRoom = {}
+--- @alias dr2c.NetworkRoomAttribute dr2c.GNetworkRoom.Attribute
 
-GRoom.Attribute = Enum.sequence({
+--- @class dr2c.NetworkRoomID : integer
+
+--- @class dr2c.GNetworkRoom
+local GNetworkRoom = {}
+
+GNetworkRoom.Attribute = Enum.sequence({
 	ID = 0,
 	Name = 1,
 })
 
-return GRoom
+return GNetworkRoom

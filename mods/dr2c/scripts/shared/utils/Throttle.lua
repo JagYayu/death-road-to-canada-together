@@ -1,7 +1,18 @@
-local GCycle = require("dr2c.shared.misc.Cycle")
+--[[
+-- @module dr2c.shared.utils.Throttle
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
 
-local getSystemTime = Time.getSystemTime
-local getTick = GCycle.getTick
+local GShared = require("dr2c.shared.Shared")
+
+local GShared_getTick = GShared.getTick
+local Time_getSystemTime = Time.getSystemTime
 
 --- @class dr2c.ThrottleData
 --- @field [0] "call" | "tick" | "time"
@@ -62,7 +73,7 @@ end
 
 local metatableTick = {
 	__call = function(t)
-		local v = getTick() % t[2]
+		local v = GShared_getTick() % t[2]
 		if t[1] then
 			return v == 0
 		else
@@ -90,7 +101,7 @@ end
 
 local metatableTime = {
 	__call = function(t)
-		local st = getSystemTime()
+		local st = Time_getSystemTime()
 		local v = (st - t[4]) > t[2]
 		if not t[1] then
 			v = not v
@@ -120,7 +131,7 @@ function GThrottle.newTime(interval, invert, lazy)
 		not not invert,
 		interval,
 		lazy ~= false,
-		getSystemTime(),
+		Time_getSystemTime(),
 	}, metatableTime)
 
 	instances[proxy] = proxy
@@ -134,6 +145,6 @@ end
 
 events:add("DebugSnapshot", function(e)
 	e.instances = instances
-end, nil, nil, scriptName)
+end, scriptName, nil, scriptName)
 
 return GThrottle

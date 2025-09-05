@@ -1,5 +1,22 @@
+--[[
+-- @module dr2c.shared.network.Client
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local Enum = require("tudov.Enum")
 local Function = require("tudov.Function")
+
+--- @alias dr2c.ClientPublicAttribute dr2c.GClient.PublicAttribute
+
+--- @alias dr2c.ClientPrivateAttribute dr2c.GClient.PrivateAttribute
+
+--- @alias dr2c.ClientPermission dr2c.GClient.Permission
 
 --- @class dr2c.GClient
 local GClient = {}
@@ -22,30 +39,32 @@ GClient.AttributeTrait = Enum.immutable({
 GClient.PublicAttribute = Enum.sequence({
 	-- 存储ClientID
 	ID = 0,
+	-- 许可
+	Permissions = 1,
 	-- 当前连接状态
-	State = 1,
+	State = 2,
 	-- 游戏平台
-	Platform = 2,
+	Platform = 3,
 	-- 游戏平台账户ID
-	PlatformID = 3,
+	PlatformID = 4,
 	-- 操作系统
-	OperatingSystem = 4,
+	OperatingSystem = 5,
 	-- 账户资料
-	Statistics = 5,
+	Statistics = 6,
 	-- 昵称（覆盖账户名）
-	DisplayName = 6,
+	DisplayName = 7,
 	-- 所在服务器房间
-	Room = 7,
+	Room = 8,
 	-- app版本
-	Version = 8,
+	Version = 9,
 	-- 游戏文件哈希值，用于判断游戏的核心文件是否和服务器一致
-	ContentHash = 9,
+	ContentHash = 10,
 	-- 游戏模组哈希值，用于判断模组是否和服务器一致
-	ModsHash = 10,
+	ModsHash = 11,
 	-- 套接口类型
-	SocketType = 11,
+	SocketType = 12,
 	-- 是否含有客户端模组
-	HasClientOnlyMods = 12,
+	HasClientOnlyMods = 13,
 })
 
 GClient.PrivateAttribute = Enum.sequence({
@@ -53,8 +72,37 @@ GClient.PrivateAttribute = Enum.sequence({
 	SecretStatistics = 2,
 })
 
+--- @enum dr2c.GClient.Permission
+GClient.Permission = { -- TODO Enum.bits
+	Authority = bit.lshift(1, 0),
+	Chat = bit.lshift(1, 1),
+	KickClient = bit.lshift(1, 2),
+	BanClient = bit.lshift(1, 3),
+	ChangeSetting = bit.lshift(1, 4),
+	ChangeAttribute = bit.lshift(1, 5),
+	ServerCommand = bit.lshift(1, 6),
+}
+
+local Permission = GClient.Permission
+local permissionsDefault = Permission.Chat
+local permissionsAdmin = bit.bor(permissionsDefault, Permission.KickClient, Permission.ChangeSetting)
+local permissionsHost = bit.bor(
+	permissionsAdmin,
+	Permission.Authority,
+	Permission.BanClient,
+	Permission.ChangeAttribute,
+	Permission.ServerCommand
+)
+
+GClient.Permissions = Enum.sequence({
+	Default = permissionsDefault,
+	Admin = permissionsAdmin,
+	Host = permissionsHost,
+})
+
 local publicAttributeTraits = {
 	[GClient.PublicAttribute.ID] = GClient.AttributeTrait.Authoritative,
+	[GClient.PublicAttribute.Permissions] = GClient.AttributeTrait.Authoritative,
 	[GClient.PublicAttribute.State] = GClient.AttributeTrait.Validation,
 	[GClient.PublicAttribute.Platform] = GClient.AttributeTrait.Validation,
 	[GClient.PublicAttribute.PlatformID] = GClient.AttributeTrait.Validation,
@@ -68,6 +116,13 @@ local publicAttributeTraits = {
 local privateAttributeTraits = {
 	[GClient.PrivateAttribute.SecretToken] = GClient.AttributeTrait.Authoritative,
 }
+
+publicAttributeTraits = persist("publicAttributeTraits", function()
+	return publicAttributeTraits
+end)
+privateAttributeTraits = persist("privateAttributeTraits", function()
+	return privateAttributeTraits
+end)
 
 --- @param attribute dr2c.GClient.PublicAttribute
 --- @return dr2c.GClient.AttributeTrait trait
@@ -95,7 +150,7 @@ local publicAttributeValidators = {
 	[GClient.PublicAttribute.ModsHash] = Function.isTypeNumber,
 }
 
---- @type table<dr2c.GClient.PrivateAttribute, fun(value: any): boolean?>
+--- @type table<dr2c.GClient.PrivateAttribute, dr2c.ValueValidator>
 local privateAttributeValidators = {
 	[GClient.PrivateAttribute.SecretToken] = Function.isTypeNumberOrNil,
 	[GClient.PrivateAttribute.SecretStatistics] = Function.isTypeTable,
@@ -105,14 +160,36 @@ local privateAttributeValidators = {
 --- @param value integer | string
 --- @return boolean
 function GClient.validatePublicAttribute(attribute, value)
-	return not not (publicAttributeValidators[attribute] or Function.alwaysTrue)(value)
+	local validator = publicAttributeValidators[attribute]
+	if validator then
+		return not not validator(value)
+	else
+		return true
+	end
 end
 
 --- @param attribute dr2c.GClient.PrivateAttribute
 --- @param value integer | string
 --- @return boolean
 function GClient.validatePrivateAttribute(attribute, value)
-	return not not (privateAttributeValidators[attribute] or Function.alwaysTrue)(value)
+	local validator = privateAttributeValidators[attribute]
+	if validator then
+		return not not validator(value)
+	else
+		return true
+	end
+end
+
+--- @param attribute dr2c.ClientPublicAttribute
+--- @param validator dr2c.ValueValidator
+function GClient.setPublicAttributeValidator(attribute, validator)
+	publicAttributeValidators[attribute] = validator
+end
+
+--- @param attribute dr2c.ClientPrivateAttribute
+--- @param validator dr2c.ValueValidator
+function GClient.setPrivateAttributeValidator(attribute, validator)
+	privateAttributeValidators[attribute] = validator
 end
 
 return GClient

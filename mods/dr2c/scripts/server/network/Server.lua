@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.server.network.Server
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local GClient = require("dr2c.shared.network.Client")
 local GMessage = require("dr2c.shared.network.Message")
 local GServer = require("dr2c.shared.network.Server")
@@ -54,7 +65,7 @@ function SServer.disconnect(clientID, disconnectionCode)
 end
 
 --- @param clientID Network.ClientID
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel?
 --- @return boolean
@@ -78,7 +89,7 @@ function SServer.sendReliable(clientID, messageType, messageContent, channel)
 end
 
 --- @param clientID Network.ClientID
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
@@ -102,7 +113,7 @@ function SServer.sendUnreliable(clientID, messageType, messageContent, channel)
 end
 
 --- Broadcast message to all clients in this server.
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
@@ -111,9 +122,9 @@ function SServer.broadcastReliable(messageType, messageContent, channel)
 	if session then
 		local data = GMessage.pack(messageType, messageContent)
 
-		if log.canTrace() then
-			log.trace(("Broadcast reliable message: %s"):format(data))
-		end
+		-- if log.canTrace() then
+		-- 	log.trace(("Broadcast reliable message: %s"):format(data))
+		-- end
 
 		channel = channel or GMessage.Channel.Main
 		--- @diagnostic disable-next-line: param-type-mismatch
@@ -125,7 +136,7 @@ function SServer.broadcastReliable(messageType, messageContent, channel)
 	end
 end
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
@@ -148,29 +159,48 @@ function SServer.broadcastUnreliable(messageType, messageContent, channel)
 	end
 end
 
-SServer.eventServerConnect = events:new(N_("SConnect"), {
-	"Clients",
+SServer.eventSHost = events:new(N_("SHost"), {
+	"Reset",
+	"Initialize",
 })
 
-SServer.eventServerDisconnect = events:new(N_("SDisconnect"), {
+SServer.eventSShutdown = events:new(N_("SShutdown"), {
+	"Reset",
+})
+
+SServer.eventSConnect = events:new(N_("SConnect"), {
+	"Clients",
+	"PlayerInputBuffer",
+})
+
+SServer.eventSDisconnect = events:new(N_("SDisconnect"), {
 	"Clients",
 	"Reset",
 })
 
-SServer.eventServerMessage = events:new(N_("SMessage"), {
+SServer.eventSMessage = events:new(N_("SMessage"), {
 	"Overrides",
 	"Receive",
 	"Broadcast",
 })
 
+events:add("ServerHost", function(e)
+	events:invoke(SServer.eventSHost, {})
+end)
+
+events:add("ServerShutdown", function(e)
+	events:invoke(SServer.eventSShutdown, {})
+end)
+
 --- @param clientID Network.ClientID
 local function invokeEventServerConnect(clientID)
 	--- @class dr2c.E.ServerConnect
+	--- @field clientID Network.ClientID
 	local e = {
 		clientID = clientID,
 	}
 
-	events:invoke(SServer.eventServerConnect, e)
+	events:invoke(SServer.eventSConnect, e)
 end
 
 --- @param e Events.E.ServerMessage
@@ -185,7 +215,7 @@ local function invokeEventServerDisconnect(clientID)
 		clientID = clientID,
 	}
 
-	events:invoke(SServer.eventServerDisconnect, e, nil, EEventInvocation.None)
+	events:invoke(SServer.eventSDisconnect, e, nil, EEventInvocation.None)
 end
 
 --- @param e Events.E.ServerDisconnect
@@ -194,12 +224,12 @@ events:add("ServerDisconnect", function(e)
 end)
 
 --- @param messageContent any?
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.NetworkMessageType
 local function invokeEventServerMessage(clientID, messageContent, messageType)
 	--- @class dr2c.E.ServerMessage
 	--- @field clientID Network.ClientID
 	--- @field content any
-	--- @field type dr2c.MessageType
+	--- @field type dr2c.NetworkMessageType
 	--- @field broadcast table?
 	local e = {
 		clientID = clientID,
@@ -208,7 +238,7 @@ local function invokeEventServerMessage(clientID, messageContent, messageType)
 	}
 
 	--- @diagnostic disable-next-line: param-type-mismatch
-	events:invoke(SServer.eventServerMessage, e, messageType)
+	events:invoke(SServer.eventSMessage, e, messageType)
 end
 
 --- @param e Events.E.ServerMessage
@@ -224,7 +254,7 @@ events:add("ServerMessage", function(e)
 end, "ServerMessage", nil, SServer.sessionSlot)
 
 --- @param e dr2c.E.ServerConnect
-events:add(SServer.eventServerConnect, function(e)
+events:add(SServer.eventSConnect, function(e)
 	local clientID = e.clientID
 
 	if log.canTrace() then
@@ -243,7 +273,7 @@ events:add(SServer.eventServerConnect, function(e)
 end, "BroadcastClientConnectState", "Clients")
 
 --- @param e dr2c.E.ServerMessage
-events:add(SServer.eventServerMessage, function(e)
+events:add(SServer.eventSMessage, function(e)
 	if e.broadcast then
 		SServer.broadcastReliable(e.type, e.broadcast)
 	end

@@ -1,9 +1,19 @@
+--[[
+-- @module ScriptEngine
+-- @author JagYayu
+-- @brief Core module for Tudov Modding Engine
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local ffi = require("ffi")
 local inspect = require("inspect")
 local jit_util = require("jit.util")
 
 local type = type
-local table_concat = table.concat
 
 local lockedTables = setmetatable({}, { __mode = "k" })
 
@@ -78,25 +88,37 @@ local function estimateMemorySize(value, extraArgs)
 	estimateMemorySizeImpl(value, extraArgs)
 end
 
+--- @param mt metatable
+local function lockMetatable(mt)
+	if type(mt) == "table" then
+		lockedTables[mt] = true
+		--- @diagnostic disable-next-line: inject-field
+		mt._TE_locked = true
+	end
+end
+
 local function initialize(luaGlobals)
 	jit.off()
 	-- jit.opt.start("maxtrace=8000", "maxrecord=16000", "maxmcode=40960")
+
+	function luaGlobals.hasLockedMetatable(tbl)
+		local mt = debug.getmetatable(tbl)
+		if type(mt) == "table" then
+			return not not lockedTables[mt]
+		end
+	end
 
 	--- @param mt metatable
 	--- @return boolean
 	function luaGlobals.isLocked(mt)
 		return not not lockedTables[mt]
 	end
-end
 
---- @param mt metatable
-local function markAsLocked(mt)
-	if type(mt) == "table" then
-		if mt.__metatable then
-			mt.__metatable = "Metatable is locked"
+	-- Lock all core metatables
+	for _, value in pairs(luaGlobals) do
+		if type(value) == "table" then
+			lockMetatable(debug.getmetatable(value))
 		end
-
-		lockedTables[mt] = true
 	end
 end
 
@@ -125,10 +147,26 @@ local function postProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals)
 			traceback = luaGlobals.debug.traceback,
 		}
 
-		local getmetatable = luaGlobals.getmetatable
-		local setmetatable = luaGlobals.setmetatable
-		local debugGetmetatable = luaGlobals.debug.getmetatable
-		local debugSetmetatable = luaGlobals.debug.setmetatable
+		function modGlobals.load(chunk, chunkname, mode, env)
+			if type(env) ~= "table" then
+				env = modGlobals
+			end
+
+			return luaGlobals.load(chunk, chunkname, mode, env)
+		end
+
+		function modGlobals.loadfile(filename, mode, env)
+			error("This function is not available currently", 2)
+		end
+
+		function modGlobals.loadstring(text, chunkname)
+			local func, errorMessage = luaGlobals.loadstring(text, chunkname)
+			if func then
+				luaGlobals.setfenv(func, modGlobals)
+			end
+
+			return func, errorMessage
+		end
 
 		--- @param tbl table
 		--- @return metatable?
@@ -137,7 +175,7 @@ local function postProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals)
 				error(("bad argument #1 to 'table' (table expected, got %s)"):format(type(tbl)), 2)
 			end
 
-			local mt = getmetatable(tbl)
+			local mt = luaGlobals.getmetatable(tbl)
 			if mt ~= nil and lockedTables[mt] then
 				error("Metatable is locked, inaccessible in a sandboxed environment", 2)
 			end
@@ -155,52 +193,24 @@ local function postProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals)
 				error(("bad argument #2 to 'metatable' (table expected, got %s)"):format(type(mt)), 2)
 			end
 
-			local lmt = getmetatable(tbl)
+			local lmt = luaGlobals.getmetatable(tbl)
 			if lmt ~= nil and lockedTables[lmt] then
 				error("metatable is locked, unmodifiable in sandboxed environment", 2)
 			end
 
-			return setmetatable(tbl, mt)
-		end
-
-		--- @param tbl table
-		--- @return metatable?
-		function modGlobals.debug.getmetatable(tbl)
-			if type(tbl) ~= "table" then
-				error(("bad argument #1 to 'table' (table expected, got %s)"):format(type(tbl)), 2)
-			end
-
-			local mt = getmetatable(tbl)
-			if mt ~= nil and lockedTables[mt] then
-				error("Metatable is locked, inaccessible in a sandboxed environment", 2)
-			end
-
-			return debugGetmetatable(tbl)
-		end
-
-		--- @param tbl table
-		--- @param mt metatable
-		--- @return nil
-		function modGlobals.debug.setmetatable(tbl, mt)
-			if type(tbl) ~= "table" then
-				error(("bad argument #1 to 'table' (table expected, got %s)"):format(type(tbl)), 2)
-			elseif type(mt) ~= "table" then
-				error(("bad argument #2 to 'metatable' (table expected, got %s)"):format(type(mt)), 2)
-			end
-
-			local lmt = getmetatable(tbl)
-			if lmt ~= nil and lockedTables[lmt] then
-				error("metatable is locked, unmodifiable in sandboxed environment", 2)
-			end
-
-			return debugSetmetatable(tbl, mt)
+			return luaGlobals.setmetatable(tbl, mt)
 		end
 	else
 		modGlobals.collectgarbage = luaGlobals.collectgarbage
 		modGlobals.debug = luaGlobals.debug
+		modGlobals.getfenv = luaGlobals.getfenv
 		modGlobals.io = luaGlobals.io
+		modGlobals.load = luaGlobals.load
+		modGlobals.loadfile = luaGlobals.loadfile
+		modGlobals.loadstring = luaGlobals.loadstring
 		modGlobals.os = luaGlobals.os
 		modGlobals.package = luaGlobals.package
+		modGlobals.setfenv = luaGlobals.setfenv
 		modGlobals["jit.profile"] = luaGlobals["jit.profile"]
 		modGlobals["jit.util"] = luaGlobals["jit.util"]
 	end
@@ -277,7 +287,7 @@ end
 return {
 	estimateMemorySize = estimateMemorySize,
 	initialize = initialize,
-	markAsLocked = markAsLocked,
+	lockMetatable = lockMetatable,
 	postProcessModGlobals = postProcessModGlobals,
 	postProcessScriptGlobals = postProcessScriptGlobals,
 }

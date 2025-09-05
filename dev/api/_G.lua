@@ -1,6 +1,9 @@
 --- @meta
 error("this is a lua library module")
 
+--- @class metatable
+--- @field _TE_locked true? @A marker field, means this metatable is locked by engine and inaccessible to sandboxed scripts.
+
 --- @diagnostic disable-next-line: duplicate-doc-alias
 --- @alias N_Hint string
 

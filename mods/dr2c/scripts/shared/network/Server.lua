@@ -1,9 +1,20 @@
+--[[
+-- @module dr2c.shared.network.Server
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local Enum = require("tudov.Enum")
 local Function = require("tudov.Function")
 
 --- @alias dr2c.ServerAttribute dr2c.GServer.Attribute
 
---- @alias dr2c.ServerAttributeRooms dr2c.RoomID[]
+--- @alias dr2c.ServerAttributeRooms dr2c.NetworkRoomID[]
 
 --- @class dr2c.GServer
 local GServer = {}

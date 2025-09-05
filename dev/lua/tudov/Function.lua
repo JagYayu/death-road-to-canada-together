@@ -1,5 +1,18 @@
+--[[
+-- @module tudov.Function
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 --- @class Function
 local Function = {}
+
+local type = type
 
 function Function.empty() end
 
@@ -90,6 +103,33 @@ Function.isTypeBooleanOrNil = Function.generateIsOrNilType("boolean")
 Function.isTypeNumberOrNil = Function.generateIsOrNilType("number")
 Function.isTypeStringOrNil = Function.generateIsOrNilType("string")
 Function.isTypeTableOrNil = Function.generateIsOrNilType("table")
+
+--- @param keyValueTypes { [1]: any, [2]: type | dr2c.ValueValidator }[]
+--- @return dr2c.ValueValidator
+function Function.generateTableValidator(keyValueTypes)
+	return function(value)
+		if type(value) ~= "table" then
+			return false
+		end
+
+		for _, entry in ipairs(keyValueTypes) do
+			local k = entry[1]
+			local v = entry[2]
+
+			if type(v) == "function" then
+				if not v(value[k]) then
+					return false
+				end
+			else
+				if type(value[k]) ~= v then
+					return false
+				end
+			end
+		end
+
+		return true
+	end
+end
 
 function Function._Enum(Enum)
 	Function._Enum = nil

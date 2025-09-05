@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.server.network.Clients
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local Enum = require("tudov.Enum")
 local Table = require("tudov.Table")
 
@@ -62,6 +73,24 @@ local function unverifiedClientEquals(entry, _, clientID)
 	return entry.clientID == clientID
 end
 
+--- Send server clients attributes to lately verified client.
+--- @param clientID Network.ClientID
+local function onVerifiedClient(clientID)
+	Table.listRemoveFirstIf(unverifiedClients, unverifiedClientEquals, clientID)
+
+	local clients
+	for existedClientID, publicAttributes in ipairs(clientsPublicAttributes) do
+		if existedClientID ~= clientID then
+			clients = clients or {}
+			clients[existedClientID] = publicAttributes
+		end
+	end
+
+	if clients then
+		SServer.sendReliable(clientID, GMessage.Type.Clients, clients)
+	end
+end
+
 --- @param e dr2c.E.ServerMessage
 events:add(N_("SMessage"), function(e)
 	local clientID = e.clientID
@@ -89,7 +118,7 @@ events:add(N_("SMessage"), function(e)
 				return
 			end
 
-			Table.listRemoveFirstIf(unverifiedClients, unverifiedClientEquals, clientID)
+			onVerifiedClient(clientID)
 		end
 	elseif trait == GClient.AttributeTrait.Validation then
 		return

@@ -23,10 +23,12 @@ namespace tudov
 {
 	struct NetworkSessionData;
 	class LocalServerSession;
+	class LocalSession;
 
 	class LocalClientSession : public IClientSession, private ILogProvider, public std::enable_shared_from_this<LocalClientSession>
 	{
-		friend LocalServerSession;
+		// friend LocalServerSession;
+		friend LocalSession;
 
 	  public:
 		struct ConnectArgs : public IClientSession::ConnectArgs

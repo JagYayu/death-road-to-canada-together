@@ -69,7 +69,7 @@ namespace tudov
 
 		virtual sol::object MakeReadonlyGlobal(sol::object obj) = 0;
 
-		virtual sol::load_result LoadFunction(const std::string &name, std::string_view code) = 0;
+		virtual sol::load_result LoadFunction(std::string_view name, std::string_view code) = 0;
 
 		virtual void InitializeScript(ScriptID scriptID, std::string_view scriptName, std::string_view modUID, bool sandboxed, sol::protected_function &func) = 0;
 
@@ -140,13 +140,13 @@ namespace tudov
 		bool _luaInit;
 
 		std::map<std::string, std::map<std::string, PersistVariable>> _persistVariables;
-		std::map<std::string_view, sol::table> _modGlobals;
+		std::map<std::string_view, sol::table> _modsGlobals;
 
 		sol::protected_function _luaThrowModifyReadonlyGlobalError;
 		sol::protected_function _luaInspect;
 		sol::protected_function _luaPostProcessModGlobals;
 		sol::protected_function _luaPostProcessScriptGlobals;
-		sol::protected_function _luaMarkAsLocked;
+		sol::protected_function _luaLockMetatable;
 		sol::protected_function _luaSTDRequire;
 
 		std::vector<std::shared_ptr<ScriptError>> _scriptRuntimeErrors;
@@ -175,7 +175,7 @@ namespace tudov
 		void RawSet(sol::table tbl, sol::object key, sol::object value) override;
 		void SetMetatable(sol::table tbl, sol::metatable mt) override;
 		sol::object MakeReadonlyGlobal(sol::object obj) override;
-		sol::load_result LoadFunction(const std::string &name, std::string_view code) override;
+		sol::load_result LoadFunction(std::string_view name, std::string_view code) override;
 		void InitializeScript(ScriptID scriptID, std::string_view scriptName, std::string_view modUID, bool sandboxed, sol::protected_function &func) noexcept override;
 		void DeinitializeScript(ScriptID scriptID, std::string_view scriptName) override;
 		std::string Inspect(sol::object obj) override;

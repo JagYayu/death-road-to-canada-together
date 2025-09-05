@@ -43,6 +43,15 @@ namespace tudov
 		void LuaSetDebugCommand(sol::table args) noexcept;
 	};
 
+	struct EventModGlobalsIndexData : public CoreEventData
+	{
+		std::string_view scriptName;
+		sol::object key;
+		sol::object value;
+	};
+
+#pragma region Network
+
 	struct EventLocalClientConnectData : public CoreEventData
 	{
 		ESocketType socketType;
@@ -168,4 +177,6 @@ namespace tudov
 		ESocketType socketType;
 		NetworkSessionSlot serverSlot;
 	};
+
+#pragma endregion
 } // namespace tudov

@@ -47,18 +47,23 @@ events:add(N_("GLoad"), function(e)
 	events:invoke(eventClientLoad, e)
 end, N_("ClientContentLoad"), "Client")
 
-local eventClientKeyDown = events:new(N_("CKeyDown"), {
+local commonOrders = {
 	"Hold",
-})
+	"Pause",
+}
 
+local eventClientKeyCodeDown = events:new(N_("CKeyCodeDown"), commonOrders)
+local eventClientScanCodeDown = events:new(N_("CScanCodeDown"), commonOrders)
+local eventClientKeyCodeUp = events:new(N_("CKeyCodeUp"), commonOrders)
+local eventClientScanCodeUp = events:new(N_("CScanCodeUp"), commonOrders)
+
+--- @param e Events.E.KeyDown
 events:add(N_("GKeyDown"), function(e)
-	events:invoke(eventClientKeyDown, e)
+	events:invoke(eventClientKeyCodeDown, e, e.keyCode)
+	events:invoke(eventClientScanCodeDown, e, e.scanCode)
 end, N_("ClientKeyDown"))
 
-local eventClientKeyUp = events:new(N_("CKeyUp"), {
-	"Hold",
-})
-
 events:add(N_("GKeyUp"), function(e)
-	events:invoke(eventClientKeyUp, e)
+	events:invoke(eventClientKeyCodeUp, e, e.keyCode)
+	events:invoke(eventClientScanCodeUp, e, e.scanCode)
 end, N_("ClientKeyUp"))

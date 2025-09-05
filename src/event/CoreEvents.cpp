@@ -33,6 +33,7 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 	TE_CORE_EVENTS_GEN_INIT(_keyDown, "KeyDown");
 	TE_CORE_EVENTS_GEN_INIT(_keyRepeat, "KeyRepeat");
 	TE_CORE_EVENTS_GEN_INIT(_keyUp, "KeyUp");
+	TE_CORE_EVENTS_GEN_INIT(_modGlobalsIndex, "ScriptGlobalIndex");
 	TE_CORE_EVENTS_GEN_INIT(_mouseMove, "MouseMove");
 	TE_CORE_EVENTS_GEN_INIT(_mouseButtonDown, "MouseButtonDown");
 	TE_CORE_EVENTS_GEN_INIT(_mouseButtonUp, "MouseButtonUp");
@@ -64,6 +65,7 @@ TE_CORE_EVENTS_GEN_GETTER(DebugSnapshot, _debugSnapshot);
 TE_CORE_EVENTS_GEN_GETTER(KeyDown, _keyDown);
 TE_CORE_EVENTS_GEN_GETTER(KeyRepeat, _keyRepeat);
 TE_CORE_EVENTS_GEN_GETTER(KeyUp, _keyUp);
+TE_CORE_EVENTS_GEN_GETTER(ModGlobalsIndex, _modGlobalsIndex);
 TE_CORE_EVENTS_GEN_GETTER(MouseMove, _mouseMove);
 TE_CORE_EVENTS_GEN_GETTER(MouseButtonDown, _mouseButtonDown);
 TE_CORE_EVENTS_GEN_GETTER(MouseButtonUp, _mouseButtonUp);

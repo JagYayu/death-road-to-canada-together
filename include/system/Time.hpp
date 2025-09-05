@@ -13,12 +13,41 @@
 
 #include "util/Micros.hpp"
 
+#include <chrono>
 #include <cmath>
 
 namespace tudov
 {
+	class LuaAPI;
+
+	class Timer
+	{
+	  private:
+		std::chrono::steady_clock::time_point _startTime;
+		bool _paused;
+		std::chrono::steady_clock::time_point _pausedTime;
+		std::chrono::duration<std::double_t> _pausedElapsed;
+
+	  public:
+		explicit Timer() noexcept;
+		explicit Timer(bool paused) noexcept;
+
+		void Pause() noexcept;
+
+		void Unpause() noexcept;
+
+		void Reset() noexcept;
+
+		std::double_t GetTime() noexcept;
+	};
+
+	/**
+	 * Wrapper for timer classes. Mainly designed for lua api.
+	 */
 	struct Time
 	{
+		friend LuaAPI;
+
 		TE_STATIC_CLASS(Time);
 
 		static std::double_t GetStartupTime() noexcept;

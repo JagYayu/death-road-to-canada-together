@@ -1,3 +1,14 @@
+--[[
+-- @module tudov.Matrix3x3
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 --- @class Matrix3x3
 --- @field [1] number
 --- @field [2] number

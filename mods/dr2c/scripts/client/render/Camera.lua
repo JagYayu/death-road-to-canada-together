@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.client.render.Camera
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 --- @class Camera
 local Camera = {}
 local Matrix3x3 = require("tudov.Matrix3x3")
@@ -37,6 +48,7 @@ local imageID = images:getID("gfx/cars/cars_unique_110x96.png")
 
 local eventRenderCamera = events:new(N_("CRenderCamera"), {
 	"Begin",
+	"Tilemap",
 	"Sprites",
 	"DebugObjects",
 	"End",

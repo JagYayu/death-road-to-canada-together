@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.client.system.Input
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local CECS = require("dr2c.client.ecs.ECS")
 local Table = require("tudov.Table")
 
@@ -69,7 +80,7 @@ local function addHoldingCode(window, windowKey2HoldingCodes, code, whatCode)
 end
 
 --- @param e Events.E.KeyDown
-events:add(N_("CKeyDown"), function(e)
+events:add(N_("CKeyCodeDown"), function(e)
 	addHoldingCode(e.window, windowKey2HoldingKeyCodes, e.keyCode, "Key")
 	addHoldingCode(e.window, windowKey2HoldingScanCodes, e.scanCode, "Scan")
 end, "AddHoldingCodes", "Hold")
@@ -95,7 +106,7 @@ local function removeHoldingCode(window, windowKey2HoldingCodes, code, whatCode)
 end
 
 --- @param e Events.E.KeyUp
-events:add(N_("CKeyUp"), function(e)
+events:add(N_("CKeyCodeUp"), function(e)
 	removeHoldingCode(e.window, windowKey2HoldingKeyCodes, e.keyCode, "Key")
 	removeHoldingCode(e.window, windowKey2HoldingScanCodes, e.scanCode, "Scan")
 end)

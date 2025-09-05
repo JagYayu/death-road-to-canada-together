@@ -19,7 +19,6 @@
 #include "system/Log.hpp"
 #include "util/Definitions.hpp"
 
-
 #include "SDL3/SDL_rect.h"
 #include "sol/table.hpp"
 
@@ -30,6 +29,7 @@
 struct SDL_GPUGraphicsPipeline;
 struct SDL_GPUShader;
 struct SDL_GPUTexture;
+struct TTF_TextEngine;
 
 namespace tudov
 {
@@ -52,7 +52,7 @@ namespace tudov
 		virtual bool SetVSync(EVSyncMode mode) noexcept = 0;
 
 		virtual void Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src) = 0;
-		virtual void DrawDebugText(std::float_t x, std::float_t y, std::string_view text) = 0;
+		virtual void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, SDL_Color color = SDL_Color(255, 255, 255, 255)) = 0;
 
 		virtual void Clear(const SDL_Color &color = SDL_Color(0ui8, 0ui8, 0ui8, 0ui8)) noexcept = 0;
 		virtual void Reset() noexcept = 0;
@@ -85,6 +85,7 @@ namespace tudov
 		Window &_window;
 		std::shared_ptr<Log> _log;
 		SDL_Renderer *_sdlRenderer;
+		TTF_TextEngine *_sdlTTFTextEngine;
 		std::stack<std::shared_ptr<RenderTarget>> _renderTargets;
 		// Manage image textures.
 		TextureManager _textureManager;
@@ -118,7 +119,7 @@ namespace tudov
 		bool SetVSync(EVSyncMode mode) noexcept override;
 
 		void Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src) override;
-		void DrawDebugText(std::float_t x, std::float_t y, std::string_view text) override;
+		void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, SDL_Color color = SDL_Color(255, 255, 255, 255)) override;
 
 		void Clear(const SDL_Color &color = SDL_Color(0ui8, 0ui8, 0ui8, 0ui8)) noexcept override;
 		void Reset() noexcept override;

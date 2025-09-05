@@ -15,8 +15,11 @@
 #include "event/EventHandleKey.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/Renderer.hpp"
+#include "mod/ScriptErrors.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
+#include "system/LogMicros.hpp"
+#include "system/Time.hpp"
 #include "util/StringUtils.hpp"
 
 #include "SDL3/SDL_rect.h"
@@ -315,6 +318,11 @@ void MainWindow::Render() noexcept
 			RenderLoadingGUI(engine);
 		}
 
+		if (GetScriptErrors().HasLoadtimeError())
+		{
+			ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(0, 0), ImGui::GetIO().DisplaySize, IM_COL32(0, 0, 0, 128), 0.0f);
+		}
+
 		ImGui::EndFrame();
 		ImGui::Render();
 	}
@@ -341,6 +349,33 @@ void MainWindow::Render() noexcept
 		    .h = static_cast<std::float_t>(h),
 		};
 		renderer->IRenderer::Draw(_renderTarget->GetTexture(), dst);
+	}
+
+	if (GetScriptErrors().HasLoadtimeError())
+	{
+		auto scriptError = GetScriptErrors().GetLoadtimeErrorsCached().at(0);
+
+		auto channel = Time::GetSystemTime() * 5.0;
+		channel = std::floor(256 - 128 * std::sin(channel - std::floor(channel)));
+
+		{
+			decltype(auto) text = "Loadtime error occurred!";
+			renderer->DrawDebugText(3, 2, text, SDL_Color(0, 0, 0, 255));
+			renderer->DrawDebugText(1, 0, text, SDL_Color(255, channel, channel, 255));
+		}
+
+		std::istringstream stream{scriptError->message};
+		std::string line;
+		std::size_t index = 0;
+		while (std::getline(stream, line))
+		{
+			++index;
+
+			std::float_t y = 3 + 9 * index;
+
+			renderer->DrawDebugText(3, y + 2, line, SDL_Color(0, 0, 0, 255));
+			renderer->DrawDebugText(1, y, line, SDL_Color(255, channel, channel, 255));
+		}
 	}
 
 	renderer->End();

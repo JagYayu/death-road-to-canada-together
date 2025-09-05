@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.client.network.Players
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local Enum = require("tudov.Enum")
 local Table = require("tudov.Table")
 
@@ -14,7 +25,7 @@ local clientPlayersAttributes = {}
 --- @param clientID Network.ClientID
 --- @return dr2c.PlayerID[]
 function CPlayers.getPlayers(clientID)
-	if true then
+	if clientID ~= 0 then
 		return { clientID }
 	else
 		return Table.empty
@@ -33,6 +44,10 @@ function CPlayers.getClientID(playerID)
 end
 
 function CPlayers.isLocalPlayer(playerID)
+	--
+end
+
+function CPlayers.listPlayers()
 	--
 end
 

@@ -1,9 +1,20 @@
-local Number = require("tudov.Number")
-
-local indexNan = Number.nan
+--[[
+-- @module tudov.Utility
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
 
 --- @class Utility
 local Utility = {}
+
+Utility.inf = 1 / 0
+
+Utility.nan = 0 / 0
 
 --- @param levelOverride integer? @default: 3
 function Utility.assertLoadtime(levelOverride)
@@ -24,7 +35,7 @@ end
 --- @param value any?
 --- @return boolean
 function Utility.canBeIndex(value)
-	return value ~= nil and value ~= indexNan
+	return value ~= nil and value ~= Utility.nan
 end
 
 return Utility

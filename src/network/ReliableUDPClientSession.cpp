@@ -144,6 +144,10 @@ void ReliableUDPClientSession::Disconnect(EDisconnectionCode code)
 	_eNetPeer = nullptr;
 	_eNetHost = nullptr;
 	_clientSessionID = 0;
+
+	while (Update())
+	{
+	}
 }
 
 bool ReliableUDPClientSession::TryDisconnect(EDisconnectionCode code)
@@ -165,13 +169,13 @@ TE_FORCEINLINE void Send(ENetPeer *peer, const NetworkSessionData &data, enet_ui
 
 void ReliableUDPClientSession::SendReliable(const NetworkSessionData &data)
 {
-	TE_TRACE("Send message");
+	// TE_TRACE("Send message");
 	Send(_eNetPeer, data, ENET_PACKET_FLAG_RELIABLE);
 }
 
 void ReliableUDPClientSession::SendUnreliable(const NetworkSessionData &data)
 {
-	TE_TRACE("Send message");
+	// TE_TRACE("Send message");
 	Send(_eNetPeer, data, 0);
 }
 
@@ -260,7 +264,7 @@ void ReliableUDPClientSession::UpdateENetReceive(_ENetEvent &event) noexcept
 	    .port = event.peer->address.port,
 	};
 
-	TE_TRACE("Receive event, host: {}, port: {}, message: {}B", data.host, data.port, data.message.size());
+	// TE_TRACE("Received event, host: {}, port: {}, message: {}B", data.host, data.port, data.message.size());
 
 	if (received.size() == 2 && received[0] == '\0') [[unlikely]]
 	{

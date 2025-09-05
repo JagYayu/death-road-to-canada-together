@@ -1,8 +1,19 @@
+--[[
+-- @module dr2c.client.network.Clients
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local String = require("tudov.String")
 local Enum = require("tudov.Enum")
 local Utility = require("tudov.Utility")
 
-local CNetwork = require("dr2c.client.misc.Network")
+local CClient = require("dr2c.client.network.Client")
 local GThrottle = require("dr2c.shared.utils.Throttle")
 local GClient = require("dr2c.shared.network.Client")
 local GMessage = require("dr2c.shared.network.Message")
@@ -44,6 +55,13 @@ privateAttributeRequestLatestID = persist("privateAttributeRequestLatestID", fun
 	return privateAttributeRequestLatestID
 end)
 
+local eventClientClientAdded = events:new(N_("CClientAdded"), {
+	"PlayerInputBuffer",
+})
+local eventClientClientRemoved = events:new(N_("CClientRemoved"), {
+	"PlayerInputBuffer",
+})
+
 --- @param clientID Network.ClientID
 --- @return boolean
 --- @nodiscard
@@ -59,6 +77,10 @@ function CClients.addClient(clientID)
 
 	clientsPublicAttributes[clientID] = {}
 	clientsPrivateAttributes[clientID] = {}
+
+	events:invoke(eventClientClientAdded, {
+		clientID = clientID,
+	})
 end
 
 --- @param clientID Network.ClientID
@@ -69,6 +91,10 @@ function CClients.removeClient(clientID)
 
 	clientsPublicAttributes[clientID] = nil
 	clientsPrivateAttributes[clientID] = nil
+
+	events:invoke(eventClientClientRemoved, {
+		clientID = clientID,
+	})
 end
 
 --- @param clientID Network.ClientID
@@ -95,7 +121,7 @@ function CClients.requestPrivateAttribute(clientID, clientPrivateAttribute, call
 		privateAttributeRequestLatestID = privateAttributeRequestLatestID + 1
 		local requestID = privateAttributeRequestLatestID
 
-		CNetwork.sendMessage(GMessage.pack(GMessage.Type.ClientPrivateAttribute, {
+		CClient.sendMessage(GMessage.pack(GMessage.Type.ClientPrivateAttribute, {
 			requestID = requestID,
 			clientID = clientID,
 			attribute = clientPrivateAttribute,
@@ -161,6 +187,21 @@ events:add(N_("CMessage"), function(e)
 
 	CClients.removeClient(clientID)
 end, "ReceiveClientDisconnect", "Receive", GMessage.Type.ClientDisconnect)
+
+local function initializeClientsAttributes(serverClientsPublicAttributes)
+	for clientID, clientPublicAttributes in pairs(serverClientsPublicAttributes) do
+		if not CClients.hasClient(clientID) then
+			CClients.addClient(clientID)
+
+			clientsPublicAttributes[clientID] = clientPublicAttributes
+		end
+	end
+end
+
+--- @param e dr2c.E.ClientMessage
+events:add(N_("CMessage"), function(e)
+	initializeClientsAttributes(e.content)
+end, "InitializeClientsAttributes", "Receive", GMessage.Type.Clients)
 
 --- @param e dr2c.E.ClientMessage
 local function receiveClientAttribute(e, validate, clientsAttributes)

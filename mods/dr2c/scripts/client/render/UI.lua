@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.client.render.UI
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local eventRenderUI = events:new(N_("CRenderUI"), {
 	"Begin",
 	"Test",

@@ -1,11 +1,24 @@
+--[[
+-- @module dr2c.client.world.Tick
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local Table = require("tudov.Table")
 
 local CSnapshot = require("dr2c.client.world.Snapshot")
-local CWorldTime = require("dr2c.client.world.WorldTime")
+local CClock = require("dr2c.client.network.Clock")
 local CPlayerInputBuffers = require("dr2c.client.world.PlayerInputBuffers")
+local CWorldSession = require("dr2c.client.world.Session")
+local GWorldSession = require("dr2c.shared.world.Session")
 
 local CSnapshot_get = CSnapshot.getSnapshot
-local CWorldTime_getTime = CWorldTime.getTime
+local CClock_getTime = CClock.getTime
 local math_ceil = math.ceil
 local math_floor = math.floor
 
@@ -14,24 +27,25 @@ local math_floor = math.floor
 --- @class dr2c.CWorldTick
 local CWorldTick = {}
 
-CWorldTick.tps = 8
-local deltaTime = 1 / CWorldTick.tps
+CWorldTick.ticksPerSeconds = bit.lshift(1, 3)
+local deltaTime = 1 / CWorldTick.ticksPerSeconds
 
--- local snapshotCurrentTick = CSnapshot.register("currentTick", 0)
 local latestTick = 0
+
 local processingTick = 0
 
+latestTick = persist("latestTick", function()
+	return latestTick
+end)
+
+--- @return number
 function CWorldTick.getDeltaTime()
 	return deltaTime
 end
 
 --- @return integer tick
 function CWorldTick.getCurrentTick()
-	return math_floor(CWorldTime_getTime() * CWorldTick.tps)
-end
-
-function CWorldTick.getNextTick()
-	return math_ceil(CWorldTime_getTime() * CWorldTick.tps)
+	return math_floor(CClock_getTime() * CWorldTick.ticksPerSeconds)
 end
 
 function CWorldTick.setLatestTick(tick)
@@ -42,11 +56,12 @@ function CWorldTick.getProcessingTick()
 	return processingTick
 end
 
-local eventClientWorldTickProcess = events:new(N_("CWorldTickProcess"), {
+CWorldTick.eventClientWorldTickProcess = events:new(N_("CWorldTickProcess"), {
 	"PlayerInputs",
 	"SnapshotSave",
 	"AccelThreadBegin",
 	"Move",
+	"Test",
 	"AccelThreadEnd",
 	"ECS",
 })
@@ -58,13 +73,16 @@ function CWorldTick.process(targetTick)
 	elseif type(targetTick) ~= "number" then
 		error("Type mismatch, number or nil expected", 2)
 	elseif targetTick ~= math.floor(targetTick) then
-		error("target tick must be an integer number", 2)
+		error("Target tick must be an integer number", 2)
 	end
 
 	local playersInputs = CPlayerInputBuffers.collectPlayersInputsInRange(latestTick, targetTick)
 	local playerIDs = Table.getKeyList(playersInputs)
 
+	local processedTicks = 0
 	while latestTick < targetTick do
+		processedTicks = processedTicks + 1
+
 		latestTick = latestTick + 1
 		processingTick = latestTick
 
@@ -73,21 +91,28 @@ function CWorldTick.process(targetTick)
 			playerInputs[playerID] = playersInputs[playerID][processingTick]
 		end
 
+		--- @class dr2c.E.CWorldTickProcess
+		--- @field entitiesChanged boolean?
 		local e = {
 			tick = processingTick,
 			playerInputs = playerInputs,
 		}
-		-- print(e)
-		events:invoke(eventClientWorldTickProcess, e)
+		events:invoke(CWorldTick.eventClientWorldTickProcess, e)
 	end
+
+	-- print(("processed %s ticks"):format(ticks))
 end
 
 events:add(N_("CUpdate"), function(e)
-	CWorldTick.process()
+	if CWorldSession.getState() == GWorldSession.State.Playing then
+		CWorldTick.process()
+	end
 end, "ProcessWorldTicks", "World")
 
 events:add(N_("CWorldRollback"), function(e)
-	latestTick = math.min(latestTick, e.snapshotID)
+	if not e.suppressed then
+		latestTick = math.min(latestTick, e.tick - 1)
+	end
 end, "SetLatestTick", "Tick")
 
 return CWorldTick

@@ -34,7 +34,7 @@
 
 using namespace tudov;
 
-// region VirtualFileSystem::List
+#pragma region VirtualFileSystem::List
 
 bool VirtualFileSystem::ListEntry::operator<(const ListEntry &r) const noexcept
 {
@@ -45,7 +45,7 @@ bool VirtualFileSystem::ListEntry::operator<(const ListEntry &r) const noexcept
 	return path < r.path;
 }
 
-// endregion
+#pragma endregion
 
 VirtualFileSystem::CommonNode::CommonNode() noexcept
     : date(std::chrono::system_clock::now())
@@ -92,7 +92,7 @@ VirtualFileSystem::FileNode::FileNode(const std::vector<std::byte> &bytes, EReso
 {
 }
 
-// region VirtualFileSystem
+#pragma region VirtualFileSystem
 
 VirtualFileSystem::VirtualFileSystem(Context &context) noexcept
     : _context(context),
@@ -620,4 +620,4 @@ std::string VirtualFileSystem::LuaReadFile(sol::object file)
 	return "";
 }
 
-// endregion VirtualFileSystem
+#pragma endregion VirtualFileSystem

@@ -1,11 +1,24 @@
-local CWorldTime = require("dr2c.client.world.WorldTime")
-local CWorldTick = require("dr2c.client.world.WorldTick")
-local CInput = require("dr2c.client.system.Input")
-local CPlayerInputBuffers = require("dr2c.client.world.PlayerInputBuffers")
-local CPlayers = require("dr2c.client.network.Players")
-local CClient = require("dr2c.client.network.Client")
-local GMessage = require("dr2c.shared.network.Message")
-local GPlayerInput = require("dr2c.shared.world.PlayerInput")
+--[[
+-- @module dr2c.client.world.PlayerInput
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
+local Math = require("tudov.Math")
+
+local CNetworkClock = require("dr2c.client.network.Clock")
+local CWorldTick = require("dr2c.client.world.Tick")
+local CSystemInput = require("dr2c.client.system.Input")
+local CWorldPlayerInputBuffers = require("dr2c.client.world.PlayerInputBuffers")
+local CNetworkPlayers = require("dr2c.client.network.Players")
+local CNetworkClient = require("dr2c.client.network.Client")
+local GNetworkMessage = require("dr2c.shared.network.Message")
+local GWorldPlayerInput = require("dr2c.shared.world.PlayerInput")
 
 --- @class dr2c.CPlayerInput
 local CPlayerInput = {}
@@ -22,30 +35,55 @@ function CPlayerInput.getPlayerMoveArg(playerID)
 	local dx = 0
 	local dy = 0
 
-	if CInput.isScanCodeHeld(EScanCode.A) then
+	if CSystemInput.isScanCodeHeld(EScanCode.A) then
 		dx = dx - 1
 	end
-	if CInput.isScanCodeHeld(EScanCode.D) then
+	if CSystemInput.isScanCodeHeld(EScanCode.D) then
 		dx = dx + 1
 	end
-	if CInput.isScanCodeHeld(EScanCode.W) then
+	if CSystemInput.isScanCodeHeld(EScanCode.W) then
 		dy = dy - 1
 	end
-	if CInput.isScanCodeHeld(EScanCode.S) then
+	if CSystemInput.isScanCodeHeld(EScanCode.S) then
 		dy = dy + 1
 	end
 
-	return (dx ~= 0 or dy ~= 0) and math.atan2(dy, dx) or nil
+	if dx > 0 then
+		if dy > 0 then
+			return 2
+		elseif dy < 0 then
+			return 8
+		else
+			return 1
+		end
+	elseif dx < 0 then
+		if dy > 0 then
+			return 4
+		elseif dy < 0 then
+			return 6
+		else
+			return 5
+		end
+	else
+		if dy > 0 then
+			return 3
+		elseif dy < 0 then
+			return 7
+		else
+			return 0
+		end
+	end
+	-- return (dx ~= 0 or dy ~= 0) and Math.atan2(dy, dx) or nil
 end
 
 --- @param e dr2c.E.ClientUpdate
 events:add(N_("CUpdate"), function(e)
-	local nextWorldTick = CWorldTick.getNextTick()
+	local nextWorldTick = CWorldTick.getCurrentTick() + 1
 	if nextWorldTick <= 0 then
 		return
 	end
 
-	local clientID = CClient.getClientID()
+	local clientID = CNetworkClient.getClientID()
 	if not clientID then
 		return
 	end
@@ -56,8 +94,8 @@ events:add(N_("CUpdate"), function(e)
 
 	local messageContent = {}
 
-	for _, playerID in ipairs(CPlayers.getPlayers(clientID)) do
-		local inputID = GPlayerInput.ID.Move
+	for _, playerID in ipairs(CNetworkPlayers.getPlayers(clientID)) do
+		local inputID = GWorldPlayerInput.ID.Move
 		local inputArg = CPlayerInput.getPlayerMoveArg(playerID)
 
 		messageContent[#messageContent + 1] = {
@@ -67,12 +105,12 @@ events:add(N_("CUpdate"), function(e)
 			worldTick = nextWorldTick,
 		}
 
-		CPlayerInputBuffers.addInput(playerID, nextWorldTick, inputID, inputArg)
+		CWorldPlayerInputBuffers.addInput(playerID, nextWorldTick, inputID, inputArg)
 	end
 end, "HandlePlayersContinuousInputs", "Inputs")
 
 events:add(N_("CUpdate"), function(e)
-	local clientID = CClient.getClientID()
+	local clientID = CNetworkClient.getClientID()
 	if not clientID then
 		return
 	end
@@ -83,13 +121,14 @@ events:add(N_("CUpdate"), function(e)
 		local worldTick = previousWorldTick + 1
 		previousWorldTick = worldTick
 
-		for _, playerID in ipairs(CPlayers.getPlayers(clientID)) do
+		for _, playerID in ipairs(CNetworkPlayers.getPlayers(clientID)) do
 			local messageContent = {
 				worldTick = worldTick,
-				input = CPlayerInputBuffers.getPlayerInputEntry(playerID, worldTick),
+				playerID = playerID,
+				playerInputs = CWorldPlayerInputBuffers.getPlayerInputs(playerID, worldTick),
 			}
 
-			-- CClient.sendReliable(GMessage.Type.PlayerInputs, messageContent)
+			CNetworkClient.sendReliable(GNetworkMessage.Type.PlayerInputs, messageContent)
 		end
 	end
 end, "SendPlayersInputs", "Inputs")

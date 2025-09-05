@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.client.world.Physics
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local Enum = require("tudov.Enum")
 
 local math_max = math.max

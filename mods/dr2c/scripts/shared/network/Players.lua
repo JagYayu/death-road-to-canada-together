@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.shared.network.Players
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local Enum = require("tudov.Enum")
 
 --- @alias dr2c.PlayerAttribute dr2c.GPlayers.Attribute

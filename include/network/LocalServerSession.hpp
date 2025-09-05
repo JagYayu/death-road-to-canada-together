@@ -29,10 +29,12 @@ namespace tudov
 	struct INetworkManager;
 	struct NetworkSessionData;
 	class LocalClientSession;
+	class LocalSession;
 
 	class LocalServerSession : public IServerSession, private ILogProvider
 	{
 		friend LocalClientSession;
+		friend LocalSession;
 
 	  public:
 		using HostArgs = IServerSession::HostArgs;

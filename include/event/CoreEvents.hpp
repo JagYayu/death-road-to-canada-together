@@ -47,6 +47,7 @@ namespace tudov
 		[[nodiscard]] virtual RuntimeEvent &ClientConnect() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ClientDisconnect() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ClientMessage() noexcept = 0;
+		// unused
 		[[nodiscard]] virtual RuntimeEvent &ServerAuthenticate() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ServerConnect() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ServerDisconnect() noexcept = 0;
@@ -67,6 +68,7 @@ namespace tudov
 
 		// Other events.
 
+		[[nodiscard]] virtual RuntimeEvent &ModGlobalsIndex() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ScriptsLoaded() noexcept = 0;
 
 		// [[nodiscard]] virtual RuntimeEvent &LocalizationUpdateTexts() noexcept = 0;
@@ -91,6 +93,7 @@ namespace tudov
 		TRuntimeEvent _keyDown;
 		TRuntimeEvent _keyRepeat;
 		TRuntimeEvent _keyUp;
+		TRuntimeEvent _modGlobalsIndex;
 		TRuntimeEvent _mouseMove;
 		TRuntimeEvent _mouseButtonDown;
 		TRuntimeEvent _mouseButtonUp;
@@ -121,6 +124,7 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &MouseButtonDown() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseButtonUp() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseWheel() noexcept override;
+		[[nodiscard]] RuntimeEvent &ModGlobalsIndex() noexcept override;
 		[[nodiscard]] RuntimeEvent &ScriptsLoaded() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerAuthenticate() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerConnect() noexcept override;

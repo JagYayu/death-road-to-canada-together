@@ -19,7 +19,7 @@
 
 using namespace tudov;
 
-// region Clipboard
+#	pragma region Clipboard
 
 bool SystemUtils::IsClipboardAvailable() noexcept
 {
@@ -47,9 +47,9 @@ void SystemUtils::ClearClipboard() noexcept
 	EmptyClipboard();
 }
 
-// endregion
+#	pragma endregion
 
-// region Script Editor
+#	pragma region Script Editor
 
 bool SystemUtils::IsScriptEditorAvailable() noexcept
 {
@@ -74,6 +74,6 @@ void SystemUtils::OpenScriptEditor(std::filesystem::path path, std::uint32_t lin
 	}
 }
 
-// endregion Script Editor
+#	pragma endregion Script Editor
 
 #endif

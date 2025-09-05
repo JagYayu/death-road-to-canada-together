@@ -13,6 +13,7 @@
 
 #include "DisconnectionCode.hpp"
 #include "util/Definitions.hpp"
+#include "util/Micros.hpp"
 
 #include <cstddef>
 #include <memory>
@@ -23,6 +24,7 @@ namespace tudov
 {
 	enum class ESessionEvent : std::uint8_t;
 	class LocalClientSession;
+	class LocalServerSession;
 
 	enum class ELocalSessionSource
 	{
@@ -55,5 +57,16 @@ namespace tudov
 		std::variant<Connect, Disconnect, Receive> variant;
 		NetworkSessionSlot clientSlot;
 		NetworkSessionSlot serverSlot;
+	};
+
+	class LocalSession
+	{
+		friend LocalClientSession;
+		friend LocalServerSession;
+
+		TE_STATIC_CLASS(LocalSession);
+
+	  public:
+		static void Disconnect(LocalClientSession &client, LocalServerSession &server, EDisconnectionCode code) noexcept;
 	};
 } // namespace tudov

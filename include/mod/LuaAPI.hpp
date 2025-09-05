@@ -34,19 +34,24 @@ namespace tudov
 		virtual ~ILuaAPI() noexcept = default;
 
 		virtual bool RegisterInstallation(std::string_view key, const TInstallation &installation) = 0;
+		
 		virtual void Install(sol::state &lua, Context &context) = 0;
+		
+		virtual const std::vector<std::string_view> &GetModGlobalsMigration() const noexcept = 0;
 	};
 
 	class LuaAPI : public ILuaAPI
 	{
 	  private:
 		std::vector<std::tuple<std::string, TInstallation>> _installations;
+		mutable std::vector<std::string_view> _modGlobalsMigration;
 
 	  public:
 		explicit LuaAPI() noexcept = default;
 
 		bool RegisterInstallation(std::string_view key, const TInstallation &installation) override;
 		void Install(sol::state &lua, Context &context) override;
+		const std::vector<std::string_view> &GetModGlobalsMigration() const noexcept override;
 
 	  private:
 		void InstallEvent(sol::state &lua, Context &context) noexcept;

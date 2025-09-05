@@ -1,7 +1,19 @@
+--[[
+-- @module tudov.Table
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local ScriptEngine = require("ScriptEngine")
 local Function = require("tudov.Function")
 local stringBuffer = require("string.buffer")
 
+local floor = math.floor
 local ipairs = ipairs
 local pairs = pairs
 local remove = table.remove
@@ -325,7 +337,7 @@ end
 function Table.reverse(list)
 	local len = #list
 
-	for i = 1, math.floor(len / 2) do
+	for i = 1, floor(len / 2) do
 		list[len - i + 1] = list[i]
 		list[i] = list[len - i + 1]
 	end
@@ -602,7 +614,7 @@ function Table.lockMetatable(tbl)
 	if type(tbl) == "table" then
 		local mt = getmetatable(tbl)
 		if type(mt) == "table" then
-			ScriptEngine.markAsLocked(mt)
+			ScriptEngine.lockMetatable(mt)
 			return mt
 		end
 	end
@@ -680,6 +692,25 @@ end
 --- @param r table
 function Table.deepEquals(l, r)
 	return deepEqualsImpl(l, r, {})
+end
+
+function Table.lowerBound(tbl, value)
+	local first, count = 1, #tbl
+	local step, index
+
+	while count > 0 do
+		step = floor(count / 2)
+		index = first + step
+
+		if value > tbl[index] then
+			first = index + 1
+			count = count - step - 1
+		else
+			count = step
+		end
+	end
+
+	return first
 end
 
 Table.lockMetatable(Table.empty)

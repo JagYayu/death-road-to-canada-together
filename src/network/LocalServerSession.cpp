@@ -35,19 +35,6 @@
 
 using namespace tudov;
 
-// LocalServerSession::Message::Message(bool reliable, std::span<const std::byte> data) noexcept
-// {
-// 	this->source = reliable ? BroadcastReliable : BroadcastUnreliable;
-// 	this->data = std::vector<std::byte>(data.begin(), data.end());
-// }
-
-// LocalServerSession::Message::Message(bool reliable, ClientSessionID clientID, std::span<const std::byte> data) noexcept
-// {
-// 	this->source = reliable ? SendReliable : SendUnreliable;
-// 	this->clientSessionID = clientID;
-// 	this->data = std::vector<std::byte>(data.begin(), data.end());
-// }
-
 LocalServerSession::LocalServerSession(INetworkManager &network, NetworkSessionSlot serverSlot) noexcept
     : _networkManager(network),
       _serverSessionSlot(serverSlot),
@@ -99,6 +86,8 @@ void LocalServerSession::Host(const HostArgs &args)
 	GetEventManager().GetCoreEvents().ServerHost().Invoke(&data, {}, EEventInvocation::None);
 
 	_sessionState = EServerSessionState::Hosting;
+
+	TE_DEBUG("Hosting Local server! slot: {}", _serverSessionSlot);
 }
 
 void LocalServerSession::HostAsync(const HostArgs &args, const ServerHostErrorHandler &handler) noexcept
@@ -110,15 +99,26 @@ void LocalServerSession::Shutdown()
 {
 	_sessionState = EServerSessionState::Stopping;
 
-	_hostInfo = nullptr;
-
 	TE_TRACE("Shutting down server");
+
+	for (auto &&client : _hostInfo->localClients)
+	{
+		if (!client.second.expired())
+		{
+			Disconnect(client.second.lock()->GetSessionID(), EDisconnectionCode::ServerClosed);
+		}
+	}
+	while (Update())
+	{
+	}
+
+	_hostInfo = nullptr;
 
 	EventLocalServerShutdownData data{
 	    .socketType = ESocketType::Local,
 	    .serverSlot = _serverSessionSlot,
 	};
-	GetEventManager().GetCoreEvents().ServerHost().Invoke(&data, {}, EEventInvocation::None);
+	GetEventManager().GetCoreEvents().ServerShutdown().Invoke(&data, {}, EEventInvocation::None);
 
 	_sessionState = EServerSessionState::Shutdown;
 }
@@ -153,7 +153,7 @@ void LocalServerSession::Disconnect(ClientSessionID clientID, EDisconnectionCode
 	auto it = _hostInfo->localClients.find(clientID);
 	if (it == _hostInfo->localClients.end()) [[unlikely]]
 	{
-		throw std::runtime_error("Invalid local client slot");
+		throw std::runtime_error("Invalid local client id");
 	}
 
 	auto &&localClient = it->second.lock();
@@ -165,8 +165,6 @@ void LocalServerSession::Disconnect(ClientSessionID clientID, EDisconnectionCode
 		};
 		_messageQueue.emplace(event, localClient->GetSessionSlot(), _serverSessionSlot);
 	}
-
-	_hostInfo->localClients.erase(clientID);
 }
 
 void LocalServerSession::SendReliable(ClientSessionID clientSessionID, const NetworkSessionData &data)
@@ -315,6 +313,8 @@ bool LocalServerSession::Update()
 			};
 
 			coreEvents.ServerDisconnect().Invoke(&data, data.socketType, EEventInvocation::None);
+
+			_hostInfo->localClients.erase(event.clientID);
 		}
 		else if (std::holds_alternative<LocalSessionMessage::Receive>(messageEntry.variant))
 		{

@@ -1,3 +1,14 @@
+--[[
+-- @module tudov.Enum
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local Function = require("tudov.Function")
 local String = require("tudov.String")
 local Table = require("tudov.Table")
@@ -11,6 +22,8 @@ local inspect = require("inspect")
 
 --- @class Enum
 local Enum = {}
+
+local scriptName = "#tudov.Enum"
 
 local enumerationsMetadata = {}
 
@@ -290,7 +303,7 @@ end
 
 events:add("DebugSnapshot", function(e)
 	e.enumerationsMetadata = enumerationsMetadata
-end, nil, nil, "#tudov.Enum")
+end, scriptName, nil, scriptName)
 
 if Function._Enum then
 	Function._Enum(Enum)

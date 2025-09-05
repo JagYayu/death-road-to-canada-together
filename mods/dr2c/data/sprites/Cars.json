@@ -1,25 +1,27 @@
 {
 	"CarUnique1Body": [
-		"gfx/cars/cars_unique_110x96.png",
-		0,
-		0,
-		110,
-		96
+		{
+			"image": "gfx/cars/cars_unique_110x96.png",
+			"x": 0,
+			"y": 0,
+			"w": 110,
+			"h": 96
+		}
 	],
 	"CarUnique1Wheels": [
-		[
-			"gfx/cars/cars_unique_110x96.png",
-			110,
-			0,
-			110,
-			96
-		],
-		[
-			"gfx/cars/cars_unique_110x96.png",
-			220,
-			0,
-			110,
-			96
-		]
+		{
+			"image": "gfx/cars/cars_unique_110x96.png",
+			"x": 110,
+			"y": 0,
+			"w": 110,
+			"h": 96
+		},
+		{
+			"image": "gfx/cars/cars_unique_110x96.png",
+			"x": 220,
+			"y": 0,
+			"w": 110,
+			"h": 96
+		}
 	]
 }

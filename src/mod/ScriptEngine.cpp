@@ -11,6 +11,9 @@
 
 #include "mod/ScriptEngine.hpp"
 
+#include "event/CoreEvents.hpp"
+#include "event/CoreEventsData.hpp"
+#include "event/RuntimeEvent.hpp"
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
@@ -37,74 +40,13 @@
 
 using namespace tudov;
 
-constexpr std::array<const char *, 6> preRequiredStdModules = {
+constexpr std::array<std::string_view, 6> preRequiredStdModules = {
     "ffi",
     "jit.profile",
     "jit.util",
     "string.buffer",
     "table.clear",
     "table.new",
-};
-
-// constexpr const char *preFullyLoadScriptNames[] = {};
-
-constexpr const char *modCopyGlobals[] = {
-    // luajit std
-    "_VERSION",
-    "assert",
-    "bit",
-    "coroutine",
-    "error",
-    "getmetatable",
-    "ipairs",
-    "load",
-    "loadstring",
-    "math",
-    "newproxy",
-    "next",
-    "pairs",
-    "pcall",
-    "print",
-    "select",
-    "setmetatable",
-    "string",
-    "table",
-    "tonumber",
-    "tostring",
-    "type",
-    "unpack",
-    "utf8",
-    "xpcall",
-    // extensions
-    "string.buffer",
-    "table.clear",
-    "table.new",
-    // C++ enum classes
-    "EClientSessionState",
-    "EDisconnectionCode",
-    "EEventInvocation",
-    "ELogVerbosity",
-    "EPathListOption",
-    "EServerSessionState",
-    "EScanCode",
-    "ESocketType",
-    // C++ static classes
-	"OperatingSystem",
-    "RandomDevice",
-    "Time",
-    // C++ exports
-    "binaries",
-    "engine",
-    "events",
-    "fonts",
-    "images",
-    "mods",
-    "network",
-    "scriptEngine",
-    "scriptErrors",
-    "scriptLoader",
-    "scriptProvider",
-    "vfs",
 };
 
 void ScriptEngine::PersistVariable::Save() noexcept
@@ -178,6 +120,8 @@ void ScriptEngine::Initialize() noexcept
 	_lua.open_libraries(sol::lib::table);
 	_lua.open_libraries(sol::lib::utf8);
 
+	GetLuaAPI().Install(_lua, _context);
+
 	_luaSTDRequire = _lua["require"];
 	_lua["require"] = [this](sol::string_view targetScriptName) -> sol::object
 	{
@@ -210,11 +154,11 @@ void ScriptEngine::Initialize() noexcept
 
 			scriptEngineModule.get<sol::protected_function>("initialize")(_lua.globals());
 
-			_luaMarkAsLocked = scriptEngineModule.get<sol::protected_function>("markAsLocked");
+			_luaLockMetatable = scriptEngineModule.get<sol::protected_function>("lockMetatable");
 			_luaPostProcessModGlobals = scriptEngineModule.get<sol::protected_function>("postProcessModGlobals");
 			_luaPostProcessScriptGlobals = scriptEngineModule.get<sol::protected_function>("postProcessScriptGlobals");
 
-			AssertLuaValue(_luaMarkAsLocked, "#ScriptEngine.markAsLocked");
+			AssertLuaValue(_luaLockMetatable, "#ScriptEngine.lockMetatable");
 			AssertLuaValue(_luaPostProcessModGlobals, "#ScriptEngine.postProcessModGlobals");
 			AssertLuaValue(_luaPostProcessScriptGlobals, "#ScriptEngine.postProcessScriptGlobals");
 		}
@@ -223,8 +167,6 @@ void ScriptEngine::Initialize() noexcept
 			Fatal("Could not find core lua module \"#ScriptEngine\"!");
 		}
 	}
-
-	GetLuaAPI().Install(_lua, _context);
 
 	for (std::string_view key : preRequiredStdModules)
 	{
@@ -380,9 +322,9 @@ std::string ScriptEngine::DebugTraceback(std::string_view message, std::double_t
 	return std::string(_lua["debug"]["traceback"](message, level).get<sol::string_view>());
 }
 
-sol::load_result ScriptEngine::LoadFunction(const std::string &name, std::string_view code)
+sol::load_result ScriptEngine::LoadFunction(std::string_view name, std::string_view code)
 {
-	return _lua.load(code, name, sol::load_mode::any);
+	return _lua.load(code, std::string(name), sol::load_mode::any);
 }
 
 std::string ScriptEngine::Inspect(sol::object obj)
@@ -443,7 +385,7 @@ sol::object ScriptEngine::MakeReadonlyGlobalImpl(sol::object obj, std::unordered
 	metatable["__index"] = table;
 	metatable["__newindex"] = _luaThrowModifyReadonlyGlobalError;
 
-	sol::protected_function_result result = _luaMarkAsLocked(metatable);
+	sol::protected_function_result result = _luaLockMetatable(metatable);
 	if (!result.valid()) [[unlikely]]
 	{
 		sol::error error = result;
@@ -462,7 +404,7 @@ sol::object ScriptEngine::MakeReadonlyGlobal(sol::object obj)
 
 sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed) noexcept
 {
-	if (auto it = _modGlobals.find(modUID); it != _modGlobals.end())
+	if (auto it = _modsGlobals.find(modUID); it != _modsGlobals.end())
 	{
 		return it->second;
 	}
@@ -470,15 +412,37 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	auto &luaGlobals = _lua.globals();
 	auto modGlobals = CreateTable();
 
-	for (const char *key : modCopyGlobals)
+	for (std::string_view key : GetLuaAPI().GetModGlobalsMigration())
 	{
-		TE_ASSERT(!modGlobals[key].valid(), "global field duplicated!");
-		modGlobals[key] = luaGlobals[key];
+		TE_ASSERT(!modGlobals[key.data()].valid(), "global field duplicated!");
+		modGlobals[key.data()] = luaGlobals[key.data()];
 	}
 
 	sol::table metatable = _lua.create_table();
+	metatable["__index"] = [this](const sol::this_state &ts, sol::object, sol::object key)
+	{
+		auto scriptName = GetScriptLoader().GetLoadingScriptName().value_or("");
+
+		EventHandleKey eventKey;
+		if (key.is<sol::string_view>())
+		{
+			eventKey = EventHandleKey(key.as<std::string_view>());
+		}
+		else if (key.is<std::double_t>())
+		{
+			eventKey = EventHandleKey(key.as<std::double_t>());
+		}
+
+		EventModGlobalsIndexData eventData{
+		    .scriptName = scriptName,
+		    .key = key,
+		    .value = sol::nil,
+		};
+		GetEventManager().GetCoreEvents().ModGlobalsIndex().Invoke(&eventData, eventKey);
+		return eventData.value;
+	};
 	modGlobals[sol::metatable_key] = metatable;
-	_luaMarkAsLocked(metatable);
+	_luaLockMetatable(metatable);
 
 	modGlobals["_G"] = modGlobals;
 
@@ -491,7 +455,7 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 		}
 	}
 
-	auto result = _modGlobals.try_emplace(modUID, modGlobals);
+	auto result = _modsGlobals.try_emplace(modUID, modGlobals);
 	TE_ASSERT(result.second);
 	return result.first->second;
 }

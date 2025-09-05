@@ -22,7 +22,6 @@
 #include "network/ReliableUDPClientSession.hpp"
 #include "network/ReliableUDPServerSession.hpp"
 #include "network/SocketType.hpp"
-#include "system/LogMicros.hpp"
 #include "util/Definitions.hpp"
 #include "util/Utils.hpp"
 
@@ -33,14 +32,13 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <thread>
 #include <vector>
 
 using namespace tudov;
 
 std::int32_t INetworkManager::GetLimitsPerUpdate() noexcept
 {
-	return 3;
+	return 32;
 }
 
 bool INetworkManager::Update() noexcept
@@ -83,7 +81,7 @@ bool INetworkManager::Update() noexcept
 }
 
 NetworkManager::NetworkManager(Context &context) noexcept
-    : _log(Log::Get("Network")),
+    : _log(Log::Get("NetworkManager")),
       _context(context),
       _initialized(false),
       _socketType(ESocketType::Local),
@@ -132,15 +130,7 @@ std::vector<DebugConsoleResult> NetworkManager::DebugClientConnect(std::string_v
 		address.remove_prefix(std::min(address.find_first_not_of(" "), address.size()));
 	}
 
-	auto *client = GetClient(_debugClientSlot);
-	if (client == nullptr)
-	{
-		results.emplace_back(std::format("Client with uid {} does not exist", _debugClientSlot), DebugConsole::Code::Failure);
-		return results;
-	}
-
-	client->TryDisconnect(EDisconnectionCode::ClientClosed);
-
+	IClientSession *client = GetClient(_debugClientSlot);
 	if (auto *localClient = dynamic_cast<LocalClientSession *>(client); localClient != nullptr)
 	{
 		try
@@ -231,26 +221,8 @@ std::vector<DebugConsoleResult> NetworkManager::DebugServerHost(std::string_view
 	}
 
 	IServerSession *server = GetServer(_debugServerSlot);
-	if (server == nullptr) [[unlikely]]
-	{
-		results.emplace_back(std::format("Server with uid {} does not exist", _debugClientSlot), DebugConsole::Code::Failure);
-		return results;
-	}
-
-	server->TryShutdown();
-
 	if (auto &&localServer = dynamic_cast<LocalServerSession *>(server); localServer != nullptr)
 	{
-		LocalServerSession *server = nullptr;
-		try
-		{
-			server = dynamic_cast<LocalServerSession *>(GetServer(std::stoi(address.data())));
-		}
-		catch (std::exception &e)
-		{
-			TE_ERROR("{}", e.what());
-		}
-
 		LocalServerSession::HostArgs args;
 		localServer->Host(args);
 
@@ -398,20 +370,20 @@ void NetworkManager::Initialize() noexcept
 		return;
 	}
 
-	auto &&client = std::make_shared<LocalClientSession>(*this, DefaultSessionSlot);
-	auto &&server = std::make_shared<LocalServerSession>(*this, DefaultSessionSlot);
+	// auto &&client = std::make_shared<LocalClientSession>(*this, DefaultSessionSlot);
+	// auto &&server = std::make_shared<LocalServerSession>(*this, DefaultSessionSlot);
 
-	_clients[DefaultSessionSlot] = client;
-	_servers[DefaultSessionSlot] = server;
+	// _clients[DefaultSessionSlot] = client;
+	// _servers[DefaultSessionSlot] = server;
 
-	LocalServerSession::HostArgs hostArgs;
-	hostArgs.title = "Local Server";
-	hostArgs.maximumClients = -1;
-	server->Host(hostArgs);
+	// LocalServerSession::HostArgs hostArgs;
+	// hostArgs.title = "Local Server";
+	// hostArgs.maximumClients = -1;
+	// server->Host(hostArgs);
 
-	LocalClientSession::ConnectArgs connectArgs;
-	connectArgs.localServer = server.get();
-	client->Connect(connectArgs);
+	// LocalClientSession::ConnectArgs connectArgs;
+	// connectArgs.localServer = server.get();
+	// client->Connect(connectArgs);
 
 	_socketType = ESocketType::Local;
 	_initialized = true;
@@ -464,14 +436,20 @@ std::vector<std::weak_ptr<IServerSession>> NetworkManager::GetServers() noexcept
 
 bool NetworkManager::SetClient(NetworkSessionSlot clientSlot)
 {
+	// TODO should call `client::TryDisconnect`.
 	return _clients.erase(clientSlot);
 }
 
 bool NetworkManager::SetClient(ESocketType socketType, NetworkSessionSlot clientSlot)
 {
-	if (auto it = _clients.find(clientSlot); it != _clients.end() && it->second->GetSocketType() == socketType)
+	if (auto it = _clients.find(clientSlot); it != _clients.end() && it->second != nullptr)
 	{
-		return false;
+		if (it->second->GetSocketType() == socketType)
+		{
+			return false;
+		}
+
+		it->second->TryDisconnect(EDisconnectionCode::Unknown);
 	}
 
 	switch (socketType)
@@ -494,14 +472,20 @@ bool NetworkManager::SetClient(ESocketType socketType, NetworkSessionSlot client
 
 bool NetworkManager::SetServer(NetworkSessionSlot serverSlot)
 {
+	// TODO should call `server::TryShutdown`.
 	return _servers.erase(serverSlot);
 }
 
 bool NetworkManager::SetServer(ESocketType socketType, NetworkSessionSlot serverSlot)
 {
-	if (auto it = _servers.find(serverSlot); it != _servers.end() && it->second->GetSocketType() == socketType)
+	if (auto it = _servers.find(serverSlot); it != _servers.end() && it->second != nullptr)
 	{
-		return false;
+		if (it->second->GetSocketType() == socketType)
+		{
+			return false;
+		}
+
+		it->second->TryShutdown();
 	}
 
 	switch (socketType)

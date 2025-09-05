@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.client.network.Server
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local GMessage = require("dr2c.shared.network.Message")
 local GServer = require("dr2c.shared.network.Server")
 

@@ -115,7 +115,8 @@ void ReliableUDPServerSession::Host(const IServerSession::HostArgs &baseArgs)
 
 	char hostName[45];
 	enet_address_get_host(&enetAddress, hostName, sizeof(hostName));
-	TE_DEBUG("Created host: {}, port: {}", hostName, _eNetHost->address.port);
+
+	TE_DEBUG("Hosting RUDP server! host: {}, port: {}, slot: {}", hostName, _eNetHost->address.port, _serverSessionSlot);
 }
 
 void ReliableUDPServerSession::HostAsync(const IServerSession::HostArgs &args, const ServerHostErrorHandler &handler) noexcept
@@ -267,7 +268,7 @@ void ReliableUDPServerSession::UpdateENetReceive(_ENetEvent &event) noexcept
 	    .port = event.peer->address.port,
 	};
 
-	TE_TRACE("Received event, host: {}, port: {}", eventData.host, eventData.port, eventData.message);
+	// TE_TRACE("Received event, host: {}, port: {}", eventData.host, eventData.port, eventData.message);
 
 	GetEventManager().GetCoreEvents().ServerMessage().Invoke(&eventData, _serverSessionSlot, EEventInvocation::None);
 
@@ -309,7 +310,7 @@ void ReliableUDPServerSession::Send(ClientSessionID clientSessionID, const Netwo
 	{
 		ENetPacket *packet = enet_packet_create(data.bytes.data(), data.bytes.size(), reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
 
-		TE_TRACE("Send message");
+		// TE_TRACE("Send message");
 		if (enet_peer_send(peer, static_cast<std::uint8_t>(data.channelID), packet) != 0)
 		{
 			enet_packet_destroy(packet);
@@ -337,7 +338,7 @@ void ReliableUDPServerSession::Broadcast(const NetworkSessionData &data, bool re
 			enet_packet_destroy(packet);
 		}
 
-		TE_TRACE("Broadcast message");
+		// TE_TRACE("Broadcast message");
 
 		enet_host_broadcast(_eNetHost, data.channelID, packet);
 	}

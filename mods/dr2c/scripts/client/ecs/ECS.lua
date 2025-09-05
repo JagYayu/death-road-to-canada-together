@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.client.ecs.ECS
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local CECSSchema = require("dr2c.client.ecs.ECSSchema")
 local Table = require("tudov.Table")
 local String = require("tudov.String")
@@ -232,16 +243,14 @@ local function spawnEntityImpl(entry)
 	entitiesID2EntityMap[entityID] = entity
 	entitiesSorted = false
 
+	local bufferDecode = String.bufferDecode
+
 	for _, component in ipairs(assert(CECSSchema.getEntityComponentsEntityTransient(entity[2]))) do
-		componentsPoolEntityTransient[entityID] = setmetatable({}, {
-			__index = component.mergedFields,
-		})
+		componentsPoolEntityTransient[entityID] = bufferDecode(component.mergedFieldsBuffer)
 	end
 
 	for _, component in ipairs(assert(CECSSchema.getEntityComponentsEntitySerializable(entity[2]))) do
-		componentsPoolEntitySerializable[entityID] = setmetatable({}, {
-			__index = component.mergedFields,
-		})
+		componentsPoolEntitySerializable[entityID] = bufferDecode(component.mergedFieldsBuffer)
 	end
 
 	if type(entry.components) == "table" then
@@ -313,6 +322,10 @@ function CECS.update()
 		end
 
 		entitiesOperations = {}
+
+		return true
+	else
+		return false
 	end
 end
 
@@ -345,7 +358,7 @@ local CECS_getComponentByID = CECS.getComponentByID
 --- @generic T : table
 --- @param entityID dr2c.EntityID
 --- @param componentType dr2c.ComponentType
---- @return T
+--- @return T?
 function CECS.getComponent(entityID, componentType)
 	return CECS_getComponentByID(entityID, CECSSchema_getComponentTypeID(componentType) or 0)
 end
@@ -575,19 +588,22 @@ function CECS.getSerialTable()
 	CECS.update()
 
 	return {
-		entities = getSortedEntities(),
-		entitiesLatestID = entitiesLatestID,
-		componentsPoolSerializable = componentsPoolEntitySerializable,
+		getSortedEntities(),
+		entitiesLatestID,
+		componentsPoolEntitySerializable,
+		componentsPoolArchetypeSerializable,
 	}
 end
 
 --- @param data table
 function CECS.setSerialTable(data)
-	entities = data.entities
-	entitiesLatestID = data.entitiesLatestID
-	componentsPoolEntitySerializable = data.componentsPoolSerializable
+	entities = data[1]
+	entitiesLatestID = data[2]
+	componentsPoolEntitySerializable = data[3]
+	componentsPoolArchetypeSerializable = data[4]
 end
 
+--- @param e dr2c.E.CWorldTickProcess
 events:add(N_("CWorldTickProcess"), function(e)
 	if isIteratingEntities then
 		isIteratingEntities = false
@@ -598,8 +614,10 @@ Did an error occurred while iterating entities? Or not calling iterators inside 
 		end
 	end
 
-	CECS.update()
+	e.entitiesChanged = CECS.update()
 end, "UpdateECS", "ECS")
+
+events:add(N_("CConnect"), CECS.clearEntities, "InitializeECS", "Initialize")
 
 events:add(N_("CDisconnect"), CECS.clearEntities, "ResetECS", "Reset")
 

@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.client.render.Sprites
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 --- @class dr2c.SpriteTable : FRect
 --- @field [0] ImageID
 
@@ -14,11 +25,6 @@ local reloadPending = true
 --- @type table<string, dr2c.SpriteTable[]>
 local spriteTablesMap = {}
 
-events:add("DebugSnapshot", function(e)
-	e.reloadPending = reloadPending
-	e.spriteTablesMap = spriteTablesMap
-end, nil, nil, scriptName)
-
 local eventSpritesLoad = events:new(N_("SpritesLoad"), {
 	"Register",
 })
@@ -26,8 +32,26 @@ local eventSpritesLoad = events:new(N_("SpritesLoad"), {
 local function registerSpritesImpl(e, sprites)
 	local dst = e.new
 
-	for spriteName, spriteInfo in pairs(sprites) do
-		dst[spriteName] = spriteInfo
+	for spriteName, spriteInfos in pairs(sprites) do
+		for index, spriteInfo in ipairs(spriteInfos) do
+			local imageName = spriteInfo.image
+			local imageID = images:getID(imageName)
+
+			if imageID then
+				local spriteTable = {
+					spriteInfo.x,
+					spriteInfo.y,
+					spriteInfo.w,
+					spriteInfo.h,
+					[0] = imageID,
+				}
+
+				dst[spriteName] = dst[spriteName] or {}
+				dst[spriteName][index] = spriteTable
+			elseif log.canWarn() then
+				log.warn(('Cannot find image "%s"'):format(imageName))
+			end
+		end
 	end
 end
 
@@ -73,7 +97,7 @@ function CSprites.registerSpritesFromJsonDirectory(path, options)
 	local entries = vfs:list(path, options)
 
 	for _, entry in ipairs(entries) do
-		CSprites.registerSpritesFromJsonFile(entry.path, false)
+		CSprites.registerSpritesFromJsonFile(entry.path)
 	end
 end
 
@@ -84,11 +108,11 @@ function CSprites.reloadImmediately()
 		new = {},
 		old = spriteTablesMap,
 	}
-	local tempSpriteTablesMap = e.new
+	local new = e.new
 
 	events:invoke(eventSpritesLoad, e, nil, EEventInvocation.None)
 
-	-- print(tempSpriteTablesMap)
+	spriteTablesMap = new
 
 	reloadPending = false
 end
@@ -112,10 +136,13 @@ end, "loadSprites", "Sprites")
 function CSprites.getSpriteTable(spriteName, spriteIndex)
 	local spriteTables = spriteTablesMap[spriteName]
 	if spriteTables then
-		return spriteTables[tonumber(spriteIndex) or 1]
+		return spriteTables[spriteIndex or 1]
 	end
 end
 
--- print(network:getClient().sendReliable)
+events:add("DebugSnapshot", function(e)
+	e.reloadPending = reloadPending
+	e.spriteTablesMap = spriteTablesMap
+end, scriptName, nil, scriptName)
 
 return CSprites

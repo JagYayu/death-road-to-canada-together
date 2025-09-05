@@ -298,7 +298,7 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 
 	TE_DEBUG("Loading script <{}>\"{}\" ...", scriptID, scriptName);
 
-	sol::load_result result = GetScriptEngine().LoadFunction(std::string(scriptName), scriptCode);
+	sol::load_result result = GetScriptEngine().LoadFunction(std::format("<{}>\"{}\"", scriptID, scriptName), scriptCode);
 	if (result.valid())
 	{
 		auto &&function = result.get<sol::protected_function>();

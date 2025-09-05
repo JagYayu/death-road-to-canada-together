@@ -13,7 +13,7 @@
 
 #include "system/Log.hpp" // IWYU pragma: keep
 
-// region Global Logging
+#pragma region Global Logging
 
 #define TE_G_LOG(Name, Verb, Format, ...)                       \
 	if (auto &&log = ::tudov::Log::Get(Name); log->Can##Verb()) \
@@ -26,9 +26,9 @@
 #define TE_G_ERROR(Name, Format, ...) TE_G_LOG(Name, Error, Format, __VA_ARGS__)
 #define TE_G_FATAL(Name, Format, ...) ::tudov::Log::Get(Name)->Fatal(Format __VA_OPT__(, __VA_ARGS__))
 
-// endregion
+#pragma endregion
 
-// region Local Logging
+#pragma region Local Logging
 
 #define TE_L_LOG(Name, Verb, Format, ...) \
 	if (TE_L_log->Can##Verb())            \
@@ -41,9 +41,9 @@
 #define TE_L_ERROR(Format, ...) TE_L_LOG(Name, Error, Format, __VA_ARGS__)
 #define TE_L_FATAL(Format, ...) TE_L_LOG(Name, Fatal, Format, __VA_ARGS__)
 
-// endregion
+#pragma endregion
 
-// region Class Logging
+#pragma region Class Logging
 
 #define TE_LOG(Verb, Format, ...) \
 	if (this->Can##Verb())        \
@@ -56,4 +56,4 @@
 #define TE_ERROR(Format, ...) TE_LOG(Error, Format, __VA_ARGS__)
 #define TE_FATAL(Format, ...) TE_LOG(Fatal, Format, __VA_ARGS__)
 
-// endregion
+#pragma endregion

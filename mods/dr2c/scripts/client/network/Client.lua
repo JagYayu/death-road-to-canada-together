@@ -1,3 +1,14 @@
+--[[
+-- @module dr2c.client.network.Client
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local String = require("tudov.String")
 local Enum = require("tudov.Enum")
 
@@ -27,57 +38,59 @@ function CClient.getClientID()
 end
 
 events:add(N_("CUpdate"), function(e)
-	local session = CClient.getNetworkSession()
-	if not session then
-		return
-	end
+	-- local session = CClient.getNetworkSession()
+	-- if not session then
+	-- 	return
+	-- end
 
-	local clientID = session:getSessionID()
-	if not clientID or CClients.hasClient(clientID) then
-		return
-	end
+	-- local clientID = session:getSessionID()
+	-- if not clientID or CClients.hasClient(clientID) then
+	-- 	return
+	-- end
 
-	if log.canTrace() then
-		log.trace(("Initialize local client %s's attributes"):format(clientID))
-	end
+	-- if log.canTrace() then
+	-- 	log.trace(("Initialize local client %s's attributes"):format(clientID))
+	-- end
 
-	local PublicAttribute = GClient.PublicAttribute
-	local PrivateAttribute = GClient.PrivateAttribute
-	local setPublicAttribute = CClients.setPublicAttribute
-	local setPrivateAttribute = CClients.setPrivateAttribute
+	-- local PublicAttribute = GClient.PublicAttribute
+	-- local PrivateAttribute = GClient.PrivateAttribute
+	-- local setPublicAttribute = CClients.setPublicAttribute
+	-- local setPrivateAttribute = CClients.setPrivateAttribute
 
-	CClients.addClient(clientID)
-	setPublicAttribute(clientID, PublicAttribute.ID, clientID)
-	setPublicAttribute(clientID, PublicAttribute.State, GClient.State.Verifying)
-	setPublicAttribute(clientID, PublicAttribute.Platform, GPlatform.getType())
-	setPublicAttribute(clientID, PublicAttribute.PlatformID, nil)
-	setPublicAttribute(clientID, PublicAttribute.OperatingSystem, OperatingSystem.getType())
-	setPublicAttribute(clientID, PublicAttribute.Statistics, {})
-	setPublicAttribute(clientID, PublicAttribute.DisplayName, nil)
-	setPublicAttribute(clientID, PublicAttribute.Room, nil)
-	setPublicAttribute(clientID, PublicAttribute.Version, engine:getVersion())
-	setPublicAttribute(clientID, PublicAttribute.ContentHash, 0)
-	setPublicAttribute(clientID, PublicAttribute.ModsHash, 0)
-	setPublicAttribute(clientID, PublicAttribute.SocketType, session:getSocketType())
-	setPrivateAttribute(clientID, PrivateAttribute.SecretToken, nil)
-	setPrivateAttribute(clientID, PrivateAttribute.SecretStatistics, nil)
+	-- CClients.addClient(clientID)
+	-- setPublicAttribute(clientID, PublicAttribute.ID, clientID)
+	-- setPublicAttribute(clientID, PublicAttribute.State, GClient.State.Verifying)
+	-- setPublicAttribute(clientID, PublicAttribute.Platform, GPlatform.getType())
+	-- setPublicAttribute(clientID, PublicAttribute.PlatformID, nil)
+	-- setPublicAttribute(clientID, PublicAttribute.OperatingSystem, OperatingSystem.getType())
+	-- setPublicAttribute(clientID, PublicAttribute.Statistics, {})
+	-- setPublicAttribute(clientID, PublicAttribute.DisplayName, nil)
+	-- setPublicAttribute(clientID, PublicAttribute.Room, nil)
+	-- setPublicAttribute(clientID, PublicAttribute.Version, engine:getVersion())
+	-- setPublicAttribute(clientID, PublicAttribute.ContentHash, 0)
+	-- setPublicAttribute(clientID, PublicAttribute.ModsHash, 0)
+	-- setPublicAttribute(clientID, PublicAttribute.SocketType, session:getSocketType())
+	-- setPrivateAttribute(clientID, PrivateAttribute.SecretToken, nil)
+	-- setPrivateAttribute(clientID, PrivateAttribute.SecretStatistics, nil)
 end, N_("InitializeLocalClientAttributes"), "Network")
 
-CClient.eventClientConnect = events:new(N_("CConnect"), {
+CClient.eventCConnect = events:new(N_("CConnect"), {
+	"Reset",
 	"Initialize",
 })
 
-CClient.eventClientDisconnect = events:new(N_("CDisconnect"), {
+CClient.eventCDisconnect = events:new(N_("CDisconnect"), {
 	"Reset",
 })
 
-CClient.eventClientMessage = events:new(N_("CMessage"), {
+CClient.eventCMessage = events:new(N_("CMessage"), {
 	"Overrides",
 	"Receive",
+	"PlayerInputBuffer",
 	"Rollback",
 }, Enum.eventKeys(GMessage.Type))
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
@@ -100,7 +113,7 @@ function CClient.sendReliable(messageType, messageContent, channel)
 	end
 end
 
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
 --- @param channel dr2c.GMessage.Channel?
 --- @return boolean success
@@ -123,18 +136,15 @@ function CClient.sendUnreliable(messageType, messageContent, channel)
 	end
 end
 
-local function invokeEventClientConnect(clientID)
+local function invokeEventClientConnect()
 	--- @class dr2c.E.ClientConnect
-	local e = {
-		clientID = clientID,
-	}
-
-	events:invoke(CClient.eventClientConnect, e)
+	local e = {}
+	events:invoke(CClient.eventCConnect, e)
 end
 
 --- @param e Events.E.ClientConnect
 events:add("ClientConnect", function(e)
-	invokeEventClientConnect(e.data.clientID)
+	invokeEventClientConnect()
 end)
 
 local function invokeEventClientDisconnect(clientID)
@@ -143,7 +153,7 @@ local function invokeEventClientDisconnect(clientID)
 		clientID = clientID,
 	}
 
-	events:invoke(CClient.eventClientDisconnect, e)
+	events:invoke(CClient.eventCDisconnect, e)
 end
 
 --- @param e Events.E.ClientConnect
@@ -152,17 +162,17 @@ events:add("ClientDisconnect", function(e)
 end)
 
 --- @param messageContent any?
---- @param messageType dr2c.MessageType
+--- @param messageType dr2c.NetworkMessageType
 local function invokeEventClientMessage(messageContent, messageType)
 	--- @class dr2c.E.ClientMessage
 	--- @field content any?
-	--- @field type dr2c.MessageType
+	--- @field type dr2c.NetworkMessageType
 	local e = {
 		content = messageContent,
 		type = messageType,
 	}
 
-	events:invoke(CClient.eventClientMessage, e, messageType)
+	events:invoke(CClient.eventCMessage, e, messageType)
 end
 
 --- @param e Events.E.ClientMessage
