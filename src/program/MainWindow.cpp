@@ -333,7 +333,7 @@ void MainWindow::Render() noexcept
 	renderer->BeginTarget(_renderTarget);
 	renderer->Clear();
 
-	if (auto *data = ImGui::GetDrawData(); data)
+	if (auto *data = ImGui::GetDrawData(); data != nullptr)
 	{
 		ImGui_ImplSDLRenderer3_RenderDrawData(data, renderer->GetSDLRendererHandle());
 	}

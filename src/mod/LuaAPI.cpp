@@ -159,8 +159,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "draw", &Renderer::LuaDraw,
 	            "drawText", &Renderer::LuaDrawText,
 	            "endTarget", &Renderer::LuaEndTarget,
-	            "newRenderTarget", &Renderer::LuaNewRenderTarget,
-	            "render", &Renderer::Render);
+	            "newRenderTarget", &Renderer::LuaNewRenderTarget);
 
 	TE_USERTYPE(RenderTarget,
 	            "getPosition", &RenderTarget::GetCameraPosition,

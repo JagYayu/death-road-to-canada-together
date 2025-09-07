@@ -31,7 +31,7 @@ Texture::Texture(Renderer &renderer) noexcept
 
 Texture::~Texture() noexcept
 {
-	if (_sdlTexture)
+	if (_sdlTexture != nullptr)
 	{
 		SDL_DestroyTexture(_sdlTexture);
 	}

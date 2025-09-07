@@ -444,9 +444,9 @@ std::shared_ptr<RenderTarget> Renderer::LuaEndTarget() noexcept
 	}
 }
 
-void Renderer::Clear(const SDL_Color &color) noexcept
+void Renderer::Clear() noexcept
 {
-	SDL_SetRenderDrawColor(_sdlRenderer, color.r, color.g, color.b, color.a);
+	SDL_SetRenderDrawColor(_sdlRenderer, 0, 0, 0, 0);
 	SDL_RenderClear(_sdlRenderer);
 }
 
@@ -454,26 +454,9 @@ void Renderer::Reset() noexcept
 {
 }
 
-void Renderer::LuaClear(std::uint32_t color) noexcept
+void Renderer::LuaClear() noexcept
 {
-	// std::uint8_t r = (color >> 24) & 0xFF;
-	// std::uint8_t g = (color >> 16) & 0xFF;
-	// std::uint8_t b = (color >> 8) & 0xFF;
-	// std::uint8_t a = (color >> 0) & 0xFF;
-	// Clear(SDL_Color{r, g, b, a});
-	Clear(SDL_Color(0, 0, 0, 0));
-}
-
-void Renderer::Render() noexcept
-{
-	// if (_renderTargets.empty())
-	// {
-	// 	RenderImpl(_renderCommands);
-	// }
-	// else
-	// {
-	// 	RenderImpl(_renderTargets.top()->_renderCommands);
-	// }
+	Clear();
 }
 
 void Renderer::Begin() noexcept
@@ -508,6 +491,9 @@ void Renderer::End() noexcept
 
 		if (static_cast<std::float_t>(w1) != w2 || static_cast<std::float_t>(h1) != h2) [[unlikely]]
 		{
+			SDL_DestroyTexture(_sdlTextureMain);
+			SDL_DestroyTexture(_sdlTextureBackground);
+
 			_sdlTextureMain = SDL_CreateTexture(_sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w1, h1);
 			_sdlTextureBackground = SDL_CreateTexture(_sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w1, h1);
 		}

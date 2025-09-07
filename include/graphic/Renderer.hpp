@@ -59,9 +59,8 @@ namespace tudov
 		virtual void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, SDL_Color color = SDL_Color(255, 255, 255, 255)) = 0;
 		virtual SDL_FRect DrawText(DrawTextArgs *args) = 0;
 
-		virtual void Clear(const SDL_Color &color = SDL_Color(0ui8, 0ui8, 0ui8, 0ui8)) noexcept = 0;
+		virtual void Clear() noexcept = 0;
 		virtual void Reset() noexcept = 0;
-		virtual void Render() noexcept = 0;
 		virtual void Begin() noexcept = 0;
 		virtual void End() noexcept = 0;
 	};
@@ -117,9 +116,8 @@ namespace tudov
 		void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, SDL_Color color = SDL_Color(255, 255, 255, 255)) override;
 		SDL_FRect DrawText(DrawTextArgs *args) override;
 
-		void Clear(const SDL_Color &color = SDL_Color(0ui8, 0ui8, 0ui8, 0ui8)) noexcept override;
+		void Clear() noexcept override;
 		void Reset() noexcept override;
-		void Render() noexcept override;
 		void Begin() noexcept override;
 		void End() noexcept override;
 
@@ -140,7 +138,7 @@ namespace tudov
 		std::tuple<std::float_t,std::float_t,std::float_t,std::float_t> LuaDrawText(sol::object args) noexcept;
 		std::shared_ptr<Texture> LuaDrawExtractTexture(sol::table args) noexcept;
 		std::shared_ptr<RenderTarget> LuaNewRenderTarget(sol::object width = sol::nil, sol::object height = sol::nil);
-		void LuaClear(std::uint32_t color) noexcept;
+		void LuaClear() noexcept;
 		std::tuple<std::float_t, std::float_t> LuaGetTargetSize(const std::shared_ptr<RenderTarget> &renderTarget) noexcept;
 
 		void ApplyTransform(SDL_FRect &dst) noexcept;

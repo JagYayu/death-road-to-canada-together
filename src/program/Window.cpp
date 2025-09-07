@@ -143,7 +143,6 @@ void Window::Render() noexcept
 	renderer->Begin();
 	if (RenderPreImpl())
 	{
-		renderer->Render();
 		renderer->End();
 	}
 }

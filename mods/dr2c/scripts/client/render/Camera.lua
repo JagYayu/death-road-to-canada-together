@@ -37,8 +37,8 @@ function Camera.getTargetCenterPosition()
 end
 
 local renderTarget
-local renderTargetWidth = 960 * .5
-local renderTargetHeight = 640 * .5
+local renderTargetWidth = 960 * 0.5
+local renderTargetHeight = 640 * 0.5
 
 function Camera.getRenderTarget()
 	return renderTarget
