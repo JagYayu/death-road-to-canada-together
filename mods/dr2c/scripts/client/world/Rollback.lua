@@ -33,7 +33,7 @@ function CRollback.apply(worldTick)
 	events:invoke(eventClientWorldRollback, e)
 end
 
---- @param e dr2c.E.ClientMessage
+--- @param e dr2c.E.CMessage
 events:add(N_("CMessage"), function(e)
 	CRollback.apply(e.content.worldTick)
 end, "ApplyWorldRollback", "Rollback", GMessage.Type.PlayerInputs)

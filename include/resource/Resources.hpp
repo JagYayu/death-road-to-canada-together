@@ -58,6 +58,11 @@ namespace tudov
 			return it != _id2Entry.end() ? it->second.resource : nullptr;
 		}
 
+		inline std::shared_ptr<TResource> GetResource(std::string_view path) const noexcept
+		{
+			return GetResource(GetResourceID(path));
+		}
+
 		inline std::string_view GetResourcePath(ResourceID id) const noexcept
 		{
 			auto it = _id2Entry.find(id);

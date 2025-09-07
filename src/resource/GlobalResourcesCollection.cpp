@@ -25,7 +25,7 @@ EResourceType GlobalResourcesCollection::PathExtensionToResourceType(const std::
 		return EResourceType::Font;
 	if (extension == ".png")
 		return EResourceType::Image;
-	if (extension == ".txt" || extension == ".lua")
+	if (extension == ".txt" || extension == ".lua" || extension == ".json")
 		return EResourceType::Text;
 	return EResourceType::Unknown;
 }
@@ -141,7 +141,7 @@ std::tuple<EResourceType, ResourceID> GlobalResourcesCollection::LoadResource(co
 	case EResourceType::Audio:
 		break;
 	case EResourceType::Font:
-		// _fontResources->Load(path.generic_string(), bytes);
+		id = _fontResources->Load(path.generic_string(), bytes);
 		break;
 	case EResourceType::Binary:
 	default:

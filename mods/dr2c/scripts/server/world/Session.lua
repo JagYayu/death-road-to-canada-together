@@ -9,6 +9,8 @@
 --
 --]]
 
+local Table = require("tudov.Table")
+
 local GWorldSession = require("dr2c.shared.world.Session")
 local GMessage = require("dr2c.shared.network.Message")
 local SServer = require("dr2c.server.network.Server")
@@ -17,11 +19,13 @@ local SServer = require("dr2c.server.network.Server")
 local SWorldSession = GWorldSession.new()
 
 SWorldSession.eventSWorldSessionStart = events:new(N_("SWorldSessionStart"), {
+	"Reset",
 	"Level",
 })
 
 SWorldSession.eventSWorldSessionFinish = events:new(N_("SWorldSessionFinish"), {
 	"Level",
+	"Reset",
 })
 
 SWorldSession.eventSWorldSessionPause = events:new(N_("SWorldSessionPause"), {
@@ -32,17 +36,26 @@ SWorldSession.eventSWorldSessionUnpause = events:new(N_("SWorldSessionUnpause"),
 	"Time",
 })
 
---- @param args table<dr2c.WorldSessionAttribute, any>
-function SWorldSession.start(args)
+--- @param args table<dr2c.WorldSessionAttribute, any>?
+function SWorldSession.start(clientID, args)
 	SWorldSession.resetAttributes()
 
 	local worldSessionAttributes = SWorldSession.getAttributes()
 
-	for attribute, value in pairs(args) do
+	for attribute, value in pairs(args or Table.empty) do
 		if GWorldSession.validateAttribute(attribute, value) then
 			worldSessionAttributes[attribute] = value
 		end
 	end
+
+	local time = Time.getSystemTime()
+
+	worldSessionAttributes[GWorldSession.Attribute.Internal] = {
+		state = GWorldSession.State.Playing,
+		timeStart = time,
+		timePaused = time,
+		elapsedPaused = 0,
+	}
 
 	local e = {
 		attributes = worldSessionAttributes,
@@ -54,11 +67,16 @@ function SWorldSession.start(args)
 		SServer.broadcastReliable(GMessage.Type.WorldSessionStart, {
 			attributes = worldSessionAttributes,
 		})
+	elseif clientID then
+		SServer.sendReliable(clientID, GMessage.Type.WorldSessionStart, {
+			suppressed = e.suppressed,
+		})
 	end
 end
 
+--- @param e dr2c.E.SMessage
 events:add(N_("SMessage"), function(e)
-	SWorldSession.start(e.content)
+	SWorldSession.start(e.clientID, e.content)
 end, "ReceiveWorldSessionStart", "Receive", GMessage.Type.WorldSessionStart)
 
 function SWorldSession.restart()
@@ -95,10 +113,12 @@ function SWorldSession.pause()
 	events:invoke(SWorldSession.eventSWorldSessionPause, e)
 
 	if not e.suppressed then
-		internal.state = GWorldSession.State.Paused
-		internal.pausedTime = Time.getSystemTime()
+		local time = Time.getSystemTime()
 
-		SServer.broadcastReliable(GMessage.Type.WorldSessionPause)
+		internal.state = GWorldSession.State.Paused
+		internal.pausedTime = time
+
+		SServer.broadcastReliable(GMessage.Type.WorldSessionPause, time)
 
 		return true
 	else
@@ -113,7 +133,7 @@ end, "ReceiveWorldSessionPause", "Receive", GMessage.Type.WorldSessionPause)
 --- @return boolean
 function SWorldSession.unpause()
 	local internal = SWorldSession.getAttribute(GWorldSession.Attribute.Internal)
-	if internal.state ~= GWorldSession.State.Playing then
+	if internal.state ~= GWorldSession.State.Paused then
 		return false
 	end
 
@@ -121,10 +141,12 @@ function SWorldSession.unpause()
 	events:invoke(SWorldSession.eventSWorldSessionUnpause, e)
 
 	if not e.suppressed then
-		internal.state = GWorldSession.State.Paused
-		internal.elapsedPaused = internal.elapsedPaused + (Time.getSystemTime() - internal.timePaused)
+		local time = Time.getSystemTime()
 
-		SServer.broadcastReliable(GMessage.Type.WorldSessionUnpause)
+		internal.state = GWorldSession.State.Paused
+		internal.elapsedPaused = internal.elapsedPaused + time - internal.timePaused
+
+		SServer.broadcastReliable(GMessage.Type.WorldSessionUnpause, time)
 
 		events:invoke(SWorldSession.eventSWorldSessionUnpause)
 

@@ -20,7 +20,7 @@ local SPlayerInputBuffer = GPlayerInputBuffers.new()
 
 local latestArchivedTick = 0
 
---- @param e dr2c.E.ServerMessage
+--- @param e dr2c.E.SMessage
 events:add(N_("SMessage"), function(e)
 	if SPlayerInputBuffer.setInputs(e.content.playerID, e.content.worldTick, e.content.playerInputs) then
 		latestArchivedTick = e.content.worldTick

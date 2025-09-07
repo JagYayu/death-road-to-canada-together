@@ -348,7 +348,7 @@ void MainWindow::Render() noexcept
 		    .w = static_cast<std::float_t>(w),
 		    .h = static_cast<std::float_t>(h),
 		};
-		renderer->IRenderer::Draw(_renderTarget->GetTexture(), dst);
+		renderer->Draw(_renderTarget->GetTexture().get(), dst);
 	}
 
 	if (GetScriptErrors().HasLoadtimeError())

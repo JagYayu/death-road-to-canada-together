@@ -9,22 +9,36 @@
 --
 --]]
 
-local GClient = require("dr2c.shared.network.Client")
-local GMessage = require("dr2c.shared.network.Message")
-local GServer = require("dr2c.shared.network.Server")
-local SRoom = require("dr2c.server.network.Room")
+local GNetworkClient = require("dr2c.shared.network.Client")
+local GNetworkMessage = require("dr2c.shared.network.Message")
+local GNetworkServer = require("dr2c.shared.network.Server")
+local SNetworkClients = require("dr2c.server.network.Clients")
+local SNetworkRoom = require("dr2c.server.network.Room")
 
 --- @class dr2c.SServer
-local SServer = {}
+local SNetworkServer = {}
 
-SServer.sessionSlot = 0
+SNetworkServer.sessionSlot = 0
 
 --- @type table<dr2c.ServerAttribute, Serializable>
-local serverAttributes
+local serverAttributes = {}
+
+serverAttributes = persist("serverAttributes", function()
+	return serverAttributes
+end)
+
+function SNetworkServer.getAttributes()
+	return serverAttributes
+end
+
+--- @param attribute dr2c.ServerAttribute
+function SNetworkServer.getAttribute(attribute)
+	return serverAttributes[attribute]
+end
 
 --- @return Network.Server?
-function SServer.getNetworkSession()
-	return network:getServer(SServer.sessionSlot)
+function SNetworkServer.getNetworkSession()
+	return network:getServer(SNetworkServer.sessionSlot)
 end
 
 events:add(N_("SUpdate"), function()
@@ -32,29 +46,29 @@ events:add(N_("SUpdate"), function()
 		return
 	end
 
-	local session = SServer.getNetworkSession()
+	local session = SNetworkServer.getNetworkSession()
 	if not session then
 		return
 	end
 
 	serverAttributes = {
-		[GServer.Attribute.DisplayName] = session:getTitle(),
-		[GServer.Attribute.Clients] = session:getClients(),
-		[GServer.Attribute.MaxClients] = session:getMaxClients(),
-		[GServer.Attribute.StartupTime] = Time.getStartupTime(),
-		[GServer.Attribute.Version] = engine:getVersion(),
-		[GServer.Attribute.Mods] = {}, -- TODO get from mod manager
-		[GServer.Attribute.HasPassword] = session:getPassword() ~= "",
-		[GServer.Attribute.Rooms] = { SRoom.defaultRoomID },
-		[GServer.Attribute.SocketType] = session:getSocketType(),
+		[GNetworkServer.Attribute.DisplayName] = session:getTitle(),
+		[GNetworkServer.Attribute.Clients] = session:getClients(),
+		[GNetworkServer.Attribute.MaxClients] = session:getMaxClients(),
+		[GNetworkServer.Attribute.StartupTime] = Time.getStartupTime(),
+		[GNetworkServer.Attribute.Version] = engine:getVersion(),
+		[GNetworkServer.Attribute.Mods] = {}, -- TODO get from mod manager
+		[GNetworkServer.Attribute.HasPassword] = session:getPassword() ~= "",
+		[GNetworkServer.Attribute.Rooms] = { SNetworkRoom.defaultRoomID },
+		[GNetworkServer.Attribute.SocketType] = session:getSocketType(),
 	}
-end, "InitializeServerAttributes", "Network")
+end, "InitializeServer", "Network")
 
 --- @param clientID Network.ClientID
 --- @param disconnectionCode dr2c.DisconnectionCode
 --- @return boolean
-function SServer.disconnect(clientID, disconnectionCode)
-	local session = SServer.getNetworkSession()
+function SNetworkServer.disconnect(clientID, disconnectionCode)
+	local session = SNetworkServer.getNetworkSession()
 	if session then
 		session:disconnect(clientID, disconnectionCode)
 
@@ -67,18 +81,18 @@ end
 --- @param clientID Network.ClientID
 --- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
---- @param channel dr2c.GMessage.Channel?
+--- @param channel dr2c.NetworkMessageChannel?
 --- @return boolean
-function SServer.sendReliable(clientID, messageType, messageContent, channel)
-	local session = SServer.getNetworkSession()
+function SNetworkServer.sendReliable(clientID, messageType, messageContent, channel)
+	local session = SNetworkServer.getNetworkSession()
 	if session then
-		local data = GMessage.pack(messageType, messageContent)
+		local data = GNetworkMessage.pack(messageType, messageContent)
 
 		if log.canTrace() then
 			log.trace(("Send reliable message to client %s: %s"):format(clientID, data))
 		end
 
-		channel = channel or GMessage.Channel.Main
+		channel = channel or GNetworkMessage.Channel.Main
 		--- @diagnostic disable-next-line: param-type-mismatch
 		session:sendReliable(clientID, data, channel)
 
@@ -91,18 +105,18 @@ end
 --- @param clientID Network.ClientID
 --- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
---- @param channel dr2c.GMessage.Channel?
+--- @param channel dr2c.NetworkMessageChannel?
 --- @return boolean success
-function SServer.sendUnreliable(clientID, messageType, messageContent, channel)
-	local session = SServer.getNetworkSession()
+function SNetworkServer.sendUnreliable(clientID, messageType, messageContent, channel)
+	local session = SNetworkServer.getNetworkSession()
 	if session then
-		local data = GMessage.pack(messageType, messageContent)
+		local data = GNetworkMessage.pack(messageType, messageContent)
 
 		if log.canTrace() then
 			log.trace(("Send unreliable message to client %d: %s"):format(clientID, data))
 		end
 
-		channel = channel or GMessage.Channel.Main
+		channel = channel or GNetworkMessage.Channel.Main
 		--- @diagnostic disable-next-line: param-type-mismatch
 		session:sendUnreliable(clientID, data, channel)
 
@@ -115,18 +129,18 @@ end
 --- Broadcast message to all clients in this server.
 --- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
---- @param channel dr2c.GMessage.Channel?
+--- @param channel dr2c.NetworkMessageChannel?
 --- @return boolean success
-function SServer.broadcastReliable(messageType, messageContent, channel)
-	local session = SServer.getNetworkSession()
+function SNetworkServer.broadcastReliable(messageType, messageContent, channel)
+	local session = SNetworkServer.getNetworkSession()
 	if session then
-		local data = GMessage.pack(messageType, messageContent)
+		local data = GNetworkMessage.pack(messageType, messageContent)
 
 		-- if log.canTrace() then
 		-- 	log.trace(("Broadcast reliable message: %s"):format(data))
 		-- end
 
-		channel = channel or GMessage.Channel.Main
+		channel = channel or GNetworkMessage.Channel.Main
 		--- @diagnostic disable-next-line: param-type-mismatch
 		session:broadcastReliable(data, channel)
 
@@ -138,18 +152,18 @@ end
 
 --- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
---- @param channel dr2c.GMessage.Channel?
+--- @param channel dr2c.NetworkMessageChannel?
 --- @return boolean success
-function SServer.broadcastUnreliable(messageType, messageContent, channel)
-	local session = SServer.getNetworkSession()
+function SNetworkServer.broadcastUnreliable(messageType, messageContent, channel)
+	local session = SNetworkServer.getNetworkSession()
 	if session then
-		local data = GMessage.pack(messageType, messageContent)
+		local data = GNetworkMessage.pack(messageType, messageContent)
 
 		if log.canTrace() then
 			log.trace(("Broadcast unreliable message: %s"):format(data))
 		end
 
-		channel = channel or GMessage.Channel.Main
+		channel = channel or GNetworkMessage.Channel.Main
 		--- @diagnostic disable-next-line: param-type-mismatch
 		session:broadcastUnreliable(data, channel)
 
@@ -159,48 +173,49 @@ function SServer.broadcastUnreliable(messageType, messageContent, channel)
 	end
 end
 
-SServer.eventSHost = events:new(N_("SHost"), {
+SNetworkServer.eventSHost = events:new(N_("SHost"), {
 	"Reset",
 	"Initialize",
 })
 
-SServer.eventSShutdown = events:new(N_("SShutdown"), {
+SNetworkServer.eventSShutdown = events:new(N_("SShutdown"), {
 	"Reset",
 })
 
-SServer.eventSConnect = events:new(N_("SConnect"), {
+SNetworkServer.eventSConnect = events:new(N_("SConnect"), {
+	"Reset",
 	"Clients",
 	"PlayerInputBuffer",
 })
 
-SServer.eventSDisconnect = events:new(N_("SDisconnect"), {
+SNetworkServer.eventSDisconnect = events:new(N_("SDisconnect"), {
 	"Clients",
 	"Reset",
 })
 
-SServer.eventSMessage = events:new(N_("SMessage"), {
+SNetworkServer.eventSMessage = events:new(N_("SMessage"), {
 	"Overrides",
 	"Receive",
 	"Broadcast",
 })
 
 events:add("ServerHost", function(e)
-	events:invoke(SServer.eventSHost, {})
+	events:invoke(SNetworkServer.eventSHost, {})
 end)
 
 events:add("ServerShutdown", function(e)
-	events:invoke(SServer.eventSShutdown, {})
+	events:invoke(SNetworkServer.eventSShutdown, {})
 end)
 
 --- @param clientID Network.ClientID
 local function invokeEventServerConnect(clientID)
-	--- @class dr2c.E.ServerConnect
+	--- @class dr2c.E.SConnect
 	--- @field clientID Network.ClientID
 	local e = {
 		clientID = clientID,
 	}
 
-	events:invoke(SServer.eventSConnect, e)
+	events:invoke(SNetworkServer.eventSConnect, e)
 end
 
 --- @param e Events.E.ServerMessage
@@ -210,12 +225,12 @@ end)
 
 --- @param clientID Network.ClientID
 local function invokeEventServerDisconnect(clientID)
-	--- @class dr2c.E.ServerDisconnect
+	--- @class dr2c.E.SDisconnect
 	local e = {
 		clientID = clientID,
 	}
 
-	events:invoke(SServer.eventSDisconnect, e, nil, EEventInvocation.None)
+	events:invoke(SNetworkServer.eventSDisconnect, e, nil, EEventInvocation.None)
 end
 
 --- @param e Events.E.ServerDisconnect
@@ -226,7 +241,7 @@ end)
 --- @param messageContent any?
 --- @param messageType dr2c.NetworkMessageType
 local function invokeEventServerMessage(clientID, messageContent, messageType)
-	--- @class dr2c.E.ServerMessage
+	--- @class dr2c.E.SMessage
 	--- @field clientID Network.ClientID
 	--- @field content any
 	--- @field type dr2c.NetworkMessageType
@@ -238,45 +253,45 @@ local function invokeEventServerMessage(clientID, messageContent, messageType)
 	}
 
 	--- @diagnostic disable-next-line: param-type-mismatch
-	events:invoke(SServer.eventSMessage, e, messageType)
+	events:invoke(SNetworkServer.eventSMessage, e, messageType)
 end
 
 --- @param e Events.E.ServerMessage
 events:add("ServerMessage", function(e)
-	local messageType, messageContent = GMessage.unpack(e.data.message)
+	local messageType, messageContent = GNetworkMessage.unpack(e.data.message)
 
-	if GMessage.isUnessential(messageType) then
+	if GNetworkMessage.isUnessential(messageType) then
 		-- Let the engine broadcast the message directly if message type is unessential.
 		e.data.broadcast = e.data.message
 	else
 		invokeEventServerMessage(e.data.clientID, messageContent, messageType)
 	end
-end, "ServerMessage", nil, SServer.sessionSlot)
+end, "ServerMessage", nil, SNetworkServer.sessionSlot)
 
---- @param e dr2c.E.ServerConnect
-events:add(SServer.eventSConnect, function(e)
+--- @param e dr2c.E.SConnect
+events:add(SNetworkServer.eventSConnect, function(e)
 	local clientID = e.clientID
 
 	if log.canTrace() then
 		log.trace(("Broadcast client %s connect message & public attribute state"):format(clientID))
 	end
 
-	SServer.broadcastReliable(GMessage.Type.ClientConnect, {
+	SNetworkServer.broadcastReliable(GNetworkMessage.Type.ClientConnect, {
 		clientID = clientID,
 	})
 
-	SServer.broadcastReliable(GMessage.Type.ClientPublicAttribute, {
+	SNetworkServer.broadcastReliable(GNetworkMessage.Type.ClientPublicAttribute, {
 		clientID = clientID,
-		attribute = GClient.PublicAttribute.State,
-		value = GClient.State.Verifying,
+		attribute = GNetworkClient.PublicAttribute.State,
+		value = GNetworkClient.State.Verifying,
 	})
 end, "BroadcastClientConnectState", "Clients")
 
---- @param e dr2c.E.ServerMessage
-events:add(SServer.eventSMessage, function(e)
+--- @param e dr2c.E.SMessage
+events:add(SNetworkServer.eventSMessage, function(e)
 	if e.broadcast then
-		SServer.broadcastReliable(e.type, e.broadcast)
+		SNetworkServer.broadcastReliable(e.type, e.broadcast)
 	end
 end, "BroadcastServerMessage", "Broadcast")
 
-return SServer
+return SNetworkServer

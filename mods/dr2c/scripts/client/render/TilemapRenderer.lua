@@ -67,4 +67,4 @@ events:add(N_("CRenderCamera"), function(e)
 	elseif true then
 		draw(e.renderer, testTilemap)
 	end
-end, "RenderDebugObjects", "DebugObjects")
+end, "RenderTilemap", "Tilemap")

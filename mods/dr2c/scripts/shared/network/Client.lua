@@ -12,22 +12,28 @@
 local Enum = require("tudov.Enum")
 local Function = require("tudov.Function")
 
---- @alias dr2c.ClientPublicAttribute dr2c.GClient.PublicAttribute
+local GNetworkPlatform = require("dr2c.shared.network.Platform")
 
---- @alias dr2c.ClientPrivateAttribute dr2c.GClient.PrivateAttribute
+--- @alias dr2c.ClientAttributeTrait dr2c.GNetworkClient.AttributeTrait
 
---- @alias dr2c.ClientPermission dr2c.GClient.Permission
+--- @alias dr2c.NetworkClientPublicAttribute dr2c.GNetworkClient.PublicAttribute
+
+--- @alias dr2c.NetworkClientPrivateAttribute dr2c.GNetworkClient.PrivateAttribute
+
+--- @alias dr2c.ClientPermission dr2c.GNetworkClient.Permission
 
 --- @class dr2c.GClient
-local GClient = {}
+local GNetworkClient = {}
 
-GClient.State = Enum.sequence({
+GNetworkClient.State = Enum.sequence({
 	Disconnected = 0,
 	Verifying = 1,
 	Verified = 2,
 })
 
-GClient.AttributeTrait = Enum.immutable({
+local State = GNetworkClient.State
+
+GNetworkClient.AttributeTrait = Enum.immutable({
 	-- 客户端可随时修改该属性（默认值）
 	Editable = 0,
 	-- 客户端只能在验证时期修改
@@ -36,13 +42,15 @@ GClient.AttributeTrait = Enum.immutable({
 	Authoritative = 2,
 })
 
-GClient.PublicAttribute = Enum.sequence({
+local AttributeTrait = GNetworkClient.AttributeTrait
+
+GNetworkClient.PublicAttribute = Enum.sequence({
 	-- 存储ClientID
 	ID = 0,
-	-- 许可
-	Permissions = 1,
 	-- 当前连接状态
-	State = 2,
+	State = 1,
+	-- 许可
+	Permissions = 2,
 	-- 游戏平台
 	Platform = 3,
 	-- 游戏平台账户ID
@@ -67,13 +75,17 @@ GClient.PublicAttribute = Enum.sequence({
 	HasClientOnlyMods = 13,
 })
 
-GClient.PrivateAttribute = Enum.sequence({
+local PublicAttribute = GNetworkClient.PublicAttribute
+
+GNetworkClient.PrivateAttribute = Enum.sequence({
 	SecretToken = 1,
 	SecretStatistics = 2,
 })
 
---- @enum dr2c.GClient.Permission
-GClient.Permission = { -- TODO Enum.bits
+local PrivateAttribute = GNetworkClient.PrivateAttribute
+
+--- @enum dr2c.GNetworkClient.Permission
+GNetworkClient.Permission = { -- TODO Enum.bits
 	Authority = bit.lshift(1, 0),
 	Chat = bit.lshift(1, 1),
 	KickClient = bit.lshift(1, 2),
@@ -83,7 +95,7 @@ GClient.Permission = { -- TODO Enum.bits
 	ServerCommand = bit.lshift(1, 6),
 }
 
-local Permission = GClient.Permission
+local Permission = GNetworkClient.Permission
 local permissionsDefault = Permission.Chat
 local permissionsAdmin = bit.bor(permissionsDefault, Permission.KickClient, Permission.ChangeSetting)
 local permissionsHost = bit.bor(
@@ -94,27 +106,60 @@ local permissionsHost = bit.bor(
 	Permission.ServerCommand
 )
 
-GClient.Permissions = Enum.sequence({
+GNetworkClient.Permissions = Enum.immutable({
+	None = 0,
 	Default = permissionsDefault,
 	Admin = permissionsAdmin,
 	Host = permissionsHost,
 })
 
+local Permissions = GNetworkClient.Permissions
+
+--- @generic TPublic : table<dr2c.NetworkClientPublicAttribute, any>
+--- @generic TPrivate : table<dr2c.NetworkClientPrivateAttribute, any>
+--- @param clientID any
+--- @param publicAttributes TPublic
+--- @param privateAttributes TPrivate
+--- @return TPublic publicAttributes
+--- @return TPrivate privateAttributes
+function GNetworkClient.initializeClientAttributes(clientID, publicAttributes, privateAttributes)
+	publicAttributes[PublicAttribute.ID] = clientID
+
+	publicAttributes[PublicAttribute.State] = State.Disconnected
+	publicAttributes[PublicAttribute.Permissions] = Permissions.None
+	publicAttributes[PublicAttribute.Platform] = GNetworkPlatform.Type.Standalone
+	publicAttributes[PublicAttribute.PlatformID] = nil
+	publicAttributes[PublicAttribute.OperatingSystem] = EOperatingSystem.Unknown
+	publicAttributes[PublicAttribute.Statistics] = {}
+	publicAttributes[PublicAttribute.DisplayName] = ""
+	publicAttributes[PublicAttribute.Room] = 0
+	publicAttributes[PublicAttribute.Version] = ""
+	publicAttributes[PublicAttribute.ContentHash] = 0
+	publicAttributes[PublicAttribute.ModsHash] = 0
+	publicAttributes[PublicAttribute.SocketType] = ESocketType.Local
+	publicAttributes[PublicAttribute.HasClientOnlyMods] = false
+
+	privateAttributes[PrivateAttribute.SecretStatistics] = {}
+	privateAttributes[PrivateAttribute.SecretToken] = nil
+
+	return publicAttributes, privateAttributes
+end
+
 local publicAttributeTraits = {
-	[GClient.PublicAttribute.ID] = GClient.AttributeTrait.Authoritative,
-	[GClient.PublicAttribute.Permissions] = GClient.AttributeTrait.Authoritative,
-	[GClient.PublicAttribute.State] = GClient.AttributeTrait.Validation,
-	[GClient.PublicAttribute.Platform] = GClient.AttributeTrait.Validation,
-	[GClient.PublicAttribute.PlatformID] = GClient.AttributeTrait.Validation,
-	[GClient.PublicAttribute.OperatingSystem] = GClient.AttributeTrait.Validation,
-	[GClient.PublicAttribute.Room] = GClient.AttributeTrait.Authoritative,
-	[GClient.PublicAttribute.Version] = GClient.AttributeTrait.Validation,
-	[GClient.PublicAttribute.ContentHash] = GClient.AttributeTrait.Validation,
-	[GClient.PublicAttribute.ModsHash] = GClient.AttributeTrait.Validation,
+	[PublicAttribute.ID] = AttributeTrait.Authoritative,
+	[PublicAttribute.Permissions] = AttributeTrait.Authoritative,
+	[PublicAttribute.State] = AttributeTrait.Validation,
+	[PublicAttribute.Platform] = AttributeTrait.Validation,
+	[PublicAttribute.PlatformID] = AttributeTrait.Validation,
+	[PublicAttribute.OperatingSystem] = AttributeTrait.Validation,
+	[PublicAttribute.Room] = AttributeTrait.Authoritative,
+	[PublicAttribute.Version] = AttributeTrait.Validation,
+	[PublicAttribute.ContentHash] = AttributeTrait.Validation,
+	[PublicAttribute.ModsHash] = AttributeTrait.Validation,
 }
 
 local privateAttributeTraits = {
-	[GClient.PrivateAttribute.SecretToken] = GClient.AttributeTrait.Authoritative,
+	[PrivateAttribute.SecretToken] = AttributeTrait.Authoritative,
 }
 
 publicAttributeTraits = persist("publicAttributeTraits", function()
@@ -124,42 +169,42 @@ privateAttributeTraits = persist("privateAttributeTraits", function()
 	return privateAttributeTraits
 end)
 
---- @param attribute dr2c.GClient.PublicAttribute
---- @return dr2c.GClient.AttributeTrait trait
-function GClient.getPublicAttributeTrait(attribute)
-	return publicAttributeTraits[attribute] or GClient.AttributeTrait.Editable
+--- @param attribute dr2c.NetworkClientPublicAttribute
+--- @return dr2c.ClientAttributeTrait trait
+function GNetworkClient.getPublicAttributeTrait(attribute)
+	return publicAttributeTraits[attribute] or GNetworkClient.AttributeTrait.Editable
 end
 
---- @param attribute dr2c.GClient.PrivateAttribute
---- @return dr2c.GClient.AttributeTrait trait
-function GClient.getPrivateAttributeTrait(attribute)
-	return privateAttributeTraits[attribute] or GClient.AttributeTrait.Editable
+--- @param attribute dr2c.NetworkClientPrivateAttribute
+--- @return dr2c.ClientAttributeTrait trait
+function GNetworkClient.getPrivateAttributeTrait(attribute)
+	return privateAttributeTraits[attribute] or GNetworkClient.AttributeTrait.Editable
 end
 
---- @type table<dr2c.GClient.PublicAttribute, fun(value: any): boolean?>
+--- @type table<dr2c.NetworkClientPublicAttribute, fun(value: any): boolean?>
 local publicAttributeValidators = {
-	[GClient.PublicAttribute.ID] = Function.isTypeInteger,
-	[GClient.PublicAttribute.State] = Function.isTypeInteger,
-	[GClient.PublicAttribute.Platform] = Function.isTypeNumber,
-	[GClient.PublicAttribute.PlatformID] = Function.isTypeStringOrNil,
-	[GClient.PublicAttribute.Statistics] = Function.isTypeTable,
-	[GClient.PublicAttribute.DisplayName] = Function.isTypeStringOrNil,
-	[GClient.PublicAttribute.Room] = Function.isTypeIntegerOrNil,
-	[GClient.PublicAttribute.Version] = Function.isTypeString,
-	[GClient.PublicAttribute.ContentHash] = Function.isTypeNumber,
-	[GClient.PublicAttribute.ModsHash] = Function.isTypeNumber,
+	[PublicAttribute.ID] = Function.isTypeInteger,
+	[PublicAttribute.State] = Function.isTypeInteger,
+	[PublicAttribute.Platform] = Function.isTypeNumber,
+	[PublicAttribute.PlatformID] = Function.isTypeStringOrNil,
+	[PublicAttribute.Statistics] = Function.isTypeTable,
+	[PublicAttribute.DisplayName] = Function.isTypeString,
+	[PublicAttribute.Room] = Function.isTypeInteger,
+	[PublicAttribute.Version] = Function.isTypeString,
+	[PublicAttribute.ContentHash] = Function.isTypeNumber,
+	[PublicAttribute.ModsHash] = Function.isTypeNumber,
 }
 
---- @type table<dr2c.GClient.PrivateAttribute, dr2c.ValueValidator>
+--- @type table<dr2c.NetworkClientPrivateAttribute, dr2c.ValueValidator>
 local privateAttributeValidators = {
-	[GClient.PrivateAttribute.SecretToken] = Function.isTypeNumberOrNil,
-	[GClient.PrivateAttribute.SecretStatistics] = Function.isTypeTable,
+	[PrivateAttribute.SecretToken] = Function.isTypeNumberOrNil,
+	[PrivateAttribute.SecretStatistics] = Function.isTypeTable,
 }
 
---- @param attribute dr2c.GClient.PublicAttribute
+--- @param attribute dr2c.NetworkClientPublicAttribute
 --- @param value integer | string
 --- @return boolean
-function GClient.validatePublicAttribute(attribute, value)
+function GNetworkClient.validatePublicAttribute(attribute, value)
 	local validator = publicAttributeValidators[attribute]
 	if validator then
 		return not not validator(value)
@@ -168,10 +213,10 @@ function GClient.validatePublicAttribute(attribute, value)
 	end
 end
 
---- @param attribute dr2c.GClient.PrivateAttribute
+--- @param attribute dr2c.NetworkClientPrivateAttribute
 --- @param value integer | string
 --- @return boolean
-function GClient.validatePrivateAttribute(attribute, value)
+function GNetworkClient.validatePrivateAttribute(attribute, value)
 	local validator = privateAttributeValidators[attribute]
 	if validator then
 		return not not validator(value)
@@ -180,16 +225,16 @@ function GClient.validatePrivateAttribute(attribute, value)
 	end
 end
 
---- @param attribute dr2c.ClientPublicAttribute
+--- @param attribute dr2c.NetworkClientPublicAttribute
 --- @param validator dr2c.ValueValidator
-function GClient.setPublicAttributeValidator(attribute, validator)
+function GNetworkClient.setPublicAttributeValidator(attribute, validator)
 	publicAttributeValidators[attribute] = validator
 end
 
---- @param attribute dr2c.ClientPrivateAttribute
+--- @param attribute dr2c.NetworkClientPrivateAttribute
 --- @param validator dr2c.ValueValidator
-function GClient.setPrivateAttributeValidator(attribute, validator)
+function GNetworkClient.setPrivateAttributeValidator(attribute, validator)
 	privateAttributeValidators[attribute] = validator
 end
 
-return GClient
+return GNetworkClient

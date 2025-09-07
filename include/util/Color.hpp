@@ -36,11 +36,11 @@ namespace tudov
 
 	  public:
 		explicit constexpr Color() noexcept
-		    : Color(0, 0, 0, 255)
+		    : Color(255, 255, 255, 255)
 		{
 		}
 
-		explicit constexpr Color(std::uint8_t r = 0, std::uint8_t g = 0, std::uint8_t b = 0, std::uint8_t a = 255) noexcept
+		explicit constexpr Color(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a) noexcept
 		    : r(r), g(g), b(b), a(a)
 		{
 		}

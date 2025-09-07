@@ -19,7 +19,7 @@ local GClient = require("dr2c.shared.network.Client")
 local GMessage = require("dr2c.shared.network.Message")
 
 --- @class dr2c.ClientPrivateRequestEntry
---- @field attribute dr2c.GClient.PrivateAttribute
+--- @field attribute dr2c.NetworkClientPrivateAttribute
 --- @field callback fun(success: boolean, attribute: any)
 --- @field expireTime number
 
@@ -32,13 +32,13 @@ secretToken2ClientID = persist("secretToken2ClientID", function()
 	return secretToken2ClientID
 end)
 
---- @type table<Network.ClientID, table<dr2c.GClient.PublicAttribute, any>>
+--- @type table<Network.ClientID, table<dr2c.NetworkClientPublicAttribute, any>>
 local clientsPublicAttributes = {}
 clientsPublicAttributes = persist("clientsPublicAttributes", function()
 	return clientsPublicAttributes
 end)
 
---- @type table<Network.ClientID, table<dr2c.GClient.PublicAttribute, any>>
+--- @type table<Network.ClientID, table<dr2c.NetworkClientPublicAttribute, any>>
 local clientsPrivateAttributes = {}
 clientsPrivateAttributes = persist("clientsPrivateAttributes", function()
 	return clientsPrivateAttributes
@@ -55,10 +55,10 @@ privateAttributeRequestLatestID = persist("privateAttributeRequestLatestID", fun
 	return privateAttributeRequestLatestID
 end)
 
-local eventClientClientAdded = events:new(N_("CClientAdded"), {
+CClients.eventCClientAdded = events:new(N_("CClientAdded"), {
 	"PlayerInputBuffer",
 })
-local eventClientClientRemoved = events:new(N_("CClientRemoved"), {
+CClients.eventCClientRemoved = events:new(N_("CClientRemoved"), {
 	"PlayerInputBuffer",
 })
 
@@ -78,9 +78,11 @@ function CClients.addClient(clientID)
 	clientsPublicAttributes[clientID] = {}
 	clientsPrivateAttributes[clientID] = {}
 
-	events:invoke(eventClientClientAdded, {
+	--- @class dr2c.E.CClientAdded
+	local e = {
 		clientID = clientID,
-	})
+	}
+	events:invoke(CClients.eventCClientAdded, e)
 end
 
 --- @param clientID Network.ClientID
@@ -92,43 +94,45 @@ function CClients.removeClient(clientID)
 	clientsPublicAttributes[clientID] = nil
 	clientsPrivateAttributes[clientID] = nil
 
-	events:invoke(eventClientClientRemoved, {
+	--- @class dr2c.E.CClientRemoved
+	local e = {
 		clientID = clientID,
-	})
+	}
+	events:invoke(CClients.eventCClientRemoved, e)
 end
 
 --- @param clientID Network.ClientID
---- @param clientPublicAttribute dr2c.GClient.PublicAttribute
+--- @param publicAttribute dr2c.NetworkClientPublicAttribute
 --- @return any?
 --- @nodiscard
-function CClients.getPublicAttribute(clientID, clientPublicAttribute)
+function CClients.getPublicAttribute(clientID, publicAttribute)
 	local attributes = clientsPublicAttributes[clientID]
 	if attributes then
-		return attributes[clientPublicAttribute]
+		return attributes[publicAttribute]
 	end
 end
 
 --- @param clientID Network.ClientID
---- @param clientPrivateAttribute dr2c.GClient.PrivateAttribute
+--- @param privateAttribute dr2c.NetworkClientPrivateAttribute
 --- @param callback fun(success: boolean, attribute: any)
-function CClients.requestPrivateAttribute(clientID, clientPrivateAttribute, callback)
+function CClients.requestPrivateAttribute(clientID, privateAttribute, callback)
 	local attributes = clientsPublicAttributes[clientID]
-	local value = attributes[clientPrivateAttribute]
+	local value = attributes[privateAttribute]
 
 	if value ~= nil then
 		callback(true, value)
 	else
-		privateAttributeRequestLatestID = privateAttributeRequestLatestID + 1
-		local requestID = privateAttributeRequestLatestID
+		local requestID = privateAttributeRequestLatestID + 1
+		privateAttributeRequestLatestID = requestID
 
-		CClient.sendMessage(GMessage.pack(GMessage.Type.ClientPrivateAttribute, {
+		CClient.sendReliable(GMessage.Type.ClientPrivateAttribute, {
 			requestID = requestID,
 			clientID = clientID,
-			attribute = clientPrivateAttribute,
-		}))
+			attribute = privateAttribute,
+		})
 
 		privateAttributeRequests[requestID] = {
-			attribute = clientPrivateAttribute,
+			attribute = privateAttribute,
 			callback = callback,
 			expireTime = Time.getSystemTime() + 10,
 		}
@@ -137,28 +141,28 @@ end
 
 --- @warn Do not modify attributes other than local client as possible.
 --- @param clientID Network.ClientID
---- @param clientPublicAttribute dr2c.GClient.PublicAttribute
+--- @param publicAttribute dr2c.NetworkClientPublicAttribute
 --- @param attributeValue any
-function CClients.setPublicAttribute(clientID, clientPublicAttribute, attributeValue)
+function CClients.setPublicAttribute(clientID, publicAttribute, attributeValue)
 	local attributes = clientsPublicAttributes[clientID]
 	if not attributes then
 		error(("Client %s does not exists"):format(clientID), 2)
 	end
 
-	attributes[clientPublicAttribute] = attributeValue
+	attributes[publicAttribute] = attributeValue
 end
 
 --- @warn Do not modify attributes other than local client as possible.
 --- @param clientID Network.ClientID
---- @param clientPrivateAttribute dr2c.GClient.PrivateAttribute
+--- @param privateAttribute dr2c.NetworkClientPrivateAttribute
 --- @param attributeValue any
-function CClients.setPrivateAttribute(clientID, clientPrivateAttribute, attributeValue)
+function CClients.setPrivateAttribute(clientID, privateAttribute, attributeValue)
 	local attributes = clientsPrivateAttributes[clientID]
 	if not attributes then
 		error(("Client %s does not exists"):format(clientID), 2)
 	end
 
-	attributes[clientPrivateAttribute] = attributeValue
+	attributes[privateAttribute] = attributeValue
 end
 
 events:add(N_("CDisconnect"), function(e)
@@ -167,7 +171,7 @@ events:add(N_("CDisconnect"), function(e)
 	privateAttributeRequests = {}
 end, N_("ResetClients"), "Reset")
 
---- @param e dr2c.E.ClientMessage
+--- @param e dr2c.E.CMessage
 events:add(N_("CMessage"), function(e)
 	local clientID = e.content.clientID
 
@@ -198,12 +202,12 @@ local function initializeClientsAttributes(serverClientsPublicAttributes)
 	end
 end
 
---- @param e dr2c.E.ClientMessage
+--- @param e dr2c.E.CMessage
 events:add(N_("CMessage"), function(e)
 	initializeClientsAttributes(e.content)
 end, "InitializeClientsAttributes", "Receive", GMessage.Type.Clients)
 
---- @param e dr2c.E.ClientMessage
+--- @param e dr2c.E.CMessage
 local function receiveClientAttribute(e, validate, clientsAttributes)
 	local content = e.content
 	if type(content) ~= "table" then
@@ -227,17 +231,17 @@ local function receiveClientAttribute(e, validate, clientsAttributes)
 	end
 end
 
---- @param e dr2c.E.ClientMessage
+--- @param e dr2c.E.CMessage
 events:add(N_("CMessage"), function(e)
 	receiveClientAttribute(e, GClient.validatePublicAttribute, clientsPublicAttributes)
 end, "ReceiveClientPublicAttribute", "Receive", GMessage.Type.ClientPublicAttribute)
 
---- @param e dr2c.E.ClientMessage
+--- @param e dr2c.E.CMessage
 events:add(N_("CMessage"), function(e)
 	receiveClientAttribute(e, GClient.validatePrivateAttribute, clientsPrivateAttributes)
 end, "ReceiveClientPrivateAttribute", "Receive", GMessage.Type.ClientPrivateAttribute)
 
---- @param e dr2c.E.ClientMessage
+--- @param e dr2c.E.CMessage
 events:add(N_("CMessage"), function(e)
 	local content = e.content
 	if type(content) ~= "table" or type(content.clientID) ~= "number" or type(content.attribute) ~= "number" then

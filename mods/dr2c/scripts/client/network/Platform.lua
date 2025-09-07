@@ -19,12 +19,14 @@ function CPlatform.getType()
 end
 
 events:add(N_("CCollectVerifyAttributes"), function(e)
-	e.public[#e.public + 1] = {
+	e.attributes[#e.attributes + 1] = {
+		public = true,
 		attribute = GClient.PublicAttribute.Platform,
 		value = GPlatform.Type.Standalone,
 	}
 
-	e.public[#e.public + 1] = {
+	e.attributes[#e.attributes + 1] = {
+		public = true,
 		attribute = GClient.PublicAttribute.PlatformID,
 		value = "1516249885",
 	}

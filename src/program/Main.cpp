@@ -9,15 +9,16 @@
  *
  */
 
+#include "SDL3_ttf/SDL_ttf.h"
 #include "data/Config.hpp"
 #include "data/Constants.hpp"
 #include "graphic/GUI.hpp"
 #include "program/CrashReporter.hpp"
 #include "program/Engine.hpp"
 #include "program/Tudov.hpp"
-#include "test/TestGPURendering.hpp"
 #include "system/Log.hpp"
 #include "system/LogMicros.hpp"
+#include "test/TestGPURendering.hpp"
 
 #define SDL_MAIN_USE_CALLBACKS
 
@@ -121,7 +122,11 @@ bool CommonInit(int argc, char **argv) noexcept
 	{
 		TE_L_FATAL("SDL3 failed to initialize", SDL_GetError());
 	}
-	TE_L_INFO("{}", "SDL3 initialized");
+	TE_L_INFO("SDL3 initialized");
+
+	// Initialize SDL3_TTF.
+	TTF_Init();
+	TE_L_INFO("SDL3 initialized");
 
 	return false;
 }

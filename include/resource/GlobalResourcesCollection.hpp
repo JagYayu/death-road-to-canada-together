@@ -17,7 +17,6 @@
 #include "Resource.hpp"
 #include "ResourceType.hpp"
 #include "TextResources.hpp"
-#include "event/DelegateEvent.hpp"
 #include "program/EngineComponent.hpp"
 #include "system/Log.hpp"
 

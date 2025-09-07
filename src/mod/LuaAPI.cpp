@@ -12,15 +12,16 @@
 #include "mod/LuaAPI.hpp"
 
 #include "data/VirtualFileSystem.hpp"
-
 #include "debug/Debug.hpp"
 #include "graphic/Camera2D.hpp"
+#include "graphic/DrawArgs.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/Renderer.hpp"
 #include "i18n/Localization.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
 #include "program/WindowManager.hpp"
+#include "resource/FontResources.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/ImageResources.hpp"
 #include "system/OperatingSystem.hpp"
@@ -63,6 +64,7 @@ decltype(auto) GetMainWindowFromContext(Context &context)
 
 #define TE_ENUM(Class, ...)     lua.new_enum<Class>(#Class, __VA_ARGS__)
 #define TE_USERTYPE(Class, ...) lua.new_usertype<Class>(#Class, __VA_ARGS__)
+#define TE_CLASS(Class, ...)    lua.create_named_table(("" #Class ""), __VA_ARGS__)
 
 void LuaAPI::Install(sol::state &lua, Context &context)
 {
@@ -91,6 +93,16 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            {"Fatal", ELogVerbosity::Fatal},
 	        });
 
+	TE_ENUM(EOperatingSystem,
+	        {
+	            {"Unknown", EOperatingSystem::Unknown},
+	            {"Windows", EOperatingSystem::Windows},
+	            {"Linux", EOperatingSystem::Linux},
+	            {"MaxOS", EOperatingSystem::MaxOS},
+	            {"Android", EOperatingSystem::Android},
+	            {"IOS", EOperatingSystem::IOS},
+	        });
+
 	TE_ENUM(EPathListOption,
 	        {
 	            {"All", EPathListOption::All},
@@ -102,11 +114,27 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            {"FullPath", EPathListOption::FullPath},
 	        });
 
+	TE_USERTYPE(DrawTextArgs,
+	            sol::call_constructor, sol::constructors<DrawTextArgs()>(),
+	            "alignX", sol::property(&DrawTextArgs::GetAlignX, &DrawTextArgs::SetAlignX),
+	            "alignY", sol::property(&DrawTextArgs::GetAlignY, &DrawTextArgs::SetAlignY),
+	            "characterScale", sol::property(&DrawTextArgs::GetCharacterScale, &DrawTextArgs::SetCharacterScale),
+	            "font", sol::property(&DrawTextArgs::GetFont, &DrawTextArgs::SetFont),
+	            "maxWidth", sol::property(&DrawTextArgs::GetMaxWidth, &DrawTextArgs::SetMaxWidth),
+	            "scale", sol::property(&DrawTextArgs::GetScale, &DrawTextArgs::SetScale),
+	            "text", sol::property(&DrawTextArgs::GetText, &DrawTextArgs::SetText),
+	            "x", sol::property(&DrawTextArgs::GetX, &DrawTextArgs::SetX),
+	            "y", sol::property(&DrawTextArgs::GetY, &DrawTextArgs::SetY));
+
 	TE_USERTYPE(Engine,
 	            "getVersion", &Engine::LuaGetVersion,
 	            "mainWindow", GetMainWindowFromContext(context),
 	            "quit", &Engine::Quit,
 	            "triggerLoadPending", &Engine::TriggerLoadPending);
+
+	TE_USERTYPE(FontResources,
+	            "getID", &FontResources::LuaGetID,
+	            "getPath", &FontResources::LuaGetPath);
 
 	TE_USERTYPE(ImageResources,
 	            "getID", &ImageResources::LuaGetID,
@@ -129,7 +157,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "beginTarget", &Renderer::LuaBeginTarget,
 	            "clear", &Renderer::LuaClear,
 	            "draw", &Renderer::LuaDraw,
-	            "drawDebugText", &Renderer::LuaDrawDebugText,
+	            "drawText", &Renderer::LuaDrawText,
 	            "endTarget", &Renderer::LuaEndTarget,
 	            "newRenderTarget", &Renderer::LuaNewRenderTarget,
 	            "render", &Renderer::Render);
@@ -166,18 +194,18 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	            "reset", &Timer::Reset,
 	            "unpause", &Timer::Unpause);
 
-	lua.create_named_table(TE_NAMEOF(OperatingSystem),
-	                       "getType", &OperatingSystem::GetType,
-	                       "isMobile", &OperatingSystem::IsMobile,
-	                       "isPC", &OperatingSystem::IsPC);
+	TE_CLASS(OperatingSystem,
+	         "getType", &OperatingSystem::GetType,
+	         "isMobile", &OperatingSystem::IsMobile,
+	         "isPC", &OperatingSystem::IsPC);
 
-	lua.create_named_table(TE_NAMEOF(RandomDevice),
-	                       "entropy", &RandomDevice::Entropy,
-	                       "generate", &RandomDevice::LuaGenerate);
+	TE_CLASS(RandomDevice,
+	         "entropy", &RandomDevice::Entropy,
+	         "generate", &RandomDevice::LuaGenerate);
 
-	lua.create_named_table(TE_NAMEOF(Time),
-	                       "getStartupTime", &Time::GetStartupTime,
-	                       "getSystemTime", &Time::GetSystemTime);
+	TE_CLASS(Time,
+	         "getStartupTime", &Time::GetStartupTime,
+	         "getSystemTime", &Time::GetSystemTime);
 
 	lua["engine"] = &context.GetEngine();
 	lua["localization"] = &dynamic_cast<Localization &>(context.GetLocalization());
@@ -225,15 +253,17 @@ const std::vector<std::string_view> &LuaAPI::GetModGlobalsMigration() const noex
 		    "table.new",
 		    // C++ enum classes
 		    "EClientSessionState",
-			"EDebugConsoleCode",
+		    "EDebugConsoleCode",
 		    "EDisconnectionCode",
 		    "EEventInvocation",
 		    "ELogVerbosity",
+		    "EOperatingSystem",
 		    "EPathListOption",
 		    "EServerSessionState",
 		    "EScanCode",
 		    "ESocketType",
 		    // C++ classes
+		    "DrawTextArgs",
 		    "Timer",
 		    // C++ static classes
 		    "OperatingSystem",

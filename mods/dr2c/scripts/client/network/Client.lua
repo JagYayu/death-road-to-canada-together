@@ -12,16 +12,18 @@
 local String = require("tudov.String")
 local Enum = require("tudov.Enum")
 
-local CClients = require("dr2c.client.network.Clients")
-local GClient = require("dr2c.shared.network.Client")
-local GMessage = require("dr2c.shared.network.Message")
-local GPlatform = require("dr2c.client.network.Platform")
-local GThrottle = require("dr2c.shared.utils.Throttle")
+local CNetworkClients = require("dr2c.client.network.Clients")
+local GNetworkClient = require("dr2c.shared.network.Client")
+local GNetworkMessage = require("dr2c.shared.network.Message")
+local GNetworkPlatform = require("dr2c.client.network.Platform")
+local GUtilsThrottle = require("dr2c.shared.utils.Throttle")
 
 local network = network
 
 --- @class dr2c.CClient
 local CClient = {}
+
+local clientPrivateAttributes = {}
 
 --- @type integer
 CClient.sessionSlot = 0
@@ -35,6 +37,21 @@ end
 function CClient.getClientID()
 	local session = CClient.getNetworkSession()
 	return session and session:getSessionID()
+end
+
+--- @param publicAttribute dr2c.NetworkClientPublicAttribute
+--- @return any?
+function CClient.getPublicAttribute(publicAttribute)
+	local clientID = CClient.getClientID()
+	if clientID then
+		return CNetworkClients.getPublicAttribute(clientID, publicAttribute)
+	end
+end
+
+--- @param privateAttribute dr2c.NetworkClientPrivateAttribute
+--- @return any?
+function CClient.getPrivateAttribute(privateAttribute)
+	return clientPrivateAttributes[privateAttribute]
 end
 
 events:add(N_("CUpdate"), function(e)
@@ -88,22 +105,22 @@ CClient.eventCMessage = events:new(N_("CMessage"), {
 	"Receive",
 	"PlayerInputBuffer",
 	"Rollback",
-}, Enum.eventKeys(GMessage.Type))
+}, Enum.eventKeys(GNetworkMessage.Type))
 
 --- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
---- @param channel dr2c.GMessage.Channel?
+--- @param channel dr2c.NetworkMessageChannel?
 --- @return boolean success
 function CClient.sendReliable(messageType, messageContent, channel)
 	local session = CClient.getNetworkSession()
 	if session then
-		local data = GMessage.pack(messageType, messageContent)
+		local data = GNetworkMessage.pack(messageType, messageContent)
 
 		if log.canTrace() then
 			-- log.trace(("Send reliable message to server: %s"):format(data))
 		end
 
-		channel = channel or GMessage.Channel.Main
+		channel = channel or GNetworkMessage.Channel.Main
 		---@diagnostic disable-next-line: param-type-mismatch
 		session:sendReliable(data, channel)
 
@@ -115,18 +132,18 @@ end
 
 --- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
---- @param channel dr2c.GMessage.Channel?
+--- @param channel dr2c.NetworkMessageChannel?
 --- @return boolean success
 function CClient.sendUnreliable(messageType, messageContent, channel)
 	local session = CClient.getNetworkSession()
 	if session then
-		local data = GMessage.pack(messageType, messageContent)
+		local data = GNetworkMessage.pack(messageType, messageContent)
 
 		if log.canTrace() then
 			-- log.trace(("Send unreliable message to server: %s"):format(data))
 		end
 
-		channel = channel or GMessage.Channel.Main
+		channel = channel or GNetworkMessage.Channel.Main
 		---@diagnostic disable-next-line: param-type-mismatch
 		session:sendUnreliable(data, channel)
 
@@ -164,7 +181,7 @@ end)
 --- @param messageContent any?
 --- @param messageType dr2c.NetworkMessageType
 local function invokeEventClientMessage(messageContent, messageType)
-	--- @class dr2c.E.ClientMessage
+	--- @class dr2c.E.CMessage
 	--- @field content any?
 	--- @field type dr2c.NetworkMessageType
 	local e = {
@@ -181,12 +198,12 @@ events:add("ClientMessage", function(e)
 		return
 	end
 
-	local messageType, messageContent = GMessage.unpack(e.data.message)
+	local messageType, messageContent = GNetworkMessage.unpack(e.data.message)
 
 	invokeEventClientMessage(messageContent, messageType)
 end, "clientMessage", nil, CClient.sessionSlot)
 
-local throttleClientUpdateClientsPrivateAttributeRequests = GThrottle.newTime(0.25)
+local throttleClientUpdateClientsPrivateAttributeRequests = GUtilsThrottle.newTime(0.25)
 
 --- @param e dr2c.E.ClientUpdate
 events:add(N_("CUpdate"), function(e)
@@ -202,31 +219,30 @@ CClient.eventCCollectVerifyAttributes = events:new(N_("CCollectVerifyAttributes"
 })
 
 events:add(N_("CCollectVerifyAttributes"), function(e)
-	e.public[#e.public + 1] = {
-		attribute = GClient.PublicAttribute.State,
-		value = GClient.State.Verified,
+	e.attributes[#e.attributes + 1] = {
+		public = true,
+		attribute = GNetworkClient.PublicAttribute.State,
+		value = GNetworkClient.State.Verified,
 	}
 end, "SendState", "State")
 
 --- @param pe dr2c.E.ClientUpdate
 local function invokeEventClientCollectVerifyAttributes(pe)
-	local public = {}
-	local private = {}
+	local attributes = {}
 
 	--- @class dr2c.E.ClientCollectVerifyAttributes
 	local e = {
 		pe = pe,
-		public = public,
-		private = private,
+		attributes = attributes,
 	}
 
 	events:invoke(CClient.eventCCollectVerifyAttributes, e)
 
 	if log.canTrace() then
-		log.trace("Collected verify attributes: ", public, private)
+		log.trace("Collected verify attributes: ", attributes)
 	end
 
-	return public, private
+	return attributes
 end
 
 --- @param e dr2c.E.ClientUpdate
@@ -245,21 +261,21 @@ events:add(N_("CUpdate"), function(e)
 		return
 	end
 
-	local state = CClients.getPublicAttribute(clientID, GClient.PublicAttribute.State)
-	if state ~= GClient.State.Verifying then
+	local state = CNetworkClients.getPublicAttribute(clientID, GNetworkClient.PublicAttribute.State)
+	if state ~= GNetworkClient.State.Verifying then
 		return
 	end
 
-	local publicEntries, privateEntries = invokeEventClientCollectVerifyAttributes(e)
+	local entries = invokeEventClientCollectVerifyAttributes(e)
 
 	print("Send client verifying attributes")
 
-	for _, entry in ipairs(privateEntries) do
-		CClient.sendReliable(GMessage.Type.ClientPrivateAttribute, entry)
-	end
-
-	for _, entry in ipairs(publicEntries) do
-		CClient.sendReliable(GMessage.Type.ClientPublicAttribute, entry)
+	for _, entry in ipairs(entries) do
+		if entry.public then
+			CClient.sendReliable(GNetworkMessage.Type.ClientPublicAttribute, entry)
+		else
+			CClient.sendReliable(GNetworkMessage.Type.ClientPrivateAttribute, entry)
+		end
 	end
 
 	sendClientVerifyingAttributesTime = time + 5

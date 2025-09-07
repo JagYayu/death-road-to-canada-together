@@ -13,8 +13,9 @@
 --- @field [0] ImageID
 
 --- @class dr2c.CSprites
-local CSprites = {}
+local CRenderSprites = {}
 
+local String = require("tudov.String")
 local Table = require("tudov.Table")
 local json = require("json")
 
@@ -35,7 +36,7 @@ local function registerSpritesImpl(e, sprites)
 	for spriteName, spriteInfos in pairs(sprites) do
 		for index, spriteInfo in ipairs(spriteInfos) do
 			local imageName = spriteInfo.image
-			local imageID = images:getID(imageName)
+			local imageID = fonts:getID(imageName)
 
 			if imageID then
 				local spriteTable = {
@@ -56,7 +57,7 @@ local function registerSpritesImpl(e, sprites)
 end
 
 --- @param sprites table<string, dr2c.SpriteTable>
-function CSprites.registerSprites(sprites)
+function CRenderSprites.registerSprites(sprites)
 	if type(sprites) ~= "table" then
 		error(("bad argument #1 to 'tbl' (table expected, got %s)"):format(type(sprites)))
 	end
@@ -66,9 +67,7 @@ function CSprites.registerSprites(sprites)
 	end)
 end
 
---- @param filePath string
---- @param noLog boolean?
-function CSprites.registerSpritesFromJsonFile(filePath, noLog)
+local function registerSpritesFromFileImpl(filePath, noLog, hint, func)
 	if type(filePath) ~= "string" then
 		error(("bad argument #1 to 'filePath' (string expected, got %s)"):format(type(filePath)))
 	end
@@ -78,16 +77,37 @@ function CSprites.registerSpritesFromJsonFile(filePath, noLog)
 			log.warn("File not found: " .. filePath)
 		end
 
-		local success, result = pcall(json.decode, vfs:readFile(filePath))
+		local success, result = pcall(func, vfs:readFile(filePath))
 		if success then
 			registerSpritesImpl(e, result)
 		elseif not noLog then
-			log.warn("Failed to load sprites from JSON file: " .. filePath)
+			log.warn(("Failed to load sprites from %s file: %s"):format(hint, filePath))
 		end
 	end)
 end
 
-function CSprites.registerSpritesFromJsonDirectory(path, options)
+--- @param filePath string
+--- @param noLog boolean?
+function CRenderSprites.registerSpritesFromJsonFile(filePath, noLog)
+	registerSpritesFromFileImpl(filePath, noLog, "json", json.decode)
+end
+
+--- @param filePath string
+--- @param noLog boolean?
+function CRenderSprites.registerSpritesFromLuaFile(filePath, noLog, chunkname, mode, env, ...)
+	local args = { ... }
+
+	registerSpritesFromFileImpl(filePath, noLog, "lua", function(text)
+		local func, errorMessage = load(text, chunkname, mode, env)
+		if func then
+			return func(unpack(args))
+		else
+			error(errorMessage, 2)
+		end
+	end)
+end
+
+local function registerSpritesFromDirectoryImpl(path, options, suffix, func)
 	if not vfs:exists(path) then
 		error(('Directory "%s" does not exist!'):format(path))
 	end
@@ -97,13 +117,25 @@ function CSprites.registerSpritesFromJsonDirectory(path, options)
 	local entries = vfs:list(path, options)
 
 	for _, entry in ipairs(entries) do
-		CSprites.registerSpritesFromJsonFile(entry.path)
+		if String.hasSuffix(entry.path, suffix) then
+			func(entry.path)
+		end
 	end
 end
 
-CSprites.registerSpritesFromJsonDirectory("mods/dr2c/data/sprites")
+--- @param path string
+--- @param options any
+function CRenderSprites.registerSpritesFromJsonDirectory(path, options)
+	registerSpritesFromDirectoryImpl(path, options, ".json", CRenderSprites.registerSpritesFromJsonFile)
+end
 
-function CSprites.reloadImmediately()
+--- @param path string
+--- @param options any
+function CRenderSprites.registerSpritesFromLuaDirectory(path, options)
+	registerSpritesFromDirectoryImpl(path, options, ".lua", CRenderSprites.registerSpritesFromLuaFile)
+end
+
+function CRenderSprites.reloadImmediately()
 	local e = {
 		new = {},
 		old = spriteTablesMap,
@@ -117,23 +149,21 @@ function CSprites.reloadImmediately()
 	reloadPending = false
 end
 
-function CSprites.reload()
+function CRenderSprites.reload()
 	reloadPending = true
 	engine:triggerLoadPending()
 end
 
-CSprites.reload()
-
 events:add(N_("CLoad"), function(e)
 	if reloadPending then
-		CSprites.reloadImmediately()
+		CRenderSprites.reloadImmediately()
 	end
 end, "loadSprites", "Sprites")
 
 --- @param spriteName string
 --- @param spriteIndex integer?
 --- @return dr2c.SpriteTable?
-function CSprites.getSpriteTable(spriteName, spriteIndex)
+function CRenderSprites.getSpriteTable(spriteName, spriteIndex)
 	local spriteTables = spriteTablesMap[spriteName]
 	if spriteTables then
 		return spriteTables[spriteIndex or 1]
@@ -145,4 +175,9 @@ events:add("DebugSnapshot", function(e)
 	e.spriteTablesMap = spriteTablesMap
 end, scriptName, nil, scriptName)
 
-return CSprites
+CRenderSprites.registerSpritesFromJsonDirectory("mods/dr2c/data/sprites")
+CRenderSprites.registerSpritesFromLuaDirectory("mods/dr2c/data/sprites")
+
+CRenderSprites.reload()
+
+return CRenderSprites

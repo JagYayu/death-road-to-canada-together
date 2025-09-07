@@ -18,6 +18,7 @@
 #include "event/RuntimeEvent.hpp"
 #include "exception/EventHandlerAddBadKeyException.hpp"
 #include "exception/EventHandlerAddBadOrderException.hpp"
+#include "exception/EventHandlerAddDuplicateException.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptProvider.hpp"
@@ -120,6 +121,14 @@ void RuntimeEvent::Add(const AddHandlerArgs &args)
 	{
 		static std::uint64_t autoID;
 		name = std::format("{}-{}", args.scriptID, autoID++);
+	}
+
+	for (const EventHandler &handler : _handlers)
+	{
+		if (handler.name == name) [[unlikely]]
+		{
+			throw EventHandlerAddDuplicateException(GetContext(), args.eventID, args.scriptID, name, args.stacktrace);
+		}
 	}
 
 	auto optArgOrder = args.order;

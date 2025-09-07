@@ -3,6 +3,8 @@ error("this is a lua library module")
 
 --- @diagnostic disable: duplicate-doc-alias
 
+--- @alias N_Hint "CClientAdded"
+--- @alias N_Hint "CClientRemoved"
 --- @alias N_Hint "CCollectVerifyAttributes"
 --- Invoke when the local client is connected to server
 --- @alias N_Hint "CConnect"
@@ -26,9 +28,9 @@ error("this is a lua library module")
 --- @alias N_Hint "CSnapshotDispense"
 --- @alias N_Hint "CUpdate"
 --- @alias N_Hint "CWorldRollback"
---- @alias N_Hint "CWorldSessionStart"
 --- @alias N_Hint "CWorldSessionFinish"
 --- @alias N_Hint "CWorldSessionPause"
+--- @alias N_Hint "CWorldSessionStart"
 --- @alias N_Hint "CWorldSessionUnpause"
 --- @alias N_Hint "CWorldTickProcess"
 --- @alias N_Hint "GLoad"
@@ -45,6 +47,10 @@ error("this is a lua library module")
 --- @alias N_Hint "SLoad"
 --- @alias N_Hint "SMessage"
 --- @alias N_Hint "SUpdate"
+--- @alias N_Hint "SWorldSessionFinish"
+--- @alias N_Hint "SWorldSessionPause"
+--- @alias N_Hint "SWorldSessionStart"
+--- @alias N_Hint "SWorldSessionUnpause"
 
 --- @alias Events.Event "dr2c_CCollectVerifyAttributes"
 --- @alias Events.Event "dr2c_CConnect"
@@ -67,9 +73,9 @@ error("this is a lua library module")
 --- @alias Events.Event "dr2c_CSnapshotDispense"
 --- @alias Events.Event "dr2c_CUpdate"
 --- @alias Events.Event "dr2c_CWorldRollback"
---- @alias Events.Event "dr2c_CWorldSessionStart"
 --- @alias Events.Event "dr2c_CWorldSessionFinish"
 --- @alias Events.Event "dr2c_CWorldSessionPause"
+--- @alias Events.Event "dr2c_CWorldSessionStart"
 --- @alias Events.Event "dr2c_CWorldSessionUnpause"
 --- @alias Events.Event "dr2c_CWorldTickProcess"
 --- @alias Events.Event "dr2c_GLoad"
@@ -86,5 +92,9 @@ error("this is a lua library module")
 --- @alias Events.Event "dr2c_SLoad"
 --- @alias Events.Event "dr2c_SMessage"
 --- @alias Events.Event "dr2c_SUpdate"
+--- @alias Events.Event "dr2c_SWorldSessionFinish"
+--- @alias Events.Event "dr2c_SWorldSessionPause"
+--- @alias Events.Event "dr2c_SWorldSessionStart"
+--- @alias Events.Event "dr2c_SWorldSessionUnpause"
 
 --- @diagnostic enable: duplicate-doc-alias

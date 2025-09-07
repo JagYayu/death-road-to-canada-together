@@ -141,6 +141,11 @@ namespace tudov
 		bool Update() noexcept override;
 
 	  private:
+		void LuaServerHostRUDP(sol::object args) noexcept;
+		void LuaServerShutdown(sol::object args) noexcept;
+		void LuaClientConnectRUDP(sol::object args) noexcept;
+		void LuaClientDisconnect(sol::object args) noexcept;
+
 		IClientSession *LuaGetClient(sol::object uid) noexcept;
 		IServerSession *LuaGetServer(sol::object uid) noexcept;
 	};

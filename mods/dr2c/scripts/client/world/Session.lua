@@ -19,36 +19,46 @@ local GWorldSession = require("dr2c.shared.world.Session")
 --- @class dr2c.CWorldSession : dr2c.WorldSession
 local CWorldSession = GWorldSession.new()
 
+--- @param args table<dr2c.WorldSessionAttribute, any>
+--- @return boolean
 function CWorldSession.start(args)
-	CClient.sendReliable(GMessage.Type.WorldSessionStart, args)
+	return CClient.sendReliable(GMessage.Type.WorldSessionStart, args)
 end
 
+--- @return boolean
 function CWorldSession.restart()
-	CClient.sendReliable(GMessage.Type.WorldSessionRestart)
+	return CClient.sendReliable(GMessage.Type.WorldSessionRestart)
 end
 
+--- @return boolean
 function CWorldSession.finish()
-	CClient.sendReliable(GMessage.Type.WorldSessionFinish)
+	return CClient.sendReliable(GMessage.Type.WorldSessionFinish)
 end
 
-local WorldSession_pause = CWorldSession.pause
-
+--- @return boolean
 function CWorldSession.pause()
-	CClient.sendReliable(GMessage.Type.WorldSessionPause)
+	return CClient.sendReliable(GMessage.Type.WorldSessionPause)
 end
 
+--- @return boolean
 function CWorldSession.unpause()
-	CClient.sendReliable(GMessage.Type.WorldSessionUnpause)
+	return CClient.sendReliable(GMessage.Type.WorldSessionUnpause)
 end
 
 CWorldSession.eventCWorldSessionStart = events:new(N_("CWorldSessionStart"), {
+	"Reset",
 	"Level",
 	"Rooms",
 })
 
 CWorldSession.eventCWorldSessionFinish = events:new(N_("CWorldSessionFinish"), {
-	"Level",
 	"Rooms",
+	"Level",
+	"Reset",
+})
+
+CWorldSession.eventCWorldSessionRestart = events:new(N_("CWorldSessionRestart"), {
+	"", -- TODO
 })
 
 CWorldSession.eventCWorldSessionPause = events:new(N_("CWorldSessionPause"), {
@@ -60,18 +70,46 @@ CWorldSession.eventCWorldSessionUnpause = events:new(N_("CWorldSessionUnpause"),
 })
 
 events:add(N_("CMessage"), function(e)
-	for _, entry in ipairs(e.content.attributes) do
-		CWorldSession.setAttribute(entry[1], entry[2])
-	end
+	if not e.suppressed then
+		CWorldSession.setAttributes(e.content.attributes)
 
-	events:invoke(CWorldSession.eventCWorldSessionStart, {})
+		events:invoke(CWorldSession.eventCWorldSessionStart, {})
+	elseif log.canWarn() then
+		log.warn(("Cannot start world session: "):format(e.suppressed))
+	end
 end, "StartWorldSession", "Receive", GMessage.Type.WorldSessionStart)
 
 events:add(N_("CMessage"), function(e)
-	CWorldSession.resetAttributes()
+	if not e.suppressed then
+		CWorldSession.resetAttributes()
 
-	events:invoke(CWorldSession.eventCWorldSessionFinish, {})
-end, "FinishWorldSession", "Receive", GMessage.Type.WorldSessionPause)
+		events:invoke(CWorldSession.eventCWorldSessionFinish, {})
+	elseif log.canWarn() then
+		log.warn(("Cannot finish world session: "):format(e.suppressed))
+	end
+end, "FinishWorldSession", "Receive", GMessage.Type.WorldSessionFinish)
+
+events:add(N_("CMessage"), function(e)
+	local internal = CWorldSession.getAttribute(GWorldSession.Attribute.Internal)
+	if internal.state == GWorldSession.State.Playing then
+		internal.state = GWorldSession.State.Paused
+		internal.pausedTime = e.content
+
+		events:invoke(CWorldSession.eventCWorldSessionPause)
+	end
+end, "PauseWorldSession", "Receive", GMessage.Type.WorldSessionPause)
+
+events:add(N_("CMessage"), function(e)
+	local internal = CWorldSession.getAttribute(GWorldSession.Attribute.Internal)
+	if internal.state == GWorldSession.State.Paused then
+		print("Unpause")
+
+		internal.state = GWorldSession.State.Paused
+		internal.elapsedPaused = internal.elapsedPaused + e.content - internal.timePaused
+
+		events:invoke(CWorldSession.eventCWorldSessionUnpause)
+	end
+end, "UnpauseWorldSession", "Receive", GMessage.Type.WorldSessionUnpause)
 
 --- @param e Events.E.DebugCommand
 events:add("DebugProvide", function(e)
@@ -79,7 +117,13 @@ events:add("DebugProvide", function(e)
 		name = "startWorldSession",
 		help = "startWorldSession [args]",
 		func = function(arg)
-			local success, result = pcall(json.decode, arg)
+			local success, result
+			if arg ~= "" then
+				success, result = pcall(json.decode, arg)
+			else
+				success, result = true, {}
+			end
+
 			if success then
 				CWorldSession.start(result)
 				return { "Sent start world session request to server", EDebugConsoleCode.Success }

@@ -11,11 +11,12 @@
 
 local Enum = require("tudov.Enum")
 
---- @alias dr2c.PlatformType dr2c.GPlatform.Type
+--- @alias dr2c.PlatformType dr2c.GNetworkPlatform.Type
 
-local GPlatform = {}
+--- @class dr2c.GNetworkPlatform
+local GNetworkPlatform = {}
 
-GPlatform.Type = Enum.sequence({
+GNetworkPlatform.Type = Enum.sequence({
 	Standalone = 0,
 	ItchIO = 1,
 	Steam = 2,
@@ -24,8 +25,8 @@ GPlatform.Type = Enum.sequence({
 })
 
 --- @return dr2c.PlatformType
-function GPlatform.getPlatformType()
-	return GPlatform.Type.Standalone
+function GNetworkPlatform.getPlatformType()
+	return GNetworkPlatform.Type.Standalone
 end
 
-return GPlatform
+return GNetworkPlatform

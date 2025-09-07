@@ -25,7 +25,8 @@ namespace tudov
 	class Engine;
 
 	/**
-	 * A lua api binding class.
+	 * Interface Class
+	 * Provide lua bindings to engine.
 	 */
 	struct ILuaAPI
 	{
@@ -34,9 +35,9 @@ namespace tudov
 		virtual ~ILuaAPI() noexcept = default;
 
 		virtual bool RegisterInstallation(std::string_view key, const TInstallation &installation) = 0;
-		
+
 		virtual void Install(sol::state &lua, Context &context) = 0;
-		
+
 		virtual const std::vector<std::string_view> &GetModGlobalsMigration() const noexcept = 0;
 	};
 

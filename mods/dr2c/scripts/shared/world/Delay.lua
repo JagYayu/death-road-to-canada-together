@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.GUI
+-- @module dr2c.shared.world.Delay
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -9,13 +9,14 @@
 --
 --]]
 
---- @class dr2c.CGUI
-local CGUI = {}
+local GWorldDelay = {}
 
-local canvases = {}
-
-function CGUI.draw()
+function GWorldDelay.register()
 	--
 end
 
-return CGUI
+function GWorldDelay.invoke()
+	
+end
+
+return GWorldDelay

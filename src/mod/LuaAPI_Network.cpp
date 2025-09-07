@@ -9,9 +9,9 @@
  *
  */
 
-#include "event/CoreEventsData.hpp"
-
 #include "mod/LuaAPI.hpp"
+
+#include "event/CoreEventsData.hpp"
 #include "network/ClientSession.hpp"
 #include "network/ClientSessionState.hpp"
 #include "network/DisconnectionCode.hpp"
@@ -163,8 +163,13 @@ void LuaAPI::InstallNetwork(sol::state &lua, Context &context) noexcept
 	            "shutdown", &IServerSession::Shutdown);
 
 	TE_USERTYPE(NetworkManager,
+	            "clientConnectRUDP", &NetworkManager::LuaClientConnectRUDP,
+	            "clientDisconnect", &NetworkManager::LuaClientDisconnect,
 	            "getClient", &NetworkManager::LuaGetClient,
-	            "getServer", &NetworkManager::LuaGetServer);
+	            "getServer", &NetworkManager::LuaGetServer,
+	            "serverHostRUDP", &NetworkManager::LuaServerHostRUDP,
+	            "serverShutdown", &NetworkManager::LuaServerShutdown,
+	            "update", &NetworkManager::Update);
 
 	lua["network"] = &dynamic_cast<NetworkManager &>(context.GetNetworkManager());
 }

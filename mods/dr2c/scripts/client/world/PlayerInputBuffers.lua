@@ -27,13 +27,16 @@ events:add(N_("CClientAdded"), function(e)
 	CPlayerInputBuffers.addPlayer(e.clientID)
 end, "AddPlayerToPlayerInputBuffers", "PlayerInputBuffer")
 
---- @param e dr2c.E.ClientMessage
+--- @param e dr2c.E.CMessage
 events:add(N_("CMessage"), function(e)
 	local playerID = e.content.playerID
-	local playerInputs = e.content.playerInputs
-	local worldTick = e.content.worldTick
 
-	CPlayerInputBuffers.setInputs(playerID, worldTick, playerInputs)
+	if CPlayerInputBuffers.hasPlayer(playerID) then
+		local playerInputs = e.content.playerInputs
+		local worldTick = e.content.worldTick
+
+		CPlayerInputBuffers.setInputs(playerID, worldTick, playerInputs)
+	end
 end, "ReceivePlayerInput", "Receive", GMessage.Type.PlayerInputs)
 
 events:add(N_("CConnect"), function(e)

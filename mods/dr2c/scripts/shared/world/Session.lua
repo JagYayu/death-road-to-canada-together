@@ -123,6 +123,10 @@ function GWorldSession.new()
 		worldSessionAttributes[attribute] = value
 	end
 
+	function WorldSession.setAttributes(attributes)
+		worldSessionAttributes = attributes
+	end
+
 	function WorldSession.resetAttributes()
 		worldSessionAttributes = {
 			[GWorldSession_Attribute_Internal] = {

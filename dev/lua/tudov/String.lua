@@ -95,14 +95,16 @@ end
 --- @param prefix string
 --- @return boolean
 function String.hasPrefix(str, prefix)
-	return str:sub(1, #prefix) == prefix
+	local len = #prefix
+	return str:sub(1, len) == len
 end
 
 --- @param str string
 --- @param suffix string
 --- @return boolean
 function String.hasSuffix(str, suffix)
-	return str:sub(-#suffix) == suffix
+	local len = #suffix
+	return str:sub(-len) == len
 end
 
 --- @param str1 string

@@ -1,6 +1,10 @@
 --- @class dr2c.TestSynchrony
 local TestSynchrony = {}
 
+local drawTextArgs = DrawTextArgs()
+
+drawTextArgs.font = fonts:getID("app/fonts/Silver.ttf")
+
 function TestSynchrony.enable()
 	local Function = require("tudov.Function")
 	local Math = require("tudov.Math")
@@ -18,38 +22,53 @@ function TestSynchrony.enable()
 		"GameObject",
 	})
 
-	events:add(N_("CRender"), function(e)
+	local i = 0
+
+	--- @param e dr2c.E.ClientRender
+	events:add(N_("CRenderCamera"), function(e)
 		local renderer = e.renderer
 
-		local y = 50
+		i = i + 1
+		drawTextArgs.x = -40
+		drawTextArgs.y = 60
+		drawTextArgs.characterScale = 1
+		drawTextArgs.maxWidth = 0
 
 		local function drawLine(text)
-			renderer:drawDebugText(0, y, text)
-			y = y + 10
+			drawTextArgs.text = text
+
+			local x, y, w, h = renderer:drawText(drawTextArgs)
+
+			-- drawTextArgs.x = drawTextArgs.x + w
+			drawTextArgs.y = drawTextArgs.y + h + 2
 		end
 
-		local clientSnapshots = CWorldSnapshot.getAll()
+		drawLine("Hello world")
+		drawLine("你好世界")
+		drawLine("abcdefg")
 
-		do
-			local totalID = #clientSnapshots
-			local firstID = clientSnapshots.first
+		-- local clientSnapshots = CWorldSnapshot.getAll()
 
-			drawLine(
-				("Client snapshots: %s, first=%s, last=%s"):format(
-					totalID,
-					firstID,
-					firstID and (firstID + totalID - 1) or "nil"
-				)
-			)
-		end
+		-- do
+		-- 	local totalID = #clientSnapshots
+		-- 	local firstID = clientSnapshots.first
 
-		drawLine("Clock " .. CNetworkClock.getTime())
+		-- 	drawLine(
+		-- 		("Client snapshots: %s, first=%s, last=%s"):format(
+		-- 			totalID,
+		-- 			firstID,
+		-- 			firstID and (firstID + totalID - 1) or "nil"
+		-- 		)
+		-- 	)
+		-- end
 
-		for index, id, typeID in CECS.iterateEntities(filter) do
-			local gameObject = CECS.getComponent(id, "GameObject")
+		-- drawLine("Clock " .. CNetworkClock.getTime())
 
-			drawLine(("entity %s position: x=%s, y=%s"):format(id, gameObject.x, gameObject.y))
-		end
+		-- for index, id, typeID in CECS.iterateEntities(filter) do
+		-- 	local gameObject = CECS.getComponent(id, "GameObject")
+
+		-- 	drawLine(("entity %s position: x=%s, y=%s"):format(id, gameObject.x, gameObject.y))
+		-- end
 	end, "TestSynchronyInfo", "Debug")
 
 	events:add(N_("CWorldTickProcess"), function(e)

@@ -25,9 +25,9 @@ void ImageResources::UninstallFromScriptEngine(std::string_view name, ScriptEngi
 {
 }
 
-ImageID ImageResources::LuaGetID(const std::string_view &image) noexcept
+ImageID ImageResources::LuaGetID(std::string_view image) noexcept
 {
-	return GetResourceID(std::string_view(image));
+	return GetResourceID(image);
 }
 
 std::string_view ImageResources::LuaGetPath(ImageID id) noexcept

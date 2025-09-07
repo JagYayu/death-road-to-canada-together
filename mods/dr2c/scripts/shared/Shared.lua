@@ -39,6 +39,8 @@ GCycle.eventGKeyUp = events:new(N_("GKeyUp"), CommonOrders)
 events:add("TickUpdate", function(e)
 	tick = tick + 1
 
+	network:update()
+
 	events:invoke(GCycle.eventGUpdate, e, nil, EEventInvocation.None)
 end, N_("GameUpdate"))
 

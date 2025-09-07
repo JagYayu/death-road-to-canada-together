@@ -19,8 +19,6 @@ error("this is a lua library module")
 --- @field [3] number
 --- @field [4] number
 
---- @class ImageID : integer
-
 --- *Mod Scope*
 --- Insert prefix of current script's namespace at the start of `str`.
 --- e.g. `N_("HelloWorld")` --> `"dr2c_HelloWorld"`

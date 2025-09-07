@@ -22,7 +22,6 @@
 #include "mod/LuaAPI.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptErrors.hpp"
-#include "network/NetworkManager.hpp"
 #include "program/Context.hpp"
 #include "program/EngineComponent.hpp"
 #include "program/EngineData.hpp"
@@ -86,7 +85,8 @@ void Engine::LoadingThread() noexcept
 			if (ELoadingState expected = ELoadingState::Pending; _loadingState.compare_exchange_strong(expected, ELoadingState::InProgress))
 			{
 				_loadingMutex.unlock();
-				TE_TRACE("{}", "Process background loading");
+
+				TE_TRACE("Process background loading");
 
 				args.title = "Background Loading";
 				args.description = "Please wait.";
@@ -198,7 +198,6 @@ bool Engine::Tick() noexcept
 	_framerate = 1'000'000'000.0 / (beginNS - _previousTick);
 	_previousTick = beginNS;
 
-	// if (ELoadingState expected = ELoadingState::Done; _loadingState.compare_exchange_strong(expected, ELoadingState::Pending))
 	if (_loadingState.load() == ELoadingState::Done)
 	{
 		// recording background loading ticks.
@@ -254,8 +253,6 @@ void Engine::ProcessLoad() noexcept
 
 void Engine::ProcessTick() noexcept
 {
-	_data->_networkManager->Update();
-
 	if (!_data->_scriptErrors->HasLoadtimeError())
 	{
 		_data->_eventManager->GetCoreEvents().TickUpdate().Invoke();

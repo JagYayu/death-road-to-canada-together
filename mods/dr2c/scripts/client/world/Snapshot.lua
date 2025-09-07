@@ -187,7 +187,7 @@ function CWorldSnapshot.deliver()
 	-- CClient.sendReliable(GMessage.Type.Snapshot, clientSnapshots)
 end
 
---- @param e dr2c.E.ClientMessage
+--- @param e dr2c.E.CMessage
 events:add(N_("CMessage"), function(e)
 	if hasServer then
 		CWorldSnapshot.dropBackward(e.content.snapshotID)
@@ -279,6 +279,10 @@ end
 events:add(N_("CConnect"), resetSnapshots, N_("ResetSnapshot"), "Reset")
 
 events:add(N_("CDisconnect"), resetSnapshots, N_("ResetSnapshot"), "Reset")
+
+events:add(N_("CWorldSessionStart"), resetSnapshots, "ResetSnapshots", "Reset")
+
+events:add(N_("CWorldSessionFinish"), resetSnapshots, "ResetSnapshots", "Reset")
 
 events:add(N_("CWorldTickProcess"), function(e)
 	-- Save snapshot every tick

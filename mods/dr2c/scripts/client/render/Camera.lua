@@ -37,8 +37,8 @@ function Camera.getTargetCenterPosition()
 end
 
 local renderTarget
-local renderTargetWidth = 960
-local renderTargetHeight = 640
+local renderTargetWidth = 960 * .5
+local renderTargetHeight = 640 * .5
 
 function Camera.getRenderTarget()
 	return renderTarget
@@ -51,6 +51,7 @@ local eventRenderCamera = events:new(N_("CRenderCamera"), {
 	"Tilemap",
 	"Sprites",
 	"DebugObjects",
+	"Debug",
 	"End",
 })
 

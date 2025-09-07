@@ -310,14 +310,16 @@ function Table.listSortAndRemoveDuplications(list, comp)
 end
 
 --- @generic T
+--- @generic TArgs
 --- @param list T[]
---- @param func fun(value: T, index: integer): boolean
+--- @param func fun(value: T, index: integer, ...: TArgs): boolean
+--- @param ... TArgs
 --- @return T[] list
-function Table.listRemoveIf(list, func)
+function Table.listRemoveIf(list, func, ...)
 	local l, r = 1, 1
 
 	while #list >= r do
-		if func(list[r], r) then
+		if func(list[r], r, ...) then
 			list[r] = nil
 		else
 			if l ~= r then

@@ -11,7 +11,8 @@
 
 #include "graphic/Renderer.hpp"
 
-#include "SDL3/SDL_oldnames.h"
+#include "data/VirtualFileSystem.hpp"
+#include "graphic/DrawArgs.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/VSyncMode.hpp"
 #include "program/Engine.hpp"
@@ -21,12 +22,15 @@
 #include "system/LogMicros.hpp"
 
 #include "SDL3/SDL_error.h"
+#include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
+#include "SDL3/SDL_surface.h"
 #include "SDL3_ttf/SDL_ttf.h"
 #include "sol/forward.hpp"
 #include "sol/table.hpp"
+#include "util/Utils.hpp"
 
 #include <cmath>
 #include <memory>
@@ -117,13 +121,13 @@ std::shared_ptr<Texture> Renderer::GetOrCreateImageTexture(ImageID imageID)
 	{
 		textureID = it->second;
 	}
-	else
+	else [[unlikely]]
 	{
 		auto &&imageResources = _window.GetGlobalResourcesCollection().GetImageResources();
 		auto &&image = imageResources.GetResource(imageID);
 		if (!image)
 		{
-			image = imageResources.GetResource(imageResources.GetResourceID("app/gfx/PlaceHolder.png"));
+			image = imageResources.GetResource(imageResources.GetResourceID("app/gfx/Placeholder.png"));
 		}
 
 		std::string_view path = imageResources.GetResourcePath(imageID);
@@ -180,11 +184,11 @@ bool Renderer::SetVSync(EVSyncMode value) noexcept
 	return SDL_SetRenderVSync(_sdlRenderer, std::int32_t(value));
 }
 
-SDL_FRect Renderer::ApplyTransform(const SDL_FRect &rect) noexcept
+void Renderer::ApplyTransform(SDL_FRect &rect) noexcept
 {
 	if (_renderTargets.empty())
 	{
-		return rect;
+		return;
 	}
 
 	auto &renderTarget = _renderTargets.top();
@@ -193,18 +197,23 @@ SDL_FRect Renderer::ApplyTransform(const SDL_FRect &rect) noexcept
 	std::float_t scaleX = renderTarget->_cameraScaleX;
 	std::float_t scaleY = renderTarget->_cameraScaleY;
 
-	return {
-	    .x = ((rect.x - x) * scaleX) + _window.GetWidth() * 0.5f,
-	    .y = ((rect.y - y) * scaleY) + _window.GetHeight() * 0.5f,
-	    .w = (rect.w * scaleX),
-	    .h = (rect.h * scaleY),
-	};
+	rect.x = ((rect.x - x) * scaleX) + _window.GetWidth() * 0.5f;
+	rect.y = ((rect.y - y) * scaleY) + _window.GetHeight() * 0.5f;
+	rect.w = (rect.w * scaleX);
+	rect.h = (rect.h * scaleY);
 }
 
-void Renderer::Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &dst, const SDL_FRect &src)
+void Renderer::Draw(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src)
 {
-	SDL_FRect tDst = ApplyTransform(dst);
-	if (!SDL_RenderTexture(_sdlRenderer, texture->GetSDLTextureHandle(), &src, &tDst)) [[unlikely]]
+	SDL_FRect dst_{dst};
+	ApplyTransform(dst_);
+
+	if (texture == nullptr)
+	{
+		texture = GetOrCreateImageTexture(0).get();
+	}
+
+	if (!SDL_RenderTexture(_sdlRenderer, texture->GetSDLTextureHandle(), src, &dst_)) [[unlikely]]
 	{
 		throw std::runtime_error(SDL_GetError());
 	}
@@ -212,10 +221,59 @@ void Renderer::Draw(const std::shared_ptr<Texture> &texture, const SDL_FRect &ds
 
 void Renderer::DrawDebugText(std::float_t x, std::float_t y, std::string_view text, SDL_Color color)
 {
-	if (!SDL_SetRenderDrawColor(_sdlRenderer, color.r, color.g, color.b, color.a) || !SDL_RenderDebugText(_sdlRenderer, x, y, text.data())) [[unlikely]]
+	// TODO
+}
+
+SDL_FRect Renderer::DrawText(DrawTextArgs *args)
+{
+	SDL_Texture *sdlTexture;
 	{
-		throw std::runtime_error(SDL_GetError());
+		const std::shared_ptr<Font> &font = GetGlobalResourcesCollection().GetFontResources().GetResource(args->font);
+		if (font == nullptr) [[unlikely]]
+		{
+			throw std::runtime_error("Invalid font");
+		}
+
+		sdlTexture = font->GetTextTexture(_sdlRenderer, 20.0F * args->characterScale, args->text, args->maxWidth);
 	}
+
+	std::float_t w = static_cast<std::float_t>(sdlTexture->w) * args->scale;
+	std::float_t h = static_cast<std::float_t>(sdlTexture->h) * args->scale;
+	SDL_FRect dst = {
+	    args->x,
+	    args->y,
+	    w,
+	    h,
+	};
+	ApplyTransform(dst);
+
+	if (args->backgroundColor.a != 0)
+	{
+		SDL_SetRenderDrawColor(_sdlRenderer, args->backgroundColor.r, args->backgroundColor.g, args->backgroundColor.b, args->backgroundColor.a);
+		SDL_RenderTexture(_sdlRenderer, GetOrCreateImageTexture(0)->GetSDLTextureHandle(), nullptr, &dst);
+	}
+
+	if (args->shadow != 0 && args->shadowColor.a != 0)
+	{
+		dst.x += args->shadow;
+		dst.y += args->shadow;
+
+		SDL_SetRenderDrawColor(_sdlRenderer, args->shadowColor.r, args->shadowColor.g, args->shadowColor.b, args->shadowColor.a);
+		SDL_RenderTexture(_sdlRenderer, sdlTexture, nullptr, &dst);
+
+		dst.x -= args->shadow;
+		dst.y -= args->shadow;
+	}
+
+	SDL_SetRenderDrawColor(_sdlRenderer, args->color.r, args->color.g, args->color.b, args->color.a);
+	SDL_RenderTexture(_sdlRenderer, sdlTexture, nullptr, &dst);
+
+	return {
+	    args->x,
+	    args->y,
+	    w,
+	    h,
+	};
 }
 
 void Renderer::LuaDraw(sol::table args)
@@ -242,28 +300,24 @@ void Renderer::LuaDraw(sol::table args)
 			rectDst.h = t.get_or<std::float_t>(4, 0);
 		}
 
-		SDL_FRect rectSrc;
+		auto source = args["source"].get<sol::object>();
+		if (source.valid())
 		{
-			auto source = args["source"].get<sol::object>();
-			auto [tw, th] = texture->GetSize();
-			if (source.valid())
-			{
-				auto t = source.as<sol::table>();
-				rectSrc.x = t.get_or<std::float_t>(1, 0);
-				rectSrc.y = t.get_or<std::float_t>(2, 0);
-				rectSrc.w = t.get_or<std::float_t>(3, tw);
-				rectSrc.h = t.get_or<std::float_t>(4, th);
-			}
-			else
-			{
-				rectSrc.x = 0;
-				rectSrc.y = 0;
-				rectSrc.w = tw;
-				rectSrc.h = th;
-			}
-		}
+			SDL_FRect rectSrc;
 
-		Draw(texture, rectDst, rectSrc);
+			auto t = source.as<sol::table>();
+			auto [tw, th] = texture->GetSize();
+			rectSrc.x = t.get_or<std::float_t>(1, 0);
+			rectSrc.y = t.get_or<std::float_t>(2, 0);
+			rectSrc.w = t.get_or<std::float_t>(3, tw);
+			rectSrc.h = t.get_or<std::float_t>(4, th);
+
+			Draw(texture.get(), rectDst, &rectSrc);
+		}
+		else
+		{
+			Draw(texture.get(), rectDst);
+		}
 	}
 	catch (std::exception &e)
 	{
@@ -276,6 +330,25 @@ void Renderer::LuaDrawDebugText(std::double_t x, std::double_t y, sol::string_vi
 	try
 	{
 		DrawDebugText(x, y, text);
+	}
+	catch (std::exception &e)
+	{
+		GetScriptEngine().ThrowError("C++ exception in `Renderer::DrawDebugText`: {}", e.what());
+	}
+}
+
+std::tuple<std::float_t, std::float_t, std::float_t, std::float_t> Renderer::LuaDrawText(sol::object args) noexcept
+{
+	try
+	{
+		if (!args.is<DrawTextArgs>()) [[unlikely]]
+		{
+			GetScriptEngine().ThrowError("Bad argument to #1 'args': userdata `DrawTextArgs` expected got {}", GetLuaTypeStringView(args.get_type()));
+		}
+
+		auto &args_ = args.as<DrawTextArgs>();
+		SDL_FRect rect = DrawText(&args_);
+		return std::make_tuple(rect.x, rect.y, rect.w, rect.h);
 	}
 	catch (std::exception &e)
 	{

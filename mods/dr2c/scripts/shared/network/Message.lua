@@ -12,6 +12,8 @@
 local String = require("tudov.String")
 local Enum = require("tudov.Enum")
 
+--- @alias dr2c.NetworkMessageChannel dr2c.GNetworkMessage.Channel
+
 --- @alias dr2c.NetworkMessageType dr2c.GNetworkMessage.Type
 
 --- @class dr2c.GNetworkMessage
@@ -40,7 +42,7 @@ GNetworkMessage.Type = Enum.sequence({
 	Clock = 8,
 	--- [Client <-> Server]
 	PlayerInputs = 9,
-	--- [Client ==> Server]
+	--- [Client <-> Server]
 	SnapshotRequest = 10,
 	--- [Server ==> Client]
 	SnapshotResponse = 11,

@@ -18,7 +18,7 @@ local eventRenderUI = events:new(N_("CRenderUI"), {
 --- @type RenderTarget
 local renderTarget
 
-local imageID = images:getID("gfx/cars/cars_unique_110x96.png")
+local imageID = fonts:getID("gfx/cars/cars_unique_110x96.png")
 
 --- @param e dr2c.E.ClientRender
 events:add(N_("CRender"), function(e)

@@ -39,6 +39,20 @@ ESocketType = {
 --- @class Network
 network = {}
 
+--- @class Network.ClientConnectRUDPArgs
+--- @field host string
+--- @field port integer
+--- @field slot integer?
+
+--- @param args Network.ClientConnectRUDPArgs
+function network:clientConnectRUDP(args) end
+
+--- @class Network.ClientDisconnectArgs
+--- @field slot integer
+
+--- @param args Network.ClientDisconnectArgs
+function network:clientDisconnect(args) end
+
 --- @param clientSessionSlot integer?
 --- @return Network.Client
 function network:getClient(clientSessionSlot) end
@@ -46,6 +60,23 @@ function network:getClient(clientSessionSlot) end
 --- @param serverSessionSlot integer?
 --- @return Network.Server?
 function network:getServer(serverSessionSlot) end
+
+--- @class Network.ServerHostRUDPArgs
+--- @field host string
+--- @field port integer
+--- @field slot integer?
+
+--- @param args Network.ServerHostRUDPArgs
+function network:serverHostRUDP(args) end
+
+--- @class Network.ServerShutdownArgs
+--- @field slot integer
+
+--- @param args Network.ServerShutdownArgs
+function network:serverShutdown(args) end
+
+--- @return boolean updated
+function network:update() end
 
 --- @class Network.ClientConnectArgs
 --- @field password string
