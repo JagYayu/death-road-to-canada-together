@@ -15,6 +15,8 @@ local GMessage = require("dr2c.shared.network.Message")
 --- @class dr2c.CRollback
 local CRollback = {}
 
+local rollbackPending
+
 local eventClientWorldRollback = events:new(N_("CWorldRollback"), {
 	"Snapshot",
 	"Tick",
@@ -35,9 +37,24 @@ end
 
 --- @param e dr2c.E.CMessage
 events:add(N_("CMessage"), function(e)
-	CRollback.apply(e.content.worldTick)
-end, "ApplyWorldRollback", "Rollback", GMessage.Type.PlayerInputs)
+	local worldTick = e.content.worldTick
+	if not worldTick then
+		return
+	end
 
--- events:add(N_(""), func, name?, order?, key?, sequence?)
+	if rollbackPending then
+		rollbackPending = math.min(rollbackPending, worldTick)
+	else
+		rollbackPending = worldTick
+	end
+end, "RollbackPending", "Rollback", GMessage.Type.PlayerInputs)
+
+events:add(N_("CUpdate"), function(e)
+	if rollbackPending then
+		CRollback.apply(rollbackPending)
+
+		rollbackPending = nil
+	end
+end, "ApplyRollback", "Rollback")
 
 return CRollback

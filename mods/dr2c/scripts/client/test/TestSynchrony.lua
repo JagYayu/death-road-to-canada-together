@@ -3,7 +3,7 @@ local TestSynchrony = {}
 
 local drawTextArgs = DrawTextArgs()
 
-drawTextArgs.font = fonts:getID("app/fonts/Silver.ttf")
+drawTextArgs.font = fonts:getID("mods/dr2c/fonts/Silver.ttf")
 
 function TestSynchrony.enable()
 	local Function = require("tudov.Function")
@@ -24,28 +24,25 @@ function TestSynchrony.enable()
 
 	local i = 0
 
-	--- @param e dr2c.E.ClientRender
+	--- @param e dr2c.E.CRender
 	events:add(N_("CRenderCamera"), function(e)
 		local renderer = e.renderer
 
 		i = i + 1
-		drawTextArgs.x = -40
+		drawTextArgs.x = -100
 		drawTextArgs.y = 60
-		drawTextArgs.characterScale = 1
-		drawTextArgs.maxWidth = 0
 
 		local function drawLine(text)
 			drawTextArgs.text = text
 
 			local x, y, w, h = renderer:drawText(drawTextArgs)
 
-			-- drawTextArgs.x = drawTextArgs.x + w
 			drawTextArgs.y = drawTextArgs.y + h + 2
 		end
 
 		drawLine("Hello world")
 		drawLine("你好世界")
-		drawLine("abcdefg")
+		drawLine("Death Road to Canada")
 
 		-- local clientSnapshots = CWorldSnapshot.getAll()
 

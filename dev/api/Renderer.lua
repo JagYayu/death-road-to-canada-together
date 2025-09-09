@@ -1,6 +1,18 @@
 --- @meta
 error("this is a lua library module")
 
+--- @class Texture
+
+--- @alias TextureArg Image | ImageID | RenderTarget
+
+--- @class DrawRectArgs
+--- @field texture TextureArg?
+--- @field destination RectangleF
+--- @field source RectangleF?
+--- @field color Color?
+--- @field angle number?
+--- @field origin Vector?
+
 --- @class DrawTextArgs : userdata
 --- @field text string?
 --- @field font number?
@@ -12,13 +24,11 @@ error("this is a lua library module")
 --- @field alignY number?
 --- @field maxWidth number?
 
+--- @return DrawRectArgs
+function DrawRectArgs() end
+
 --- @return DrawTextArgs
 function DrawTextArgs() end
-
---- @class RenderTarget : userdata
-local renderTarget = {}
-
--- function renderTarget.() end
 
 --- @class Renderer : userdata
 local renderer = {}
@@ -31,13 +41,16 @@ function renderer:endTarget() end
 
 function renderer:clear() end
 
+--- @return RenderBuffer
+function renderer:newRenderBuffer() end
+
 --- @param width integer
 --- @param height integer
 --- @return RenderTarget
 function renderer:newRenderTarget(width, height) end
 
 --- @param args table
-function renderer:draw(args) end
+function renderer:drawRect(args) end
 
 --- @param x number
 --- @param y number
@@ -45,4 +58,8 @@ function renderer:draw(args) end
 function renderer:drawDebugText(x, y, text) end
 
 --- @param args DrawTextArgs
+--- @return number x
+--- @return number y
+--- @return number w
+--- @return number h
 function renderer:drawText(args) end

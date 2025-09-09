@@ -14,8 +14,9 @@ local CGUI = {}
 
 local canvases = {}
 
-function CGUI.draw()
-	--
+local currentID = 0
+
+function CGUI.button()
 end
 
 return CGUI

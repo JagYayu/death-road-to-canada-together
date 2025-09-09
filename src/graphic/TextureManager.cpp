@@ -23,7 +23,7 @@ TextureManager::TextureManager() noexcept
 std::shared_ptr<Texture> TextureManager::GetTexture(TextureID textureID) noexcept
 {
 	auto it = _textures.find(textureID);
-	if (it == _textures.end())
+	if (it == _textures.end()) [[unlikely]]
 	{
 		return nullptr;
 	}

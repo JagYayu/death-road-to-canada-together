@@ -208,6 +208,7 @@ local function postProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals)
 		modGlobals.load = luaGlobals.load
 		modGlobals.loadfile = luaGlobals.loadfile
 		modGlobals.loadstring = luaGlobals.loadstring
+		modGlobals.newproxy = luaGlobals.newproxy
 		modGlobals.os = luaGlobals.os
 		modGlobals.package = luaGlobals.package
 		modGlobals.setfenv = luaGlobals.setfenv

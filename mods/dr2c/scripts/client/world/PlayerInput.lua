@@ -17,8 +17,10 @@ local CSystemInput = require("dr2c.client.system.Input")
 local CWorldPlayerInputBuffers = require("dr2c.client.world.PlayerInputBuffers")
 local CNetworkPlayers = require("dr2c.client.network.Players")
 local CNetworkClient = require("dr2c.client.network.Client")
+local CWorldSession = require("dr2c.client.world.Session")
 local GNetworkMessage = require("dr2c.shared.network.Message")
 local GWorldPlayerInput = require("dr2c.shared.world.PlayerInput")
+local GWorldSession = require("dr2c.shared.world.Session")
 
 --- @class dr2c.CPlayerInput
 local CPlayerInput = {}
@@ -80,6 +82,10 @@ end
 events:add(N_("CUpdate"), function(e)
 	local nextWorldTick = CWorldTick.getCurrentTick() + 1
 	if nextWorldTick <= 0 then
+		return
+	end
+
+	if CWorldSession.getState() == GWorldSession.State.Inactive then
 		return
 	end
 

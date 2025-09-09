@@ -55,7 +55,9 @@ local eventRenderCamera = events:new(N_("CRenderCamera"), {
 	"End",
 })
 
---- @param e dr2c.E.ClientRender
+local drawRectArgs = DrawRectArgs()
+
+--- @param e dr2c.E.CRender
 events:add(N_("CRender"), function(e)
 	local snapScale
 	local renderer = e.renderer
@@ -82,23 +84,23 @@ events:add(N_("CRender"), function(e)
 
 	events:invoke(eventRenderCamera, e)
 
+	drawRectArgs.texture = imageID
+
 	for x = -1, 2 do
-		renderer:draw({
-			image = imageID,
-			destination = { x * 100, x * 100, 80, 57 },
-			source = { 14, 302, 80, 57 },
-		})
+		drawRectArgs.destination = { x = x * 100, y = x * 100, w = 80, h = 57 }
+		drawRectArgs.source = { x = 14, y = 302, w = 80, h = 57 }
+		renderer:drawRect(drawRectArgs)
 	end
 
-	renderer:draw({
-		renderTarget = renderer:endTarget(),
-		destination = {
-			0,
-			0,
-			width,
-			height,
-		},
-	})
+	drawRectArgs.texture = renderer:endTarget()
+	drawRectArgs.destination = {
+		x = 0,
+		y = 0,
+		w = width,
+		h = height,
+	}
+	drawRectArgs.source = nil
+	renderer:drawRect(drawRectArgs)
 end, N_("RenderCamera"), "Camera")
 
 return Camera

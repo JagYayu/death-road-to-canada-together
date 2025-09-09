@@ -36,8 +36,8 @@ namespace tudov::impl
 		static constexpr size_t Dimension = N;
 
 		template <typename... TArgs>
-		inline constexpr explicit VectorImpl(Args &&...args) noexcept
-		    : VectorData<N, T>(std::forward<Args>(args)...)
+		inline constexpr explicit VectorImpl(TArgs &&...args) noexcept
+		    : VectorData<N, T>(std::forward<TArgs>(args)...)
 		{
 		}
 
@@ -304,8 +304,8 @@ namespace tudov::impl
 		};
 
 		template <typename... TArgs>
-		inline constexpr explicit VectorData(Args &&...args) noexcept
-		    : array(std::forward<Args>(args)...){};
+		inline constexpr explicit VectorData(TArgs &&...args) noexcept
+		    : array({std::forward<TArgs>(args)...}){};
 
 		inline constexpr explicit VectorData(T x, T y) noexcept
 		    : array({x, y}) {};
@@ -324,8 +324,8 @@ namespace tudov::impl
 		};
 
 		template <typename... TArgs>
-		inline constexpr explicit VectorData(Args &&...args) noexcept
-		    : array(std::forward<Args>(args)...){};
+		inline constexpr explicit VectorData(TArgs &&...args) noexcept
+		    : array({std::forward<TArgs>(args)...}){};
 
 		inline constexpr explicit VectorData(T x, T y, T z) noexcept
 		    : array({x, y, z}) {};
@@ -344,8 +344,8 @@ namespace tudov::impl
 		};
 
 		template <typename... TArgs>
-		inline constexpr explicit VectorData(Args &&...args) noexcept
-		    : array(std::forward<Args>(args)...){};
+		inline constexpr explicit VectorData(TArgs &&...args) noexcept
+		    : array({std::forward<TArgs>(args)...}){};
 
 		inline constexpr explicit VectorData(T x, T y, T z, T w) noexcept
 		    : array({x, y, z, w}) {};
@@ -357,28 +357,24 @@ namespace tudov
 	template <size_t Dimension, typename TValue>
 	struct Vector : public impl::VectorImpl<Dimension, TValue>
 	{
-		constexpr explicit Vector() noexcept = default;
-
 		template <typename... TArgs>
-		inline constexpr explicit Vector(Args &&...args) noexcept
-		    : impl::VectorImpl<Dimension, TValue>(std::forward<Args>(args)...)
+		inline constexpr explicit Vector(TArgs &&...args) noexcept
+		    : impl::VectorImpl<Dimension, TValue>({std::forward<TArgs>(args)...})
 		{
-			static_assert(sizeof...(Args) == Dimension, "Number of arguments must match vector dimension");
-			static_assert((std::is_same_v<std::decay_t<Args>, TValue> && ...), "All arguments must be of type TValue");
+			static_assert(sizeof...(TArgs) == Dimension, "Number of arguments must match vector dimension");
+			static_assert((std::is_same_v<std::decay_t<TArgs>, TValue> && ...), "All arguments must be of type TValue");
 		}
 	};
 
 	template <typename TValue>
 	struct Vector<2, TValue> : public impl::VectorImpl<2, TValue>
 	{
-		constexpr explicit Vector() noexcept = default;
-
 		template <typename... TArgs>
-		inline constexpr explicit Vector(Args &&...args) noexcept
-		    : impl::VectorImpl<2, TValue>(std::forward<Args>(args)...)
+		inline constexpr explicit Vector(TArgs &&...args) noexcept
+		    : impl::VectorImpl<2, TValue>(std::forward<TArgs>(args)...)
 		{
-			static_assert(sizeof...(Args) == 2, "Number of arguments must match vector dimension");
-			static_assert((std::is_same_v<std::decay_t<Args>, TValue> && ...), "All arguments must be of type TValue");
+			static_assert(sizeof...(TArgs) == 2, "Number of arguments must match vector dimension");
+			static_assert((std::is_same_v<std::decay_t<TArgs>, TValue> && ...), "All arguments must be of type TValue");
 		}
 
 		inline constexpr explicit Vector(TValue x = 0, TValue y = 0) noexcept

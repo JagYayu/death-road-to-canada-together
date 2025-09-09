@@ -14,13 +14,19 @@
 #include <cstdint>
 
 struct SDL_Color;
+struct SDL_FColor;
 
 namespace tudov
 {
 	class Color
 	{
 	  public:
+		static const Color White;
 		static const Color Red;
+		static const Color Green;
+		static const Color Blue;
+		static const Color Black;
+		static const Color Transparent;
 
 	  private:
 		static constexpr decltype(auto) SHIFT_R = 24;
@@ -35,18 +41,21 @@ namespace tudov
 		std::uint8_t a;
 
 	  public:
-		explicit constexpr Color() noexcept
+		inline explicit constexpr Color() noexcept
 		    : Color(255, 255, 255, 255)
 		{
 		}
 
-		explicit constexpr Color(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a) noexcept
+		inline explicit constexpr Color(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a) noexcept
 		    : r(r), g(g), b(b), a(a)
 		{
 		}
 
-		explicit constexpr Color(std::uint32_t value) noexcept
-		    : r((value >> SHIFT_R) & 0xFF), g((value >> SHIFT_G) & 0xFF), b((value >> SHIFT_B) & 0xFF), a((value >> SHIFT_A) & 0xFF)
+		inline explicit constexpr Color(std::uint32_t value) noexcept
+		    : r((value >> SHIFT_R) & 0xFF),
+		      g((value >> SHIFT_G) & 0xFF),
+		      b((value >> SHIFT_B) & 0xFF),
+		      a((value >> SHIFT_A) & 0xFF)
 		{
 		}
 
@@ -56,11 +65,21 @@ namespace tudov
 		{
 			return r == other.r && g == other.g && b == other.b && a == other.a;
 		}
+
 		inline constexpr bool operator!=(const Color &other) const noexcept
 		{
-			return r != other.r || g != other.g || b != other.b | a == other.a;
+			return r != other.r || g != other.g || b != other.b || a == other.a;
 		}
 
-		inline constexpr operator SDL_Color() const noexcept;
+		inline explicit constexpr operator std::uint32_t() const noexcept
+		{
+			return static_cast<std::uint32_t>(r) << SHIFT_R |
+			       static_cast<std::uint32_t>(g) << SHIFT_G |
+			       static_cast<std::uint32_t>(b) << SHIFT_B |
+			       static_cast<std::uint32_t>(a) << SHIFT_A;
+		}
+
+		operator SDL_Color() const noexcept;
+		operator SDL_FColor() const noexcept;
 	};
 } // namespace tudov

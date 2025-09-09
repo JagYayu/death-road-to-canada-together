@@ -11,13 +11,22 @@ error("this is a lua library module")
 
 --- @alias Serializable boolean | number | string | table<Serializable, Serializable>
 
---- @alias UInt8 integer
+--- 0~255
+--- @class UInt8 : integer
 
---- @class FRect
+--- @class RectangleF : userdata
+--- @field x number
+--- @field y number
+--- @field w number
+--- @field h number
+
+--- @class VectorF : userdata
+--- @field x number
+--- @field y number
+
+--- @class Vector
 --- @field [1] number
 --- @field [2] number
---- @field [3] number
---- @field [4] number
 
 --- *Mod Scope*
 --- Insert prefix of current script's namespace at the start of `str`.

@@ -11,17 +11,16 @@
 
 #pragma once
 
-#include "util/Color.hpp"
-
-#include <cmath>
+#include "SDL3/SDL_render.h"
 
 namespace tudov
 {
-	struct Vertex
-	{
-		std::float_t x, y, z;
-		Color color;
-		std::float_t tx, ty;
-		std::uint32_t anim;
-	};
+	// struct Vertex
+	// {
+	// 	Vector2F xy = Vector2F();
+	// 	Color col = Color();
+	// 	Vector2F uv = Vector2F();
+	// };
+
+	using Vertex = SDL_Vertex;
 } // namespace tudov

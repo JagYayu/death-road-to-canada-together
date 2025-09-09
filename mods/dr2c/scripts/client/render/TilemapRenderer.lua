@@ -47,7 +47,7 @@ local function draw(renderer, tilemap)
 				drawArgsDst[3] = 32
 				drawArgsDst[4] = 32
 
-				renderer:draw(drawArgs)
+				renderer:drawRect(drawArgs)
 			end
 		end
 	end
@@ -59,7 +59,7 @@ local testTilemap = {
 	tiles = {},
 }
 
---- @param e dr2c.E.ClientRender
+--- @param e dr2c.E.CRender
 events:add(N_("CRenderCamera"), function(e)
 	local room = CRoom.getRoom(CRenderFocus.getFocusedRoomID())
 	if room then

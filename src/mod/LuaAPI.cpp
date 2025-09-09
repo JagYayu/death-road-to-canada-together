@@ -14,10 +14,12 @@
 #include "data/VirtualFileSystem.hpp"
 #include "debug/Debug.hpp"
 #include "graphic/Camera2D.hpp"
-#include "graphic/DrawArgs.hpp"
+#include "graphic/RenderArgs.hpp"
+#include "graphic/RenderBuffer.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/Renderer.hpp"
 #include "i18n/Localization.hpp"
+#include "math/Geometry.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
 #include "program/WindowManager.hpp"
@@ -73,148 +75,190 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	InstallNetwork(lua, context);
 	InstallScanCode(lua, context);
 
-	TE_ENUM(EDebugConsoleCode,
-	        {
-	            {"None", EDebugConsoleCode::None},
-	            {"Failure", EDebugConsoleCode::Failure},
-	            {"Success", EDebugConsoleCode::Success},
-	            {"Warn", EDebugConsoleCode::Warn},
-	        });
+	TE_ENUM(
+	    EDebugConsoleCode,
+	    {
+	        {"None", EDebugConsoleCode::None},
+	        {"Failure", EDebugConsoleCode::Failure},
+	        {"Success", EDebugConsoleCode::Success},
+	        {"Warn", EDebugConsoleCode::Warn},
+	    });
 
-	TE_ENUM(ELogVerbosity,
-	        {
-	            {"All", ELogVerbosity::All},
-	            {"None", ELogVerbosity::None},
-	            {"Error", ELogVerbosity::Error},
-	            {"Warn", ELogVerbosity::Warn},
-	            {"Info", ELogVerbosity::Info},
-	            {"Debug", ELogVerbosity::Debug},
-	            {"Trace", ELogVerbosity::Trace},
-	            {"Fatal", ELogVerbosity::Fatal},
-	        });
+	TE_ENUM(
+	    ELogVerbosity,
+	    {
+	        {"All", ELogVerbosity::All},
+	        {"None", ELogVerbosity::None},
+	        {"Error", ELogVerbosity::Error},
+	        {"Warn", ELogVerbosity::Warn},
+	        {"Info", ELogVerbosity::Info},
+	        {"Debug", ELogVerbosity::Debug},
+	        {"Trace", ELogVerbosity::Trace},
+	        {"Fatal", ELogVerbosity::Fatal},
+	    });
 
-	TE_ENUM(EOperatingSystem,
-	        {
-	            {"Unknown", EOperatingSystem::Unknown},
-	            {"Windows", EOperatingSystem::Windows},
-	            {"Linux", EOperatingSystem::Linux},
-	            {"MaxOS", EOperatingSystem::MaxOS},
-	            {"Android", EOperatingSystem::Android},
-	            {"IOS", EOperatingSystem::IOS},
-	        });
+	TE_ENUM(
+	    EOperatingSystem,
+	    {
+	        {"Unknown", EOperatingSystem::Unknown},
+	        {"Windows", EOperatingSystem::Windows},
+	        {"Linux", EOperatingSystem::Linux},
+	        {"MaxOS", EOperatingSystem::MaxOS},
+	        {"Android", EOperatingSystem::Android},
+	        {"IOS", EOperatingSystem::IOS},
+	    });
 
-	TE_ENUM(EPathListOption,
-	        {
-	            {"All", EPathListOption::All},
-	            {"None", EPathListOption::None},
-	            {"File", EPathListOption::File},
-	            {"Directory", EPathListOption::Directory},
-	            {"Recursed", EPathListOption::Recursed},
-	            {"Sorted", EPathListOption::Sorted},
-	            {"FullPath", EPathListOption::FullPath},
-	        });
+	TE_ENUM(
+	    EPathListOption,
+	    {
+	        {"All", EPathListOption::All},
+	        {"None", EPathListOption::None},
+	        {"File", EPathListOption::File},
+	        {"Directory", EPathListOption::Directory},
+	        {"Recursed", EPathListOption::Recursed},
+	        {"Sorted", EPathListOption::Sorted},
+	        {"FullPath", EPathListOption::FullPath},
+	    });
 
-	TE_USERTYPE(DrawTextArgs,
-	            sol::call_constructor, sol::constructors<DrawTextArgs()>(),
-	            "alignX", sol::property(&DrawTextArgs::GetAlignX, &DrawTextArgs::SetAlignX),
-	            "alignY", sol::property(&DrawTextArgs::GetAlignY, &DrawTextArgs::SetAlignY),
-	            "characterScale", sol::property(&DrawTextArgs::GetCharacterScale, &DrawTextArgs::SetCharacterScale),
-	            "font", sol::property(&DrawTextArgs::GetFont, &DrawTextArgs::SetFont),
-	            "maxWidth", sol::property(&DrawTextArgs::GetMaxWidth, &DrawTextArgs::SetMaxWidth),
-	            "scale", sol::property(&DrawTextArgs::GetScale, &DrawTextArgs::SetScale),
-	            "text", sol::property(&DrawTextArgs::GetText, &DrawTextArgs::SetText),
-	            "x", sol::property(&DrawTextArgs::GetX, &DrawTextArgs::SetX),
-	            "y", sol::property(&DrawTextArgs::GetY, &DrawTextArgs::SetY));
+	TE_USERTYPE(
+	    DrawRectArgs,
+	    sol::call_constructor, sol::constructors<DrawRectArgs()>(),
+	    "angle", sol::property(&DrawRectArgs::LuaGetAngle, &DrawRectArgs::LuaSetAngle),
+	    "color", sol::property(&DrawRectArgs::LuaGetColor, &DrawRectArgs::LuaSetColor),
+	    "destination", sol::property(&DrawRectArgs::LuaGetDestination, &DrawRectArgs::LuaSetDestination),
+	    // "origin", sol::property(&DrawRectArgs::LuaGetOrigin, &DrawRectArgs::LuaSetOrigin),
+	    "source", sol::property(&DrawRectArgs::LuaGetSource, &DrawRectArgs::LuaSetSource),
+	    "texture", sol::property(&DrawRectArgs::LuaGetTexture, &DrawRectArgs::LuaSetTexture));
 
-	TE_USERTYPE(Engine,
-	            "getVersion", &Engine::LuaGetVersion,
-	            "mainWindow", GetMainWindowFromContext(context),
-	            "quit", &Engine::Quit,
-	            "triggerLoadPending", &Engine::TriggerLoadPending);
+	TE_USERTYPE(
+	    DrawTextArgs,
+	    sol::call_constructor, sol::constructors<DrawTextArgs()>(),
+	    "alignX", sol::property(&DrawTextArgs::GetAlignX, &DrawTextArgs::SetAlignX),
+	    "alignY", sol::property(&DrawTextArgs::GetAlignY, &DrawTextArgs::SetAlignY),
+	    "characterScale", sol::property(&DrawTextArgs::GetCharacterScale, &DrawTextArgs::SetCharacterScale),
+	    "font", sol::property(&DrawTextArgs::GetFont, &DrawTextArgs::SetFont),
+	    "maxWidth", sol::property(&DrawTextArgs::GetMaxWidth, &DrawTextArgs::SetMaxWidth),
+	    "scale", sol::property(&DrawTextArgs::GetScale, &DrawTextArgs::SetScale),
+	    "text", sol::property(&DrawTextArgs::GetText, &DrawTextArgs::SetText),
+	    "x", sol::property(&DrawTextArgs::GetX, &DrawTextArgs::SetX),
+	    "y", sol::property(&DrawTextArgs::GetY, &DrawTextArgs::SetY));
 
-	TE_USERTYPE(FontResources,
-	            "getID", &FontResources::LuaGetID,
-	            "getPath", &FontResources::LuaGetPath);
+	TE_USERTYPE(
+	    Engine,
+	    "getVersion", &Engine::LuaGetVersion,
+	    "mainWindow", GetMainWindowFromContext(context),
+	    "quit", &Engine::Quit,
+	    "triggerLoadPending", &Engine::TriggerLoadPending);
 
-	TE_USERTYPE(ImageResources,
-	            "getID", &ImageResources::LuaGetID,
-	            "getPath", &ImageResources::LuaGetPath);
+	TE_USERTYPE(
+	    FontResources,
+	    "getID", &FontResources::LuaGetID,
+	    "getPath", &FontResources::LuaGetPath);
 
-	TE_USERTYPE(Log,
-	            "canOutput", &Log::CanOutput,
-	            "output", &Log::LuaOutput);
+	TE_USERTYPE(
+	    ImageResources,
+	    "getID", &ImageResources::LuaGetID,
+	    "getPath", &ImageResources::LuaGetPath);
 
-	TE_USERTYPE(Window,
-	            "renderer", &Window::renderer,
-	            "close", &Window::Close,
-	            "getHeight", &Window::GetHeight,
-	            "getKey", &Window::LuaGetKey,
-	            "getSize", &Window::GetSize,
-	            "getWidth", &Window::GetWidth,
-	            "shouldClose", &Window::ShouldClose);
+	TE_USERTYPE(
+	    Log,
+	    "canOutput", &Log::CanOutput,
+	    "output", &Log::LuaOutput);
 
-	TE_USERTYPE(Renderer,
-	            "beginTarget", &Renderer::LuaBeginTarget,
-	            "clear", &Renderer::LuaClear,
-	            "draw", &Renderer::LuaDraw,
-	            "drawText", &Renderer::LuaDrawText,
-	            "endTarget", &Renderer::LuaEndTarget,
-	            "newRenderTarget", &Renderer::LuaNewRenderTarget);
+	TE_USERTYPE(
+	    RectangleF,
+	    sol::call_constructor, sol::constructors<RectangleF()>(),
+	    "x", sol::property(&RectangleF::LuaGet1, &RectangleF::LuaSet1),
+	    "y", sol::property(&RectangleF::LuaGet2, &RectangleF::LuaSet2),
+	    "w", sol::property(&RectangleF::LuaGet3, &RectangleF::LuaSet3),
+	    "h", sol::property(&RectangleF::LuaGet4, &RectangleF::LuaSet4));
 
-	TE_USERTYPE(RenderTarget,
-	            "getPosition", &RenderTarget::GetCameraPosition,
-	            "getHeight", &RenderTarget::GetHeight,
-	            "getPositionLerpFactor", &RenderTarget::GetPositionLerpFactor,
-	            "getScale", &RenderTarget::GetCameraScale,
-	            "getScaleLerpFactor", &RenderTarget::GetScaleLerpFactor,
-	            "getSize", &RenderTarget::GetSize,
-	            "getCameraTargetScale", &RenderTarget::GetCameraTargetScale,
-	            "getCameraTargetScale", &RenderTarget::GetCameraTargetScale,
-	            "getWidth", &RenderTarget::GetWidth,
-	            "resize", &RenderTarget::Resize,
-	            "resizeToFit", &RenderTarget::ResizeToFit,
-	            "setPositionLerpFactor", &RenderTarget::SetPositionLerpFactor,
-	            "setScaleLerpFactor", &RenderTarget::SetScaleLerpFactor,
-	            "setCameraTargetPosition", &RenderTarget::SetCameraTargetPosition,
-	            "setCameraTargetScale", &RenderTarget::SetCameraTargetScale,
-	            "snapCameraPosition", &RenderTarget::SnapCameraPosition,
-	            "snapCameraScale", &RenderTarget::SnapCameraScale,
-	            "update", &RenderTarget::Update);
+	TE_USERTYPE(
+	    RenderBuffer,
+	    "addRectangle", &RenderBuffer::LuaAddRectangle,
+	    "clear", &RenderBuffer::Clear,
+	    "draw", &RenderBuffer::LuaDraw);
 
-	TE_USERTYPE(VirtualFileSystem,
-	            "exists", &VirtualFileSystem::LuaExists,
-	            "list", &VirtualFileSystem::LuaList,
-	            "readFile", &VirtualFileSystem::LuaReadFile);
+	TE_USERTYPE(
+	    RenderTarget,
+	    "getPosition", &RenderTarget::GetCameraPosition,
+	    "getHeight", &RenderTarget::GetHeight,
+	    "getPositionLerpFactor", &RenderTarget::GetPositionLerpFactor,
+	    "getScale", &RenderTarget::GetCameraScale,
+	    "getScaleLerpFactor", &RenderTarget::GetScaleLerpFactor,
+	    "getSize", &RenderTarget::GetSize,
+	    "getCameraTargetScale", &RenderTarget::GetCameraTargetScale,
+	    "getCameraTargetScale", &RenderTarget::GetCameraTargetScale,
+	    "getWidth", &RenderTarget::GetWidth,
+	    "resize", &RenderTarget::Resize,
+	    "resizeToFit", &RenderTarget::ResizeToFit,
+	    "setPositionLerpFactor", &RenderTarget::SetPositionLerpFactor,
+	    "setScaleLerpFactor", &RenderTarget::SetScaleLerpFactor,
+	    "setCameraTargetPosition", &RenderTarget::SetCameraTargetPosition,
+	    "setCameraTargetScale", &RenderTarget::SetCameraTargetScale,
+	    "snapCameraPosition", &RenderTarget::SnapCameraPosition,
+	    "snapCameraScale", &RenderTarget::SnapCameraScale,
+	    "update", &RenderTarget::Update);
 
-	TE_USERTYPE(Timer,
-	            sol::call_constructor, sol::constructors<Timer(), Timer(bool paused)>(),
-	            "getTime", &Timer::GetTime,
-	            "pause", &Timer::Pause,
-	            "reset", &Timer::Reset,
-	            "unpause", &Timer::Unpause);
+	TE_USERTYPE(
+	    Renderer,
+	    "beginTarget", &Renderer::LuaBeginTarget,
+	    "clear", &Renderer::LuaClear,
+	    "drawRect", &Renderer::LuaDrawRect,
+	    "drawText", &Renderer::LuaDrawText,
+	    "endTarget", &Renderer::LuaEndTarget,
+	    "newRenderBuffer", &Renderer::NewRenderBuffer,
+	    "newRenderTarget", &Renderer::LuaNewRenderTarget);
 
-	TE_CLASS(OperatingSystem,
-	         "getType", &OperatingSystem::GetType,
-	         "isMobile", &OperatingSystem::IsMobile,
-	         "isPC", &OperatingSystem::IsPC);
+	TE_USERTYPE(
+	    Timer,
+	    sol::call_constructor, sol::constructors<Timer(), Timer(bool paused)>(),
+	    "getTime", &Timer::GetTime,
+	    "pause", &Timer::Pause,
+	    "reset", &Timer::Reset,
+	    "unpause", &Timer::Unpause);
 
-	TE_CLASS(RandomDevice,
-	         "entropy", &RandomDevice::Entropy,
-	         "generate", &RandomDevice::LuaGenerate);
+	TE_USERTYPE(
+	    VirtualFileSystem,
+	    "exists", &VirtualFileSystem::LuaExists,
+	    "list", &VirtualFileSystem::LuaList,
+	    "readFile", &VirtualFileSystem::LuaReadFile);
 
-	TE_CLASS(Time,
-	         "getStartupTime", &Time::GetStartupTime,
-	         "getSystemTime", &Time::GetSystemTime);
+	TE_USERTYPE(
+	    Window,
+	    "renderer", &Window::renderer,
+	    "close", &Window::Close,
+	    "getHeight", &Window::GetHeight,
+	    "getKey", &Window::LuaGetKey,
+	    "getSize", &Window::GetSize,
+	    "getWidth", &Window::GetWidth,
+	    "shouldClose", &Window::ShouldClose);
+
+	TE_CLASS(
+	    OperatingSystem,
+	    "getType", &OperatingSystem::GetType,
+	    "isMobile", &OperatingSystem::IsMobile,
+	    "isPC", &OperatingSystem::IsPC);
+
+	TE_CLASS(
+	    RandomDevice,
+	    "entropy", &RandomDevice::Entropy,
+	    "generate", &RandomDevice::LuaGenerate);
+
+	TE_CLASS(
+	    Time,
+	    "getStartupTime", &Time::GetStartupTime,
+	    "getSystemTime", &Time::GetSystemTime);
 
 	lua["engine"] = &context.GetEngine();
 	lua["localization"] = &dynamic_cast<Localization &>(context.GetLocalization());
 	lua["vfs"] = &dynamic_cast<VirtualFileSystem &>(context.GetVirtualFileSystem());
 
 	auto &collection = context.GetGlobalResourcesCollection();
-	lua["binaries"] = collection.GetBinariesResources();
-	lua["fonts"] = collection.GetFontResources();
-	lua["images"] = collection.GetImageResources();
-	lua["texts"] = collection.GetTextResources();
+	lua["binaries"] = &collection.GetBinariesResources();
+	lua["fonts"] = &collection.GetFontResources();
+	lua["images"] = &collection.GetImageResources();
+	lua["texts"] = &collection.GetTextResources();
 }
 
 const std::vector<std::string_view> &LuaAPI::GetModGlobalsMigration() const noexcept
@@ -262,7 +306,9 @@ const std::vector<std::string_view> &LuaAPI::GetModGlobalsMigration() const noex
 		    "EScanCode",
 		    "ESocketType",
 		    // C++ classes
+		    "DrawRectArgs",
 		    "DrawTextArgs",
+		    "RectangleF",
 		    "Timer",
 		    // C++ static classes
 		    "OperatingSystem",

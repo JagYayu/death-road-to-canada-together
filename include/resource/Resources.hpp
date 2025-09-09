@@ -72,7 +72,7 @@ namespace tudov
 		inline ResourceID GetResourceID(std::string_view path) const noexcept
 		{
 			auto it = _path2ID.find(path);
-			return it != _path2ID.end() ? it->second : false;
+			return it != _path2ID.end() ? it->second : 0;
 		}
 
 		template <typename TDerived = TResource, typename... TArgs>
@@ -98,12 +98,11 @@ namespace tudov
 				TE_ERROR("Exception occurred while loading \"{}\": {}", path, e.what());
 			}
 
-			Entry entry{
+			_id2Entry[id] = Entry{
 			    .path = std::string(path),
 			    .resource = resource,
 			};
-			auto &&result = _id2Entry.try_emplace(id, entry);
-			_path2ID[std::string_view(result.first->second.path)] = id;
+			_path2ID[_id2Entry[id].path] = id;
 
 			TE_TRACE("Loaded resource <{}>\"{}\"", id, path);
 

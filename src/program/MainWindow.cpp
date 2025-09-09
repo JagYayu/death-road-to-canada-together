@@ -163,7 +163,7 @@ void MainWindow::UpdateGuiStyle() noexcept
 	fonts->Clear();
 	ImFontConfig config;
 	config.FontDataOwnedByAtlas = false;
-	_guiFontMemory = ReadFileToString("dev/fonts/FiraCode-Medium.ttf", true);
+	_guiFontMemory = ReadFileToString("dev/fonts/JetBrainsMapleMono.ttf", true);
 	_guiFontMedium = fonts->AddFontFromMemoryTTF(_guiFontMemory.data(), _guiFontMemory.size() * sizeof(char), 12.0f * scale, &config);
 	_guiFontSmall = fonts->AddFontFromMemoryTTF(_guiFontMemory.data(), _guiFontMemory.size() * sizeof(char), 6.0f * scale, &config);
 	_guiFontLarge = fonts->AddFontFromMemoryTTF(_guiFontMemory.data(), _guiFontMemory.size() * sizeof(char), 18.0f * scale, &config);
@@ -340,6 +340,7 @@ void MainWindow::Render() noexcept
 
 	renderer->EndTarget();
 
+	try
 	{
 		auto [w, h] = GetSize();
 		SDL_FRect dst{
@@ -348,7 +349,10 @@ void MainWindow::Render() noexcept
 		    .w = static_cast<std::float_t>(w),
 		    .h = static_cast<std::float_t>(h),
 		};
-		renderer->Draw(_renderTarget->GetTexture().get(), dst);
+		renderer->DrawRect(_renderTarget->GetTexture().get(), dst);
+	}
+	catch (std::exception &e)
+	{
 	}
 
 	if (GetScriptErrors().HasLoadtimeError())
@@ -360,8 +364,7 @@ void MainWindow::Render() noexcept
 
 		{
 			decltype(auto) text = "Loadtime error occurred!";
-			renderer->DrawDebugText(3, 2, text, SDL_Color(0, 0, 0, 255));
-			renderer->DrawDebugText(1, 0, text, SDL_Color(255, channel, channel, 255));
+			renderer->DrawDebugText(1, 0, text, Color(255, channel, channel, 255));
 		}
 
 		std::istringstream stream{scriptError->message};
@@ -371,10 +374,7 @@ void MainWindow::Render() noexcept
 		{
 			++index;
 
-			std::float_t y = 3 + 9 * index;
-
-			renderer->DrawDebugText(3, y + 2, line, SDL_Color(0, 0, 0, 255));
-			renderer->DrawDebugText(1, y, line, SDL_Color(255, channel, channel, 255));
+			renderer->DrawDebugText(1, 3 + 9 * index, line, Color(255, channel, channel, 255));
 		}
 	}
 

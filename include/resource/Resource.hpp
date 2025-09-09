@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include "util/Definitions.hpp"
+
 #include <span>
 #include <string_view>
 
@@ -20,10 +22,12 @@ namespace tudov
 	{
 		virtual ~IResource() noexcept = default;
 
+		// virtual ResourceID GetResourceID() noexcept = 0;
+
 		/**
 		 * Get the file path in Virtual File System.
 		 */
-		virtual std::string_view GetFilePath()const noexcept = 0;
+		virtual std::string_view GetFilePath() const noexcept = 0;
 
 		virtual bool CanReadBytes() noexcept;
 

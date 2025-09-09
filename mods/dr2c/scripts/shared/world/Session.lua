@@ -146,7 +146,7 @@ function GWorldSession.new()
 	end
 
 	--- Equivalent to `WorldSession.getAttribute(GWorldSession.Attribute.Internal).state`
-	--- @return dr2c.WorldSessionMode
+	--- @return dr2c.WorldSessionState
 	function WorldSession.getState()
 		return worldSessionAttributes[GWorldSession_Attribute_Internal].state
 	end

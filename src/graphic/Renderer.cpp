@@ -11,8 +11,8 @@
 
 #include "graphic/Renderer.hpp"
 
-#include "data/VirtualFileSystem.hpp"
-#include "graphic/DrawArgs.hpp"
+#include "graphic/RenderArgs.hpp"
+#include "graphic/RenderBuffer.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/VSyncMode.hpp"
 #include "program/Engine.hpp"
@@ -20,22 +20,21 @@
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/ImageResources.hpp"
 #include "system/LogMicros.hpp"
+#include "util/Utils.hpp"
 
 #include "SDL3/SDL_error.h"
-#include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
-#include "SDL3/SDL_surface.h"
 #include "SDL3_ttf/SDL_ttf.h"
 #include "sol/forward.hpp"
 #include "sol/table.hpp"
-#include "util/Utils.hpp"
 
 #include <cmath>
 #include <memory>
 #include <stdexcept>
 #include <tuple>
+#include <vector>
 
 using namespace tudov;
 
@@ -46,7 +45,7 @@ Renderer::Renderer(Window &window) noexcept
       _sdlTextureMain(nullptr),
       _sdlTextureBackground(nullptr)
 {
-	if (_sdlRenderer)
+	if (_sdlRenderer != nullptr)
 	{
 		DeinitializeRenderer();
 	}
@@ -114,6 +113,39 @@ std::shared_ptr<RenderTarget> Renderer::NewRenderTarget(std::int32_t width, std:
 	return renderTarget;
 }
 
+std::shared_ptr<RenderBuffer> Renderer::NewRenderBuffer() noexcept
+{
+	auto &&renderBuffer = std::make_shared<RenderBuffer>(*this);
+	return renderBuffer;
+}
+
+std::shared_ptr<Texture> Renderer::ExtractTexture(sol::table args) noexcept
+{
+	std::shared_ptr<Texture> texture;
+
+	auto t = args["texture"];
+	if (t.is<std::double_t>())
+	{
+		texture = GetOrCreateImageTexture(static_cast<ImageID>(t.get<std::double_t>()));
+	}
+	else if (t.is<std::shared_ptr<Image>>())
+	{
+		std::string_view filePath = t.get<std::shared_ptr<Image>>()->GetFilePath();
+		ImageID imageID = GetGlobalResourcesCollection().GetImageResources().GetResourceID(filePath);
+		texture = GetOrCreateImageTexture(imageID);
+	}
+	else if (t.is<std::shared_ptr<RenderTarget>>())
+	{
+		texture = t.get<std::shared_ptr<RenderTarget>>()->_texture;
+	}
+	else
+	{
+		texture = nullptr;
+	}
+
+	return texture;
+}
+
 std::shared_ptr<Texture> Renderer::GetOrCreateImageTexture(ImageID imageID)
 {
 	TextureID textureID;
@@ -140,24 +172,6 @@ std::shared_ptr<Texture> Renderer::GetOrCreateImageTexture(ImageID imageID)
 	}
 
 	return _textureManager.GetTexture(textureID);
-}
-
-bool Renderer::ReleaseTexture(const std::shared_ptr<Texture> &texture) noexcept
-{
-	return _heldTextures.erase(texture.get()->GetSDLTextureHandle());
-}
-
-std::shared_ptr<Texture> Renderer::GetRenderTexture() noexcept
-{
-	if (auto &&sdlTexture = SDL_GetRenderTarget(_sdlRenderer); sdlTexture != nullptr)
-	{
-		auto it = _heldTextures.find(sdlTexture);
-		if (it != _heldTextures.end())
-		{
-			return it->second;
-		}
-	}
-	return nullptr;
 }
 
 void Renderer::SetRenderTexture(const std::shared_ptr<Texture> &texture) noexcept
@@ -203,23 +217,20 @@ void Renderer::ApplyTransform(SDL_FRect &rect) noexcept
 	rect.h = (rect.h * scaleY);
 }
 
-void Renderer::Draw(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src)
+void Renderer::DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src)
 {
 	SDL_FRect dst_{dst};
 	ApplyTransform(dst_);
 
-	if (texture == nullptr)
-	{
-		texture = GetOrCreateImageTexture(0).get();
-	}
+	bool success = SDL_RenderTexture(_sdlRenderer, texture ? texture->GetSDLTextureHandle() : nullptr, src, &dst_);
 
-	if (!SDL_RenderTexture(_sdlRenderer, texture->GetSDLTextureHandle(), src, &dst_)) [[unlikely]]
+	if (!success) [[unlikely]]
 	{
 		throw std::runtime_error(SDL_GetError());
 	}
 }
 
-void Renderer::DrawDebugText(std::float_t x, std::float_t y, std::string_view text, SDL_Color color)
+void Renderer::DrawDebugText(std::float_t x, std::float_t y, std::string_view text, Color color)
 {
 	// TODO
 }
@@ -276,52 +287,114 @@ SDL_FRect Renderer::DrawText(DrawTextArgs *args)
 	};
 }
 
-void Renderer::LuaDraw(sol::table args)
+void Renderer::DrawVertices(Texture *texture, const std::vector<Vertex> &vertices)
+{
+	if (vertices.empty())
+	{
+		return;
+	}
+
+	bool success = SDL_RenderGeometry(
+	    _sdlRenderer,
+	    texture ? texture->GetSDLTextureHandle() : nullptr,
+	    vertices.data(),
+	    vertices.size(),
+	    nullptr,
+	    0);
+
+	if (!success) [[unlikely]]
+	{
+		throw std::runtime_error(std::format("Error draw vertices: {}", SDL_GetError()));
+	}
+}
+
+void Renderer::DrawVertices(Texture *texture, const std::vector<Vertex> &vertices, const std::vector<std::int32_t> &indices)
+{
+	if (vertices.empty())
+	{
+		return;
+	}
+
+	bool success = SDL_RenderGeometry(
+	    _sdlRenderer,
+	    texture ? texture->GetSDLTextureHandle() : nullptr,
+	    vertices.data(),
+	    vertices.size(),
+	    indices.data(),
+	    indices.size());
+
+	if (!success) [[unlikely]]
+	{
+		throw std::runtime_error(std::format("Error draw vertices: {}", SDL_GetError()));
+	}
+}
+
+void Renderer::LuaDrawRect(DrawRectArgs *args) noexcept
 {
 	try
 	{
-		auto &&texture = LuaDrawExtractTexture(args);
-		if (texture == nullptr) [[unlikely]]
+		Texture *texture;
+		if (args->_texture.has_value()) [[likely]]
 		{
-			throw std::runtime_error("Texture was not found");
+			texture = args->_texture.value().get();
 		}
-
-		SDL_FRect rectDst;
+		else [[unlikely]]
 		{
-			auto t = args["destination"].get<sol::table>();
-			if (!t.is<sol::table>()) [[unlikely]]
+			auto texture1 = args->texture;
+			std::shared_ptr<Texture> texture2 = nullptr;
+
+			if (texture1.is<std::double_t>())
 			{
-				throw std::runtime_error("Failed to draw rect: missing parameter 'destination'");
+				texture2 = GetOrCreateImageTexture(static_cast<ImageID>(texture1.as<std::double_t>()));
+			}
+			else if (texture1.is<std::shared_ptr<Image>>())
+			{
+				std::string_view filePath = texture1.as<std::shared_ptr<Image>>()->GetFilePath();
+				ImageID imageID = GetGlobalResourcesCollection().GetImageResources().GetResourceID(filePath);
+				texture2 = GetOrCreateImageTexture(imageID);
+			}
+			else if (texture1.is<std::shared_ptr<RenderTarget>>())
+			{
+				texture2 = texture1.as<std::shared_ptr<RenderTarget>>()->GetTexture();
+			}
+			else
+			{
+				texture2 = nullptr;
 			}
 
-			rectDst.x = t.get_or<std::float_t>(1, 0);
-			rectDst.y = t.get_or<std::float_t>(2, 0);
-			rectDst.w = t.get_or<std::float_t>(3, 0);
-			rectDst.h = t.get_or<std::float_t>(4, 0);
+			args->_texture = texture2;
+			texture = texture2.get();
 		}
 
-		auto source = args["source"].get<sol::object>();
-		if (source.valid())
+		SDL_SetRenderDrawColor(_sdlRenderer, args->color.r, args->color.g, args->color.b, args->color.a);
+
+		SDL_FRect rectDst{
+		    args->destination.x,
+		    args->destination.y,
+		    args->destination.w,
+		    args->destination.h,
+		};
+
+		if (args->source.has_value())
 		{
-			SDL_FRect rectSrc;
+			auto value = args->source.value();
+			SDL_FRect rectSrc{
+			    value.x,
+			    value.y,
+			    value.w,
+			    value.h,
+			};
 
-			auto t = source.as<sol::table>();
-			auto [tw, th] = texture->GetSize();
-			rectSrc.x = t.get_or<std::float_t>(1, 0);
-			rectSrc.y = t.get_or<std::float_t>(2, 0);
-			rectSrc.w = t.get_or<std::float_t>(3, tw);
-			rectSrc.h = t.get_or<std::float_t>(4, th);
-
-			Draw(texture.get(), rectDst, &rectSrc);
+			DrawRect(texture, rectDst, &rectSrc);
 		}
 		else
 		{
-			Draw(texture.get(), rectDst);
+			DrawRect(texture, rectDst);
 		}
 	}
 	catch (std::exception &e)
 	{
-		GetScriptEngine().ThrowError("C++ exception in `Renderer::Draw`: {}", e.what());
+		GetScriptEngine().ThrowError("C++ exception in `{}`: {}", TE_NAMEOF(Renderer::DrawRect), e.what());
 	}
 }
 
@@ -354,28 +427,6 @@ std::tuple<std::float_t, std::float_t, std::float_t, std::float_t> Renderer::Lua
 	{
 		GetScriptEngine().ThrowError("C++ exception in `Renderer::DrawDebugText`: {}", e.what());
 	}
-}
-
-std::shared_ptr<Texture> Renderer::LuaDrawExtractTexture(sol::table args) noexcept
-{
-	{
-		auto &&renderTarget = args.get_or("renderTarget", static_cast<RenderTarget *>(nullptr));
-		if (renderTarget != nullptr)
-		{
-			return renderTarget->_texture;
-		}
-	}
-
-	{
-		auto imageID = args.get_or<ImageID>("image", 0);
-		auto &&texture = GetOrCreateImageTexture(imageID);
-		if (texture != nullptr)
-		{
-			return texture;
-		}
-	}
-
-	return nullptr;
 }
 
 std::shared_ptr<RenderTarget> Renderer::LuaNewRenderTarget(sol::object width, sol::object height)

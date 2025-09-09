@@ -20,7 +20,7 @@ local filterTest = CECS.filter({
 	"GameObject",
 })
 
---- @param e dr2c.E.ClientRender
+--- @param e dr2c.E.CRender
 events:add(N_("CRenderCamera"), function(e)
 	local renderer = e.renderer
 
@@ -43,7 +43,7 @@ events:add(N_("CRenderCamera"), function(e)
 		destination[3] = width
 		destination[4] = height
 
-		renderer:draw(drawArgs)
+		renderer:drawRect(drawArgs)
 	end
 end, "RenderDebugObjects", "DebugObjects")
 

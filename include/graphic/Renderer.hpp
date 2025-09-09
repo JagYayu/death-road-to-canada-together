@@ -17,6 +17,7 @@
 #include "program/Context.hpp"
 #include "sol/forward.hpp"
 #include "system/Log.hpp"
+#include "util/Color.hpp"
 #include "util/Definitions.hpp"
 
 #include "SDL3/SDL_rect.h"
@@ -31,13 +32,15 @@ struct SDL_GPUShader;
 struct SDL_GPUTexture;
 struct TTF_TextEngine;
 
-struct TTF_Font;
-
 namespace tudov
 {
 	struct IWindow;
-
+	struct DrawRectArgs;
 	struct DrawTextArgs;
+
+	class RenderBuffer;
+	class RenderTarget;
+	class Window;
 
 	struct IRenderer
 	{
@@ -48,15 +51,11 @@ namespace tudov
 		virtual void InitializeRenderer() noexcept = 0;
 		virtual void DeinitializeRenderer() noexcept = 0;
 
-		virtual bool ReleaseTexture(const std::shared_ptr<Texture> &texture) noexcept = 0;
-		virtual std::shared_ptr<Texture> GetRenderTexture() noexcept = 0;
-		virtual void SetRenderTexture(const std::shared_ptr<Texture> &texture = nullptr) noexcept = 0;
-
 		virtual EVSyncMode GetVSync() noexcept = 0;
 		virtual bool SetVSync(EVSyncMode mode) noexcept = 0;
 
-		virtual void Draw(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src = nullptr) = 0;
-		virtual void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, SDL_Color color = SDL_Color(255, 255, 255, 255)) = 0;
+		virtual void DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src = nullptr) = 0;
+		virtual void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, Color color = Color(255, 255, 255, 255)) = 0;
 		virtual SDL_FRect DrawText(DrawTextArgs *args) = 0;
 
 		virtual void Clear() noexcept = 0;
@@ -64,9 +63,6 @@ namespace tudov
 		virtual void Begin() noexcept = 0;
 		virtual void End() noexcept = 0;
 	};
-
-	class Window;
-	class RenderTarget;
 
 	class Renderer : public IRenderer, public IContextProvider, ILogProvider
 	{
@@ -87,8 +83,6 @@ namespace tudov
 		SDL_Texture *_sdlTextureBackground;
 		bool _background;
 
-		TTF_Font *fontTest;
-
 	  public:
 		explicit Renderer(Window &window) noexcept;
 		~Renderer() noexcept = default;
@@ -101,25 +95,27 @@ namespace tudov
 		IWindow &GetWindow() noexcept override;
 		Context &GetContext() noexcept override;
 
-		std::shared_ptr<RenderTarget> NewRenderTarget(std::int32_t width, std::int32_t height) noexcept;
-		void BeginTarget(const std::shared_ptr<RenderTarget> &renderTarget) noexcept;
-		std::shared_ptr<RenderTarget> EndTarget() noexcept;
-
-		bool ReleaseTexture(const std::shared_ptr<Texture> &texture) noexcept override;
-		std::shared_ptr<Texture> GetRenderTexture() noexcept override;
-		void SetRenderTexture(const std::shared_ptr<Texture> &texture = nullptr) noexcept override;
-
 		EVSyncMode GetVSync() noexcept override;
 		bool SetVSync(EVSyncMode mode) noexcept override;
 
-		void Draw(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src = nullptr) override;
-		void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, SDL_Color color = SDL_Color(255, 255, 255, 255)) override;
+		void DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src = nullptr) override;
+		void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, Color color = Color(255, 255, 255, 255)) override;
 		SDL_FRect DrawText(DrawTextArgs *args) override;
+		void DrawVertices(Texture *texture, const std::vector<SDL_Vertex> &vertices);
+		void DrawVertices(Texture *texture, const std::vector<SDL_Vertex> &vertices, const std::vector<std::int32_t> &indices);
 
 		void Clear() noexcept override;
 		void Reset() noexcept override;
 		void Begin() noexcept override;
 		void End() noexcept override;
+
+		std::shared_ptr<RenderTarget> NewRenderTarget(std::int32_t width, std::int32_t height) noexcept;
+		void BeginTarget(const std::shared_ptr<RenderTarget> &renderTarget) noexcept;
+		std::shared_ptr<RenderTarget> EndTarget() noexcept;
+
+		std::shared_ptr<RenderBuffer> NewRenderBuffer() noexcept;
+
+		std::shared_ptr<Texture> ExtractTexture(sol::table args) noexcept;
 
 		SDL_Renderer *GetSDLRendererHandle() noexcept;
 
@@ -128,14 +124,17 @@ namespace tudov
 			return const_cast<Renderer *>(this)->GetSDLRendererHandle();
 		}
 
+	  protected:
+		void SetRenderTexture(const std::shared_ptr<Texture> &texture = nullptr) noexcept;
+
 	  private:
 		std::shared_ptr<Texture> GetOrCreateImageTexture(ImageID imageID);
 
 		void LuaBeginTarget(sol::object renderTarget) noexcept;
 		std::shared_ptr<RenderTarget> LuaEndTarget() noexcept;
-		void LuaDraw(sol::table args);
+		void LuaDrawRect(DrawRectArgs *args) noexcept;
 		void LuaDrawDebugText(std::double_t x, std::double_t y, sol::string_view text) noexcept;
-		std::tuple<std::float_t,std::float_t,std::float_t,std::float_t> LuaDrawText(sol::object args) noexcept;
+		std::tuple<std::float_t, std::float_t, std::float_t, std::float_t> LuaDrawText(sol::object args) noexcept;
 		std::shared_ptr<Texture> LuaDrawExtractTexture(sol::table args) noexcept;
 		std::shared_ptr<RenderTarget> LuaNewRenderTarget(sol::object width = sol::nil, sol::object height = sol::nil);
 		void LuaClear() noexcept;

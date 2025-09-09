@@ -31,7 +31,7 @@ namespace tudov
 	  public:
 		FontResources() noexcept;
 
-		FontID LuaGetID(std::string_view font) noexcept;
+		FontID LuaGetID(std::string_view fontPath) noexcept;
 		std::string_view LuaGetPath(FontID id) noexcept;
 	};
 } // namespace tudov

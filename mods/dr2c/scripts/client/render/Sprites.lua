@@ -9,7 +9,7 @@
 --
 --]]
 
---- @class dr2c.SpriteTable : FRect
+--- @class dr2c.SpriteTable : RectangleF
 --- @field [0] ImageID
 
 --- @class dr2c.CSprites

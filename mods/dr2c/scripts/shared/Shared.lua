@@ -42,6 +42,8 @@ events:add("TickUpdate", function(e)
 	network:update()
 
 	events:invoke(GCycle.eventGUpdate, e, nil, EEventInvocation.None)
+
+	-- collectgarbage()
 end, N_("GameUpdate"))
 
 events:add("TickRender", function(e)
