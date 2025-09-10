@@ -14,13 +14,13 @@ local String = require("tudov.String")
 local Table = require("tudov.Table")
 local inspect = require("inspect")
 
---- @class Enum.Defaults
+--- @class TE.Enum.Defaults
 --- @field [integer] string
 --- @field [string] integer
 --- @field [false] integer? @The initial value for enumeration, default: `0`.
 --- @field [true] integer? @The value step for enumeration, default: `1`.
 
---- @class Enum
+--- @class TE.Enum
 local Enum = {}
 
 local scriptName = "#tudov.Enum"
@@ -155,35 +155,35 @@ local function extendSequence(metadata, key) end
 
 local function extendProtocol(metadata, key) end
 
---- @param defaults Enum.Defaults
+--- @param defaults TE.Enum.Defaults
 --- @return table enum
 --- @nodiscard
 function Enum.flags(defaults)
 	return makeBitFlags(defaults, extendBitFlags)
 end
 
---- @param defaults Enum.Defaults
+--- @param defaults TE.Enum.Defaults
 --- @return table enum
 --- @nodiscard
 function Enum.bits(defaults)
 	return makeBitFlags(defaults)
 end
 
---- @param defaults Enum.Defaults
+--- @param defaults TE.Enum.Defaults
 --- @return table enum
 --- @nodiscard
 function Enum.sequence(defaults)
 	return makeIntegers(defaults, extendSequence)
 end
 
---- @param defaults Enum.Defaults
+--- @param defaults TE.Enum.Defaults
 --- @return table enum
 --- @nodiscard
 function Enum.immutable(defaults)
 	return makeIntegers(defaults)
 end
 
---- @param defaults Enum.Defaults
+--- @param defaults TE.Enum.Defaults
 --- @return table enum
 --- @nodiscard
 function Enum.protocol(defaults)

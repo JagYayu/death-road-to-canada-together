@@ -9,7 +9,7 @@
 --
 --]]
 
---- @class EnumFlag
+--- @class TE.EnumFlag
 local EnumFlag = {}
 
 local bit_band = bit.band

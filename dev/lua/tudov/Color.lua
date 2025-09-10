@@ -9,8 +9,10 @@
 --
 --]]
 
---- @class Color
+--- @class TE.Color
 local Color = {}
+
+--- @class Color : integer
 
 local bit_band = bit.band
 local bit_bor = bit.bor

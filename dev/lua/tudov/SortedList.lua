@@ -9,17 +9,17 @@
 --
 --]]
 
---- @class SortedList.Data
+--- @class TE.SortedList.Data
 --- @field compare fun(l: any, r: any): boolean?
 
---- @class SortedList
+--- @class TE.SortedList
 local SortedList = {}
 
 function SortedList:insert()
 	--
 end
 
---- @return SortedList.Data
+--- @return TE.SortedList.Data
 function SortedList.create(compare)
 	return {
 		compare = compare,

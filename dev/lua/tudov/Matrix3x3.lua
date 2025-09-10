@@ -9,7 +9,7 @@
 --
 --]]
 
---- @class Matrix3x3
+--- @class TE.Matrix3x3
 --- @field [1] number
 --- @field [2] number
 --- @field [3] number
@@ -48,7 +48,7 @@ local metatable = {
 --- @param m31 number?
 --- @param m32 number?
 --- @param m33 number?
---- @return Matrix3x3
+--- @return TE.Matrix3x3
 function Matrix3x3.new(m11, m12, m13, m21, m22, m23, m31, m32, m33)
 	return setmetatable({
 		m11 or Matrix3x3[1], m12 or Matrix3x3[2], m13 or Matrix3x3[3],
@@ -57,12 +57,12 @@ function Matrix3x3.new(m11, m12, m13, m21, m22, m23, m31, m32, m33)
 	}, metatable)
 end
 
---- @return Matrix3x3
+--- @return TE.Matrix3x3
 function Matrix3x3:clone()
 	return Matrix3x3.new(self[1], self[2], self[3], self[4], self[5], self[6], self[7], self[8], self[9])
 end
 
---- @param dst Matrix3x3
+--- @param dst TE.Matrix3x3
 --- @return self
 function Matrix3x3:copyTo(dst)
 	self[1] = dst[1]
@@ -97,7 +97,7 @@ end
 
 --- @param sx number
 --- @param sy number
---- @return Matrix3x3
+--- @return TE.Matrix3x3
 function Matrix3x3:scale(sx, sy)
 	self[1] = self[1] * sx
 	self[2] = self[2] * sy
@@ -149,7 +149,7 @@ function Matrix3x3:invert()
 	return self, d
 end
 
---- @param r Matrix3x3
+--- @param r TE.Matrix3x3
 function Matrix3x3:multiplyMatrix(r)
 	local l = self
 	self[1] = l[1] * r[1] + l[2] * r[4] + l[3] * r[7]

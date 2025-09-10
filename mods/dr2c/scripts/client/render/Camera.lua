@@ -92,6 +92,8 @@ events:add(N_("CRender"), function(e)
 		renderer:drawRect(drawRectArgs)
 	end
 
+	local drawRect = renderer.drawRect
+
 	drawRectArgs.texture = renderer:endTarget()
 	drawRectArgs.destination = {
 		x = 0,

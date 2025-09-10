@@ -40,7 +40,7 @@ function TestSynchrony.enable()
 			drawTextArgs.y = drawTextArgs.y + h + 2
 		end
 
-		drawLine("Hello world")
+		drawLine("NEWS OPTIONS")
 		drawLine("你好世界")
 		drawLine("Death Road to Canada")
 

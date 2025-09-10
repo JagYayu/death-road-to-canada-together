@@ -9,7 +9,7 @@
 --
 --]]
 
---- @class Function
+--- @class TE.Function
 local Function = {}
 
 local type = type

@@ -14,19 +14,25 @@ error("this is a lua library module")
 --- 0~255
 --- @class UInt8 : integer
 
+--- @class Rectangle
+--- @field [1] number
+--- @field [2] number
+--- @field [3] number
+--- @field [4] number
+
 --- @class RectangleF : userdata
 --- @field x number
 --- @field y number
 --- @field w number
 --- @field h number
 
---- @class VectorF : userdata
---- @field x number
---- @field y number
-
 --- @class Vector
 --- @field [1] number
 --- @field [2] number
+
+--- @class VectorF : userdata
+--- @field x number
+--- @field y number
 
 --- *Mod Scope*
 --- Insert prefix of current script's namespace at the start of `str`.

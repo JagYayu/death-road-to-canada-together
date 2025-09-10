@@ -19,7 +19,7 @@ local pairs = pairs
 local remove = table.remove
 local type = type
 
---- @class Tudov.Table
+--- @class TE.Table
 local Table = {}
 
 Table.empty = setmetatable({}, {

@@ -1,14 +1,14 @@
+local Enum = require("tudov.Enum")
 --- @class dr2c.MenuEntry
-
---- @class dr2c.Menu
---- @field animationTime number?
---- @field content string
---- @field widgets dr2c.MenuEntry[]
---- @field name string
---- @field title string?
 
 --- @class dr2c.CUIMenu
 local CUIMenu = {}
+
+--- @alias dr2c.MenuType dr2c.CUIMenu.Type
+
+CUIMenu.Type = Enum.sequence({
+	Generic = 1,
+})
 
 local menuStack = {}
 
@@ -20,27 +20,53 @@ function CUIMenu.getAll()
 	return menuStack
 end
 
-CUIMenu.eventCMenu = events:new(N_("CMenu"), {})
+CUIMenu.eventCMenu = events:new(N_("CMenu"), {
+	"Initialize",
+	"Overrides",
+})
 
---- @param menuName string
+local menuMetatable = {
+	__index = {
+		--- @param self dr2c.Menu
+		draw = function(self, ...)
+			for _, widget in ipairs(self.widgets) do
+				local draw = widget.draw
+				if draw then
+					draw(widget, ...)
+				end
+			end
+		end,
+	},
+}
+
+--- @param menuType dr2c.MenuType
 --- @param menuArgs table?
---- @return table
-function CUIMenu.open(menuName, menuArgs)
-	menuName = tostring(menuName)
-
+--- @return dr2c.Menu?
+function CUIMenu.open(menuType, menuArgs)
+	--- @class dr2c.Menu
+	--- @field animationTime number?
+	--- @field content string
+	--- @field title string?
+	--- @field type dr2c.MenuType
+	--- @field widgets dr2c.UIWidget[]
 	local menu = {
-		name = menuName,
+		type = menuType,
+		widgets = {},
 	}
 
+	--- @class dr2c.E.CMenu
+	--- @field initialized boolean?
 	local e = {
 		menu = menu,
 		args = menuArgs,
 	}
-	events:invoke(CUIMenu.eventCMenu, e, menuName)
+	events:invoke(CUIMenu.eventCMenu, e, menuType)
 
-	menuStack[#menuStack + 1] = menu
+	if e.initialized then
+		menuStack[#menuStack + 1] = setmetatable(menu, menuMetatable)
 
-	return menu
+		return menu
+	end
 end
 
 function CUIMenu.close()
@@ -51,16 +77,23 @@ function CUIMenu.closeAll()
 	menuStack = {}
 end
 
---- @param menu dr2c.Menu
-function CUIMenu.draw(menu)
-	--
-end
-
 events:add(N_("CRenderUI"), function(e)
 	local menu = menuStack[#menuStack]
 	if menu then
-		CUIMenu.draw(menu)
+		menu:draw(e.renderer)
 	end
 end, "RenderMenu", "Menu")
+
+local testOnce = true
+
+events:add(N_("CUpdate"), function(e)
+	if testOnce then
+		CUIMenu.closeAll()
+		CUIMenu.open(CUIMenu.Type.Generic)
+
+		testOnce = false
+		print("test once")
+	end
+end, "Test")
 
 return CUIMenu

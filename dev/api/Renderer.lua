@@ -3,10 +3,10 @@ error("this is a lua library module")
 
 --- @class Texture
 
---- @alias TextureArg Image | ImageID | RenderTarget
+--- @alias DrawArgTexture Image | ImageID | RenderTarget
 
---- @class DrawRectArgs
---- @field texture TextureArg?
+--- @class DrawRectArgs : userdata
+--- @field texture DrawArgTexture?
 --- @field destination RectangleF
 --- @field source RectangleF?
 --- @field color Color?
@@ -49,7 +49,7 @@ function renderer:newRenderBuffer() end
 --- @return RenderTarget
 function renderer:newRenderTarget(width, height) end
 
---- @param args table
+--- @param args DrawRectArgs
 function renderer:drawRect(args) end
 
 --- @param x number

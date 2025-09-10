@@ -12,7 +12,7 @@
 local Table = require("tudov.Table")
 
 --- Q16.16
---- @class dr2c.Math
+--- @class TE.Math
 local Math = {}
 
 local bit_band = bit.band

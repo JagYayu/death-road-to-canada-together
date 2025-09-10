@@ -47,15 +47,15 @@ namespace tudov
 		std::optional<std::shared_ptr<Texture>> _texture = std::nullopt;
 
 	  private:
-		sol::object LuaGetTexture() noexcept
+		inline sol::object LuaGetTexture() noexcept
 		{
 			return texture;
 		}
-		RectangleF *LuaGetDestination() noexcept
+		inline RectangleF *LuaGetDestination() noexcept
 		{
 			return &destination;
 		}
-		RectangleF *LuaGetSource() noexcept
+		inline RectangleF *LuaGetSource() noexcept
 		{
 			if (source.has_value())
 			{
@@ -66,29 +66,29 @@ namespace tudov
 				return nullptr;
 			}
 		}
-		std::uint32_t LuaGetColor() noexcept
+		inline std::uint32_t LuaGetColor() noexcept
 		{
 			return static_cast<std::uint32_t>(color);
 		}
-		std::float_t LuaGetAngle() noexcept
+		inline std::float_t LuaGetAngle() noexcept
 		{
 			return angle;
 		}
-		std::float_t LuaGetOriginX() noexcept
+		inline std::float_t LuaGetOriginX() noexcept
 		{
 			return originX;
 		}
-		std::float_t LuaGetOriginY() noexcept
+		inline std::float_t LuaGetOriginY() noexcept
 		{
 			return originY;
 		}
 
-		void LuaSetTexture(sol::object texture) noexcept
+		inline void LuaSetTexture(sol::object texture) noexcept
 		{
 			this->texture = texture;
 			_texture = std::nullopt;
 		}
-		void LuaSetDestination(sol::table destination) noexcept
+		inline void LuaSetDestination(sol::table destination) noexcept
 		{
 			this->destination = RectangleF{
 			    destination.get_or("x", 0.0f),
@@ -97,7 +97,7 @@ namespace tudov
 			    destination.get_or("h", 0.0f),
 			};
 		}
-		void LuaSetSource(sol::object source) noexcept
+		inline void LuaSetSource(sol::object source) noexcept
 		{
 			if (source.is<sol::table>())
 			{
@@ -114,19 +114,19 @@ namespace tudov
 				this->source = std::nullopt;
 			}
 		}
-		void LuaSetColor(std::uint32_t color) noexcept
+		inline void LuaSetColor(std::double_t color) noexcept
 		{
-			this->color = Color(color);
+			this->color = Color(static_cast<std::uint32_t>(color));
 		}
-		void LuaSetAngle(std::float_t angle) noexcept
+		inline void LuaSetAngle(std::double_t angle) noexcept
 		{
 			this->angle = angle;
 		}
-		void LuaSetOriginX(std::float_t originX) noexcept
+		inline void LuaSetOriginX(std::double_t originX) noexcept
 		{
 			this->originX = originX;
 		}
-		void LuaSetOriginY(std::float_t originY) noexcept
+		inline void LuaSetOriginY(std::double_t originY) noexcept
 		{
 			this->originY = originY;
 		}

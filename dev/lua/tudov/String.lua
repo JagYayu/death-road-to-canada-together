@@ -11,7 +11,7 @@
 
 local stringBuffer = require("string.buffer")
 
---- @class Tudov.String
+--- @class TE.String
 local String = {}
 
 local stringByte = string.byte

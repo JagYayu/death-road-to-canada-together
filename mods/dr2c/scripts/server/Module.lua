@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.server.network.Update
+-- @module dr2c.server.Module
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -9,14 +9,14 @@
 --
 --]]
 
---- @class dr2c.SCycle
-local SCycle = {}
+--- @class dr2c.SModule
+local SModule = {}
 
-SCycle.eventSUpdate = events:new(N_("SUpdate"), {
+SModule.eventSUpdate = events:new(N_("SUpdate"), {
 	"Network",
 })
 
 events:add(N_("GUpdate"), function(e)
 	--- @class dr2c.E.SUpdate : dr2c.E.GUpdate
-	events:invoke(SCycle.eventSUpdate, e)
+	events:invoke(SModule.eventSUpdate, e)
 end, N_("ServerUpdate"), nil, "Main")

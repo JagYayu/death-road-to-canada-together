@@ -222,7 +222,16 @@ void Renderer::DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect 
 	SDL_FRect dst_{dst};
 	ApplyTransform(dst_);
 
-	bool success = SDL_RenderTexture(_sdlRenderer, texture ? texture->GetSDLTextureHandle() : nullptr, src, &dst_);
+	bool success;
+	if (auto sdlTexture = texture ? texture->GetSDLTextureHandle() : nullptr; sdlTexture != nullptr)
+	{
+		success = SDL_RenderTexture(_sdlRenderer, sdlTexture, src, &dst_);
+	}
+	else
+	{
+		sdlTexture = GetOrCreateImageTexture(0)->GetSDLTextureHandle();
+		success = SDL_RenderTexture(_sdlRenderer, sdlTexture, src, &dst_);
+	}
 
 	if (!success) [[unlikely]]
 	{
@@ -336,7 +345,7 @@ void Renderer::LuaDrawRect(DrawRectArgs *args) noexcept
 		Texture *texture;
 		if (args->_texture.has_value()) [[likely]]
 		{
-			texture = args->_texture.value().get();
+			texture = args->_texture->get();
 		}
 		else [[unlikely]]
 		{

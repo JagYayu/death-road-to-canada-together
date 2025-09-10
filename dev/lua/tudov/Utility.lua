@@ -9,7 +9,7 @@
 --
 --]]
 
---- @class Utility
+--- @class TE.Utility
 local Utility = {}
 
 Utility.inf = 1 / 0

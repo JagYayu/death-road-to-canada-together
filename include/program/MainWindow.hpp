@@ -32,6 +32,7 @@ namespace tudov
 		ImFont *_guiFontMedium;
 		ImFont *_guiFontLarge;
 		std::float_t _guiScale;
+		bool _showDebugElements;
 
 	  public:
 		explicit MainWindow(Context &context) noexcept;

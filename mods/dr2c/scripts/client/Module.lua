@@ -1,15 +1,27 @@
-local CClient = {}
+--[[
+-- @module dr2c.client.Module
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
+--- @class dr2c.CModule
+local CModule = {}
 
 --- @type Renderer?
 local renderer
 --- @type Window?
 local window
 
-function CClient.getRenderer()
+function CModule.getRenderer()
 	return renderer
 end
 
-function CClient.getWindow()
+function CModule.getWindow()
 	return window
 end
 
@@ -31,7 +43,7 @@ events:add(N_("GUpdate"), function(e)
 	events:invoke(eventClientUpdate, e_)
 end, N_("ClientUpdate"), nil, "Main")
 
-CClient.eventCRender = events:new(N_("CRender"), {
+CModule.eventCRender = events:new(N_("CRender"), {
 	"Camera",
 	"UI",
 	"Debug",
@@ -48,10 +60,10 @@ events:add(N_("GRender"), function(e)
 	renderer = window.renderer
 	e.renderer = renderer
 
-	events:invoke(CClient.eventCRender, e)
+	events:invoke(CModule.eventCRender, e)
 end, N_("ClientRender"), nil, "Main")
 
-CClient.eventCLoad = events:new(N_("CLoad"), {
+CModule.eventCLoad = events:new(N_("CLoad"), {
 	"Sprites",
 	"ECS",
 	"Validate",
@@ -61,7 +73,7 @@ CClient.eventCLoad = events:new(N_("CLoad"), {
 events:add(N_("GLoad"), function(e)
 	--- @class dr2c.E.CLoad
 	--- @cast e dr2c.E.CLoad
-	events:invoke(CClient.eventCLoad, e)
+	events:invoke(CModule.eventCLoad, e)
 end, N_("ClientContentLoad"), "Client")
 
 local commonOrders = {
@@ -69,20 +81,20 @@ local commonOrders = {
 	"Pause",
 }
 
-CClient.eventCKeyCodeDown = events:new(N_("CKeyCodeDown"), commonOrders)
-CClient.eventCScanCodeDown = events:new(N_("CScanCodeDown"), commonOrders)
-CClient.eventCKeyCodeUp = events:new(N_("CKeyCodeUp"), commonOrders)
-CClient.eventCScanCodeUp = events:new(N_("CScanCodeUp"), commonOrders)
+CModule.eventCKeyCodeDown = events:new(N_("CKeyCodeDown"), commonOrders)
+CModule.eventCScanCodeDown = events:new(N_("CScanCodeDown"), commonOrders)
+CModule.eventCKeyCodeUp = events:new(N_("CKeyCodeUp"), commonOrders)
+CModule.eventCScanCodeUp = events:new(N_("CScanCodeUp"), commonOrders)
 
 --- @param e Events.E.KeyDown
 events:add(N_("GKeyDown"), function(e)
-	events:invoke(CClient.eventCKeyCodeDown, e, e.keyCode)
-	events:invoke(CClient.eventCScanCodeDown, e, e.scanCode)
+	events:invoke(CModule.eventCKeyCodeDown, e, e.keyCode)
+	events:invoke(CModule.eventCScanCodeDown, e, e.scanCode)
 end, N_("ClientKeyDown"))
 
 events:add(N_("GKeyUp"), function(e)
-	events:invoke(CClient.eventCKeyCodeUp, e, e.keyCode)
-	events:invoke(CClient.eventCScanCodeUp, e, e.scanCode)
+	events:invoke(CModule.eventCKeyCodeUp, e, e.keyCode)
+	events:invoke(CModule.eventCScanCodeUp, e, e.scanCode)
 end, N_("ClientKeyUp"))
 
-return CClient
+return CModule

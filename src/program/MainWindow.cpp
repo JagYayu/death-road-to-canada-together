@@ -34,7 +34,8 @@
 using namespace tudov;
 
 MainWindow::MainWindow(Context &context) noexcept
-    : Window(context, "MainWindow")
+    : Window(context, "MainWindow"),
+      _showDebugElements()
 {
 }
 
@@ -195,7 +196,7 @@ void MainWindow::InitializeWindow(std::int32_t width, std::int32_t height, std::
 			io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 		}
 
-		auto sdlRenderer = renderer->GetSDLRendererHandle();
+		SDL_Renderer *sdlRenderer = renderer->GetSDLRendererHandle();
 		ImGui_ImplSDL3_InitForSDLRenderer(_sdlWindow, sdlRenderer);
 		ImGui_ImplSDLRenderer3_Init(sdlRenderer);
 
@@ -203,6 +204,7 @@ void MainWindow::InitializeWindow(std::int32_t width, std::int32_t height, std::
 	}
 
 	_renderTarget = std::make_shared<RenderTarget>(*renderer, width, height);
+
 	SetShowDebugElements(true);
 }
 
@@ -235,26 +237,21 @@ void MainWindow::SetDebugManager(const std::shared_ptr<IDebugManager> &debugMana
 
 bool MainWindow::GetShowDebugElements() noexcept
 {
-	return true;
-	// return _renderTarget != nullptr;
+	return _showDebugElements;
 }
 
 void MainWindow::SetShowDebugElements(bool value) noexcept
 {
-	// auto [width, height] = GetSize();
-	// _renderTarget = std::make_shared<RenderTarget>(*renderer, width, height);
+	_showDebugElements = value;
 }
 
 bool MainWindow::GetShowLoadingFrame() noexcept
 {
-	// return _loadingFrameRenderTarget != nullptr;
 	return true;
 }
 
 void MainWindow::SetShowLoadingFrame(bool value) noexcept
 {
-	// auto [width, height] = GetSize();
-	// _loadingFrameRenderTarget = std::make_shared<RenderTarget>(*renderer, width, height);
 }
 
 EventHandleKey MainWindow::GetKey() const noexcept
@@ -294,14 +291,15 @@ void MainWindow::Render() noexcept
 		std::atomic<Engine::ELoadingState> &loadingState = engine.GetLoadingState();
 		auto &loadingMutex = engine.GetLoadingMutex();
 
-		if (loadingMutex.try_lock_for(std::chrono::milliseconds(10)))
+		if (loadingMutex.try_lock())
 		{
 			if (Engine::ELoadingState expected = Engine::ELoadingState::Done; loadingState.compare_exchange_strong(expected, Engine::ELoadingState::Locked))
 			{
 				loadingState.store(Engine::ELoadingState::Done);
 
 				RenderPreImpl();
-				if (!_debugManager.expired())
+
+				if (!_debugManager.expired() && GetShowDebugElements())
 				{
 					_debugManager.lock()->UpdateAndRender(*this);
 				}

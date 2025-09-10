@@ -606,7 +606,7 @@ void EventManager::LuaInvoke(sol::object event, sol::object args, sol::object ke
 
 		if (GetScriptLoader().GetLoadingScriptID() != 0) [[unlikely]]
 		{
-			throw std::runtime_error("Attempt to invoke event at script load time");
+			GetScriptEngine().ThrowError("Attempt to invoke event at script load time");
 		}
 
 		RuntimeEvent *eventInstance;
