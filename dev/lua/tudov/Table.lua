@@ -12,6 +12,7 @@
 local ScriptEngine = require("ScriptEngine")
 local Function = require("tudov.Function")
 local stringBuffer = require("string.buffer")
+local table_new = require("table.new")
 
 local floor = math.floor
 local ipairs = ipairs
@@ -28,7 +29,7 @@ Table.empty = setmetatable({}, {
 
 Table.clear = require("table.clear")
 
-Table.new = require("table.new")
+Table.new = table_new
 
 --- @generic T: table, K, V
 --- @param tbl table
@@ -71,7 +72,7 @@ end
 --- @param depth number? default: math.huge
 --- @return T
 function Table.copy(tbl, depth)
-	depth = depth or math.huge
+	depth = tonumber(depth) or math.huge
 
 	return depth > 0 and copyImpl(tbl, depth) or copyFinalImpl(tbl)
 end
@@ -94,6 +95,40 @@ function Table.fastCopy(tbl)
 	end
 
 	return tbl
+end
+
+--- @generic T
+--- @param list T[]
+--- @param depth integer
+--- @return T[]
+local function copyArrayImplNested(list, depth)
+	local result = table_new(2, 0)
+
+	if depth > 0 then
+		for i, v in ipairs(list) do
+			if type(v) == "table" then
+				list[i] = copyArrayImplNested(v, depth - 1)
+			end
+		end
+	else
+		for i, v in ipairs(list) do
+			list[i] = v
+		end
+	end
+
+	return result
+end
+
+--- Copy array part of a table.
+--- This is faster than `Table.fastCopy`, but only support copy array part of tables inside.
+--- @generic T
+--- @param list T[]
+--- @param depth integer? @default: 0
+--- @return T[]
+function Table.copyArray(list, depth)
+	depth = tonumber(depth) or 0
+
+	return copyArrayImplNested(list, depth)
 end
 
 local flattenImpl
@@ -405,7 +440,7 @@ end
 --- @return table<T, number>
 --- @nodiscard
 function Table.invertIndexValues(list)
-	local tbl = Table.new(0, #list)
+	local tbl = table_new(0, #list)
 
 	for index, value in ipairs(list) do
 		tbl[value] = index
@@ -574,7 +609,7 @@ end
 function Table.listShrinkToFit(list, length)
 	local l = list
 
-	list = Table.new(#l, 0)
+	list = table_new(#l, 0)
 	for i = 1, length do
 		list[i] = l[i]
 	end

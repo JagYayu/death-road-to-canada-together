@@ -205,6 +205,16 @@ std::tuple<std::float_t, std::float_t> RenderTarget::GetCameraScale() noexcept
 	return std::make_tuple(_cameraScaleX, _cameraScaleY);
 }
 
+EBlendMode RenderTarget::GetBlendMode() noexcept
+{
+	return _renderer.GetBlendMode(_texture.get());
+}
+
+void RenderTarget::SetBlendMode(EBlendMode blendMode) noexcept
+{
+	_renderer.SetBlendMode(_texture.get(), blendMode);
+}
+
 void RenderTarget::SnapCameraPosition() noexcept
 {
 	_snapCameraPosition = true;

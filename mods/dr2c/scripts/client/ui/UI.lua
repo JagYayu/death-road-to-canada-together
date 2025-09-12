@@ -17,6 +17,8 @@ local CUI = {}
 --- @type Renderer
 local renderer
 
+local time
+
 CUI.eventRenderUI = events:new(N_("CRenderUI"), {
 	"Begin",
 	"Menu",
@@ -37,44 +39,191 @@ function CUI.setTexture(drawTexture)
 	drawRectArgs.texture = drawTexture
 end
 
---- 画一个通用的矩形框
---- @param x number @Frame top left position
---- @param y number @Frame top left position
---- @param size number @Corner size
---- @param width number @Frame width
---- @param height number @Frame height
-function CUI.drawFrame(x, y, size, width, height, color)
-	
+local uiTexture = images:getID("mods/dr2c/gfx/UI.png")
+local uiTextureX = 0
+local uiTextureY = 0
+local uiTextureWidth = 9
+local uiTextureHeight = 9
+local uiTextureSize = 4
+local uiFont = fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
+
+--- @class dr2c.UI.DrawBorder
+--- @field x number? @Frame top left position
+--- @field y number? @Frame top left position
+--- @field width number? @Frame middle width
+--- @field height number? @Frame middle height
+--- @field size number? @Corner size (width & height)
+--- @field texture DrawArgTexture?
+--- @field textureX number?
+--- @field textureY number?
+--- @field textureWidth number?
+--- @field textureHeight number?
+--- @field textureSize number?
+--- @field color Color?
+
+function CUI.setRenderer() end
+
+--- 画一个通用的矩形边框
+--- @param args dr2c.UI.DrawBorder
+function CUI.drawBorder(args)
+	-- 绘制顺序：左上、上、右上、左、右、左下、下、右下
+
+	local x = args.x
+	local y = args.y
+	local w = args.width
+	local h = args.height
+	local sz = args.size
+	if not (x or y or w or h) then
+		return
+	end
+
+	--- @cast x number
+	--- @cast y number
+	--- @cast w number
+	--- @cast h number
+	--- @cast sz number
+
+	local tx = args.textureX or uiTextureX
+	local ty = args.textureY or uiTextureY
+	local tw = args.textureWidth or uiTextureWidth
+	local th = args.textureHeight or uiTextureHeight
+	local tsz = args.textureSize or uiTextureSize
+
+	drawRectArgs.texture = args.texture or uiTexture
+	drawRectArgs.color = args.color or Color.White
+
+	drawRectSrc.x = tx
+	drawRectSrc.y = args.textureY
+	drawRectSrc.w = tsz
+	drawRectSrc.h = tsz
+	drawRectDst.x = x
+	drawRectDst.y = y
+	drawRectDst.w = sz
+	drawRectDst.h = sz
+	renderer:drawRect(drawRectArgs)
+
+	drawRectSrc.x = tx + tsz
+	drawRectSrc.w = tw - 2 * tsz
+	drawRectDst.x = x + sz
+	drawRectDst.w = w - 2 * sz
+	renderer:drawRect(drawRectArgs)
+
+	drawRectSrc.x = tx + (tw - tsz)
+	drawRectSrc.w = tsz
+	drawRectDst.x = x - sz + w
+	drawRectDst.w = sz
+	renderer:drawRect(drawRectArgs)
+
+	drawRectSrc.x = tx
+	drawRectSrc.y = ty + tsz
+	drawRectSrc.h = th - 2 * tsz
+	drawRectDst.x = x
+	drawRectDst.y = y + sz
+	drawRectDst.w = sz
+	drawRectDst.h = h
+	renderer:drawRect(drawRectArgs)
+
+	drawRectSrc.x = tx + (tw - tsz)
+	drawRectDst.x = x - sz + w
+	renderer:drawRect(drawRectArgs)
+
+	drawRectSrc.x = tx
+	drawRectSrc.y = ty + (th - tsz)
+	drawRectSrc.w = tsz
+	drawRectSrc.h = tsz
+	drawRectDst.x = x
+	drawRectDst.y = y + sz + h
+	drawRectDst.h = sz
+	renderer:drawRect(drawRectArgs)
+
+	drawRectSrc.x = tsz
+	drawRectSrc.w = tw - 2 * tsz
+	drawRectDst.x = x + sz
+	drawRectDst.w = w - 2 * sz
+	renderer:drawRect(drawRectArgs)
+
+	drawRectSrc.x = tw - tsz
+	drawRectSrc.w = tsz
+	drawRectDst.x = x - sz + w
+	drawRectDst.w = sz
+	renderer:drawRect(drawRectArgs)
 end
 
-function CUI.addText(x, y, text)
-	local rect = CClient.getRenderer():drawDebugText(x, y, text)
-end
+--- @class dr2c.UI.DrawButton
+--- @field x number?
+--- @field y number?
+--- @field text string?
+--- @field alignX number?
+--- @field alignY number?
+--- @field font DrawArgFont?
+--- @field scale number?
+--- @field width number?
+--- @field height number?
+--- @field size number?
+--- @field held boolean?
+--- @field border dr2c.UI.DrawBorder?
 
---- @param x number
---- @param y number
---- @param text string?
---- @param size number?
---- @param width number?
---- @param height number?
-function CUI.drawButton(x, y, text, size, width, height, color)
-	size = size or 8
+--- @param args dr2c.UI.DrawButton
+function CUI.drawButton(args)
+	if not (args.x and args.y) then
+		return
+	end
 
-	drawTextArgs.text = tostring(text)
-	drawTextArgs.font = 2
-	drawTextArgs.x = x
-	drawTextArgs.y = y
+	local border = args.border
+	if border then
+		if args.held then
+			border.x = args.x
+			border.y = args.y
+			border.width = args.width
+			border.height = args.height
+			border.size = uiTextureSize
+		else
+			border.x = args.x
+			border.y = args.y
+			border.width = args.width
+			border.height = args.height
+			border.size = uiTextureSize
+		end
 
-	local txtX, txtY, txtW, txtH = renderer:drawText(drawTextArgs)
+		CUI.drawBorder(args.border)
+	end
 
-	CUI.drawFrame(txtX - size, txtY - size, size, txtW, txtH, color)
+	local borderSize = border and border.size or uiTextureSize
+
+	do
+		drawRectArgs.texture = uiTexture
+		drawRectArgs.color = Color.White
+		drawRectSrc.x = 9
+		drawRectSrc.y = 1
+		drawRectSrc.w = 1
+		drawRectSrc.h = 6
+		drawRectDst.x = args.x + borderSize
+		drawRectDst.y = args.y + borderSize
+		drawRectDst.w = args.width - borderSize * 2
+		drawRectDst.h = args.height - borderSize
+		renderer:drawRect(drawRectArgs)
+	end
+
+	drawTextArgs.font = args.font or uiFont
+	drawTextArgs.text = tostring(args.text)
+	drawTextArgs.alignX = args.alignX or 0
+	drawTextArgs.alignY = args.alignY or 0
+	drawTextArgs.x = args.x + args.width * 0.5 + borderSize
+	drawTextArgs.y = args.y + args.height * 0.5 + borderSize
+	-- drawTextArgs.maxWidth = args.width - borderSize * 2
+	drawTextArgs.scale = (args.held and 0.8 or 1) * (args.scale or 1)
+	-- drawTextArgs.color = Color.Red
+	-- drawTextArgs.backgroundColor = Color.rgba(255, 255, 255, 63)
+	drawTextArgs.characterSize = 18
+	drawTextArgs.shadow = 2
+	drawTextArgs.shadowColor = Color.Green
+	renderer:drawText(drawTextArgs)
 end
 
 --- @param e dr2c.E.CRender
 events:add(N_("CRender"), function(e)
+	time = Time:getSystemTime()
 	renderer = e.renderer
-
-	CUI.drawButton(100, 100, "你好 hello world", nil, 168, 64, Color.White)
 
 	--- @alias dr2c.E.CRenderUI dr2c.E.CRender
 	events:invoke(CUI.eventRenderUI, e)

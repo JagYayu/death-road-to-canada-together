@@ -15,6 +15,7 @@
 #include "graphic/Renderer.hpp"
 #include "util/Micros.hpp"
 
+#include "SDL3/SDL_blendmode.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_surface.h"
@@ -59,7 +60,7 @@ void Texture::Initialize(std::int32_t width, std::int32_t height, SDL_PixelForma
 
 	_sdlTexture = SDL_CreateTexture(renderer.GetSDLRendererHandle(), format, access, width, height);
 
-	SDL_SetTextureScaleMode(_sdlTexture, SDL_SCALEMODE_NEAREST);
+	PostInitialize();
 }
 
 void Texture::Initialize(Image &image)
@@ -69,7 +70,13 @@ void Texture::Initialize(Image &image)
 	auto sdlSurface = static_cast<SDL_Surface *>(image.GetSDLSurfaceHandle());
 	_sdlTexture = SDL_CreateTextureFromSurface(renderer.GetSDLRendererHandle(), sdlSurface);
 
+	PostInitialize();
+}
+
+void Texture::PostInitialize() noexcept
+{
 	SDL_SetTextureScaleMode(_sdlTexture, SDL_SCALEMODE_NEAREST);
+	SDL_SetTextureBlendMode(_sdlTexture, SDL_BLENDMODE_BLEND);
 }
 
 std::float_t Texture::GetWidth() const

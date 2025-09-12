@@ -16,9 +16,6 @@ local Table = require("tudov.Table")
 --- @class dr2c.CUIWidget
 local CUIWidget = {}
 
---- @class dr2c.UIWidget.Border
---- @field texture DrawArgTexture
-
 --- @alias dr2c.UIWidgetType dr2c.CUIWidget.Type
 
 CUIWidget.Type = Enum.sequence({
@@ -47,12 +44,11 @@ function CUIWidget.new(widgetType, args)
 	args = args or Table.empty
 
 	--- @class dr2c.UIWidget
-	--- @field border dr2c.UIWidget.Border
 	--- @field draw? fun(self: self, renderer: Renderer)
 	--- @field margin Rectangle
 	--- @field padding Rectangle
+	--- @field rect? Rectangle
 	local widget = {
-		border = args.border,
 		margin = args.margin or { 0, 0, 0, 0 },
 		padding = args.padding or { 0, 0, 0, 0 },
 		type = widgetType,

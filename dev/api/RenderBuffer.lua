@@ -2,7 +2,7 @@
 error("this is a lua library module")
 
 --- @class RenderBuffer.AddRectangleArgs : userdata
---- @field texture TextureArg?
+--- @field texture DrawArgTexture?
 --- @field destination Rectangle
 --- @field source Rectangle?
 --- @field color Color?

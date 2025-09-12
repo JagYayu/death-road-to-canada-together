@@ -11,6 +11,7 @@
 
 #include "graphic/Renderer.hpp"
 
+#include "graphic/BlendMode.hpp"
 #include "graphic/RenderArgs.hpp"
 #include "graphic/RenderBuffer.hpp"
 #include "graphic/RenderTarget.hpp"
@@ -217,21 +218,21 @@ void Renderer::ApplyTransform(SDL_FRect &rect) noexcept
 	rect.h = (rect.h * scaleY);
 }
 
-void Renderer::DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src)
+void Renderer::DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src, Color color)
 {
 	SDL_FRect dst_{dst};
 	ApplyTransform(dst_);
 
-	bool success;
-	if (auto sdlTexture = texture ? texture->GetSDLTextureHandle() : nullptr; sdlTexture != nullptr)
-	{
-		success = SDL_RenderTexture(_sdlRenderer, sdlTexture, src, &dst_);
-	}
-	else
+	auto sdlTexture = texture ? texture->GetSDLTextureHandle() : nullptr;
+	if (sdlTexture == nullptr)
 	{
 		sdlTexture = GetOrCreateImageTexture(0)->GetSDLTextureHandle();
-		success = SDL_RenderTexture(_sdlRenderer, sdlTexture, src, &dst_);
 	}
+
+	SDL_SetTextureColorMod(sdlTexture, color.r, color.g, color.b);
+	SDL_SetTextureAlphaMod(sdlTexture, color.a);
+
+	bool success = SDL_RenderTexture(_sdlRenderer, sdlTexture, src, &dst_);
 
 	if (!success) [[unlikely]]
 	{
@@ -246,22 +247,19 @@ void Renderer::DrawDebugText(std::float_t x, std::float_t y, std::string_view te
 
 SDL_FRect Renderer::DrawText(DrawTextArgs *args)
 {
-	SDL_Texture *sdlTexture;
+	const std::shared_ptr<Font> &font = GetGlobalResourcesCollection().GetFontResources().GetResource(args->font);
+	if (font == nullptr) [[unlikely]]
 	{
-		const std::shared_ptr<Font> &font = GetGlobalResourcesCollection().GetFontResources().GetResource(args->font);
-		if (font == nullptr) [[unlikely]]
-		{
-			throw std::runtime_error("Invalid font");
-		}
-
-		sdlTexture = font->GetTextTexture(_sdlRenderer, 20.0F * args->characterScale, args->text, args->maxWidth);
+		throw std::runtime_error("Invalid font");
 	}
 
-	std::float_t w = static_cast<std::float_t>(sdlTexture->w) * args->scale;
-	std::float_t h = static_cast<std::float_t>(sdlTexture->h) * args->scale;
+	auto [sdlTexture, width, height] = font->GetTextInfo(_sdlRenderer, args->characterSize, args->text, args->maxWidth);
+
+	std::float_t w = static_cast<std::float_t>(width) * args->scale;
+	std::float_t h = static_cast<std::float_t>(height) * args->scale;
 	SDL_FRect dst = {
-	    args->x,
-	    args->y,
+	    args->x - w * args->alignX,
+	    args->y - h * args->alignY,
 	    w,
 	    h,
 	};
@@ -269,23 +267,29 @@ SDL_FRect Renderer::DrawText(DrawTextArgs *args)
 
 	if (args->backgroundColor.a != 0)
 	{
-		SDL_SetRenderDrawColor(_sdlRenderer, args->backgroundColor.r, args->backgroundColor.g, args->backgroundColor.b, args->backgroundColor.a);
-		SDL_RenderTexture(_sdlRenderer, GetOrCreateImageTexture(0)->GetSDLTextureHandle(), nullptr, &dst);
+		SDL_Texture *backgroundSDLTexture = GetOrCreateImageTexture(0)->GetSDLTextureHandle();
+		SDL_SetTextureColorMod(backgroundSDLTexture, args->backgroundColor.r, args->backgroundColor.g, args->backgroundColor.b);
+		SDL_SetTextureAlphaMod(backgroundSDLTexture, args->backgroundColor.a);
+		SDL_RenderTexture(_sdlRenderer, backgroundSDLTexture, nullptr, &dst);
 	}
 
 	if (args->shadow != 0 && args->shadowColor.a != 0)
 	{
-		dst.x += args->shadow;
-		dst.y += args->shadow;
+		std::float_t offset = args->shadow * args->scale;
 
-		SDL_SetRenderDrawColor(_sdlRenderer, args->shadowColor.r, args->shadowColor.g, args->shadowColor.b, args->shadowColor.a);
+		dst.x += offset;
+		dst.y += offset;
+
+		SDL_SetTextureColorMod(sdlTexture, args->shadowColor.r, args->shadowColor.g, args->shadowColor.b);
+		SDL_SetTextureAlphaMod(sdlTexture, args->shadowColor.a);
 		SDL_RenderTexture(_sdlRenderer, sdlTexture, nullptr, &dst);
 
-		dst.x -= args->shadow;
-		dst.y -= args->shadow;
+		dst.x -= offset;
+		dst.y -= offset;
 	}
 
-	SDL_SetRenderDrawColor(_sdlRenderer, args->color.r, args->color.g, args->color.b, args->color.a);
+	SDL_SetTextureColorMod(sdlTexture, args->color.r, args->color.g, args->color.b);
+	SDL_SetTextureAlphaMod(sdlTexture, args->color.a);
 	SDL_RenderTexture(_sdlRenderer, sdlTexture, nullptr, &dst);
 
 	return {
@@ -342,6 +346,11 @@ void Renderer::LuaDrawRect(DrawRectArgs *args) noexcept
 {
 	try
 	{
+		if (args == nullptr) [[unlikely]]
+		{
+			GetScriptEngine().ThrowError("'Args' cannot be a null pointer");
+		}
+
 		Texture *texture;
 		if (args->_texture.has_value()) [[likely]]
 		{
@@ -375,8 +384,6 @@ void Renderer::LuaDrawRect(DrawRectArgs *args) noexcept
 			texture = texture2.get();
 		}
 
-		SDL_SetRenderDrawColor(_sdlRenderer, args->color.r, args->color.g, args->color.b, args->color.a);
-
 		SDL_FRect rectDst{
 		    args->destination.x,
 		    args->destination.y,
@@ -394,11 +401,11 @@ void Renderer::LuaDrawRect(DrawRectArgs *args) noexcept
 			    value.h,
 			};
 
-			DrawRect(texture, rectDst, &rectSrc);
+			DrawRect(texture, rectDst, &rectSrc, args->color);
 		}
 		else
 		{
-			DrawRect(texture, rectDst);
+			DrawRect(texture, rectDst, nullptr, args->color);
 		}
 	}
 	catch (std::exception &e)
@@ -502,6 +509,18 @@ std::shared_ptr<RenderTarget> Renderer::LuaEndTarget() noexcept
 		TE_ASSERT(false, "UNHANDLED ERROR");
 		return nullptr;
 	}
+}
+
+EBlendMode Renderer::GetBlendMode(Texture *texture) noexcept
+{
+	SDL_BlendMode sdlBlendMode;
+	SDL_GetTextureBlendMode(texture != nullptr ? texture->GetSDLTextureHandle() : nullptr, &sdlBlendMode);
+	return static_cast<EBlendMode>(sdlBlendMode);
+}
+
+void Renderer::SetBlendMode(Texture *texture, EBlendMode blendMode) noexcept
+{
+	SDL_SetTextureBlendMode(texture != nullptr ? texture->GetSDLTextureHandle() : nullptr, static_cast<SDL_BlendMode>(blendMode));
 }
 
 void Renderer::Clear() noexcept

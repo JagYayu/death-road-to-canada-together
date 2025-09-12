@@ -136,19 +136,19 @@ namespace tudov
 	{
 		friend LuaAPI;
 
-		FontID font = 0;
+		FontID font = 0.0f;
 		std::string_view text = "";
-		std::float_t x = 0;
-		std::float_t y = 0;
-		std::float_t scale = 1;
-		std::float_t characterScale = 1;
-		std::float_t alignX = 0;
-		std::float_t alignY = 0;
-		std::float_t maxWidth = 0;
+		std::float_t x = 0.0f;
+		std::float_t y = 0.0f;
+		std::float_t scale = 1.0f;
+		std::float_t characterSize = 20.0f;
+		std::float_t alignX = 0.0f;
+		std::float_t alignY = 0.0f;
+		std::float_t maxWidth = 0.0f;
 		Color color = Color();
 		Color backgroundColor = Color(255, 0, 0, 0);
 		std::float_t shadow = 0.0f;
-		Color shadowColor = Color(0, 255, 0, 255);
+		Color shadowColor = Color(0, 0, 0, 255);
 
 	  private:
 		inline std::string_view GetText() noexcept
@@ -159,9 +159,9 @@ namespace tudov
 		{
 			return font;
 		}
-		inline std::float_t GetCharacterScale() noexcept
+		inline std::float_t GetCharacterSize() noexcept
 		{
-			return characterScale;
+			return characterSize;
 		}
 		inline std::float_t GetX() noexcept
 		{
@@ -187,6 +187,22 @@ namespace tudov
 		{
 			return maxWidth;
 		}
+		inline std::uint32_t GetColor() noexcept
+		{
+			return static_cast<std::uint32_t>(color);
+		}
+		inline std::uint32_t GetBackgroundColor() noexcept
+		{
+			return static_cast<std::uint32_t>(backgroundColor);
+		}
+		inline std::float_t GetShadow() noexcept
+		{
+			return shadow;
+		}
+		inline std::uint32_t GetShadowColor() noexcept
+		{
+			return static_cast<std::uint32_t>(shadowColor);
+		}
 
 		inline void SetText(sol::string_view text) noexcept
 		{
@@ -196,9 +212,9 @@ namespace tudov
 		{
 			this->font = font;
 		}
-		inline void SetCharacterScale(std::float_t characterScale) noexcept
+		inline void SetCharacterSize(std::float_t characterSize) noexcept
 		{
-			this->characterScale = characterScale;
+			this->characterSize = characterSize;
 		}
 		inline void SetX(std::float_t x) noexcept
 		{
@@ -223,6 +239,22 @@ namespace tudov
 		inline void SetMaxWidth(std::float_t maxWidth) noexcept
 		{
 			this->maxWidth = maxWidth;
+		}
+		inline void SetColor(std::uint32_t color) noexcept
+		{
+			this->color = Color(color);
+		}
+		inline void SetBackgroundColor(std::uint32_t backgroundColor) noexcept
+		{
+			this->backgroundColor = Color(backgroundColor);
+		}
+		inline void SetShadow(std::float_t shadow) noexcept
+		{
+			this->shadow = shadow;
+		}
+		inline void SetShadowColor(std::uint32_t color) noexcept
+		{
+			this->shadowColor = Color(shadowColor);
 		}
 	};
 } // namespace tudov

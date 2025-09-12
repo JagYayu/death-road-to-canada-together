@@ -3,7 +3,7 @@ local TestSynchrony = {}
 
 local drawTextArgs = DrawTextArgs()
 
-drawTextArgs.font = fonts:getID("mods/dr2c/fonts/Silver.ttf")
+drawTextArgs.font = fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
 
 function TestSynchrony.enable()
 	local Function = require("tudov.Function")
@@ -40,9 +40,9 @@ function TestSynchrony.enable()
 			drawTextArgs.y = drawTextArgs.y + h + 2
 		end
 
-		drawLine("NEWS OPTIONS")
-		drawLine("你好世界")
-		drawLine("Death Road to Canada")
+		-- drawLine("NEWS OPTIONS")
+		-- drawLine("你好世界")
+		-- drawLine("Death Road to Canada")
 
 		-- local clientSnapshots = CWorldSnapshot.getAll()
 

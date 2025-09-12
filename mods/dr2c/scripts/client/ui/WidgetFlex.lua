@@ -35,11 +35,25 @@ end
 --- @param self dr2c.UIWidgetFlexHorizontal
 --- @param renderer Renderer
 function metatable.__index:draw(renderer)
-	for i, child in ipairs(self.children) do
-		if child.draw and child.rect then
-			-- child.rect
+	local x = self.rect[1]
+	local y = self.rect[2]
+	local w = self.rect[3]
+	local h = self.rect[4]
 
-			child:draw(child, renderer)
+	for i, child in ipairs(self.children) do
+		if child.draw then
+			local rect = child.rect
+			if not rect then
+				rect = { 0, 0, 0, 0 }
+				child.rect = rect
+			end
+
+			rect[1] = x + (i - 1) * w
+			rect[2] = y
+			rect[3] = w
+			rect[4] = h
+
+			child:draw(renderer)
 		end
 	end
 end
@@ -53,8 +67,10 @@ events:add(CUIWidget.eventCWidget, function(e)
 	--- @type table | false
 	widget.cache = false
 
+	--- @type dr2c.UIWidget[]
 	widget.children = {}
 
+	--- @type Rectangle
 	widget.margin = {
 		tonumber(e.args.marginX) or 0,
 		tonumber(e.args.marginY) or 0,
@@ -62,6 +78,7 @@ events:add(CUIWidget.eventCWidget, function(e)
 		tonumber(e.args.marginH) or 0,
 	}
 
+	--- @type Rectangle
 	widget.rect = {
 		tonumber(e.args.x) or 0,
 		tonumber(e.args.y) or 0,

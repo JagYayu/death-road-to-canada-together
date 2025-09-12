@@ -58,5 +58,8 @@ namespace tudov
 		{
 			return const_cast<Texture *>(this)->GetSDLTextureHandle();
 		}
+
+	  private:
+		void PostInitialize() noexcept;
 	};
 } // namespace tudov

@@ -23,6 +23,7 @@
 
 namespace tudov
 {
+	enum class EBlendMode : std::uint8_t;
 	class Engine;
 	class LuaAPI;
 	class Renderer;
@@ -101,6 +102,9 @@ namespace tudov
 		std::tuple<std::float_t, std::float_t> GetCameraTargetScale() noexcept;
 		void SetCameraTargetScale(std::float_t x, std::float_t y) noexcept;
 		std::tuple<std::float_t, std::float_t> GetCameraScale() noexcept;
+
+		EBlendMode GetBlendMode() noexcept;
+		void SetBlendMode(EBlendMode blendMode) noexcept;
 
 		void SnapCameraPosition() noexcept;
 		void SnapCameraScale() noexcept;

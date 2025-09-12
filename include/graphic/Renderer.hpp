@@ -15,12 +15,12 @@
 #include "VSyncMode.hpp"
 #include "mod/LuaAPI.hpp"
 #include "program/Context.hpp"
-#include "sol/forward.hpp"
 #include "system/Log.hpp"
 #include "util/Color.hpp"
 #include "util/Definitions.hpp"
 
 #include "SDL3/SDL_rect.h"
+#include "sol/forward.hpp"
 #include "sol/table.hpp"
 
 #include <cstdint>
@@ -34,6 +34,8 @@ struct TTF_TextEngine;
 
 namespace tudov
 {
+	enum class EBlendMode : std::uint8_t;
+
 	struct IWindow;
 	struct DrawRectArgs;
 	struct DrawTextArgs;
@@ -54,9 +56,12 @@ namespace tudov
 		virtual EVSyncMode GetVSync() noexcept = 0;
 		virtual bool SetVSync(EVSyncMode mode) noexcept = 0;
 
-		virtual void DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src = nullptr) = 0;
-		virtual void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, Color color = Color(255, 255, 255, 255)) = 0;
+		virtual void DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src = nullptr, Color color = Color::White) = 0;
+		virtual void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, Color color = Color::White) = 0;
 		virtual SDL_FRect DrawText(DrawTextArgs *args) = 0;
+
+		virtual EBlendMode GetBlendMode(Texture *texture) noexcept = 0;
+		virtual void SetBlendMode(Texture *texture, EBlendMode blendMode) noexcept = 0;
 
 		virtual void Clear() noexcept = 0;
 		virtual void Reset() noexcept = 0;
@@ -98,11 +103,14 @@ namespace tudov
 		EVSyncMode GetVSync() noexcept override;
 		bool SetVSync(EVSyncMode mode) noexcept override;
 
-		void DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src = nullptr) override;
-		void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, Color color = Color(255, 255, 255, 255)) override;
+		void DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src = nullptr, Color color = Color::White) override;
+		void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, Color color = Color::White) override;
 		SDL_FRect DrawText(DrawTextArgs *args) override;
 		void DrawVertices(Texture *texture, const std::vector<SDL_Vertex> &vertices);
 		void DrawVertices(Texture *texture, const std::vector<SDL_Vertex> &vertices, const std::vector<std::int32_t> &indices);
+
+		EBlendMode GetBlendMode(Texture *texture) noexcept override;
+		void SetBlendMode(Texture *texture, EBlendMode blendMode) noexcept override;
 
 		void Clear() noexcept override;
 		void Reset() noexcept override;
