@@ -22,7 +22,7 @@ GPlayers.Attribute = Enum.sequence({
 	ClientID = 1,
 })
 
-local eventClientPlayersUpdateMaxPerClient = events:new("CPlayersUpdateMaxPerClient", {
+local eventClientPlayersUpdateMaxPerClient = events:new(N_("CPlayersUpdateMaxPerClient"), {
 	"Overrides",
 	"Cache",
 })

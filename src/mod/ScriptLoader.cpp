@@ -19,11 +19,13 @@
 #include "mod/ScriptModule.hpp"
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
+#include "program/Tudov.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "system/LogMicros.hpp"
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 
+#include <algorithm>
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
@@ -50,7 +52,9 @@ ScriptLoader::ScriptLoader(Context &context) noexcept
       _onLoadedScript(),
       _onUnloadScript(),
       _onFailedLoadScript(),
-      _scriptReversedDependencies()
+      _scriptReversedDependencies(),
+      _parseErrorScripts(),
+      _scriptProviderVersion()
 {
 }
 
@@ -129,8 +133,62 @@ bool ScriptLoader::IsScriptFullyLoaded(ScriptID scriptID) noexcept
 
 bool ScriptLoader::IsScriptHasError(ScriptID scriptID) noexcept
 {
+	if (_parseErrorScripts.contains(scriptID))
+	{
+		return true;
+	}
+
 	auto it = _scriptModules.find(scriptID);
 	return it == _scriptModules.end() ? false : it->second->HasLoadError();
+}
+
+void ScriptLoader::MarkScriptLoadError(ScriptID scriptID)
+{
+	auto it = _scriptModules.find(scriptID);
+	if (it == _scriptModules.end()) [[unlikely]]
+	{
+		throw std::runtime_error("Script does not exist");
+	}
+
+	it->second->MarkLoadError();
+}
+
+std::vector<ScriptID> ScriptLoader::CollectErrorScripts() const noexcept
+{
+	CheckScriptProvider();
+
+	std::vector<ScriptID> scriptIDs{};
+
+	for (auto scriptID : _parseErrorScripts)
+	{
+		scriptIDs.emplace_back(scriptID);
+	}
+
+	for (auto [scriptID, scriptModule] : _scriptModules)
+	{
+		if (scriptModule->HasLoadError())
+		{
+			TE_ASSERT(!_parseErrorScripts.contains(scriptID));
+
+			scriptIDs.emplace_back(scriptID);
+		}
+	}
+
+	return scriptIDs;
+}
+
+void ScriptLoader::CheckScriptProvider() const noexcept
+{
+	const IScriptProvider &provider = GetScriptProvider();
+	if (provider.GetVersionID() != _scriptProviderVersion) [[unlikely]]
+	{
+		std::erase_if(_parseErrorScripts, [&provider](ScriptID scriptID) -> bool
+		{
+			return !provider.IsValidScript(scriptID);
+		});
+
+		_scriptProviderVersion = provider.GetVersionID();
+	}
 }
 
 ScriptID ScriptLoader::GetLoadingScriptID() const noexcept
@@ -288,17 +346,14 @@ std::shared_ptr<IScriptModule> ScriptLoader::Load(ScriptID scriptID)
 
 std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view scriptCode, std::string_view modUID)
 {
+	if (auto it = _scriptModules.find(scriptID); it != _scriptModules.end())
 	{
-		auto it = _scriptModules.find(scriptID);
-		if (it != _scriptModules.end())
-		{
-			return it->second;
-		}
+		return it->second;
 	}
 
 	TE_DEBUG("Loading script <{}>\"{}\" ...", scriptID, scriptName);
 
-	sol::load_result result = GetScriptEngine().LoadFunction(std::format("<{}>\"{}\"", scriptID, scriptName), scriptCode);
+	sol::load_result result = GetScriptEngine().LoadFunction(std::format("<{}>{}", scriptID, scriptName), scriptCode);
 	if (result.valid())
 	{
 		auto &&function = result.get<sol::protected_function>();
@@ -329,18 +384,22 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 
 		_onLoadedScript(scriptID, scriptName);
 
+		_parseErrorScripts.erase(scriptID);
+
 		return it->second;
 	}
 	else
 	{
 		sol::error err = result;
-		TE_ERROR("Failed to load script <{}>\"{}\": {}", scriptID, scriptName, err.what());
+		TE_ERROR("Failed to parse script <{}>\"{}\": {}", scriptID, scriptName, err.what());
 
 		auto &&scriptModule = std::make_shared<ScriptModule>(scriptID, sol::protected_function());
 		auto &&[_, inserted] = _scriptModules.try_emplace(scriptID, scriptModule);
 		TE_ASSERT(inserted);
 
 		_onFailedLoadScript(scriptID, scriptName, std::string_view(err.what()));
+
+		_parseErrorScripts.emplace(scriptID);
 
 		return nullptr;
 	}
@@ -357,6 +416,8 @@ void ScriptLoader::UnloadAllScripts()
 			UnloadScript(it.first);
 		}
 	}
+
+	_parseErrorScripts.clear();
 }
 
 std::vector<ScriptID> ScriptLoader::UnloadScript(ScriptID scriptID)

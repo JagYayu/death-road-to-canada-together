@@ -1,4 +1,17 @@
+--[[
+-- @module dr2c.client.ui.Menu
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
 local Enum = require("tudov.Enum")
+local Table = require("tudov.Table")
+
 --- @class dr2c.MenuEntry
 
 --- @class dr2c.CUIMenu
@@ -10,6 +23,7 @@ CUIMenu.Type = Enum.sequence({
 	Generic = 1,
 })
 
+--- @type dr2c.Menu[]
 local menuStack = {}
 
 menuStack = persist("menuStack", function()
@@ -18,6 +32,21 @@ end)
 
 function CUIMenu.getAll()
 	return menuStack
+end
+
+function CUIMenu.draw()
+	local menu = menuStack[#menuStack]
+	if menu and menu.draw then
+		menu:draw()
+	end
+end
+
+function CUIMenu.update()
+	for _, menu in Table.reversedPairs(menuStack) do
+		if menu.update then
+			menu:update()
+		end
+	end
 end
 
 CUIMenu.eventCMenu = events:new(N_("CMenu"), {
@@ -43,7 +72,9 @@ local menuMetatable = {
 --- @param menuArgs table?
 --- @return dr2c.Menu?
 function CUIMenu.open(menuType, menuArgs)
-	--- @class dr2c.Menu
+	--- @class dr2c.Menu : table
+	--- @field draw? fun(self: self)
+	--- @field update? fun(self: self)
 	--- @field animationTime number?
 	--- @field content string
 	--- @field title string?
@@ -77,12 +108,7 @@ function CUIMenu.closeAll()
 	menuStack = {}
 end
 
-events:add(N_("CRenderUI"), function(e)
-	local menu = menuStack[#menuStack]
-	if menu then
-		menu:draw(e.renderer)
-	end
-end, "RenderMenu", "Menu")
+events:add(N_("CRenderUI"), CUIMenu.draw, "RenderMenu", "Menu")
 
 local testOnce = true
 

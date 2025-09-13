@@ -18,7 +18,6 @@
 #include "mod/ScriptErrors.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
-#include "system/LogMicros.hpp"
 #include "system/Time.hpp"
 #include "util/StringUtils.hpp"
 
@@ -28,6 +27,7 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
 
+#include <chrono>
 #include <memory>
 #include <numbers>
 
@@ -288,18 +288,15 @@ void MainWindow::Render() noexcept
 	Engine &engine = GetEngine();
 
 	{
-		std::atomic<Engine::ELoadingState> &loadingState = engine.GetLoadingState();
 		auto &loadingMutex = engine.GetLoadingMutex();
-
-		if (loadingMutex.try_lock())
+		
+		if (loadingMutex.try_lock_for(std::chrono::milliseconds(10)))
 		{
-			if (Engine::ELoadingState expected = Engine::ELoadingState::Done; loadingState.compare_exchange_strong(expected, Engine::ELoadingState::Locked))
+			if (engine.GetLoadingState() == Engine::ELoadingState::Done)
 			{
-				loadingState.store(Engine::ELoadingState::Done);
-
 				RenderPreImpl();
 
-				if (!_debugManager.expired() && GetShowDebugElements())
+				if (!_debugManager.expired())
 				{
 					_debugManager.lock()->UpdateAndRender(*this);
 				}

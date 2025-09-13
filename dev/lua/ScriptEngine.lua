@@ -10,8 +10,8 @@
 --]]
 
 local ffi = require("ffi")
-local inspect = require("inspect")
 local jit_util = require("jit.util")
+local inspect = require("inspect")
 
 local type = type
 

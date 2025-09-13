@@ -1,17 +1,44 @@
+--[[
+-- @module dr2c.client.ui.MenuGeneric
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
+local CModule = require("dr2c.client.Module")
 local CUIMenu = require("dr2c.client.ui.Menu")
 local CUIWidget = require("dr2c.client.ui.Widget")
 
 --- @param e dr2c.E.CMenu
 events:add(CUIMenu.eventCMenu, function(e)
-	e.menu.widgets[#e.menu.widgets + 1] = CUIWidget.newButton({
-		x = 400,
-		y = 400,
-		w = 200,
-		h = 40,
-		label = "START",
-		alignX = 0.5,
-		alignY = 0.5,
+	local windowW, windowH = CModule.getWindow():getSize()
+
+	local flex = CUIWidget.newFlexHorizontal({
+		rectangle = {
+			windowW * 0.4,
+			windowH * 0.65,
+			windowW * 0.2,
+			windowH * 0.25,
+		},
 	})
+
+	flex:addChild(CUIWidget.newButton({
+		label = "START",
+	}))
+
+	flex:addChild(CUIWidget.newButton({
+		label = "OPTIONS",
+	}))
+
+	flex:addChild(CUIWidget.newButton({
+		label = "EXIT",
+	}))
+
+	e.menu.widgets[#e.menu.widgets + 1] = flex
 
 	e.initialized = true
 end, "InitializeGeneric", "Initialize", CUIMenu.Type.Generic)

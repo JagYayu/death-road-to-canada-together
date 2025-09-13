@@ -42,6 +42,7 @@ namespace tudov
 		{
 			ScriptID id;
 			sol::table globals;
+			bool sandboxed;
 		};
 
 		virtual ~IScriptEngine() noexcept = default;
@@ -148,6 +149,7 @@ namespace tudov
 		sol::protected_function _luaPostProcessScriptGlobals;
 		sol::protected_function _luaLockMetatable;
 		sol::protected_function _luaSTDRequire;
+		sol::table _luaStackTrackPlus;
 
 		std::vector<std::shared_ptr<ScriptError>> _scriptRuntimeErrors;
 

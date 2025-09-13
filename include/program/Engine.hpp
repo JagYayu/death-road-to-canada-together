@@ -17,7 +17,6 @@
 #include "program/EngineComponent.hpp"
 #include "system/Log.hpp"
 
-#include <atomic>
 #include <cmath>
 #include <memory>
 #include <mutex>
@@ -53,8 +52,6 @@ namespace tudov
 			Pending,
 			// Loading thread is loading in progress.
 			InProgress,
-			// Locked by main thread.
-			Locked,
 		};
 
 		struct LoadingInfoArgs
@@ -108,7 +105,7 @@ namespace tudov
 
 		std::thread _logicThread;
 		// Background loading thread
-		std::atomic<ELoadingState> _loadingState;
+		ELoadingState _loadingState;
 		std::thread _loadingThread;
 		std::timed_mutex _loadingMutex;
 		std::uint64_t _loadingBeginNS;
@@ -145,7 +142,7 @@ namespace tudov
 		// Background loading info operations.
 
 		bool IsLoadingLagged() noexcept;
-		std::atomic<ELoadingState> &GetLoadingState() noexcept;
+		ELoadingState GetLoadingState() const noexcept;
 		std::timed_mutex &GetLoadingMutex() noexcept;
 		std::uint64_t GetLoadingBeginTick() const noexcept;
 		LoadingInfo GetLoadingInfo() noexcept;
@@ -174,11 +171,6 @@ namespace tudov
 		inline const LoadingInfo GetLoadingInfo() const noexcept
 		{
 			return const_cast<Engine *>(this)->GetLoadingInfo();
-		}
-
-		inline const std::atomic<ELoadingState> &GetLoadingState() const noexcept
-		{
-			return const_cast<Engine *>(this)->GetLoadingState();
 		}
 
 		inline Engine &AddLoadingProgress(std::float_t value) noexcept

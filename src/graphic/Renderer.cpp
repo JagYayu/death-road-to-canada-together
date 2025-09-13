@@ -541,8 +541,8 @@ void Renderer::LuaClear() noexcept
 void Renderer::Begin() noexcept
 {
 	{
-		auto state = GetEngine().GetLoadingState().load();
-		_background = state == Engine::ELoadingState::Pending || state == Engine::ELoadingState::InProgress;
+		auto loadingState = GetEngine().GetLoadingState();
+		_background = loadingState == Engine::ELoadingState::Pending || loadingState == Engine::ELoadingState::InProgress;
 	}
 
 	SDL_SetRenderTarget(_sdlRenderer, nullptr);

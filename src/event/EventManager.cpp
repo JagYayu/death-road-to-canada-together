@@ -26,10 +26,10 @@
 #include "util/LuaUtils.hpp"
 #include "util/Utils.hpp"
 
+#include "sol/forward.hpp"
 #include "sol/types.hpp"
-#include <format>
-#include <sol/forward.hpp>
 
+#include <format>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -110,6 +110,8 @@ void EventManager::OnScriptsLoaded()
 			std::string_view eventName = _eventID2Name[eventID];
 			ScriptID scriptID = loadtimeEvent->GetScriptID();
 			std::string_view scriptName = scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
+
+			GetScriptLoader().MarkScriptLoadError(scriptID);
 
 			TE_ERROR("Attempt to add handlers to non-exist event <{}>\"{}\", source script <{}>\"{}\"", eventID, eventName, scriptID, scriptName);
 			GetScriptErrors().AddLoadtimeError(scriptID, std::format("Attempt to add handlers to non-exist event <{}>\"{}\"{}", eventID, eventName, loadtimeEvent->GetScriptTraceBack()));

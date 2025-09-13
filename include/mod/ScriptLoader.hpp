@@ -25,6 +25,7 @@
 #include <set>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace tudov
@@ -90,6 +91,16 @@ namespace tudov
 		 * @see `IScriptModule::HasLoadError`
 		 */
 		virtual bool IsScriptHasError(ScriptID scriptID) noexcept = 0;
+
+		/**
+		 * Mark a script has loadtime error.
+		 */
+		virtual void MarkScriptLoadError(ScriptID scriptID) = 0;
+
+		/**
+		 * Collect a vector of script id that has load error. Result scripts are unsorted.
+		 */
+		virtual std::vector<ScriptID> CollectErrorScripts() const noexcept = 0;
 
 		/**
 		 * Get current loading script id. More preciously, is the script that in "FullLoad" (or "RawLoad"), but not in "LazyLoad" since its a wrapper process and didn't run the content of script.
@@ -254,6 +265,9 @@ namespace tudov
 		DelegateEvent<ScriptID, std::string_view> _onUnloadScript;
 		DelegateEvent<ScriptID, std::string_view, std::string_view> _onFailedLoadScript;
 
+		mutable std::unordered_set<ScriptID> _parseErrorScripts;
+		mutable std::uint64_t _scriptProviderVersion;
+
 	  public:
 		explicit ScriptLoader(Context &context) noexcept;
 		~ScriptLoader() noexcept override;
@@ -275,6 +289,8 @@ namespace tudov
 		bool IsScriptLazyLoaded(ScriptID scriptID) noexcept override;
 		bool IsScriptFullyLoaded(ScriptID scriptID) noexcept override;
 		bool IsScriptHasError(ScriptID scriptID) noexcept override;
+		void MarkScriptLoadError(ScriptID scriptID) override;
+		std::vector<ScriptID> CollectErrorScripts() const noexcept override;
 		ScriptID GetLoadingScriptID() const noexcept override;
 		std::optional<std::string_view> GetLoadingScriptName() const noexcept override;
 		std::vector<ScriptID> GetScriptDependencies(ScriptID scriptID) const override;
@@ -291,6 +307,7 @@ namespace tudov
 		void ProcessFullLoads() override;
 
 	  protected:
+		void CheckScriptProvider() const noexcept;
 		std::shared_ptr<ScriptModule> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
 		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
 		void PostLoadScripts();

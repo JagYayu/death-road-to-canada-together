@@ -11,10 +11,6 @@
 
 local Table = require("tudov.Table")
 
---- Q16.16
---- @class TE.Math
-local Math = {}
-
 local bit_band = bit.band
 local bit_lshift = bit.lshift
 local bit_rshift = bit.rshift
@@ -22,46 +18,57 @@ local math_atan = math.atan
 local math_ceil = math.ceil
 local math_deg = math.deg
 local math_floor = math.floor
+local math_max = math.max
+local math_min = math.min
 
-local shift = 16
+--- Q16.16
+--- @class TE.Math
+local Math = {}
+
+--- @class TE.Math.Q1616
+local Q1616 = {
+	shift = 16,
+}
+
+local shift = Q1616.shift
 local one = bit_lshift(1, shift)
 
-function Math.toFixed(x)
+function Q1616.toFixed(x)
 	return bit_lshift(x, shift)
 end
 
-function Math.fromFixed(x)
+function Q1616.fromFixed(x)
 	return bit_rshift(x, shift)
 end
 
-Math.pi = Math.toFixed(math.pi)
-local pi = Math.pi
+Q1616.pi = Q1616.toFixed(math.pi)
+local pi = Q1616.pi
 
 --- @param a number
 --- @param b number
 --- @return integer value
-function Math.add(a, b)
+function Q1616.add(a, b)
 	return a + b
 end
 
 --- @param a number
 --- @param b number
 --- @return integer value
-function Math.sub(a, b)
+function Q1616.sub(a, b)
 	return a - b
 end
 
 --- @param a number
 --- @param b number
 --- @return integer value
-function Math.mul(a, b)
+function Q1616.mul(a, b)
 	return bit_rshift(a * b, shift)
 end
 
 --- @param a number
 --- @param b number
 --- @return integer value
-function Math.div(a, b)
+function Q1616.div(a, b)
 	a = bit_lshift(a, shift) / b
 	return a >= 0 and math_floor(a) or math_ceil(a)
 end
@@ -69,12 +76,12 @@ end
 local seed = math.random(1, 123456789)
 
 --- @param x number
-function Math.randomseed(x)
+function Q1616.randomseed(x)
 	seed = math_floor(x)
 end
 
 --- @return integer @Range: 0~9999
-function Math.random(m, n)
+function Q1616.random(m, n)
 	seed = bit_band((1103515245 * seed + 12345), 0x7fffffff)
 	if not m then
 		return seed % 1e4
@@ -86,23 +93,20 @@ function Math.random(m, n)
 end
 
 local sinCache = {}
-do
-	local pi = math.pi
-	for deg = 0, 360 do
-		local rad = deg * pi / 180
-		sinCache[deg] = math_floor(math.sin(rad) * one + 0.5)
-	end
+for deg = 0, 360 do
+	local rad = deg * pi / 180
+	sinCache[deg] = math_floor(math.sin(rad) * one + 0.5)
 end
 
-function Math.sin(deg)
+function Q1616.sin(deg)
 	deg = deg % 360
 	return sinCache[deg]
 end
 
-local Math_sin = Math.sin
+local Q1616_sin = Q1616.sin
 
-function Math.cos(deg)
-	return Math_sin((deg + 90) % 360)
+function Q1616.cos(deg)
+	return Q1616_sin((deg + 90) % 360)
 end
 
 local atanTable = {
@@ -123,9 +127,9 @@ local atanTable = {
 	4,
 	2,
 }
-local piDiv2 = Math.div(Math.pi, 2)
+local piDiv2 = Q1616.div(Q1616.pi, 2)
 
-function Math.atan2(y, x)
+function Q1616.atan2(y, x)
 	if x == 0 then
 		if y > 0 then
 			return piDiv2
@@ -167,6 +171,26 @@ function Math.atan2(y, x)
 	end
 
 	return angle
+end
+
+Math.Q1616 = Q1616
+
+--- @param l number
+--- @param v number
+--- @param r number
+--- @return number
+--- @nodiscard
+function Math.clamp(l, v, r)
+	return math_max(l, math_min(r, v))
+end
+
+--- @param a number
+--- @param b number
+--- @param t number
+--- @return number
+--- @nodiscard
+function Math.lerp(a, b, t)
+	return (1 - t) * a + t * b
 end
 
 setmetatable(Math, {

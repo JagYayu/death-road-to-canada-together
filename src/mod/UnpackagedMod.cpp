@@ -247,7 +247,7 @@ void UnpackagedMod::Load()
 
 			_fileWatchQueue.push(std::make_tuple(filePath, pathType, changeType));
 
-			GetEngine().GetLoadingState().store(Engine::ELoadingState::Pending);
+			GetEngine().TriggerLoadPending();
 		}
 	};
 	_fileWatcher->StartWatching();

@@ -62,24 +62,29 @@ Log &ScriptModule::GetLog() noexcept
 	return *_parentLog.lock();
 }
 
-bool ScriptModule::IsValid() const
+bool ScriptModule::IsValid() const noexcept
 {
 	return _func.valid();
 }
 
-bool ScriptModule::IsLazyLoaded() const
+bool ScriptModule::IsLazyLoaded() const noexcept
 {
 	return _table.valid();
 }
 
-bool ScriptModule::IsFullyLoaded() const
+bool ScriptModule::IsFullyLoaded() const noexcept
 {
 	return _fullyLoaded;
 }
 
-bool ScriptModule::HasLoadError() const
+bool ScriptModule::HasLoadError() const noexcept
 {
 	return _fullyLoaded && _hasError;
+}
+
+void ScriptModule::MarkLoadError() noexcept
+{
+	_hasError = true;
 }
 
 sol::table &ScriptModule::GetTable()

@@ -12,6 +12,7 @@
 local ScriptEngine = require("ScriptEngine")
 local Function = require("tudov.Function")
 local stringBuffer = require("string.buffer")
+local table_clear = require("table.clear")
 local table_new = require("table.new")
 
 local floor = math.floor
@@ -23,13 +24,12 @@ local type = type
 --- @class TE.Table
 local Table = {}
 
+Table.clear = table_clear
+Table.new = table_new
+
 Table.empty = setmetatable({}, {
 	__newindex = Function.empty,
 })
-
-Table.clear = require("table.clear")
-
-Table.new = table_new
 
 --- @generic T: table, K, V
 --- @param tbl table
@@ -101,18 +101,18 @@ end
 --- @param list T[]
 --- @param depth integer
 --- @return T[]
-local function copyArrayImplNested(list, depth)
-	local result = table_new(2, 0)
+local function copyArrayImpl(list, depth)
+	local result = table_new(#list, 0)
 
 	if depth > 0 then
 		for i, v in ipairs(list) do
 			if type(v) == "table" then
-				list[i] = copyArrayImplNested(v, depth - 1)
+				result[i] = copyArrayImpl(v, depth - 1)
 			end
 		end
 	else
 		for i, v in ipairs(list) do
-			list[i] = v
+			result[i] = v
 		end
 	end
 
@@ -128,7 +128,7 @@ end
 function Table.copyArray(list, depth)
 	depth = tonumber(depth) or 0
 
-	return copyArrayImplNested(list, depth)
+	return copyArrayImpl(list, depth)
 end
 
 local flattenImpl
@@ -382,18 +382,27 @@ function Table.reverse(list)
 	return list
 end
 
-do
-	local function reversedPairsIterator(list, index)
-		index = index - 1
+--- @generic T
+--- @param list T[]
+--- @param index integer
+--- @return integer? index
+--- @return T? index
+--- @nodiscard
+local function reversedPairsIterator(list, index)
+	index = index - 1
 
-		if list[index] then
-			return index, list[index]
-		end
+	if list[index] then
+		return index, list[index]
 	end
+end
 
-	function Table.reversedPairs(list)
-		return reversedPairsIterator, list, #list + 1
-	end
+--- @generic T
+--- @param list T[]
+--- @return fun(list: T[], index: integer): (index: integer?, index: T?)
+--- @return T[]
+--- @return integer?
+function Table.reversedPairs(list)
+	return reversedPairsIterator, list, #list + 1
 end
 
 --- @generic TK, TV

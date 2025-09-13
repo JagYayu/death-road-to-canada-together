@@ -331,7 +331,7 @@ void DebugScripts::UpdateAndRenderProvidedScripts(IWindow &window) noexcept
 			}
 			else if (scriptLoader.IsScriptValid(scriptID))
 			{
-				ImGui::TextColored(errorColor, "Load error");
+				ImGui::TextColored(errorColor, "Parse/Load error");
 			}
 			else if (!scriptLoader.IsScriptExists(scriptID))
 			{

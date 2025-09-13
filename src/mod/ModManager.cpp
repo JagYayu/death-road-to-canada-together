@@ -338,10 +338,22 @@ void ModManager::UpdateScripts() noexcept
 		}
 	}
 
+	// When reloading updated scripts, we should also collect all scripts with errors, which may be fixed after.
+	for (ScriptID scriptID : GetScriptLoader().CollectErrorScripts())
+	{
+		scriptIDs.emplace_back(scriptID);
+
+		for (ScriptID dependencyScriptID : scriptLoader.GetScriptDependencies(scriptID))
+		{
+			scriptIDs.emplace_back(dependencyScriptID);
+		};
+	}
+
 	scriptIDs.erase(std::unique(scriptIDs.begin(), scriptIDs.end()), scriptIDs.end());
 	if (!scriptIDs.empty())
 	{
 		std::sort(scriptIDs.begin(), scriptIDs.end());
+
 		scriptLoader.HotReloadScripts(scriptIDs);
 	}
 

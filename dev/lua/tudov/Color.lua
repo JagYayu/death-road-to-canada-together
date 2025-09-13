@@ -24,12 +24,14 @@ local bit_rshift = bit.rshift
 --- @param b UInt8
 function Color.rgb(r, g, b)
 	return bit_bor(
-		0x000000FF, -- bit_lshift(bit_band(255, 255), 0)
+		0x000000FF,
 		bit_lshift(bit_band(b, 255), 8),
 		bit_lshift(bit_band(g, 255), 16),
 		bit_lshift(bit_band(r, 255), 24)
 	)
 end
+
+local Color_rgb = Color.rgb
 
 --- @param r UInt8
 --- @param g UInt8
@@ -43,6 +45,8 @@ function Color.rgba(r, g, b, a)
 		bit_lshift(bit_band(r, 255), 24)
 	)
 end
+
+local Color_rgba = Color.rgba
 
 function Color.rgbF(r, g, b)
 	error("not implement yet")
@@ -60,20 +64,54 @@ function Color.hsva()
 	error("not implement yet")
 end
 
+--- @param c Color
+--- @return integer r
+--- @nodiscard
 function Color.getR(c)
-	error("not implement yet")
+	return bit_band(bit_rshift(c, 24), 255)
 end
 
+--- @param c Color
+--- @return integer g
+--- @nodiscard
 function Color.getG(c)
-	error("not implement yet")
+	return bit_band(bit_rshift(c, 16), 255)
 end
 
+--- @param c Color
+--- @return integer b
+--- @nodiscard
 function Color.getB(c)
-	error("not implement yet")
+	return bit_band(bit_rshift(c, 8), 255)
 end
 
+--- @param c Color
+--- @return integer a
+--- @nodiscard
 function Color.getA(c)
-	error("not implement yet")
+	return bit_band(c, 255)
+end
+
+--- @param c Color
+--- @return integer r
+--- @return integer g
+--- @return integer b
+--- @nodiscard
+function Color.getRGB(c)
+	return bit_band(bit_rshift(c, 24), 255), bit_band(bit_rshift(c, 16), 255), bit_band(bit_rshift(c, 8), 255)
+end
+
+--- @param c Color
+--- @return integer r
+--- @return integer g
+--- @return integer b
+--- @return integer a
+--- @nodiscard
+function Color.getRGBA(c)
+	return bit_band(bit_rshift(c, 24), 255),
+		bit_band(bit_rshift(c, 16), 255),
+		bit_band(bit_rshift(c, 8), 255),
+		bit_band(c, 255)
 end
 
 function Color.getH(c)
@@ -116,13 +154,48 @@ function Color.setV(c)
 	error("not implement yet")
 end
 
-local TransparentWhite = Color.rgba(255, 255, 255, 0)
+local Color_getRGBA = Color.getRGBA
+
+--- @param c Color
+--- @param f number
+--- @return number c
+--- @nodiscard
+function Color.darken(c, f)
+	local r, g, b, a = Color_getRGBA(c)
+	return Color_rgba(r * f, g * f, b * f, a)
+end
+
+--- @param v UInt8?
+--- @return number c
+--- @nodiscard
+function Color.gray(v)
+	v = v or 127
+	return Color_rgb(v, v, v)
+end
+
+--- @param f number? @default=0.5
+--- @return number c
+--- @nodiscard
+function Color.grayF(f)
+	f = (f or 0.5) * 255
+	return Color_rgb(f, f, f)
+end
+
+local TransparentWhite = Color_rgba(255, 255, 255, 0)
 
 --- Slightly faster than `Color.rgba(255, 255, 255, a)`
 --- @param a UInt8
---- @return integer
+--- @return integer c
+--- @nodiscard
 function Color.opacity(a)
 	return bit_bor(TransparentWhite, a)
+end
+
+--- @param a number
+--- @return integer c
+--- @nodiscard
+function Color.opacityF(a)
+	return bit_bor(TransparentWhite, bit_band(a * 255))
 end
 
 Color.Black = Color.rgb(0, 0, 0)
@@ -131,15 +204,15 @@ Color.Cyan = Color.rgb(0, 255, 255)
 Color.Green = Color.rgb(0, 255, 0)
 Color.Magenta = Color.rgb(255, 0, 255)
 Color.Red = Color.rgb(255, 0, 0)
-Color.Transparent = Color.rgba(0, 0, 0, 0)
-Color.TransparentBlack = Color.rgba(0, 0, 0, 0)
-Color.TransparentBlue = Color.rgba(0, 0, 255, 0)
-Color.TransparentCyan = Color.rgba(0, 255, 255, 0)
-Color.TransparentGreen = Color.rgba(0, 255, 0, 0)
-Color.TransparentMagenta = Color.rgba(255, 0, 255, 0)
-Color.TransparentRed = Color.rgba(255, 0, 0, 0)
+Color.Transparent = Color_rgba(0, 0, 0, 0)
+Color.TransparentBlack = Color_rgba(0, 0, 0, 0)
+Color.TransparentBlue = Color_rgba(0, 0, 255, 0)
+Color.TransparentCyan = Color_rgba(0, 255, 255, 0)
+Color.TransparentGreen = Color_rgba(0, 255, 0, 0)
+Color.TransparentMagenta = Color_rgba(255, 0, 255, 0)
+Color.TransparentRed = Color_rgba(255, 0, 0, 0)
 Color.TransparentWhite = TransparentWhite
-Color.TransparentYellow = Color.rgba(255, 255, 0, 0)
+Color.TransparentYellow = Color_rgba(255, 255, 0, 0)
 Color.White = Color.rgb(255, 255, 255)
 Color.Yellow = Color.rgb(255, 255, 0)
 

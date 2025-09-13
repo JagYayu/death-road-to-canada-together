@@ -4,7 +4,8 @@ error("this is a lua library module")
 --- @class Engine
 engine = {}
 
-engine.mainWindow = nil
+--- @type Window
+engine.mainWindow = {}
 
 --- @return string
 function engine:getVersion() end

@@ -36,7 +36,9 @@
 #include <array>
 #include <corecrt_terminate.h>
 #include <memory>
+#include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 
 using namespace tudov;
 
@@ -47,6 +49,10 @@ constexpr std::array<std::string_view, 6> preRequiredStdModules = {
     "string.buffer",
     "table.clear",
     "table.new",
+};
+
+std::unordered_set<std::string_view> permissiveModules = {
+    "#ScriptEngine",
 };
 
 void ScriptEngine::PersistVariable::Save() noexcept
@@ -122,50 +128,61 @@ void ScriptEngine::Initialize() noexcept
 
 	GetLuaAPI().Install(_lua, _context);
 
+	IScriptLoader &scriptLoader = GetScriptLoader();
+
+	_luaThrowModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::protected_function>();
+
 	_luaSTDRequire = _lua["require"];
 	_lua["require"] = [this](sol::string_view targetScriptName) -> sol::object
 	{
 		return LuaRequire(targetScriptName, nullptr);
 	};
 
-	IScriptLoader &scriptLoader = GetScriptLoader();
-
-	_luaThrowModifyReadonlyGlobalError = _lua.load("error('Attempt to modify read-only global', 2)").get<sol::protected_function>();
-
+	// Load lua StackTracePlus
+	if (auto &&stackTracePlusModule = scriptLoader.Load("#StackTracePlus"); stackTracePlusModule != nullptr)
 	{
-		auto &&inspectModule = scriptLoader.Load("#inspect");
-		if (inspectModule != nullptr)
-		{
-			_luaInspect = inspectModule->GetTable()["inspect"];
+		_luaStackTrackPlus = stackTracePlusModule->GetTable();
 
-			AssertLuaValue(_luaInspect, "#inspect.inspect");
-		}
-		else
-		{
-			Fatal("Could not find core lua module \"#inspect\"!");
-		}
+		AssertLuaValue(_luaStackTrackPlus["stacktrace"], "#StackTracePlus.stacktrace");
+
+		sol::protected_function::set_default_handler(_luaStackTrackPlus["stacktrace"]);
+		_lua["debug"]["trackback"] = _luaStackTrackPlus["stacktrace"];
+	}
+	else
+	{
+		Fatal("Could not find core lua module \"#StackTracePlus\"!");
 	}
 
+	// Load lua inspect
+	if (auto &&inspectModule = scriptLoader.Load("#inspect"); inspectModule != nullptr)
 	{
-		auto &&scriptEngine = scriptLoader.Load("#ScriptEngine");
-		if (scriptEngine != nullptr)
-		{
-			auto scriptEngineModule = scriptEngine->GetTable();
+		_luaInspect = inspectModule->GetTable()["inspect"];
 
-			scriptEngineModule.get<sol::protected_function>("initialize")(_lua.globals());
+		AssertLuaValue(_luaInspect, "#inspect.inspect");
+	}
+	else
+	{
+		Fatal("Could not find core lua module \"#inspect\"!");
+	}
 
-			_luaLockMetatable = scriptEngineModule.get<sol::protected_function>("lockMetatable");
-			_luaPostProcessModGlobals = scriptEngineModule.get<sol::protected_function>("postProcessModGlobals");
-			_luaPostProcessScriptGlobals = scriptEngineModule.get<sol::protected_function>("postProcessScriptGlobals");
+	// Load lua ScriptEngine
+	if (auto &&scriptEngine = scriptLoader.Load("#ScriptEngine"); scriptEngine != nullptr)
+	{
+		auto scriptEngineModule = scriptEngine->GetTable();
 
-			AssertLuaValue(_luaLockMetatable, "#ScriptEngine.lockMetatable");
-			AssertLuaValue(_luaPostProcessModGlobals, "#ScriptEngine.postProcessModGlobals");
-			AssertLuaValue(_luaPostProcessScriptGlobals, "#ScriptEngine.postProcessScriptGlobals");
-		}
-		else
-		{
-			Fatal("Could not find core lua module \"#ScriptEngine\"!");
-		}
+		scriptEngineModule.get<sol::protected_function>("initialize")(_lua.globals());
+
+		_luaLockMetatable = scriptEngineModule.get<sol::protected_function>("lockMetatable");
+		_luaPostProcessModGlobals = scriptEngineModule.get<sol::protected_function>("postProcessModGlobals");
+		_luaPostProcessScriptGlobals = scriptEngineModule.get<sol::protected_function>("postProcessScriptGlobals");
+
+		AssertLuaValue(_luaLockMetatable, "#ScriptEngine.lockMetatable");
+		AssertLuaValue(_luaPostProcessModGlobals, "#ScriptEngine.postProcessModGlobals");
+		AssertLuaValue(_luaPostProcessScriptGlobals, "#ScriptEngine.postProcessScriptGlobals");
+	}
+	else
+	{
+		Fatal("Could not find core lua module \"#ScriptEngine\"!");
 	}
 
 	for (std::string_view key : preRequiredStdModules)
@@ -247,10 +264,25 @@ sol::object ScriptEngine::LuaRequire(sol::string_view targetScriptName, ScriptRe
 	IScriptProvider &scriptProvider = GetScriptProvider();
 
 	ScriptID targetScriptID = scriptProvider.GetScriptIDByName(targetScriptName);
+	if (targetScriptID == 0 && script != nullptr)
+	{
+		// Require script by relative location.
+		auto scriptName = scriptProvider.GetScriptNameByID(script->id);
+		if (scriptName.has_value())
+		{
+			auto str = std::string(scriptName.value());
+			std::string relativeScriptName = str.replace(str.rfind('.') + 1, std::string::npos, targetScriptName);
+			targetScriptID = scriptProvider.GetScriptIDByName(relativeScriptName);
+		}
+	}
 	if (targetScriptID == 0)
 	{
-		std::string fallbackScriptName = std::format("#{}", targetScriptName);
-		targetScriptID = scriptProvider.GetScriptIDByName(fallbackScriptName);
+		// Require static script. Sandboxed script has no permission to access permissive core modules.
+		std::string staticScriptName = std::format("#{}", targetScriptName);
+		if (!(script != nullptr && script->sandboxed && permissiveModules.contains(staticScriptName)))
+		{
+			targetScriptID = scriptProvider.GetScriptIDByName(staticScriptName);
+		}
 	}
 
 	if (targetScriptID != 0)
@@ -293,6 +325,7 @@ sol::object ScriptEngine::LuaRequire(sol::string_view targetScriptName, ScriptRe
 		}
 	}
 
+	// ! CALL DECONSTRUCTOR ON LUA LONGJMP
 	std::string errorMessage;
 
 	{
@@ -319,7 +352,9 @@ sol::table ScriptEngine::CreateTable(uint32_t arr, uint32_t hash) noexcept
 
 std::string ScriptEngine::DebugTraceback(std::string_view message, std::double_t level) noexcept
 {
-	return std::string(_lua["debug"]["traceback"](message, level).get<sol::string_view>());
+	sol::protected_function_result result = _luaStackTrackPlus["stacktrace"](message, level);
+	TE_ASSERT(result.valid());
+	return std::string(result.get<sol::string_view>());
 }
 
 sol::load_result ScriptEngine::LoadFunction(std::string_view name, std::string_view code)
@@ -517,9 +552,9 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 		log->Debug("{}", string.c_str());
 	});
 
-	scriptGlobals.set_function("require", [this, scriptGlobals, scriptID](sol::string_view targetScriptName) -> sol::object
+	scriptGlobals.set_function("require", [this, scriptGlobals, scriptID, sandboxed](sol::string_view targetScriptName) -> sol::object
 	{
-		ScriptRequire script{scriptID, scriptGlobals};
+		ScriptRequire script{scriptID, scriptGlobals, sandboxed};
 		return LuaRequire(targetScriptName, &script);
 	});
 

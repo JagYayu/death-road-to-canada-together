@@ -21,6 +21,7 @@
 #include "i18n/Localization.hpp"
 #include "math/Geometry.hpp"
 #include "program/Engine.hpp"
+#include "program/MainWindow.hpp"
 #include "program/Window.hpp"
 #include "program/WindowManager.hpp"
 #include "resource/FontResources.hpp"
@@ -32,6 +33,7 @@
 
 #include "sol/forward.hpp"
 #include "sol/property.hpp"
+#include <memory>
 
 using namespace tudov;
 
@@ -49,17 +51,18 @@ bool LuaAPI::RegisterInstallation(std::string_view name, const TInstallation &in
 	return true;
 }
 
-decltype(auto) GetMainWindowFromContext(Context &context)
+decltype(auto) GetMainWindowFromContext(Context &context) noexcept
 {
-	return sol::readonly_property([&context]()
+	return sol::readonly_property([&context]() -> std::shared_ptr<Window>
 	{
 		try
 		{
-			return context.GetWindowManager().GetMainWindow();
+			auto window = context.GetWindowManager().GetMainWindow();
+			return std::static_pointer_cast<Window>(window);
 		}
 		catch (std::exception &e)
 		{
-			return std::shared_ptr<IWindow>(nullptr);
+			return nullptr;
 		}
 	});
 }
@@ -231,12 +234,12 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 
 	TE_USERTYPE(
 	    Window,
-	    "renderer", &Window::renderer,
 	    "close", &Window::Close,
 	    "getHeight", &Window::GetHeight,
 	    "getKey", &Window::LuaGetKey,
 	    "getSize", &Window::GetSize,
 	    "getWidth", &Window::GetWidth,
+	    "renderer", &Window::renderer,
 	    "shouldClose", &Window::ShouldClose);
 
 	TE_CLASS(

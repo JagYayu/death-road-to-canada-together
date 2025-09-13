@@ -12,8 +12,8 @@
 #pragma once
 
 #include "program/Context.hpp"
-#include "util/Definitions.hpp"
 #include "system/Log.hpp"
+#include "util/Definitions.hpp"
 
 #include "sol/table.hpp"
 
@@ -30,22 +30,24 @@ namespace tudov
 		 * Check if the script module is valid.
 		 * This only checks whether the script module's function is valid, that is, whether the code is parsed properly.
 		 */
-		virtual bool IsValid() const = 0;
+		virtual bool IsValid() const noexcept = 0;
 
 		/**
 		 * Check if current script module is lazy loaded, which has a already been a wrapper of module's return table.
 		 */
-		virtual bool IsLazyLoaded() const = 0;
+		virtual bool IsLazyLoaded() const noexcept = 0;
 
 		/**
 		 * Check if current script module is fully loaded (or raw loaded).
 		 */
-		virtual bool IsFullyLoaded() const = 0;
+		virtual bool IsFullyLoaded() const noexcept = 0;
 
 		/**
 		 * Check if the script module has load error.
 		 */
-		virtual bool HasLoadError() const = 0;
+		virtual bool HasLoadError() const noexcept = 0;
+
+		virtual void MarkLoadError() noexcept = 0;
 
 		/**
 		 * Get module's wrapperred table. Note: it is not the original module table, wrapperred one instead.
@@ -93,10 +95,11 @@ namespace tudov
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;
 
-		bool IsValid() const override;
-		bool IsLazyLoaded() const override;
-		bool IsFullyLoaded() const override;
-		bool HasLoadError() const override;
+		bool IsValid() const noexcept override;
+		bool IsLazyLoaded() const noexcept override;
+		bool IsFullyLoaded() const noexcept override;
+		bool HasLoadError() const noexcept override;
+		void MarkLoadError() noexcept override;
 
 		sol::table &GetTable() override;
 		sol::table &RawLoad(IScriptLoader &scriptLoader) override;

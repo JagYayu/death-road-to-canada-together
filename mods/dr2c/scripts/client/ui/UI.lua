@@ -160,6 +160,7 @@ end
 --- @field width number?
 --- @field height number?
 --- @field size number?
+--- @field hover boolean?
 --- @field held boolean?
 --- @field border dr2c.UI.DrawBorder?
 
@@ -171,6 +172,12 @@ function CUI.drawButton(args)
 
 	local border = args.border
 	if border then
+		if args.hover then
+			border.color = Color.White
+		else
+			border.color = Color.gray(192)
+		end
+
 		if args.held then
 			border.x = args.x
 			border.y = args.y
@@ -192,7 +199,11 @@ function CUI.drawButton(args)
 
 	do
 		drawRectArgs.texture = uiTexture
-		drawRectArgs.color = Color.White
+		if args.hover then
+			drawRectArgs.color = Color.White
+		else
+			drawRectArgs.color = Color.gray(192)
+		end
 		drawRectSrc.x = 9
 		drawRectSrc.y = 1
 		drawRectSrc.w = 1
@@ -212,7 +223,7 @@ function CUI.drawButton(args)
 	drawTextArgs.y = args.y + args.height * 0.5 + borderSize
 	-- drawTextArgs.maxWidth = args.width - borderSize * 2
 	drawTextArgs.scale = (args.held and 0.8 or 1) * (args.scale or 1)
-	-- drawTextArgs.color = Color.Red
+	drawTextArgs.color = Color.White
 	-- drawTextArgs.backgroundColor = Color.rgba(255, 255, 255, 63)
 	drawTextArgs.characterSize = 18
 	drawTextArgs.shadow = 2

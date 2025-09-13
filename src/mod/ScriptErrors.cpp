@@ -186,6 +186,15 @@ void ScriptErrors::AddLoadtimeError(const std::shared_ptr<ScriptError> &scriptEr
 void ScriptErrors::AddRuntimeError(const std::shared_ptr<ScriptError> &scriptError)
 {
 	_scriptRuntimeErrors.push_back(scriptError);
+
+	if (_scriptRuntimeErrors.size() > 1024) [[unlikely]]
+	{
+		for (auto i = 1; i < 256; ++i)
+		{
+			_scriptRuntimeErrors.pop_front();
+		}
+	}
+
 	ClearCaches();
 }
 

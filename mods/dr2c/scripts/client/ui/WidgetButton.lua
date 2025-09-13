@@ -14,13 +14,12 @@ local Color = require("tudov.Color")
 
 local CUI = require("dr2c.client.ui.UI")
 local CUIWidget = require("dr2c.client.ui.Widget")
+local CUIWidgetBox = require("dr2c.client.ui.WidgetBox")
 
-local metatable = {
-	__index = {},
-}
+local CUIWidgetButton = {}
 
 --- @param self dr2c.UIWidgetButton
-function metatable.__index:draw()
+local function draw(self)
 	local rect = self.rectangle
 
 	self.drawButtonArgs.x = rect[1]
@@ -32,54 +31,40 @@ function metatable.__index:draw()
 	CUI.drawButton(self.drawButtonArgs)
 end
 
+CUIWidgetButton.metatable = {
+	__index = {
+		draw = draw,
+	},
+}
+
 --- @param e dr2c.E.CWidget
 events:add(CUIWidget.eventCWidget, function(e)
+	--- @class dr2c.UIWidgetButton.Args : dr2c.UIWidget.Args
+	--- @field alignX? number
+	--- @field alignY? number
+	--- @field label? string
 	local args = e.args
 
 	--- @class dr2c.UIWidgetButton : dr2c.UIWidget
 	local widget = e.widget
 
-	--- @type dr2c.UI.DrawBorder
-	widget.border = {
-		x = 0,
-		y = 0,
-		width = 0,
-		height = 0,
-		size = args.borderSize,
-		texture = args.borderTexture,
-		textureX = args.borderTextureX,
-		textureY = args.borderTextureY,
-		textureWidth = args.borderTextureWidth,
-		textureHeight = args.borderTextureHeight,
-		textureSize = args.borderTextureSize,
-		color = args.borderColor,
-	}
-
-	local rectangle = {
-		tonumber(args.x) or 0,
-		tonumber(args.y) or 0,
-		tonumber(args.w) or 0,
-		tonumber(args.h) or 0,
-	}
-
 	local label = args.label and tostring(args.label) or nil
 
 	--- @type dr2c.UI.DrawButton
 	widget.drawButtonArgs = {
-		x = rectangle[1],
-		y = rectangle[2],
-		width = rectangle[3],
-		height = rectangle[4],
+		x = widget.rectangle[1],
+		y = widget.rectangle[2],
+		width = widget.rectangle[3],
+		height = widget.rectangle[4],
 		text = label,
-		alignX = tonumber(args.alignX),
-		alignY = tonumber(args.alignY),
+		alignX = tonumber(args.alignX) or 0.5,
+		alignY = tonumber(args.alignY) or 0.5,
 		border = widget.border,
 	}
 
-	--- @type Rectangle
-	widget.rectangle = rectangle
-
-	e.widget = setmetatable(widget, metatable)
+	e.widget = setmetatable(widget, CUIWidgetButton.metatable)
 
 	e.initialized = true
 end, "Button", "Initialize", CUIWidget.Type.Button)
+
+return CUIWidgetButton

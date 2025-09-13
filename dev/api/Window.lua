@@ -7,7 +7,7 @@ error("this is a lua library module")
 local window = {}
 
 --- @type Renderer
-window.renderer = nil
+window.renderer = {}
 
 --- @return string
 function window:getKey() end

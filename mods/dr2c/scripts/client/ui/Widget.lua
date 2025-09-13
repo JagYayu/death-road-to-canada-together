@@ -13,6 +13,8 @@ local Enum = require("tudov.Enum")
 local Function = require("tudov.Function")
 local Table = require("tudov.Table")
 
+local CRenderUtils = require("dr2c.client.render.Utils")
+
 --- @class dr2c.CUIWidget
 local CUIWidget = {}
 
@@ -22,14 +24,13 @@ CUIWidget.Type = Enum.sequence({
 	Box = 0,
 	Button = 1,
 	ColorPicker = 2,
-	Container = 3,
-	Dialogue = 4,
-	Dropdown = 5,
-	FlexHorizontal = 6,
-	FlexVertical = 7,
-	Grid = 8,
-	Label = 9,
-	Textbox = 10,
+	Dialogue = 3,
+	Dropdown = 4,
+	FlexHorizontal = 5,
+	FlexVertical = 6,
+	Grid = 7,
+	Label = 8,
+	Textbox = 9,
 })
 
 CUIWidget.eventCWidget = events:new(N_("CWidgetNew"), {
@@ -38,20 +39,29 @@ CUIWidget.eventCWidget = events:new(N_("CWidgetNew"), {
 })
 
 --- @param widgetType dr2c.UIWidgetType
---- @param args table?
+--- @param args? dr2c.UIWidget.Args
 --- @return dr2c.UIWidget
 function CUIWidget.new(widgetType, args)
+	widgetType = tonumber(widgetType) or CUIWidget.Type.Box
+
+	--- @class dr2c.UIWidget.Args
+	--- @field border? dr2c.UI.DrawBorder
+	--- @field margin? Rectangle
+	--- @field padding? Rectangle
+	--- @field rectangle? Rectangle
 	args = args or Table.empty
 
 	--- @class dr2c.UIWidget
-	--- @field draw? fun(self: self, renderer: Renderer)
+	--- @field draw fun(self: self, renderer: Renderer)
 	--- @field margin Rectangle
 	--- @field padding Rectangle
-	--- @field rect? Rectangle
+	--- @field rectangle Rectangle
 	local widget = {
-		margin = args.margin or { 0, 0, 0, 0 },
-		padding = args.padding or { 0, 0, 0, 0 },
 		type = widgetType,
+		border = CRenderUtils.copyDrawBorder(args.border or Table.empty),
+		margin = CRenderUtils.copyRectangle(args.margin or Table.empty),
+		padding = CRenderUtils.copyRectangle(args.padding or Table.empty),
+		rectangle = CRenderUtils.copyRectangle(args.rectangle or Table.empty),
 	}
 
 	--- @class dr2c.E.CWidget
@@ -71,7 +81,7 @@ function CUIWidget.new(widgetType, args)
 	return widget
 end
 
---- @param args table?
+--- @param args dr2c.UIWidgetButton.Args
 --- @return dr2c.UIWidgetButton
 function CUIWidget.newButton(args)
 	local widget = CUIWidget.new(CUIWidget.Type.Button, args)
@@ -79,10 +89,10 @@ function CUIWidget.newButton(args)
 	return widget
 end
 
---- @param args table?
+--- @param args dr2c.UIWidgetFlexHorizontal.Args
 --- @return dr2c.UIWidgetFlexHorizontal
-function CUIWidget.newContainer(args)
-	local widget = CUIWidget.new(CUIWidget.Type.Container, args)
+function CUIWidget.newFlexHorizontal(args)
+	local widget = CUIWidget.new(CUIWidget.Type.FlexHorizontal, args)
 	--- @cast widget dr2c.UIWidgetFlexHorizontal
 	return widget
 end

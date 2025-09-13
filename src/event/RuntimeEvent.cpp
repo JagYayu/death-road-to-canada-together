@@ -29,7 +29,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-#include <stdexcept>
 #include <utility>
 
 using namespace tudov;

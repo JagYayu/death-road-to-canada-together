@@ -12,10 +12,10 @@
 --- @class dr2c.CModule
 local CModule = {}
 
---- @type Renderer?
-local renderer
---- @type Window?
-local window
+--- @type Window
+local window = engine.mainWindow
+--- @type Renderer
+local renderer = window.renderer
 
 function CModule.getRenderer()
 	return renderer
