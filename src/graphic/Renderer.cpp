@@ -16,6 +16,7 @@
 #include "graphic/RenderBuffer.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/VSyncMode.hpp"
+#include "mod/ScriptEngine.hpp"
 #include "program/Engine.hpp"
 #include "program/Window.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
@@ -298,6 +299,12 @@ SDL_FRect Renderer::DrawText(DrawTextArgs *args)
 	    w,
 	    h,
 	};
+}
+
+SDL_FRect Renderer::DrawRichText(DrawTextArgs *args)
+{
+	// TODO
+	return {};
 }
 
 void Renderer::DrawVertices(Texture *texture, const std::vector<Vertex> &vertices)

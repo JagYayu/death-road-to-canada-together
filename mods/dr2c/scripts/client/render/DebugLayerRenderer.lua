@@ -43,7 +43,7 @@ events:add(N_("CRenderCamera"), function(e)
 		destination[3] = width
 		destination[4] = height
 
-		renderer:drawRect(drawArgs)
+		-- renderer:drawRect(drawArgs)
 	end
 end, "RenderDebugObjects", "DebugObjects")
 

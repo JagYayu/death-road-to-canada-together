@@ -15,11 +15,6 @@ local Matrix3x3 = require("tudov.Matrix3x3")
 
 local centerX = 0
 local centerY = 0
-local rotation = 0
-local scaleX = 1
-local scaleY = 1
-local viewWidth = 1280
-local viewHeight = 768
 
 function Camera.getCenter()
 	return centerX, centerY

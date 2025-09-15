@@ -11,11 +11,13 @@
 
 #pragma once
 
-#include "sol/string_view.hpp"
-#include "sol/table.hpp"
 #include "util/Definitions.hpp"
 
+#include "sol/string_view.hpp"
+#include "sol/table.hpp"
+
 #include <cstdint>
+#include <memory>
 #include <string_view>
 
 struct _ENetPeer;
@@ -23,9 +25,14 @@ struct _ENetPeer;
 namespace tudov
 {
 	enum class EDisconnectionCode : std::uint32_t;
+	enum class EScanCode : std::int32_t;
+	enum class EKeyCode : std::uint32_t;
+	enum class EKeyModifier : std::uint32_t;
 	enum class ESocketType : std::uint8_t;
 	class Context;
-	class IDebugManager;
+	struct IDebugManager;
+	struct IWindow;
+	struct IKeyboard;
 
 	struct CoreEventData
 	{
@@ -179,4 +186,28 @@ namespace tudov
 	};
 
 #pragma endregion
+
+	struct EventMouseMotionData : public CoreEventData
+	{
+		std::int32_t mouseID;
+		std::float_t x;
+		std::float_t y;
+		std::float_t relativeX;
+		std::float_t relativeY;
+	};
+
+	struct EventKeyData : public CoreEventData
+	{
+		std::shared_ptr<IWindow> window;
+		std::uint32_t windowID;
+		std::shared_ptr<IKeyboard> keyboard;
+		std::uint32_t keyboardID;
+		EScanCode scanCode;
+		EKeyCode keyCode;
+		EKeyModifier modifier;
+	};
+
+	struct EventWindowResizeData : public CoreEventData
+	{
+	};
 } // namespace tudov

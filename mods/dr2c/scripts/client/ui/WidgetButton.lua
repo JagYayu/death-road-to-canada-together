@@ -12,7 +12,7 @@
 local Table = require("tudov.Table")
 local Color = require("tudov.Color")
 
-local CUI = require("dr2c.client.ui.UI")
+local CUIDraw = require("dr2c.client.ui.Draw")
 local CUIWidget = require("dr2c.client.ui.Widget")
 local CUIWidgetBox = require("dr2c.client.ui.WidgetBox")
 
@@ -28,7 +28,7 @@ local function draw(self)
 	self.drawButtonArgs.height = rect[4]
 	self.drawButtonArgs.border = self.border
 
-	CUI.drawButton(self.drawButtonArgs)
+	CUIDraw.drawButton(self.drawButtonArgs)
 end
 
 CUIWidgetButton.metatable = {
@@ -43,6 +43,7 @@ events:add(CUIWidget.eventCWidget, function(e)
 	--- @field alignX? number
 	--- @field alignY? number
 	--- @field label? string
+	--- @field scale? number
 	local args = e.args
 
 	--- @class dr2c.UIWidgetButton : dr2c.UIWidget
@@ -57,6 +58,7 @@ events:add(CUIWidget.eventCWidget, function(e)
 		width = widget.rectangle[3],
 		height = widget.rectangle[4],
 		text = label,
+		scale = tonumber(args.scale) or 1,
 		alignX = tonumber(args.alignX) or 0.5,
 		alignY = tonumber(args.alignY) or 0.5,
 		border = widget.border,

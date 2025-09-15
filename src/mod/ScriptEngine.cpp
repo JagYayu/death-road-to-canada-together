@@ -14,7 +14,7 @@
 #include "event/CoreEvents.hpp"
 #include "event/CoreEventsData.hpp"
 #include "event/RuntimeEvent.hpp"
-#include "mod/LuaAPI.hpp"
+#include "mod/LuaBindings.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptModule.hpp"
@@ -126,7 +126,7 @@ void ScriptEngine::Initialize() noexcept
 	_lua.open_libraries(sol::lib::table);
 	_lua.open_libraries(sol::lib::utf8);
 
-	GetLuaAPI().Install(_lua, _context);
+	GetLuaBindings().Install(_lua, _context);
 
 	IScriptLoader &scriptLoader = GetScriptLoader();
 
@@ -307,11 +307,11 @@ sol::object ScriptEngine::LuaRequire(sol::string_view targetScriptName, ScriptRe
 		{
 			if (scriptProvider.IsStaticScript(targetScriptID))
 			{
-				return targetModule->RawLoad(scriptLoader);
+				return targetModule->RawLoad();
 			}
 			else
 			{
-				return targetModule->LazyLoad(scriptLoader);
+				return targetModule->LazyLoad();
 			}
 		}
 	}
@@ -447,7 +447,7 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	auto &luaGlobals = _lua.globals();
 	auto modGlobals = CreateTable();
 
-	for (std::string_view key : GetLuaAPI().GetModGlobalsMigration())
+	for (std::string_view key : GetLuaBindings().GetModGlobalsMigration())
 	{
 		TE_ASSERT(!modGlobals[key.data()].valid(), "global field duplicated!");
 		modGlobals[key.data()] = luaGlobals[key.data()];

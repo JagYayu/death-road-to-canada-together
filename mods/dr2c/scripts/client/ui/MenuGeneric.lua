@@ -17,7 +17,7 @@ local CUIWidget = require("dr2c.client.ui.Widget")
 events:add(CUIMenu.eventCMenu, function(e)
 	local windowW, windowH = CModule.getWindow():getSize()
 
-	local flex = CUIWidget.newFlexHorizontal({
+	local flex = CUIWidget.newFlex({
 		rectangle = {
 			windowW * 0.4,
 			windowH * 0.65,
@@ -29,15 +29,6 @@ events:add(CUIMenu.eventCMenu, function(e)
 	flex:addChild(CUIWidget.newButton({
 		label = "START",
 	}))
-
-	flex:addChild(CUIWidget.newButton({
-		label = "OPTIONS",
-	}))
-
-	flex:addChild(CUIWidget.newButton({
-		label = "EXIT",
-	}))
-
 	e.menu.widgets[#e.menu.widgets + 1] = flex
 
 	e.initialized = true

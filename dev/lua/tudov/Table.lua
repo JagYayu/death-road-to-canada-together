@@ -31,6 +31,12 @@ Table.empty = setmetatable({}, {
 	__newindex = Function.empty,
 })
 
+--- @diagnostic disable-next-line: deprecated
+Table.foreach = table.foreach
+
+--- @diagnostic disable-next-line: deprecated
+Table.foreachi = table.foreachi
+
 --- @generic T: table, K, V
 --- @param tbl table
 --- @return table

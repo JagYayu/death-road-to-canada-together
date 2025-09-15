@@ -62,15 +62,15 @@ namespace tudov
 
 	class AbstractEvent;
 	class CoreEvents;
-	class LuaAPI;
+	class LuaBindings;
 
 	class EventManager : public IEventManager, private ILogProvider
 	{
 		friend CoreEvents;
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  private:
-		// static ILuaAPI::TInstallation rendererLuaAPIInstallation;
+		// static ILuaBindings::TInstallation rendererLuaBindingsInstallation;
 
 	  protected:
 		Context &_context;

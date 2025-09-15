@@ -18,7 +18,7 @@
 
 namespace tudov
 {
-	class LuaAPI;
+	class LuaBindings;
 
 	class Timer
 	{
@@ -46,7 +46,7 @@ namespace tudov
 	 */
 	struct Time
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 		TE_STATIC_CLASS(Time);
 

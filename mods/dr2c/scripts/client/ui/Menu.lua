@@ -20,11 +20,15 @@ local CUIMenu = {}
 --- @alias dr2c.MenuType dr2c.CUIMenu.Type
 
 CUIMenu.Type = Enum.sequence({
-	Generic = 1,
+	TitleScreen = 1,
+	Generic = 2,
 })
 
 --- @type dr2c.Menu[]
 local menuStack = {}
+
+--- @type dr2c.UIWidget?
+local selectedWidget
 
 menuStack = persist("menuStack", function()
 	return menuStack
@@ -34,9 +38,14 @@ function CUIMenu.getAll()
 	return menuStack
 end
 
+--- @return dr2c.UIWidget?
+function CUIMenu.getSelectedWidget()
+	return selectedWidget
+end
+
 function CUIMenu.draw()
 	local menu = menuStack[#menuStack]
-	if menu and menu.draw then
+	if menu then
 		menu:draw()
 	end
 end
@@ -54,17 +63,40 @@ CUIMenu.eventCMenu = events:new(N_("CMenu"), {
 	"Overrides",
 })
 
-local menuMetatable = {
+--- @param self dr2c.Menu
+local function metatableMenuDraw(self)
+	selectedWidget = nil
+	local mouseX
+	local mouseY
+	for _, widget in ipairs(self.widgets) do
+		-- widget.rectangle
+		if widget.selectable then
+			--
+		end
+	end
+
+	for _, widget in ipairs(self.widgets) do
+		local draw = widget.draw
+		if draw then
+			draw(widget)
+		end
+	end
+end
+
+--- @param self dr2c.Menu
+local function metatableMenuUpdate(self)
+	for _, widget in ipairs(self.widgets) do
+		local update = widget.update
+		if update then
+			update(widget)
+		end
+	end
+end
+
+CUIMenu.metatable = {
 	__index = {
-		--- @param self dr2c.Menu
-		draw = function(self, ...)
-			for _, widget in ipairs(self.widgets) do
-				local draw = widget.draw
-				if draw then
-					draw(widget, ...)
-				end
-			end
-		end,
+		draw = metatableMenuDraw,
+		update = metatableMenuUpdate,
 	},
 }
 
@@ -74,7 +106,7 @@ local menuMetatable = {
 function CUIMenu.open(menuType, menuArgs)
 	--- @class dr2c.Menu : table
 	--- @field draw? fun(self: self)
-	--- @field update? fun(self: self)
+	--- @field update fun(self: self)
 	--- @field animationTime number?
 	--- @field content string
 	--- @field title string?
@@ -85,6 +117,8 @@ function CUIMenu.open(menuType, menuArgs)
 		widgets = {},
 	}
 
+	setmetatable(menu, CUIMenu.metatable)
+
 	--- @class dr2c.E.CMenu
 	--- @field initialized boolean?
 	local e = {
@@ -94,7 +128,9 @@ function CUIMenu.open(menuType, menuArgs)
 	events:invoke(CUIMenu.eventCMenu, e, menuType)
 
 	if e.initialized then
-		menuStack[#menuStack + 1] = setmetatable(menu, menuMetatable)
+		menu:update()
+
+		menuStack[#menuStack + 1] = menu
 
 		return menu
 	end
@@ -115,11 +151,13 @@ local testOnce = true
 events:add(N_("CUpdate"), function(e)
 	if testOnce then
 		CUIMenu.closeAll()
-		CUIMenu.open(CUIMenu.Type.Generic)
+		CUIMenu.open(CUIMenu.Type.TitleScreen)
 
 		testOnce = false
 		print("test once")
 	end
+
+	CUIMenu.update()
 end, "Test")
 
 return CUIMenu

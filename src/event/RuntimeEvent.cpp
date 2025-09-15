@@ -36,6 +36,10 @@ using namespace tudov;
 RuntimeEvent::RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys, ScriptID scriptID)
     : AbstractEvent(eventManager, eventID, scriptID),
       _log(Log::Get("RuntimeEvent")),
+      _hasAnyCache(false),
+      _handlersSortedCache(false),
+      _invocationCache(),
+      _invocationCaches(),
       _orders(orders),
       _keys(keys),
       _invocationTrackID(0),
@@ -193,6 +197,7 @@ std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 	}
 
 	_handlersSortedCache = true;
+	_hasAnyCache = true;
 
 	return _handlers;
 }
@@ -280,6 +285,8 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 				{
 					_invocationCache->emplace_back(&handler);
 				}
+
+				_hasAnyCache = true;
 			}
 
 			cache = &_invocationCache.value();
@@ -298,6 +305,8 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 					cache->emplace_back(&handler);
 				}
 			}
+
+			_hasAnyCache = true;
 		}
 
 		if (anyKey)
@@ -492,10 +501,15 @@ void RuntimeEvent::InvokeUncached(sol::object args, const EventHandleKey &key)
 
 void RuntimeEvent::ClearCaches()
 {
-	_handlersSortedCache = false;
-	_invocationCache = std::nullopt;
-	_invocationCaches.clear();
-	TE_TRACE("Runtime event <{}> cleared caches", _id);
+	if (_hasAnyCache)
+	{
+		_hasAnyCache = false;
+		_handlersSortedCache = false;
+		_invocationCache = std::nullopt;
+		_invocationCaches.clear();
+
+		TE_TRACE("Runtime event <{}> cleared caches", _id);
+	}
 }
 
 void RuntimeEvent::ClearScriptHandlersImpl(std::function<bool(const EventHandler &)> pred)

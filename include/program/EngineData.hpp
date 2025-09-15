@@ -11,8 +11,6 @@
 
 #pragma once
 
-#include "util/Micros.hpp"
-
 #include <memory>
 #include <vector>
 
@@ -21,7 +19,7 @@ namespace tudov
 	class Engine;
 	class Context;
 	struct IEngineComponent;
-	struct ILuaAPI;
+	struct ILuaBindings;
 	struct IGlobalStorageManager;
 	struct ILocalization;
 	class VirtualFileSystem;
@@ -29,6 +27,8 @@ namespace tudov
 	struct IAssetsManager;
 	class WindowManager;
 	struct INetworkManager;
+	struct IKeyboardManager;
+	struct IMouseManager;
 	struct IModManager;
 	struct IEventManager;
 	struct IGameScripts;
@@ -42,7 +42,7 @@ namespace tudov
 		friend Engine;
 		friend Context;
 
-		std::shared_ptr<ILuaAPI> _luaAPI;
+		std::shared_ptr<ILuaBindings> _luaBindings;
 		std::shared_ptr<IGlobalStorageManager> _globalStorageManager;
 		std::shared_ptr<ILocalization> _localization;
 		std::shared_ptr<VirtualFileSystem> _virtualFileSystem;
@@ -53,6 +53,8 @@ namespace tudov
 		std::shared_ptr<IAssetsManager> _assetsManager;
 		std::shared_ptr<WindowManager> _windowManager;
 		std::shared_ptr<INetworkManager> _networkManager;
+		std::shared_ptr<IKeyboardManager> _keyboardManager;
+		std::shared_ptr<IMouseManager> _mouseManager;
 		std::shared_ptr<IModManager> _modManager;
 		std::shared_ptr<IEventManager> _eventManager;
 		std::shared_ptr<IGameScripts> _gameScripts;

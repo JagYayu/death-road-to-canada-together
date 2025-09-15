@@ -12,7 +12,7 @@
 -- local Camera = require "dr2c.render.Camera"
 -- local SpriteRenderer = {}
 
--- local renderer = Engine.getMainWindow().getRenderer()
+-- local renderer = Engine.getPrimaryWindow().getRenderer()
 
 -- function SpriteRenderer.test()
 -- end

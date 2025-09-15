@@ -11,25 +11,27 @@
 
 #pragma once
 
+#include "EngineComponent.hpp"
 #include "system/Log.hpp"
+#include "util/Definitions.hpp"
 
 #include <memory>
 #include <vector>
 
 union SDL_Event;
-using SDL_WindowID = std::uint32_t;
 
 namespace tudov
 {
 	class Context;
+	struct AppEvent;
 	struct IDebugManager;
 	struct IWindow;
 
-	class WindowManager : private ILogProvider
+	class WindowManager : public IEngineComponent, private ILogProvider
 	{
 	  private:
 		Context &_context;
-		std::weak_ptr<IWindow> _mainWindow;
+		std::weak_ptr<IWindow> _primaryWindow;
 		std::vector<std::shared_ptr<IWindow>> _subWindows;
 		std::vector<std::shared_ptr<IWindow>> _windows;
 		std::shared_ptr<IDebugManager> _debugManager;
@@ -37,12 +39,14 @@ namespace tudov
 	  public:
 		explicit WindowManager(Context &context) noexcept;
 
+		Context& GetContext() noexcept override;
 		Log &GetLog() noexcept override;
 
-		std::shared_ptr<IWindow> GetWindowByID(SDL_WindowID windowID) noexcept;
+		bool HandleEvent(AppEvent &appEvent) noexcept override;
 
-		std::shared_ptr<IWindow> GetMainWindow() noexcept;
-		std::shared_ptr<const IWindow> GetMainWindow() const noexcept;
+		std::shared_ptr<IWindow> GetWindowByID(WindowID windowID) noexcept;
+		std::shared_ptr<IWindow> GetPrimaryWindow() noexcept;
+		std::shared_ptr<const IWindow> GetPrimaryWindow() const noexcept;
 		std::vector<std::shared_ptr<IWindow>> &GetSubWindows() noexcept;
 		const std::vector<std::shared_ptr<IWindow>> &GetSubWindows() const noexcept;
 
@@ -53,10 +57,9 @@ namespace tudov
 		void RemoveSubWindow(const std::shared_ptr<IWindow> &window);
 
 		bool IsEmpty() noexcept;
-		void InitializeMainWindow() noexcept;
+		void InitializePrimaryWindow() noexcept;
 		void CloseWindows() noexcept;
 		void HandleEvents() noexcept;
-		bool HandleEvent(SDL_Event &sdlEvent) noexcept;
 		void Render() noexcept;
 
 		inline std::vector<std::shared_ptr<IWindow>>::iterator begin() noexcept

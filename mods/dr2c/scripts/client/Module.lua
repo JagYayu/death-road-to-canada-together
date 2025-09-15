@@ -13,7 +13,7 @@
 local CModule = {}
 
 --- @type Window
-local window = engine.mainWindow
+local window = engine.primaryWindow
 --- @type Renderer
 local renderer = window.renderer
 

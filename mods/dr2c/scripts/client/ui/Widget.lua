@@ -26,11 +26,10 @@ CUIWidget.Type = Enum.sequence({
 	ColorPicker = 2,
 	Dialogue = 3,
 	Dropdown = 4,
-	FlexHorizontal = 5,
-	FlexVertical = 6,
-	Grid = 7,
-	Label = 8,
-	Textbox = 9,
+	Flex = 5,
+	Grid = 6,
+	Label = 7,
+	Textbox = 8,
 })
 
 CUIWidget.eventCWidget = events:new(N_("CWidgetNew"), {
@@ -49,19 +48,23 @@ function CUIWidget.new(widgetType, args)
 	--- @field margin? Rectangle
 	--- @field padding? Rectangle
 	--- @field rectangle? Rectangle
+	--- @field selectable? boolean @default true
 	args = args or Table.empty
 
 	--- @class dr2c.UIWidget
-	--- @field draw fun(self: self, renderer: Renderer)
+	--- @field draw? fun(self: self)
+	--- @field update? fun(self: self)
 	--- @field margin Rectangle
 	--- @field padding Rectangle
 	--- @field rectangle Rectangle
+	--- @field widgets? dr2c.UIWidget[]
 	local widget = {
 		type = widgetType,
 		border = CRenderUtils.copyDrawBorder(args.border or Table.empty),
 		margin = CRenderUtils.copyRectangle(args.margin or Table.empty),
 		padding = CRenderUtils.copyRectangle(args.padding or Table.empty),
 		rectangle = CRenderUtils.copyRectangle(args.rectangle or Table.empty),
+		selectable = args.selectable ~= false,
 	}
 
 	--- @class dr2c.E.CWidget
@@ -89,11 +92,11 @@ function CUIWidget.newButton(args)
 	return widget
 end
 
---- @param args dr2c.UIWidgetFlexHorizontal.Args
---- @return dr2c.UIWidgetFlexHorizontal
-function CUIWidget.newFlexHorizontal(args)
-	local widget = CUIWidget.new(CUIWidget.Type.FlexHorizontal, args)
-	--- @cast widget dr2c.UIWidgetFlexHorizontal
+--- @param args dr2c.UIWidgetFlex.Args
+--- @return dr2c.UIWidgetFlex
+function CUIWidget.newFlex(args)
+	local widget = CUIWidget.new(CUIWidget.Type.Flex, args)
+	--- @cast widget dr2c.UIWidgetFlex
 	return widget
 end
 

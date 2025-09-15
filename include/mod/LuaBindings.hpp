@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaAPI.hpp
+ * @file mod/LuaBindings.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -28,11 +28,11 @@ namespace tudov
 	 * Interface Class
 	 * Provide lua bindings to engine.
 	 */
-	struct ILuaAPI
+	struct ILuaBindings
 	{
 		using TInstallation = std::function<void(sol::state &)>;
 
-		virtual ~ILuaAPI() noexcept = default;
+		virtual ~ILuaBindings() noexcept = default;
 
 		virtual bool RegisterInstallation(std::string_view key, const TInstallation &installation) = 0;
 
@@ -41,14 +41,14 @@ namespace tudov
 		virtual const std::vector<std::string_view> &GetModGlobalsMigration() const noexcept = 0;
 	};
 
-	class LuaAPI : public ILuaAPI
+	class LuaBindings : public ILuaBindings
 	{
 	  private:
 		std::vector<std::tuple<std::string, TInstallation>> _installations;
 		mutable std::vector<std::string_view> _modGlobalsMigration;
 
 	  public:
-		explicit LuaAPI() noexcept = default;
+		explicit LuaBindings() noexcept = default;
 
 		bool RegisterInstallation(std::string_view key, const TInstallation &installation) override;
 		void Install(sol::state &lua, Context &context) override;
@@ -59,12 +59,13 @@ namespace tudov
 		void InstallMod(sol::state &lua, Context &context) noexcept;
 		void InstallNetwork(sol::state &lua, Context &context) noexcept;
 		void InstallScanCode(sol::state &lua, Context &context) noexcept;
+		void InstallSystem(sol::state &lua, Context &context) noexcept;
 	};
 
-	struct [[deprecated("DO NOT USE")]] ILuaAPIProvider
+	struct [[deprecated("DO NOT USE")]] ILuaBindingsProvider
 	{
-		virtual ~ILuaAPIProvider() noexcept = default;
+		virtual ~ILuaBindingsProvider() noexcept = default;
 
-		virtual void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept = 0;
+		virtual void ProvideLuaBindings(ILuaBindings &luaBindings) noexcept = 0;
 	};
 } // namespace tudov

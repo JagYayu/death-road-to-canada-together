@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaAPI_Network.cpp
+ * @file mod/LuaBindings_Network.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/LuaAPI.hpp"
+#include "mod/LuaBindings.hpp"
 
 #include "event/CoreEventsData.hpp"
 #include "network/ClientSession.hpp"
@@ -24,7 +24,7 @@ using namespace tudov;
 #define TE_ENUM(Class, ...)     lua.new_enum<Class>(#Class, __VA_ARGS__)
 #define TE_USERTYPE(Class, ...) lua.new_usertype<Class>(#Class, __VA_ARGS__)
 
-void LuaAPI::InstallNetwork(sol::state &lua, Context &context) noexcept
+void LuaBindings::InstallNetwork(sol::state &lua, Context &context) noexcept
 {
 	TE_ENUM(EClientSessionState,
 	        {

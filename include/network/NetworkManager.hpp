@@ -97,11 +97,11 @@ namespace tudov
 		}
 	};
 
-	class LuaAPI;
+	class LuaBindings;
 
 	class NetworkManager : public INetworkManager, public IDebugProvider, private ILogProvider
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  protected:
 		std::shared_ptr<Log> _log;

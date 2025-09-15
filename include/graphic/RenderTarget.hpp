@@ -25,13 +25,13 @@ namespace tudov
 {
 	enum class EBlendMode : std::uint8_t;
 	class Engine;
-	class LuaAPI;
+	class LuaBindings;
 	class Renderer;
 	class Texture;
 
 	class RenderTarget : public std::enable_shared_from_this<RenderTarget>, public IContextProvider
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 		friend Renderer;
 
 	  public:

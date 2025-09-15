@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaAPI_Mod.cpp
+ * @file mod/LuaBindings_Mod.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -9,7 +9,8 @@
  *
  */
 
-#include "mod/LuaAPI.hpp"
+#include "mod/LuaBindings.hpp"
+
 #include "mod/ModManager.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
@@ -19,7 +20,7 @@ using namespace tudov;
 #define TE_ENUM(Class, ...)     lua.new_enum<Class>(#Class, __VA_ARGS__)
 #define TE_USERTYPE(Class, ...) lua.new_usertype<Class>(#Class, __VA_ARGS__)
 
-void LuaAPI::InstallMod(sol::state &lua, Context &context) noexcept
+void LuaBindings::InstallMod(sol::state &lua, Context &context) noexcept
 {
 
 	TE_USERTYPE(ModConfig,

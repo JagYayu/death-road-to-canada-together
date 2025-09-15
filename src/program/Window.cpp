@@ -11,7 +11,9 @@
 
 #include "program/Window.hpp"
 
+#include "event/AppEvent.hpp"
 #include "event/CoreEvents.hpp"
+#include "event/CoreEventsData.hpp"
 #include "event/EventHandleKey.hpp"
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
@@ -24,6 +26,7 @@
 #include "SDL3/SDL_video.h"
 #include "sol/string_view.hpp"
 #include "sol/types.hpp"
+#include "system/ScanCode.hpp"
 
 #include <cmath>
 #include <memory>
@@ -74,50 +77,91 @@ void Window::HandleEvents() noexcept
 {
 }
 
-bool Window::HandleEvent(SDL_Event &event) noexcept
+bool Window::HandleEvent(AppEvent &appEvent) noexcept
 {
+	SDL_Event &sdlEvent = *appEvent.sdlEvent;
 	IEventManager &eventManager = GetEventManager();
 
-	if (event.type >= SDL_EVENT_WINDOW_FIRST && event.type <= SDL_EVENT_WINDOW_LAST)
+	if (sdlEvent.type >= SDL_EVENT_WINDOW_FIRST && sdlEvent.type <= SDL_EVENT_WINDOW_LAST)
 	{
-		if (SDL_GetWindowID(_sdlWindow) != event.window.windowID)
+		if (SDL_GetWindowID(_sdlWindow) != sdlEvent.window.windowID)
 		{
 			return false;
+		}
+
+		if (sdlEvent.type == SDL_EVENT_WINDOW_RESIZED)
+		{
+			SDL_WindowEvent &window = sdlEvent.window;
+			SDL_WindowID windowID = SDL_GetWindowID(_sdlWindow);
+			if (windowID != window.windowID)
+			{
+				return false;
+			}
+
+			RuntimeEvent &runtimeEvent = GetEventManager().GetCoreEvents().MouseMotion();
+
+			EventWindowResizeData data{
+			    // window.
+			};
+
+			runtimeEvent.Invoke(&data, windowID, EEventInvocation::None);
 		}
 	}
-	else if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP)
+	else if (sdlEvent.type == SDL_EVENT_KEY_DOWN || sdlEvent.type == SDL_EVENT_KEY_UP)
 	{
-		SDL_KeyboardEvent &key = event.key;
+		// SDL_KeyboardEvent &key = sdlEvent.key;
+		// SDL_WindowID windowID = SDL_GetWindowID(_sdlWindow);
+		// if (windowID != key.windowID)
+		// {
+		// 	return false;
+		// }
+
+		// RuntimeEvent *runtimeEvent;
+		// if (!key.down)
+		// {
+		// 	runtimeEvent = &GetEventManager().GetCoreEvents().KeyUp();
+		// }
+		// else if (key.repeat)
+		// {
+		// 	runtimeEvent = &GetEventManager().GetCoreEvents().KeyRepeat();
+		// }
+		// else
+		// {
+		// 	runtimeEvent = &GetEventManager().GetCoreEvents().KeyDown();
+		// }
+
+		// EventKeyData data{
+		//     .window = this,
+		//     .windowID = windowID,
+		//     .keyboard = sol::nil,
+		//     .keyboardID = 0,
+		//     .scanCode = static_cast<EScanCode>(key.scancode),
+		//     .keyCode = static_cast<EKeyCode>(key.key),
+		//     .modifier = static_cast<EKeyModifier>(key.mod),
+		// };
+
+		// runtimeEvent->Invoke(&data, windowID, EEventInvocation::None);
+	}
+	else if (sdlEvent.type == SDL_EVENT_MOUSE_MOTION)
+	{
+		SDL_MouseMotionEvent &motion = sdlEvent.motion;
 		SDL_WindowID windowID = SDL_GetWindowID(_sdlWindow);
-		if (windowID != key.windowID)
+		if (windowID != motion.windowID)
 		{
 			return false;
 		}
 
-		RuntimeEvent *runtimeEvent;
-		if (!key.down)
-		{
-			runtimeEvent = &GetEventManager().GetCoreEvents().KeyUp();
-		}
-		else if (key.repeat)
-		{
-			runtimeEvent = &GetEventManager().GetCoreEvents().KeyRepeat();
-		}
-		else
-		{
-			runtimeEvent = &GetEventManager().GetCoreEvents().KeyDown();
-		}
+		RuntimeEvent &runtimeEvent = GetEventManager().GetCoreEvents().MouseMotion();
 
-		sol::table e = GetScriptEngine().CreateTable(0, 8);
-		e["window"] = this;
-		e["windowID"] = windowID;
-		e["keyboard"] = nullptr;
-		e["keyboardID"] = 0;
-		e["scanCode"] = key.scancode;
-		e["keyCode"] = key.key;
-		e["mod"] = key.mod;
+		EventMouseMotionData data{
+		    .mouseID = static_cast<std::int32_t>(motion.which),
+		    .x = motion.x,
+		    .y = motion.y,
+		    .relativeX = motion.xrel,
+		    .relativeY = motion.yrel,
+		};
 
-		runtimeEvent->Invoke(e, windowID, EEventInvocation::None);
+		runtimeEvent.Invoke(&data, windowID, EEventInvocation::None);
 	}
 	else
 	{
@@ -129,13 +173,7 @@ bool Window::HandleEvent(SDL_Event &event) noexcept
 
 bool Window::HandleEventKey(SDL_KeyboardEvent &e) noexcept
 {
-	// if (SDL_GetWindowID(_sdlWindow) == e.windowID)
-	// {
-	// 	if (e.type != SDL_EVENT_KEY_DOWN)
-	// 	{
-	// 	}
-	// }
-	return 1;
+	return true;
 }
 
 void Window::Render() noexcept
@@ -155,7 +193,7 @@ bool Window::RenderPreImpl() noexcept
 	}
 
 	auto &&args = GetScriptEngine().CreateTable(0, 3);
-	args["isMain"] = GetContext().GetWindowManager().GetMainWindow().get() == this;
+	args["isMain"] = GetContext().GetWindowManager().GetPrimaryWindow().get() == this;
 	args["window"] = this;
 	args["key"] = LuaGetKey();
 	GetEventManager().GetCoreEvents().TickRender().Invoke(args, GetKey(), EEventInvocation::None);
@@ -166,6 +204,11 @@ bool Window::RenderPreImpl() noexcept
 SDL_Window *Window::GetSDLWindowHandle() noexcept
 {
 	return _sdlWindow;
+}
+
+WindowID Window::GetWindowID() const noexcept
+{
+	return SDL_GetWindowID(_sdlWindow);
 }
 
 std::int32_t Window::GetWidth() const noexcept

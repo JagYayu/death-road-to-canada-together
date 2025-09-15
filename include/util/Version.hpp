@@ -18,11 +18,11 @@
 
 namespace tudov
 {
-	class LuaAPI;
+	class LuaBindings;
 
 	class Version
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  private:
 		std::vector<int32_t> _parts;

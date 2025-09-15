@@ -9,9 +9,9 @@
  *
  */
 
-#include "SDL3_ttf/SDL_ttf.h"
 #include "data/Config.hpp"
 #include "data/Constants.hpp"
+#include "event/AppEvent.hpp"
 #include "graphic/GUI.hpp"
 #include "program/CrashReporter.hpp"
 #include "program/Engine.hpp"
@@ -20,13 +20,15 @@
 #include "system/LogMicros.hpp"
 #include "test/TestGPURendering.hpp"
 
+#include "SDL3_ttf/SDL_ttf.h"
+
+#include <memory>
+
 #define SDL_MAIN_USE_CALLBACKS
 
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_main.h"
-
-#include <memory>
 
 using namespace tudov;
 
@@ -222,7 +224,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 
 	try
 	{
-		app->Event(*event);
+		AppEvent appEvent{*event};
+		app->Event(appEvent);
+
 		return SDL_APP_CONTINUE;
 	}
 	catch (const std::exception &e)

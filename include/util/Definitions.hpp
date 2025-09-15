@@ -24,6 +24,9 @@ namespace tudov
 	using NetworkSessionSlot = std::uint32_t;
 	using ResourceID = std::uint64_t;
 	using ScriptID = std::uint64_t;
+	using WindowID = std::uint32_t;
+	using KeyboardID = std::uint32_t;
+	using MouseID = std::uint32_t;
 
 	// Resources
 

@@ -11,6 +11,7 @@
 
 #include "graphic/RenderBuffer.hpp"
 #include "graphic/Renderer.hpp"
+#include "mod/ScriptEngine.hpp"
 
 #include "sol/table.hpp"
 

@@ -15,9 +15,11 @@
 
 #include "SDL3/SDL_scancode.h"
 
+#include <cstdint>
+
 namespace tudov
 {
-	enum class EScanCode : int
+	enum class EScanCode : std::int32_t
 	{
 		// Alphabet Keys
 

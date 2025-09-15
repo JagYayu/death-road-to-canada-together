@@ -1,5 +1,5 @@
 /**
- * @file program/MainWindow.cpp
+ * @file program/PrimaryWindow.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -9,9 +9,10 @@
  *
  */
 
-#include "program/MainWindow.hpp"
+#include "program/PrimaryWindow.hpp"
 
 #include "debug/DebugManager.hpp"
+#include "event/AppEvent.hpp"
 #include "event/EventHandleKey.hpp"
 #include "graphic/RenderTarget.hpp"
 #include "graphic/Renderer.hpp"
@@ -33,15 +34,15 @@
 
 using namespace tudov;
 
-MainWindow::MainWindow(Context &context) noexcept
-    : Window(context, "MainWindow"),
+PrimaryWindow::PrimaryWindow(Context &context) noexcept
+    : Window(context, "PrimaryWindow"),
       _showDebugElements()
 {
 }
 
 static bool bSDLImGUI = false;
 
-MainWindow::~MainWindow() noexcept
+PrimaryWindow::~PrimaryWindow() noexcept
 {
 	if (bSDLImGUI)
 	{
@@ -138,7 +139,7 @@ void SetImGuiStyle(std::float_t scale) noexcept
 	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.12f, 0.14f, 0.17f, 0.35f);
 }
 
-void MainWindow::UpdateGuiStyle() noexcept
+void PrimaryWindow::UpdateGuiStyle() noexcept
 {
 	ImGuiViewport *viewport = ImGui::GetMainViewport();
 	if (viewport == nullptr)
@@ -175,7 +176,7 @@ void MainWindow::UpdateGuiStyle() noexcept
 	ImGui_ImplSDLRenderer3_Init(sdlRenderer);
 }
 
-void MainWindow::InitializeWindow(std::int32_t width, std::int32_t height, std::string_view title) noexcept
+void PrimaryWindow::InitializeWindow(std::int32_t width, std::int32_t height, std::string_view title) noexcept
 {
 	_sdlWindow = SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 	if (!_sdlWindow)
@@ -208,64 +209,64 @@ void MainWindow::InitializeWindow(std::int32_t width, std::int32_t height, std::
 	SetShowDebugElements(true);
 }
 
-void MainWindow::DeinitializeWindow() noexcept
+void PrimaryWindow::DeinitializeWindow() noexcept
 {
 	renderer->DeinitializeRenderer();
 
 	SDL_DestroyWindow(_sdlWindow);
 }
 
-ImFont *MainWindow::GetGUIFontSmall() noexcept
+ImFont *PrimaryWindow::GetGUIFontSmall() noexcept
 {
 	return _guiFontSmall;
 }
 
-ImFont *MainWindow::GetGUIFontMedium() noexcept
+ImFont *PrimaryWindow::GetGUIFontMedium() noexcept
 {
 	return _guiFontMedium;
 }
 
-ImFont *MainWindow::GetGUIFontLarge() noexcept
+ImFont *PrimaryWindow::GetGUIFontLarge() noexcept
 {
 	return _guiFontLarge;
 }
 
-void MainWindow::SetDebugManager(const std::shared_ptr<IDebugManager> &debugManager) noexcept
+void PrimaryWindow::SetDebugManager(const std::shared_ptr<IDebugManager> &debugManager) noexcept
 {
 	_debugManager = debugManager;
 }
 
-bool MainWindow::GetShowDebugElements() noexcept
+bool PrimaryWindow::GetShowDebugElements() noexcept
 {
 	return _showDebugElements;
 }
 
-void MainWindow::SetShowDebugElements(bool value) noexcept
+void PrimaryWindow::SetShowDebugElements(bool value) noexcept
 {
 	_showDebugElements = value;
 }
 
-bool MainWindow::GetShowLoadingFrame() noexcept
+bool PrimaryWindow::GetShowLoadingFrame() noexcept
 {
 	return true;
 }
 
-void MainWindow::SetShowLoadingFrame(bool value) noexcept
+void PrimaryWindow::SetShowLoadingFrame(bool value) noexcept
 {
 }
 
-EventHandleKey MainWindow::GetKey() const noexcept
+EventHandleKey PrimaryWindow::GetKey() const noexcept
 {
 	static EventHandleKey key = "Main";
 	return key;
 }
 
-bool MainWindow::HandleEvent(SDL_Event &event) noexcept
+bool PrimaryWindow::HandleEvent(AppEvent &appEvent) noexcept
 {
-	return Window::HandleEvent(event) | ImGui_ImplSDL3_ProcessEvent(&event);
+	return Window::HandleEvent(appEvent) | ImGui_ImplSDL3_ProcessEvent(appEvent.sdlEvent.get());
 }
 
-void MainWindow::Render() noexcept
+void PrimaryWindow::Render() noexcept
 {
 	if (IsMinimized())
 	{
@@ -289,7 +290,7 @@ void MainWindow::Render() noexcept
 
 	{
 		auto &loadingMutex = engine.GetLoadingMutex();
-		
+
 		if (loadingMutex.try_lock_for(std::chrono::milliseconds(10)))
 		{
 			if (engine.GetLoadingState() == Engine::ELoadingState::Done)
@@ -376,7 +377,7 @@ void MainWindow::Render() noexcept
 	renderer->End();
 }
 
-void MainWindow::RenderLoadingGUI(Engine &engine) noexcept
+void PrimaryWindow::RenderLoadingGUI(Engine &engine) noexcept
 {
 	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(0, 0), ImGui::GetIO().DisplaySize, IM_COL32(0, 0, 0, 128), 0.0f);
 

@@ -31,26 +31,61 @@ local function setWeight(self, index, weight)
 	self.weights[index] = weight
 end
 
---- @param self dr2c.UIWidgetFlexHorizontal
---- @param renderer Renderer
-local function draw(self, renderer)
+--- @param self dr2c.UIWidgetFlex
+local function draw(self)
+	for _, drawFunction in ipairs(self.widgetsDrawFunctions) do
+		drawFunction()
+	end
+end
+
+--- @param self dr2c.UIWidgetFlex
+local function update(self)
+	self.widgetsDrawFunctions = {}
+
 	local x = self.rectangle[1]
 	local y = self.rectangle[2]
 	local w = self.rectangle[3]
 	local h = self.rectangle[4]
 
-	local ww = w / #self.widgets
+	if self.vertical then
+		local hh = h / #self.widgets
 
-	for i, widget in ipairs(self.widgets) do
-		if widget.draw then
-			local rect = widget.rectangle
+		for i, widget in ipairs(self.widgets) do
+			if widget.draw then
+				local cy = y + (i - 1) * hh
+				local ch = hh
 
-			rect[1] = x + (i - 1) * ww
-			rect[2] = y
-			rect[3] = ww
-			rect[4] = h
+				self.widgetsDrawFunctions[#self.widgetsDrawFunctions + 1] = function()
+					local rect = widget.rectangle
 
-			widget:draw(renderer)
+					rect[1] = x
+					rect[2] = cy
+					rect[3] = w
+					rect[4] = ch
+
+					widget:draw()
+				end
+			end
+		end
+	else
+		local ww = w / #self.widgets
+
+		for i, widget in ipairs(self.widgets) do
+			if widget.draw then
+				local cx = x + (i - 1) * ww
+				local cw = ww
+
+				self.widgetsDrawFunctions[#self.widgetsDrawFunctions + 1] = function()
+					local rect = widget.rectangle
+
+					rect[1] = cx
+					rect[2] = y
+					rect[3] = cw
+					rect[4] = h
+
+					widget:draw()
+				end
+			end
 		end
 	end
 end
@@ -60,12 +95,13 @@ CUIWidgetFlex.metatable = {
 		addChild = addChild,
 		draw = draw,
 		setWeight = setWeight,
+		update = update,
 	},
 }
 
 --- @param e dr2c.E.CWidget
 events:add(CUIWidget.eventCWidget, function(e)
-	--- @class dr2c.UIWidgetFlexHorizontal.Args : dr2c.UIWidget.Args
+	--- @class dr2c.UIWidgetFlex.Args : dr2c.UIWidget.Args
 	--- @field marginX? number
 	--- @field marginY? number
 	--- @field marginWidth? number
@@ -74,15 +110,18 @@ events:add(CUIWidget.eventCWidget, function(e)
 	--- @field y? number
 	--- @field width? number
 	--- @field height? number
+	--- @field vertical? boolean
 	--- @field weights? number[]
 	local args = e.args
 
-	--- @class dr2c.UIWidgetFlexHorizontal : dr2c.UIWidget
+	--- @class dr2c.UIWidgetFlex : dr2c.UIWidget
 	--- @field addChild fun(self: self, widget: dr2c.UIWidget)
 	local widget = e.widget
 
 	--- @type table | false
 	widget.cache = false
+
+	widget.vertical = not not args.vertical
 
 	--- @type dr2c.UIWidget[]
 	widget.widgets = {}
@@ -98,9 +137,11 @@ events:add(CUIWidget.eventCWidget, function(e)
 		widget.weights = {}
 	end
 
+	widget.widgetsDrawFunctions = {}
+
 	e.widget = setmetatable(widget, CUIWidgetFlex.metatable)
 
 	e.initialized = true
-end, "Container", "Initialize", CUIWidget.Type.FlexHorizontal)
+end, "InitializeFlex", "Initialize", CUIWidget.Type.Flex)
 
 return CUIWidgetFlex

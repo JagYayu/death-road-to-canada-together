@@ -17,7 +17,7 @@
 
 namespace tudov
 {
-	enum class EKeyMode : std::uint32_t
+	enum class EKeyModifier : std::uint32_t
 	{
 		None = SDL_KMOD_NONE,         // No modifier is applicable.
 		LeftShift = SDL_KMOD_LSHIFT,  // The left Shift key is down.

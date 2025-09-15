@@ -13,12 +13,9 @@
 
 #include "data/Config.hpp"
 #include "debug/DebugManager.hpp"
-#include "program/MainWindow.hpp"
+#include "program/PrimaryWindow.hpp"
 #include "system/Log.hpp"
-#include "system/LogMicros.hpp"
 #include "util/MicrosImpl.hpp"
-
-#include "SDL3/SDL_events.h"
 
 #include <algorithm>
 #include <memory>
@@ -31,12 +28,29 @@ WindowManager::WindowManager(Context &context) noexcept
 {
 }
 
+Context &WindowManager::GetContext() noexcept
+{
+	return _context;
+}
+
 Log &WindowManager::GetLog() noexcept
 {
 	return *Log::Get(TE_NAMEOF(WindowManager));
 }
 
-TE_GEN_GETTER_SMART_PTR(std::shared_ptr, IWindow, WindowManager::GetMainWindow, _mainWindow, noexcept);
+std::shared_ptr<IWindow> WindowManager::GetWindowByID(WindowID windowID) noexcept
+{
+	for (std::shared_ptr<IWindow> &window : _windows)
+	{
+		if (window->GetWindowID() == windowID)
+		{
+			return window;
+		}
+	}
+	return nullptr;
+}
+
+TE_GEN_GETTER_SMART_PTR(std::shared_ptr, IWindow, WindowManager::GetPrimaryWindow, _primaryWindow, noexcept);
 
 std::vector<std::shared_ptr<IWindow>> &WindowManager::GetSubWindows() noexcept
 {
@@ -90,21 +104,21 @@ bool WindowManager::IsEmpty() noexcept
 	return _windows.empty();
 }
 
-void WindowManager::InitializeMainWindow() noexcept
+void WindowManager::InitializePrimaryWindow() noexcept
 {
-	if (!_mainWindow.expired())
+	if (!_primaryWindow.expired())
 	{
 		Log::Get("WindowManager")->Error("Engine main window has already been initialized!");
 	}
 
-	const auto &mainWindow = std::make_shared<MainWindow>(_context);
+	const auto &primaryWindow = std::make_shared<PrimaryWindow>(_context);
 	Config &config = Tudov::GetConfig();
-	mainWindow->InitializeWindow(config.GetWindowWidth(), config.GetWindowHeight(), config.GetWindowTitle());
-	_windows.emplace_back(mainWindow);
-	_mainWindow = mainWindow;
+	primaryWindow->InitializeWindow(config.GetWindowWidth(), config.GetWindowHeight(), config.GetWindowTitle());
+	_windows.emplace_back(primaryWindow);
+	_primaryWindow = primaryWindow;
 
 	_debugManager = std::make_shared<DebugManager>();
-	mainWindow->SetDebugManager(_debugManager);
+	primaryWindow->SetDebugManager(_debugManager);
 }
 
 void WindowManager::CloseWindows() noexcept
@@ -127,12 +141,12 @@ void WindowManager::HandleEvents() noexcept
 {
 }
 
-bool WindowManager::HandleEvent(SDL_Event &sdlEvent) noexcept
+bool WindowManager::HandleEvent(AppEvent &appEvent) noexcept
 {
 	bool handled = false;
 	for (const std::shared_ptr<IWindow> &window : _windows)
 	{
-		handled = window->HandleEvent(sdlEvent) || handled;
+		handled = window->HandleEvent(appEvent) || handled;
 	}
 
 	_windows.erase(std::remove_if(_windows.begin(), _windows.end(), IsWindowShouldClose), _windows.end());

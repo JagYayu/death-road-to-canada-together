@@ -33,10 +33,14 @@ namespace tudov
 
 		// Mouse events.
 
-		[[nodiscard]] virtual RuntimeEvent &MouseMove() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &MouseMotion() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &MouseButtonDown() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &MouseButtonUp() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &MouseWheel() noexcept = 0;
+
+		// Window events.
+
+		[[nodiscard]] virtual RuntimeEvent &WindowResize() noexcept = 0;
 
 		// Network events.
 
@@ -94,7 +98,7 @@ namespace tudov
 		TRuntimeEvent _keyRepeat;
 		TRuntimeEvent _keyUp;
 		TRuntimeEvent _modGlobalsIndex;
-		TRuntimeEvent _mouseMove;
+		TRuntimeEvent _mouseMotion;
 		TRuntimeEvent _mouseButtonDown;
 		TRuntimeEvent _mouseButtonUp;
 		TRuntimeEvent _mouseWheel;
@@ -108,6 +112,7 @@ namespace tudov
 		TRuntimeEvent _tickLoad;
 		TRuntimeEvent _tickRender;
 		TRuntimeEvent _tickUpdate;
+		TRuntimeEvent _windowResize;
 
 	  public:
 		explicit CoreEvents(EventManager &eventManager) noexcept;
@@ -120,7 +125,7 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &KeyDown() noexcept override;
 		[[nodiscard]] RuntimeEvent &KeyRepeat() noexcept override;
 		[[nodiscard]] RuntimeEvent &KeyUp() noexcept override;
-		[[nodiscard]] RuntimeEvent &MouseMove() noexcept override;
+		[[nodiscard]] RuntimeEvent &MouseMotion() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseButtonDown() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseButtonUp() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseWheel() noexcept override;
@@ -135,5 +140,6 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &TickLoad() noexcept override;
 		[[nodiscard]] RuntimeEvent &TickRender() noexcept override;
 		[[nodiscard]] RuntimeEvent &TickUpdate() noexcept override;
+		[[nodiscard]] RuntimeEvent &WindowResize() noexcept override;
 	};
 } // namespace tudov

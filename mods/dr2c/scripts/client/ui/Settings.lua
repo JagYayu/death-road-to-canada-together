@@ -1,9 +1,15 @@
+--[[
+-- @module dr2c.client.ui.Settings
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
+
+--- @class dr2c.CUISettings
 local CUISettings = {}
-
-local scale = 0
-
-function CUISettings.getScale()
-	return scale
-end
 
 return CUISettings

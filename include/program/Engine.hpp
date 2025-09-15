@@ -24,15 +24,13 @@
 #include <thread>
 #include <vector>
 
-union SDL_Event;
-
 namespace tudov
 {
 	class EngineData;
 
 	class Context;
 	class Log;
-	class LuaAPI;
+	class LuaBindings;
 
 	/**
 	 * @brief Tudov game engine
@@ -41,7 +39,7 @@ namespace tudov
 	{
 		friend Context;
 		friend EngineData;
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  public:
 		enum class ELoadingState : std::uint8_t
@@ -100,7 +98,7 @@ namespace tudov
 		std::float_t _previousTick;
 		std::float_t _framerate;
 		bool _firstTick;
-		std::vector<std::unique_ptr<SDL_Event>> _sdlEvents;
+		std::vector<std::unique_ptr<AppEvent>> _sdlEvents;
 		std::unique_ptr<EngineData> _data;
 
 		std::thread _logicThread;
@@ -125,7 +123,7 @@ namespace tudov
 		Version GetAppVersion() const noexcept override;
 		void Initialize() noexcept override;
 		bool Tick() noexcept override;
-		void Event(SDL_Event &event) noexcept override;
+		void Event(AppEvent &appEvent) noexcept override;
 		void Deinitialize() noexcept override;
 
 		Log &GetLog() noexcept override;
@@ -150,20 +148,23 @@ namespace tudov
 		void TriggerLoadPending() noexcept;
 
 	  private:
-		void LogicThread() noexcept;
 		void LoadingThread() noexcept;
 		bool ShouldQuit() noexcept;
-		[[deprecated]]
-		void InitializeMainWindow() noexcept;
-		[[deprecated]]
-		void InitializeResources() noexcept;
+
 		void PostInitialization() noexcept;
 		void PreDeinitialization() noexcept;
-		void HandleEvent(SDL_Event &event) noexcept;
+		void HandleEvent(AppEvent &appEvent) noexcept;
 
 		void ProcessLoad() noexcept;
 		void ProcessTick() noexcept;
 		void ProcessRender() noexcept;
+
+		[[deprecated]]
+		void LogicThread() noexcept;
+		[[deprecated]]
+		void InitializePrimaryWindow() noexcept;
+		[[deprecated]]
+		void InitializeResources() noexcept;
 
 	  public:
 		// Inline implementations.

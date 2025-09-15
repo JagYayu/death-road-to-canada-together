@@ -173,13 +173,13 @@ void EventManager::EmplaceRuntimeEventFromLoadtimeEvent(const std::shared_ptr<Lo
 	}
 }
 
-// ILuaAPI::TInstallation EventManager::rendererLuaAPIInstallation = [](sol::state &lua)
+// ILuaBindings::TInstallation EventManager::rendererLuaBindingsInstallation = [](sol::state &lua)
 // {
 // };
 
-// void EventManager::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
+// void EventManager::ProvideLuaBindings(ILuaBindings &luaBindings) noexcept
 // {
-// 	luaAPI.RegisterInstallation()
+// 	luaBindings.RegisterInstallation()
 // }
 
 Context &EventManager::GetContext() noexcept

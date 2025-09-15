@@ -24,12 +24,12 @@ namespace tudov
 	{
 	}
 
-	class LuaAPI;
+	class LuaBindings;
 	class ScriptEngine;
 
 	class TextResources : public Resources<Text>
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  public:
 		explicit TextResources() noexcept = default;

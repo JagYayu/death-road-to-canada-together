@@ -59,12 +59,12 @@ namespace tudov
 		virtual void Update() = 0;
 	};
 
-	class LuaAPI;
+	class LuaBindings;
 	class UnpackagedMod;
 
 	class ModManager : public IModManager, public IDebugProvider, private ILogProvider
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  private:
 		struct ModDirectory

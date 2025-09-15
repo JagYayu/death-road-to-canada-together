@@ -25,14 +25,14 @@
 
 namespace tudov
 {
-	class LuaAPI;
+	class LuaBindings;
 	class RenderTarget;
 	class Renderer;
 	class Texture;
 
 	struct DrawRectArgs
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 		friend Renderer;
 
 		sol::object texture = sol::nil;
@@ -134,7 +134,7 @@ namespace tudov
 
 	struct DrawTextArgs
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 		FontID font = 0.0f;
 		std::string_view text = "";

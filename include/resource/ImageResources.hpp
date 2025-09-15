@@ -25,12 +25,12 @@ namespace tudov
 	{
 	}
 
-	class LuaAPI;
+	class LuaBindings;
 	class ScriptEngine;
 
 	class ImageResources : public Resources<Image>
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  public:
 		explicit ImageResources() noexcept;

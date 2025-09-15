@@ -29,7 +29,7 @@
 
 namespace tudov
 {
-	class LuaAPI;
+	class LuaBindings;
 
 	struct ScriptError
 	{
@@ -82,7 +82,7 @@ namespace tudov
 
 	class ScriptErrors : public IScriptErrors
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  protected:
 		Context &_context;

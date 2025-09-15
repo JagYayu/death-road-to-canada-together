@@ -1,5 +1,5 @@
 /**
- * @file program/MainWindow.hpp
+ * @file program/PrimaryWindow.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -22,7 +22,7 @@ namespace tudov
 	struct IDebugManager;
 	class RenderTarget;
 
-	class MainWindow : public Window
+	class PrimaryWindow : public Window
 	{
 	  protected:
 		std::weak_ptr<IDebugManager> _debugManager;
@@ -35,8 +35,8 @@ namespace tudov
 		bool _showDebugElements;
 
 	  public:
-		explicit MainWindow(Context &context) noexcept;
-		~MainWindow() noexcept override;
+		explicit PrimaryWindow(Context &context) noexcept;
+		~PrimaryWindow() noexcept override;
 
 	  protected:
 		void UpdateGuiStyle() noexcept;
@@ -47,7 +47,7 @@ namespace tudov
 		void DeinitializeWindow() noexcept override;
 
 		EventHandleKey GetKey() const noexcept override;
-		bool HandleEvent(SDL_Event &event) noexcept override;
+		bool HandleEvent(AppEvent &appEvent) noexcept override;
 		void Render() noexcept override;
 
 		ImFont *GetGUIFontSmall() noexcept;

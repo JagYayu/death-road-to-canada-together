@@ -26,7 +26,7 @@ namespace tudov
 	enum class EDisconnectionCode : std::uint32_t;
 	enum class EServerSessionState : std::uint8_t;
 	struct NetworkSessionData;
-	class LuaAPI;
+	class LuaBindings;
 
 	struct ServerSessionHostArgs
 	{
@@ -41,7 +41,7 @@ namespace tudov
 
 	struct IServerSession : public INetworkSession
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 		using HostArgs = ServerSessionHostArgs;
 

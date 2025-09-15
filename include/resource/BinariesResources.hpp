@@ -22,12 +22,12 @@ namespace tudov
 	{
 	}
 
-	class LuaAPI;
+	class LuaBindings;
 	class ScriptEngine;
 
 	class BinariesResources : public Resources<Binaries>
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  public:
 		explicit BinariesResources() noexcept;

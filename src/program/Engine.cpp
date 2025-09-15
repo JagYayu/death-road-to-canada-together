@@ -15,17 +15,19 @@
 #include "debug/Debug.hpp"
 #include "debug/DebugConsole.hpp"
 #include "debug/DebugManager.hpp"
+#include "event/AppEvent.hpp"
 #include "event/CoreEvents.hpp"
 #include "event/CoreEventsData.hpp"
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
-#include "mod/LuaAPI.hpp"
+#include "mod/LuaBindings.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptErrors.hpp"
+#include "program/Application.hpp"
 #include "program/Context.hpp"
 #include "program/EngineComponent.hpp"
 #include "program/EngineData.hpp"
-#include "program/MainWindow.hpp"
+#include "program/PrimaryWindow.hpp"
 #include "program/Window.hpp"
 #include "program/WindowManager.hpp"
 #include "system/Log.hpp"
@@ -157,7 +159,7 @@ void Engine::Initialize() noexcept
 {
 	TE_DEBUG("{}", "Initializing engine ...");
 	{
-		_data->_windowManager->InitializeMainWindow();
+		_data->_windowManager->InitializePrimaryWindow();
 
 		for (auto it = _data->_components.begin(); it != _data->_components.end(); ++it)
 		{
@@ -203,7 +205,7 @@ bool Engine::Tick() noexcept
 		_loadingBeginNS = SDL_GetTicksNS();
 	}
 
-	if (DisableLoadingThread)
+	if constexpr (DisableLoadingThread)
 	{
 		ProcessLoad();
 	}
@@ -257,7 +259,7 @@ void Engine::ProcessTick() noexcept
 		_data->_eventManager->GetCoreEvents().TickUpdate().Invoke();
 	}
 
-	for (const std::unique_ptr<SDL_Event> &event : _sdlEvents)
+	for (const std::unique_ptr<AppEvent> &event : _sdlEvents)
 	{
 		HandleEvent(*event);
 	}
@@ -265,35 +267,33 @@ void Engine::ProcessTick() noexcept
 	_sdlEvents.reserve(0);
 }
 
+void Engine::HandleEvent(AppEvent &appEvent) noexcept
+{
+	for (std::shared_ptr<IEngineComponent> &component : _data->_components)
+	{
+		if (component->HandleEvent(appEvent))
+		{
+			return;
+		}
+	}
+}
+
 void Engine::ProcessRender() noexcept
 {
 	_data->_windowManager->Render();
 }
 
-void Engine::HandleEvent(SDL_Event &event) noexcept
+void Engine::Event(AppEvent &appEvent) noexcept
 {
-	if (_data->_windowManager->HandleEvent(event))
+	if (appEvent.sdlEvent->type == SDL_EVENT_QUIT) [[unlikely]]
 	{
-		return;
-	}
-
-	switch (event.type)
-	{
-	}
-}
-
-void Engine::Event(SDL_Event &event) noexcept
-{
-	switch (event.type)
-	{
-	case SDL_EVENT_QUIT:
 		Quit();
 		return;
 	}
 
 	if (_sdlEvents.size() < 999) [[likely]]
 	{
-		_sdlEvents.emplace_back(std::make_unique<SDL_Event>(event));
+		_sdlEvents.emplace_back(std::make_unique<AppEvent>(*appEvent.sdlEvent));
 	}
 }
 
@@ -344,7 +344,7 @@ void Engine::Quit()
 	}
 }
 
-void Engine::InitializeMainWindow() noexcept
+void Engine::InitializePrimaryWindow() noexcept
 {
 }
 

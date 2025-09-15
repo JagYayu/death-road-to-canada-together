@@ -11,7 +11,14 @@
 
 #include "program/EngineComponent.hpp"
 
+#include "event/AppEvent.hpp"
+
 using namespace tudov;
+
+std::int32_t IEngineComponent::GetSortingSequence() noexcept
+{
+	return 0;
+}
 
 void IEngineComponent::PreInitialize() noexcept
 {
@@ -29,6 +36,23 @@ void IEngineComponent::PostDeinitialize() noexcept
 {
 }
 
-void IEngineComponent::ProvideLuaAPI(ILuaAPI &luaAPI) noexcept
+void IEngineComponent::ProvideLuaBindings(ILuaBindings &luaBindings) noexcept
+{
+}
+
+bool IEngineComponent::HandleEvent(AppEvent &appEvent) noexcept
+{
+	return false;
+}
+
+void IEngineComponent::ProcessTick() noexcept
+{
+}
+
+void IEngineComponent::ProcessRender() noexcept
+{
+}
+
+void IEngineComponent::ProcessLoad() noexcept
 {
 }

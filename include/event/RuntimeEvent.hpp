@@ -63,6 +63,7 @@ namespace tudov
 	  private:
 		std::shared_ptr<Log> _log;
 		std::shared_ptr<Profile> _profile;
+		bool _hasAnyCache;
 		bool _handlersSortedCache;
 		std::optional<InvocationCache> _invocationCache;
 		std::unordered_map<EventHandleKey, InvocationCache, EventHandleKey::Hash, EventHandleKey::Equal> _invocationCaches;

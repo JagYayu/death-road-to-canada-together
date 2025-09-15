@@ -17,6 +17,8 @@ union SDL_Event;
 
 namespace tudov
 {
+	struct AppEvent;
+
 	/**
 	 * @brief Tudov engine base class
 	 */
@@ -30,7 +32,7 @@ namespace tudov
 
 		virtual bool Tick() noexcept = 0;
 
-		virtual void Event(SDL_Event &event) noexcept = 0;
+		virtual void Event(AppEvent &appEvent) noexcept = 0;
 
 		virtual void Deinitialize() noexcept = 0;
 	};

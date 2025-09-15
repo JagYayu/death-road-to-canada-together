@@ -13,10 +13,13 @@
 
 #include "Context.hpp"
 
+#include <cstdint>
+
 namespace tudov
 {
 	class Context;
-	struct ILuaAPI;
+	struct AppEvent;
+	struct ILuaBindings;
 
 	/**
 	 * As a core component of the engine, the subclass lifespan functions: "Initialize", "Reinitialize" are controlled by the engine.
@@ -24,6 +27,8 @@ namespace tudov
 	struct IEngineComponent : public IContextProvider
 	{
 		~IEngineComponent() noexcept override = default;
+
+		virtual std::int32_t GetSortingSequence() noexcept;
 
 		/**
 		 * Pre initialize component contents, register delegate event handlers.
@@ -45,6 +50,11 @@ namespace tudov
 		 */
 		virtual void PostDeinitialize() noexcept;
 
-		[[deprecated]] virtual void ProvideLuaAPI(ILuaAPI &luaAPI) noexcept;
+		virtual bool HandleEvent(AppEvent &appEvent) noexcept;
+		virtual void ProcessTick() noexcept;
+		virtual void ProcessRender() noexcept;
+		virtual void ProcessLoad() noexcept;
+
+		[[deprecated]] virtual void ProvideLuaBindings(ILuaBindings &luaBindings) noexcept;
 	};
 } // namespace tudov

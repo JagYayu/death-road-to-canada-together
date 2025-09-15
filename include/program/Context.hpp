@@ -17,7 +17,7 @@ namespace tudov
 {
 	struct IEventManager;
 	struct IGlobalStorageManager;
-	struct ILuaAPI;
+	struct ILuaBindings;
 	struct IModManager;
 	struct INetworkManager;
 	struct IScriptEngine;
@@ -31,6 +31,8 @@ namespace tudov
 	class GlobalResourcesCollection;
 	class VirtualFileSystem;
 	class WindowManager;
+	class IKeyboardManager;
+	class IMouseManager;
 
 	/**
 	 * Context of tudov engine.
@@ -49,7 +51,7 @@ namespace tudov
 	  public:
 		[[nodiscard]] Engine &GetEngine();
 		[[nodiscard]] IEventManager &GetEventManager();
-		[[nodiscard]] ILuaAPI &GetLuaAPI();
+		[[nodiscard]] ILuaBindings &GetLuaBindings();
 		[[nodiscard]] IModManager &GetModManager();
 		[[nodiscard]] IScriptEngine &GetScriptEngine();
 		[[nodiscard]] IScriptErrors &GetScriptErrors();
@@ -58,6 +60,8 @@ namespace tudov
 		[[nodiscard]] IGlobalStorageManager &GetGlobalStorageManager();
 		[[nodiscard]] ILocalization &GetLocalization();
 		[[nodiscard]] INetworkManager &GetNetworkManager();
+		[[nodiscard]] IKeyboardManager &GetKeyboardManager();
+		[[nodiscard]] IMouseManager &GetMouseManager();
 		[[nodiscard]] GlobalResourcesCollection &GetGlobalResourcesCollection();
 		[[nodiscard]] VirtualFileSystem &GetVirtualFileSystem();
 		[[nodiscard]] WindowManager &GetWindowManager();
@@ -72,9 +76,9 @@ namespace tudov
 			return This()->GetEventManager();
 		}
 
-		[[nodiscard]] TE_FORCEINLINE ILuaAPI &GetLuaAPI() const
+		[[nodiscard]] TE_FORCEINLINE ILuaBindings &GetLuaBindings() const
 		{
-			return This()->GetLuaAPI();
+			return This()->GetLuaBindings();
 		}
 
 		[[nodiscard]] TE_FORCEINLINE const IModManager &GetModManager() const
@@ -132,6 +136,16 @@ namespace tudov
 			return const_cast<Context *>(this)->GetWindowManager();
 		}
 
+		[[nodiscard]] const IKeyboardManager &GetKeyboardManager() const
+		{
+			return const_cast<Context *>(this)->GetKeyboardManager();
+		}
+
+		[[nodiscard]] const IMouseManager &GetMouseManager() const
+		{
+			return const_cast<Context *>(this)->GetMouseManager();
+		}
+
 	  private:
 		TE_FORCEINLINE Context *This() const noexcept
 		{
@@ -173,14 +187,14 @@ namespace tudov
 			return GetContext().GetEventManager();
 		}
 
-		[[nodiscard]] TE_FORCEINLINE ILuaAPI &GetLuaAPI() noexcept
+		[[nodiscard]] TE_FORCEINLINE ILuaBindings &GetLuaBindings() noexcept
 		{
-			return GetContext().GetLuaAPI();
+			return GetContext().GetLuaBindings();
 		}
 
-		[[nodiscard]] TE_FORCEINLINE const ILuaAPI &GetLuaAPI() const noexcept
+		[[nodiscard]] TE_FORCEINLINE const ILuaBindings &GetLuaBindings() const noexcept
 		{
-			return GetContext().GetLuaAPI();
+			return GetContext().GetLuaBindings();
 		}
 
 		[[nodiscard]] TE_FORCEINLINE IModManager &GetModManager() noexcept
@@ -291,6 +305,16 @@ namespace tudov
 		[[nodiscard]] const WindowManager &GetWindowManager() const noexcept
 		{
 			return GetContext().GetWindowManager();
+		}
+
+		[[nodiscard]] IKeyboardManager &GetKeyboardManager()
+		{
+			return GetContext().GetKeyboardManager();
+		}
+
+		[[nodiscard]] IMouseManager &GetMouseManager()
+		{
+			return GetContext().GetMouseManager();
 		}
 	};
 } // namespace tudov

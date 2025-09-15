@@ -16,6 +16,8 @@
 #include "util/Definitions.hpp"
 
 #include "sol/table.hpp"
+#include "util/Micros.hpp"
+#include <memory>
 
 namespace tudov
 {
@@ -26,6 +28,8 @@ namespace tudov
 	 */
 	struct IScriptModule
 	{
+		virtual IScriptLoader &GetScriptLoader() noexcept = 0;
+
 		/**
 		 * Check if the script module is valid.
 		 * This only checks whether the script module's function is valid, that is, whether the code is parsed properly.
@@ -57,17 +61,22 @@ namespace tudov
 		/**
 		 * Raw load means no sandbox, no environment overriding, just load this script from pure globals.
 		 */
-		virtual sol::table &RawLoad(IScriptLoader &scriptLoader) = 0;
+		virtual sol::table &RawLoad() = 0;
 
 		/**
 		 * TODO
 		 */
-		virtual sol::table &LazyLoad(IScriptLoader &scriptLoader) = 0;
+		virtual sol::table &LazyLoad() = 0;
 
 		/**
 		 * TODO
 		 */
-		virtual sol::table &FullLoad(IScriptLoader &scriptLoader) = 0;
+		virtual sol::table &FullLoad() = 0;
+
+		TE_FORCEINLINE const IScriptLoader &GetScriptLoader() const noexcept
+		{
+			return const_cast<IScriptModule *>(this)->GetScriptLoader();
+		}
 
 		TE_FORCEINLINE const sol::table &GetTable() const
 		{
@@ -75,13 +84,14 @@ namespace tudov
 		}
 	};
 
-	struct ScriptModule : public IScriptModule, public IContextProvider, private ILogProvider
+	struct ScriptModule : public IScriptModule, public IContextProvider, private ILogProvider, public std::enable_shared_from_this<ScriptModule>
 	{
 	  protected:
 		static Context *_parentContext;
 		static std::weak_ptr<Log> _parentLog;
 
 	  protected:
+		IScriptLoader &_scriptLoader;
 		ScriptID _scriptID;
 		sol::protected_function _func;
 		bool _fullyLoaded;
@@ -89,12 +99,13 @@ namespace tudov
 		sol::table _table;
 
 	  public:
-		explicit ScriptModule();
-		explicit ScriptModule(ScriptID scriptID, const sol::protected_function &func);
+		explicit ScriptModule(IScriptLoader &scriptLoader);
+		explicit ScriptModule(IScriptLoader &scriptLoader, ScriptID scriptID, const sol::protected_function &func);
 
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;
 
+		IScriptLoader &GetScriptLoader() noexcept override;
 		bool IsValid() const noexcept override;
 		bool IsLazyLoaded() const noexcept override;
 		bool IsFullyLoaded() const noexcept override;
@@ -102,8 +113,8 @@ namespace tudov
 		void MarkLoadError() noexcept override;
 
 		sol::table &GetTable() override;
-		sol::table &RawLoad(IScriptLoader &scriptLoader) override;
-		sol::table &LazyLoad(IScriptLoader &scriptLoader) override;
-		sol::table &FullLoad(IScriptLoader &scriptLoader) override;
+		sol::table &RawLoad() override;
+		sol::table &LazyLoad() override;
+		sol::table &FullLoad() override;
 	};
 } // namespace tudov

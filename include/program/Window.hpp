@@ -14,6 +14,7 @@
 #include "program/Context.hpp"
 #include "sol/types.hpp"
 #include "system/Log.hpp"
+#include "util/Definitions.hpp"
 
 #include <memory>
 #include <tuple>
@@ -28,22 +29,37 @@ namespace tudov
 	class Engine;
 	class ScriptEngine;
 	class Renderer;
+	struct AppEvent;
 	struct EventHandleKey;
 
 	struct IWindow : public IContextProvider
 	{
 		virtual void InitializeWindow(std::int32_t width, std::int32_t height, std::string_view title) noexcept = 0;
+
 		virtual void DeinitializeWindow() noexcept = 0;
+
+		virtual WindowID GetWindowID() const noexcept = 0;
+
 		virtual std::int32_t GetWidth() const noexcept = 0;
+
 		virtual std::int32_t GetHeight() const noexcept = 0;
+
 		virtual std::float_t GetDisplayScale() const noexcept = 0;
+
 		virtual std::float_t GetGUIScale() const noexcept = 0;
+
 		virtual std::tuple<std::int32_t, std::int32_t> GetSize() const noexcept = 0;
+
 		virtual bool IsMinimized() const noexcept = 0;
+
 		virtual void Close() noexcept = 0;
+
 		virtual bool ShouldClose() noexcept = 0;
+
 		virtual void HandleEvents() noexcept = 0;
-		virtual bool HandleEvent(SDL_Event &event) noexcept = 0;
+
+		virtual bool HandleEvent(AppEvent &appEvent) noexcept = 0;
+
 		virtual void Render() noexcept = 0;
 	};
 
@@ -52,10 +68,10 @@ namespace tudov
 	 */
 	class Window : public IWindow
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  protected:
-		// static ILuaAPI::TInstallation windowLuaAPIInstallation;
+		// static ILuaBindings::TInstallation windowLuaBindingsInstallation;
 
 	  protected:
 		Context &_context;
@@ -72,6 +88,7 @@ namespace tudov
 
 	  public:
 		Context &GetContext() noexcept override;
+		WindowID GetWindowID() const noexcept override;
 		std::int32_t GetWidth() const noexcept override;
 		std::int32_t GetHeight() const noexcept override;
 		std::tuple<std::int32_t, std::int32_t> GetSize() const noexcept override;
@@ -81,9 +98,9 @@ namespace tudov
 		void Close() noexcept override;
 		bool ShouldClose() noexcept override;
 		void HandleEvents() noexcept override;
-		bool HandleEvent(SDL_Event &event) noexcept override;
+		bool HandleEvent(AppEvent &appEvent) noexcept override;
 		void Render() noexcept override;
-		
+
 		SDL_Window *GetSDLWindowHandle() noexcept;
 
 		virtual EventHandleKey GetKey() const noexcept;

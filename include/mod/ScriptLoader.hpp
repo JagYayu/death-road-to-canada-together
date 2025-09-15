@@ -240,7 +240,7 @@ namespace tudov
 
 	class ScriptLoader : public IScriptLoader, private ILogProvider
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 		friend ScriptModule;
 
 	  protected:

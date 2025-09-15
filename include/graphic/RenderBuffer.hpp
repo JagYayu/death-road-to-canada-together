@@ -23,13 +23,13 @@
 
 namespace tudov
 {
-	class LuaAPI;
+	class LuaBindings;
 	class Renderer;
 	class Texture;
 
 	class RenderBuffer : public IContextProvider
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  private:
 		struct Batch

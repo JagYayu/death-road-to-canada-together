@@ -81,8 +81,11 @@ end
 
 --- @param e Events.E.KeyDown
 events:add(N_("CKeyCodeDown"), function(e)
-	addHoldingCode(e.window, windowKey2HoldingKeyCodes, e.keyCode, "Key")
-	addHoldingCode(e.window, windowKey2HoldingScanCodes, e.scanCode, "Scan")
+	local window = e.window
+	if window then
+		addHoldingCode(window, windowKey2HoldingKeyCodes, e.keyCode, "Key")
+		addHoldingCode(window, windowKey2HoldingScanCodes, e.scanCode, "Scan")
+	end
 end, "AddHoldingCodes", "Hold")
 
 --- @generic T
@@ -107,8 +110,11 @@ end
 
 --- @param e Events.E.KeyUp
 events:add(N_("CKeyCodeUp"), function(e)
-	removeHoldingCode(e.window, windowKey2HoldingKeyCodes, e.keyCode, "Key")
-	removeHoldingCode(e.window, windowKey2HoldingScanCodes, e.scanCode, "Scan")
+	local window = e.window
+	if window then
+		removeHoldingCode(window, windowKey2HoldingKeyCodes, e.keyCode, "Key")
+		removeHoldingCode(window, windowKey2HoldingScanCodes, e.scanCode, "Scan")
+	end
 end)
 
 return CInput

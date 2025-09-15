@@ -10,5 +10,5 @@
 --]]
 
 return {
-	windowKey = "MainWindow",
+	windowKey = "PrimaryWindow",
 }

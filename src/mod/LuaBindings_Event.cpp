@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaAPI_Event.cpp
+ * @file mod/LuaBindings_Event.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -9,18 +9,19 @@
  *
  */
 
+#include "mod/LuaBindings.hpp"
+
 #include "event/CoreEventsData.hpp"
 #include "event/EventInvocation.hpp"
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
-#include "mod/LuaAPI.hpp"
 
 using namespace tudov;
 
 #define TE_ENUM(Class, ...)     lua.new_enum<Class>(#Class, __VA_ARGS__)
 #define TE_USERTYPE(Class, ...) lua.new_usertype<Class>(#Class, __VA_ARGS__)
 
-void LuaAPI::InstallEvent(sol::state &lua, Context &context) noexcept
+void LuaBindings::InstallEvent(sol::state &lua, Context &context) noexcept
 {
 	TE_ENUM(EEventInvocation,
 	        {
@@ -44,6 +45,13 @@ void LuaAPI::InstallEvent(sol::state &lua, Context &context) noexcept
 	            "getInvokingEvent", &EventManager::GetInvokingEvent,
 	            "new", &EventManager::LuaNew,
 	            "invoke", &EventManager::LuaInvoke);
+
+	TE_USERTYPE(EventMouseMotionData,
+	            "mouseID", &EventMouseMotionData::mouseID,
+	            "relativeX", &EventMouseMotionData::relativeX,
+	            "relativeY", &EventMouseMotionData::relativeY,
+	            "x", &EventMouseMotionData::x,
+	            "y", &EventMouseMotionData::y);
 
 	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
 }

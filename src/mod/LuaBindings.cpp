@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaAPI.cpp
+ * @file mod/LuaBindings.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/LuaAPI.hpp"
+#include "mod/LuaBindings.hpp"
 
 #include "data/VirtualFileSystem.hpp"
 #include "debug/Debug.hpp"
@@ -21,15 +21,12 @@
 #include "i18n/Localization.hpp"
 #include "math/Geometry.hpp"
 #include "program/Engine.hpp"
-#include "program/MainWindow.hpp"
+#include "program/PrimaryWindow.hpp"
 #include "program/Window.hpp"
 #include "program/WindowManager.hpp"
 #include "resource/FontResources.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/ImageResources.hpp"
-#include "system/OperatingSystem.hpp"
-#include "system/RandomDevice.hpp"
-#include "system/Time.hpp"
 
 #include "sol/forward.hpp"
 #include "sol/property.hpp"
@@ -37,7 +34,7 @@
 
 using namespace tudov;
 
-bool LuaAPI::RegisterInstallation(std::string_view name, const TInstallation &installation)
+bool LuaBindings::RegisterInstallation(std::string_view name, const TInstallation &installation)
 {
 	for (auto &&installation : _installations)
 	{
@@ -51,13 +48,13 @@ bool LuaAPI::RegisterInstallation(std::string_view name, const TInstallation &in
 	return true;
 }
 
-decltype(auto) GetMainWindowFromContext(Context &context) noexcept
+decltype(auto) GetPrimaryWindowFromContext(Context &context) noexcept
 {
 	return sol::readonly_property([&context]() -> std::shared_ptr<Window>
 	{
 		try
 		{
-			auto window = context.GetWindowManager().GetMainWindow();
+			auto window = context.GetWindowManager().GetPrimaryWindow();
 			return std::static_pointer_cast<Window>(window);
 		}
 		catch (std::exception &e)
@@ -71,12 +68,13 @@ decltype(auto) GetMainWindowFromContext(Context &context) noexcept
 #define TE_USERTYPE(Class, ...) lua.new_usertype<Class>(#Class, __VA_ARGS__)
 #define TE_CLASS(Class, ...)    lua.create_named_table(("" #Class ""), __VA_ARGS__)
 
-void LuaAPI::Install(sol::state &lua, Context &context)
+void LuaBindings::Install(sol::state &lua, Context &context)
 {
 	InstallEvent(lua, context);
 	InstallMod(lua, context);
 	InstallNetwork(lua, context);
 	InstallScanCode(lua, context);
+	InstallSystem(lua, context);
 
 	TE_ENUM(
 	    EDebugConsoleCode,
@@ -85,30 +83,6 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	        {"Failure", EDebugConsoleCode::Failure},
 	        {"Success", EDebugConsoleCode::Success},
 	        {"Warn", EDebugConsoleCode::Warn},
-	    });
-
-	TE_ENUM(
-	    ELogVerbosity,
-	    {
-	        {"All", ELogVerbosity::All},
-	        {"None", ELogVerbosity::None},
-	        {"Error", ELogVerbosity::Error},
-	        {"Warn", ELogVerbosity::Warn},
-	        {"Info", ELogVerbosity::Info},
-	        {"Debug", ELogVerbosity::Debug},
-	        {"Trace", ELogVerbosity::Trace},
-	        {"Fatal", ELogVerbosity::Fatal},
-	    });
-
-	TE_ENUM(
-	    EOperatingSystem,
-	    {
-	        {"Unknown", EOperatingSystem::Unknown},
-	        {"Windows", EOperatingSystem::Windows},
-	        {"Linux", EOperatingSystem::Linux},
-	        {"MaxOS", EOperatingSystem::MaxOS},
-	        {"Android", EOperatingSystem::Android},
-	        {"IOS", EOperatingSystem::IOS},
 	    });
 
 	TE_ENUM(
@@ -153,7 +127,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	TE_USERTYPE(
 	    Engine,
 	    "getVersion", &Engine::LuaGetVersion,
-	    "mainWindow", GetMainWindowFromContext(context),
+	    "primaryWindow", GetPrimaryWindowFromContext(context),
 	    "quit", &Engine::Quit,
 	    "triggerLoadPending", &Engine::TriggerLoadPending);
 
@@ -219,14 +193,6 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	    "newRenderTarget", &Renderer::LuaNewRenderTarget);
 
 	TE_USERTYPE(
-	    Timer,
-	    sol::call_constructor, sol::constructors<Timer(), Timer(bool paused)>(),
-	    "getTime", &Timer::GetTime,
-	    "pause", &Timer::Pause,
-	    "reset", &Timer::Reset,
-	    "unpause", &Timer::Unpause);
-
-	TE_USERTYPE(
 	    VirtualFileSystem,
 	    "exists", &VirtualFileSystem::LuaExists,
 	    "list", &VirtualFileSystem::LuaList,
@@ -242,22 +208,6 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	    "renderer", &Window::renderer,
 	    "shouldClose", &Window::ShouldClose);
 
-	TE_CLASS(
-	    OperatingSystem,
-	    "getType", &OperatingSystem::GetType,
-	    "isMobile", &OperatingSystem::IsMobile,
-	    "isPC", &OperatingSystem::IsPC);
-
-	TE_CLASS(
-	    RandomDevice,
-	    "entropy", &RandomDevice::Entropy,
-	    "generate", &RandomDevice::LuaGenerate);
-
-	TE_CLASS(
-	    Time,
-	    "getStartupTime", &Time::GetStartupTime,
-	    "getSystemTime", &Time::GetSystemTime);
-
 	lua["engine"] = &context.GetEngine();
 	lua["localization"] = &dynamic_cast<Localization &>(context.GetLocalization());
 	lua["vfs"] = &dynamic_cast<VirtualFileSystem &>(context.GetVirtualFileSystem());
@@ -269,7 +219,7 @@ void LuaAPI::Install(sol::state &lua, Context &context)
 	lua["texts"] = &collection.GetTextResources();
 }
 
-const std::vector<std::string_view> &LuaAPI::GetModGlobalsMigration() const noexcept
+const std::vector<std::string_view> &LuaBindings::GetModGlobalsMigration() const noexcept
 {
 	if (_modGlobalsMigration.empty()) [[unlikely]]
 	{

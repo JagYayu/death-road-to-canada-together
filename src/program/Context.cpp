@@ -15,6 +15,8 @@
 #include "program/Engine.hpp"
 #include "program/EngineData.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
+#include "system/KeyboardManager.hpp"
+#include "system/MouseManager.hpp"
 #include "util/MicrosImpl.hpp"
 
 #include <stdexcept>
@@ -42,14 +44,24 @@ IEventManager &Context::GetEventManager()
 	return *GetEngine()._data->_eventManager;
 }
 
-ILuaAPI &Context::GetLuaAPI()
+IKeyboardManager &Context::GetKeyboardManager()
 {
-	return *GetEngine()._data->_luaAPI;
+	return *GetEngine()._data->_keyboardManager;
+}
+
+ILuaBindings &Context::GetLuaBindings()
+{
+	return *GetEngine()._data->_luaBindings;
 }
 
 IModManager &Context::GetModManager()
 {
 	return *GetEngine()._data->_modManager;
+}
+
+IMouseManager &Context::GetMouseManager()
+{
+	return *GetEngine()._data->_mouseManager;
 }
 
 IScriptEngine &Context::GetScriptEngine()

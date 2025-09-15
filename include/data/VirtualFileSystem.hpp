@@ -32,11 +32,11 @@
 namespace tudov
 {
 	enum class EPathType;
-	class LuaAPI;
+	class LuaBindings;
 
 	class VirtualFileSystem : public IContextProvider, private ILogProvider
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  public:
 		using MountDirectoryEvent = DelegateEvent<const std::filesystem::path &>;

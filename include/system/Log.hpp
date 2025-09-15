@@ -24,7 +24,7 @@
 
 namespace tudov
 {
-	class LuaAPI;
+	class LuaBindings;
 
 	/**
 	 * Customized logging system for Tudov Engine.
@@ -32,7 +32,7 @@ namespace tudov
 	 */
 	class Log
 	{
-		friend LuaAPI;
+		friend LuaBindings;
 
 	  private:
 		struct Entry

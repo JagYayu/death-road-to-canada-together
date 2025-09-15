@@ -5,7 +5,7 @@ error("this is a lua library module")
 engine = {}
 
 --- @type Window
-engine.mainWindow = {}
+engine.primaryWindow = {}
 
 --- @return string
 function engine:getVersion() end

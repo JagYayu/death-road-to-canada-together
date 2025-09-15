@@ -13,7 +13,6 @@
 
 #include "TextureManager.hpp"
 #include "VSyncMode.hpp"
-#include "mod/LuaAPI.hpp"
 #include "program/Context.hpp"
 #include "system/Log.hpp"
 #include "util/Color.hpp"
@@ -59,6 +58,7 @@ namespace tudov
 		virtual void DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src = nullptr, Color color = Color::White) = 0;
 		virtual void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, Color color = Color::White) = 0;
 		virtual SDL_FRect DrawText(DrawTextArgs *args) = 0;
+		virtual SDL_FRect DrawRichText(DrawTextArgs *args) = 0;
 
 		virtual EBlendMode GetBlendMode(Texture *texture) noexcept = 0;
 		virtual void SetBlendMode(Texture *texture, EBlendMode blendMode) noexcept = 0;
@@ -71,7 +71,7 @@ namespace tudov
 
 	class Renderer : public IRenderer, public IContextProvider, ILogProvider
 	{
-		friend class LuaAPI;
+		friend class LuaBindings;
 		friend RenderTarget;
 
 	  private:
@@ -106,6 +106,7 @@ namespace tudov
 		void DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect *src = nullptr, Color color = Color::White) override;
 		void DrawDebugText(std::float_t x, std::float_t y, std::string_view text, Color color = Color::White) override;
 		SDL_FRect DrawText(DrawTextArgs *args) override;
+		SDL_FRect DrawRichText(DrawTextArgs *args) override;
 		void DrawVertices(Texture *texture, const std::vector<SDL_Vertex> &vertices);
 		void DrawVertices(Texture *texture, const std::vector<SDL_Vertex> &vertices, const std::vector<std::int32_t> &indices);
 
@@ -143,6 +144,7 @@ namespace tudov
 		void LuaDrawRect(DrawRectArgs *args) noexcept;
 		void LuaDrawDebugText(std::double_t x, std::double_t y, sol::string_view text) noexcept;
 		std::tuple<std::float_t, std::float_t, std::float_t, std::float_t> LuaDrawText(sol::object args) noexcept;
+		std::tuple<std::float_t, std::float_t, std::float_t, std::float_t> LuaDrawRichText(sol::object args) noexcept;
 		std::shared_ptr<Texture> LuaDrawExtractTexture(sol::table args) noexcept;
 		std::shared_ptr<RenderTarget> LuaNewRenderTarget(sol::object width = sol::nil, sol::object height = sol::nil);
 		void LuaClear() noexcept;

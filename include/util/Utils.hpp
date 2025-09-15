@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "Micros.hpp"
 #include "Scopes.hpp"
 #include "system/Log.hpp"
 
@@ -209,4 +210,15 @@ namespace tudov
 	std::vector<std::byte> CompressData(const std::vector<std::byte> &input);
 
 	std::vector<std::byte> DecompressData(const std::vector<std::byte> &input, std::size_t originalSize);
+
+	struct Utils
+	{
+		TE_STATIC_CLASS(Utils);
+
+		template <typename T>
+		static constexpr auto ToUnderlying(T value) noexcept
+		{
+			return static_cast<std::underlying_type_t<T>>(value);
+		}
+	};
 } // namespace tudov

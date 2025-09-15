@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaAPI_ScanCode.cpp
+ * @file mod/LuaBindings_ScanCode.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/LuaAPI.hpp"
+#include "mod/LuaBindings.hpp"
 
 #include "system/ScanCode.hpp"
 
@@ -17,7 +17,7 @@ using namespace tudov;
 
 #define TE_ENUM(Class, ...) lua.new_enum<Class>(#Class, __VA_ARGS__)
 
-void LuaAPI::InstallScanCode(sol::state &lua, Context &context) noexcept
+void LuaBindings::InstallScanCode(sol::state &lua, Context &context) noexcept
 {
 	TE_ENUM(EScanCode,
 	        {

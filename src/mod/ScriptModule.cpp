@@ -32,8 +32,9 @@ using namespace tudov;
 Context *ScriptModule::_parentContext = nullptr;
 std::weak_ptr<Log> ScriptModule::_parentLog = std::shared_ptr<Log>(nullptr);
 
-ScriptModule::ScriptModule()
-    : _scriptID(0),
+ScriptModule::ScriptModule(IScriptLoader &scriptLoader)
+    : _scriptLoader(scriptLoader),
+      _scriptID(0),
       _func(),
       _fullyLoaded(false),
       _hasError(false),
@@ -41,8 +42,9 @@ ScriptModule::ScriptModule()
 {
 }
 
-ScriptModule::ScriptModule(ScriptID scriptID, const sol::protected_function &func)
-    : _scriptID(scriptID),
+ScriptModule::ScriptModule(IScriptLoader &scriptLoader, ScriptID scriptID, const sol::protected_function &func)
+    : _scriptLoader(scriptLoader),
+      _scriptID(scriptID),
       _func(func),
       _fullyLoaded(false),
       _hasError(false),
@@ -60,6 +62,11 @@ Log &ScriptModule::GetLog() noexcept
 {
 	TE_ASSERT(!_parentLog.expired());
 	return *_parentLog.lock();
+}
+
+IScriptLoader &ScriptModule::GetScriptLoader() noexcept
+{
+	return _scriptLoader;
 }
 
 bool ScriptModule::IsValid() const noexcept
@@ -144,7 +151,7 @@ void CopyTableMetatableFields(sol::table dst, sol::table src)
 	}
 }
 
-sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
+sol::table &ScriptModule::RawLoad()
 {
 	if (_fullyLoaded)
 	{
@@ -153,7 +160,7 @@ sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 
 	TE_ASSERT(_scriptID);
 
-	ScriptLoader &parent = static_cast<ScriptLoader &>(scriptLoader);
+	ScriptLoader &parent = static_cast<ScriptLoader &>(_scriptLoader);
 	_parentContext = &parent._context;
 	_parentLog = parent._log;
 
@@ -170,7 +177,7 @@ sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 
 	Engine &engine = GetEngine();
 
-	engine.SetLoadingDescription(scriptLoader.GetScriptProvider().GetScriptNameByID(_scriptID).value());
+	engine.SetLoadingDescription(_scriptLoader.GetScriptProvider().GetScriptNameByID(_scriptID).value());
 
 	ScriptID previousLoadingScript = parent._loadingScript;
 	parent._loadingScript = _scriptID;
@@ -178,12 +185,12 @@ sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 	if (!result.valid()) [[unlikely]]
 	{
 		sol::error err = result;
-		Fatal("'{}': {}", scriptLoader.GetLoadingScriptName().value(), err.what());
+		Fatal("'{}': {}", _scriptLoader.GetLoadingScriptName().value(), err.what());
 	}
 
 	if (result.get<sol::object>(1))
 	{
-		TE_WARN("'{}': Does not support receiving multiple return values", scriptLoader.GetLoadingScriptName().value());
+		TE_WARN("'{}': Does not support receiving multiple return values", _scriptLoader.GetLoadingScriptName().value());
 	}
 
 	parent._loadingScript = previousLoadingScript;
@@ -196,7 +203,7 @@ sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 		}
 		else
 		{
-			tbl = scriptLoader.GetScriptEngine().CreateTable();
+			tbl = _scriptLoader.GetScriptEngine().CreateTable();
 		}
 	}
 
@@ -206,10 +213,15 @@ sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 	_table[sol::metatable_key] = metatable;
 
 	CopyTableMetatableFields(_table, tbl);
+
+	std::weak_ptr<ScriptModule> weakThis = shared_from_this();
 	metatable["__index"] = tbl;
-	metatable["__newindex"] = [this](const sol::this_state &ts)
+	metatable["__newindex"] = [weakThis](const sol::this_state &ts)
 	{
-		GetScriptEngine().ThrowError("Cannot override module");
+		if (std::shared_ptr<ScriptModule> this_ = weakThis.lock(); this_ != nullptr)
+		{
+			this_->GetScriptEngine().ThrowError("Cannot override module");
+		}
 	};
 
 	_fullyLoaded = true;
@@ -218,11 +230,11 @@ sol::table &ScriptModule::RawLoad(IScriptLoader &scriptLoader)
 	return _table;
 }
 
-sol::table &ScriptModule::LazyLoad(IScriptLoader &scriptLoader)
+sol::table &ScriptModule::LazyLoad()
 {
 	if (!_table.valid())
 	{
-		_table = scriptLoader.GetScriptEngine().CreateTable();
+		_table = _scriptLoader.GetScriptEngine().CreateTable();
 	}
 
 	if (_table[sol::metatable_key].valid())
@@ -232,28 +244,39 @@ sol::table &ScriptModule::LazyLoad(IScriptLoader &scriptLoader)
 
 	if (!_func.valid()) [[unlikely]]
 	{
-		_table = scriptLoader.GetScriptEngine().CreateTable();
+		_table = _scriptLoader.GetScriptEngine().CreateTable();
 		_fullyLoaded = true;
 		return _table;
 	}
 
-	sol::table metatable = scriptLoader.GetScriptEngine().CreateTable();
+	sol::table metatable = _scriptLoader.GetScriptEngine().CreateTable();
 
 	_table[sol::metatable_key] = metatable;
 
-	metatable["__index"] = [this, &scriptLoader](const sol::this_state &ts, sol::object, sol::object key)
+	std::weak_ptr<ScriptModule> weakThis = shared_from_this();
+	metatable["__index"] = [weakThis](const sol::this_state &ts, sol::object, sol::object key) -> sol::object
 	{
-		return FullLoad(scriptLoader)[key];
+		if (std::shared_ptr<ScriptModule> this_ = weakThis.lock(); this_ != nullptr)
+		{
+			return this_->FullLoad()[key];
+		}
+		else
+		{
+			return sol::nil;
+		}
 	};
-	metatable["__newindex"] = [this](const sol::this_state &ts)
+	metatable["__newindex"] = [weakThis](const sol::this_state &ts)
 	{
-		GetScriptEngine().ThrowError("Cannot override module");
+		if (std::shared_ptr<ScriptModule> this_ = weakThis.lock(); this_ != nullptr)
+		{
+			this_->GetScriptEngine().ThrowError("Cannot override module");
+		}
 	};
 
 	return _table;
 }
 
-sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
+sol::table &ScriptModule::FullLoad()
 {
 	if (_fullyLoaded)
 	{
@@ -262,14 +285,14 @@ sol::table &ScriptModule::FullLoad(IScriptLoader &scriptLoader)
 
 	if (!_func.valid()) [[unlikely]]
 	{
-		_table = scriptLoader.GetScriptEngine().CreateTable();
+		_table = _scriptLoader.GetScriptEngine().CreateTable();
 		_fullyLoaded = true;
 		return _table;
 	}
 
 	TE_ASSERT(_scriptID);
 
-	auto &parent = static_cast<ScriptLoader &>(scriptLoader);
+	auto &parent = static_cast<ScriptLoader &>(_scriptLoader);
 	_parentContext = &parent._context;
 	_parentLog = parent._log;
 

@@ -357,13 +357,13 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 	if (result.valid())
 	{
 		auto &&function = result.get<sol::protected_function>();
-		auto &&scriptModule = std::make_shared<ScriptModule>(scriptID, function);
+		auto &&scriptModule = std::make_shared<ScriptModule>(*this, scriptID, function);
 		auto &&[it, inserted] = _scriptModules.try_emplace(scriptID, scriptModule);
 		TE_ASSERT(inserted);
 
 		if (GetScriptProvider().IsStaticScript(scriptName))
 		{
-			scriptModule->RawLoad(*this);
+			scriptModule->RawLoad();
 			TE_TRACE("Raw loaded script <{}>\"{}\"", scriptID, scriptName);
 		}
 		else
@@ -393,7 +393,7 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 		sol::error err = result;
 		TE_ERROR("Failed to parse script <{}>\"{}\": {}", scriptID, scriptName, err.what());
 
-		auto &&scriptModule = std::make_shared<ScriptModule>(scriptID, sol::protected_function());
+		auto &&scriptModule = std::make_shared<ScriptModule>(*this, scriptID, sol::protected_function());
 		auto &&[_, inserted] = _scriptModules.try_emplace(scriptID, scriptModule);
 		TE_ASSERT(inserted);
 
@@ -542,7 +542,7 @@ void ScriptLoader::ProcessFullLoads()
 			try
 			{
 				TE_TRACE("Fully loading script \"{}\"", GetScriptProvider().GetScriptNameByID(scriptID).value());
-				scriptModule->FullLoad(*this);
+				scriptModule->FullLoad();
 				TE_TRACE("Fully loaded script \"{}\"", GetScriptProvider().GetScriptNameByID(scriptID).value());
 			}
 			catch (std::exception &e)
