@@ -109,7 +109,7 @@ namespace tudov
 		std::timed_mutex _loadingMutex;
 		std::uint64_t _loadingBeginNS;
 		LoadingInfo _loadingInfo;
-		std::mutex _loadingInfoMutex;
+		// std::mutex _loadingInfoMutex;
 
 		std::shared_ptr<Log> _log;
 

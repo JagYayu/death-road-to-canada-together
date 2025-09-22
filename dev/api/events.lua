@@ -12,7 +12,7 @@ error("this is a lua library module")
 
 --- @class Events.E.DebugSnapshot
 
---- @class Events.E.KeyDown
+--- @class Events.E.KeyboardPress
 --- @field window TE.Window?
 --- @field windowID TE.WindowID
 --- @field keyboard TE.Keyboard?
@@ -21,9 +21,9 @@ error("this is a lua library module")
 --- @field keyCode integer
 --- @field mod integer
 
---- @alias Events.E.KeyRepeat Events.E.KeyDown
+--- @alias Events.E.KeyRepeat Events.E.KeyboardPress
 
---- @alias Events.E.KeyUp Events.E.KeyDown
+--- @alias Events.E.KeyUp Events.E.KeyboardPress
 
 --- @class Events.E.MouseButtonDown
 
@@ -176,7 +176,7 @@ error("this is a lua library module")
 --- @alias Events.Event "ClientMessage"
 --- @alias Events.Event "DebugCommand"
 --- @alias Events.Event "DebugSnapshot"
---- @alias Events.Event "KeyDown"
+--- @alias Events.Event "KeyboardPress"
 --- @alias Events.Event "KeyUp"
 --- @alias Events.Event "MouseButtonDown"
 --- @alias Events.Event "MouseButtonUp"

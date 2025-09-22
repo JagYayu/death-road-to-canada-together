@@ -24,6 +24,6 @@ namespace tudov
 		NoProfiler = 1 << 1,
 		TrackProgression = 1 << 2,
 
-		Default = CacheHandlers,
+		Default = None,
 	};
 } // namespace tudov

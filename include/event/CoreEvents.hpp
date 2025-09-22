@@ -27,9 +27,11 @@ namespace tudov
 
 		// Keyboard events.
 
-		[[nodiscard]] virtual RuntimeEvent &KeyDown() noexcept = 0;
-		[[nodiscard]] virtual RuntimeEvent &KeyRepeat() noexcept = 0;
-		[[nodiscard]] virtual RuntimeEvent &KeyUp() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &KeyboardPress() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &KeyboardRelease() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &KeyboardRepeat() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &KeyboardAdded() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &KeyboardRemoved() noexcept = 0;
 
 		// Mouse events.
 
@@ -37,6 +39,8 @@ namespace tudov
 		[[nodiscard]] virtual RuntimeEvent &MouseButtonDown() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &MouseButtonUp() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &MouseWheel() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &MouseAdded() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &MouseRemoved() noexcept = 0;
 
 		// Window events.
 
@@ -51,8 +55,6 @@ namespace tudov
 		[[nodiscard]] virtual RuntimeEvent &ClientConnect() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ClientDisconnect() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ClientMessage() noexcept = 0;
-		// unused
-		[[nodiscard]] virtual RuntimeEvent &ServerAuthenticate() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ServerConnect() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ServerDisconnect() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &ServerHost() noexcept = 0;
@@ -76,6 +78,11 @@ namespace tudov
 		[[nodiscard]] virtual RuntimeEvent &ScriptsLoaded() noexcept = 0;
 
 		// [[nodiscard]] virtual RuntimeEvent &LocalizationUpdateTexts() noexcept = 0;
+
+		// Unused events.
+
+		[[deprecated("Server validation logic should be written in scripts")]]
+		virtual RuntimeEvent &ServerAuthenticate() noexcept = 0;
 	};
 
 	class EventManager;
@@ -94,14 +101,18 @@ namespace tudov
 		TRuntimeEvent _clientMessage;
 		TRuntimeEvent _debugProvide;
 		TRuntimeEvent _debugSnapshot;
-		TRuntimeEvent _keyDown;
-		TRuntimeEvent _keyRepeat;
-		TRuntimeEvent _keyUp;
+		TRuntimeEvent _keyboardPress;
+		TRuntimeEvent _keyboardRepeat;
+		TRuntimeEvent _keyboardRelease;
+		TRuntimeEvent _keyboardAdded;
+		TRuntimeEvent _keyboardRemoved;
 		TRuntimeEvent _modGlobalsIndex;
 		TRuntimeEvent _mouseMotion;
 		TRuntimeEvent _mouseButtonDown;
 		TRuntimeEvent _mouseButtonUp;
 		TRuntimeEvent _mouseWheel;
+		TRuntimeEvent _mouseAdded;
+		TRuntimeEvent _mouseRemoved;
 		TRuntimeEvent _scriptsLoaded;
 		TRuntimeEvent _serverAuthenticate;
 		TRuntimeEvent _serverConnect;
@@ -122,13 +133,17 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &ClientMessage() noexcept override;
 		[[nodiscard]] RuntimeEvent &DebugProvide() noexcept override;
 		[[nodiscard]] RuntimeEvent &DebugSnapshot() noexcept override;
-		[[nodiscard]] RuntimeEvent &KeyDown() noexcept override;
-		[[nodiscard]] RuntimeEvent &KeyRepeat() noexcept override;
-		[[nodiscard]] RuntimeEvent &KeyUp() noexcept override;
+		[[nodiscard]] RuntimeEvent &KeyboardPress() noexcept override;
+		[[nodiscard]] RuntimeEvent &KeyboardRepeat() noexcept override;
+		[[nodiscard]] RuntimeEvent &KeyboardRelease() noexcept override;
+		[[nodiscard]] RuntimeEvent &KeyboardAdded() noexcept override;
+		[[nodiscard]] RuntimeEvent &KeyboardRemoved() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseMotion() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseButtonDown() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseButtonUp() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseWheel() noexcept override;
+		[[nodiscard]] RuntimeEvent &MouseAdded() noexcept override;
+		[[nodiscard]] RuntimeEvent &MouseRemoved() noexcept override;
 		[[nodiscard]] RuntimeEvent &ModGlobalsIndex() noexcept override;
 		[[nodiscard]] RuntimeEvent &ScriptsLoaded() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerAuthenticate() noexcept override;

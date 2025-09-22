@@ -128,7 +128,7 @@ void EventManager::OnScriptsLoaded()
 		auto scriptID = event->GetScriptID();
 		TE_ASSERT(!scriptID || scriptProvider.IsValidScript(scriptID), "{}", "Invalid script detected!");
 
-		if (scriptID)
+		if (scriptID != 0)
 		{
 			for (auto it = event->BeginHandlers(); it != event->EndHandlers(); ++it)
 			{
@@ -402,7 +402,7 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		}
 		else if (key.is<std::string_view>())
 		{
-			key_ = EventHandleKey(std::string(key.as<std::string_view>()));
+			key_ = EventHandleKey(key.as<std::string_view>());
 		}
 		else
 		{
@@ -434,13 +434,12 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		}
 
 		registryEvent->get().Add({
-		    .eventID = eventID,
-		    .scriptID = scriptID,
 		    .function = EventHandleFunction(func),
 		    .name = name_,
 		    .order = order_,
 		    .key = key_,
 		    .sequence = sequence_,
+		    .scriptID = scriptID,
 		    .stacktrace = GetScriptEngine().DebugTraceback(),
 		});
 	}

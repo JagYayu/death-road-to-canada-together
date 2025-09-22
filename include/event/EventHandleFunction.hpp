@@ -16,56 +16,77 @@
 #include "sol/error.hpp"
 #include "sol/forward.hpp"
 #include "sol/function.hpp"
+#include "util/Micros.hpp"
 
+#include <functional>
+#include <stdexcept>
 #include <variant>
 
 namespace tudov
 {
 	struct EventHandleFunction
 	{
-		std::variant<sol::protected_function, int> function;
+		using Cpp = std::function<void(sol::object e, const EventHandleKey &key)>;
+		using Lua = sol::protected_function;
 
-		explicit EventHandleFunction(const sol::protected_function &function)
-		    : function(function)
+		std::variant<Lua, Cpp> function;
+
+		explicit EventHandleFunction(const Cpp &cppFunction)
+		    : function(cppFunction)
 		{
 		}
 
-		void operator()(sol::object obj) const
+		explicit EventHandleFunction(const Lua &luaFunction)
+		    : function(luaFunction)
 		{
-			if (std::holds_alternative<sol::protected_function>(function))
+		}
+
+		TE_FORCEINLINE void operator()(sol::object obj) const
+		{
+			if (auto func = std::get_if<Lua>(&function); func != nullptr)
 			{
-				const auto &func = std::get<sol::protected_function>(function);
-				if (func.valid())
+				if (func->valid()) [[likely]]
 				{
-					sol::protected_function_result result = func(obj);
+					auto result = (*func)(obj);
 					if (!result.valid()) [[unlikely]]
 					{
 						sol::error err = result;
 						throw err;
 					}
 				}
+				else [[unlikely]]
+				{
+					throw std::runtime_error("Attempt to call invalid lua function");
+				}
 			}
-			else
+			else if (auto func = std::get_if<Cpp>(&function); func != nullptr)
 			{
-				int i = std::get<int>(function);
-				// TODO:
+				(*func)(obj, {});
+			}
+			else [[unlikely]]
+			{
+				throw std::runtime_error("Unknown function");
 			}
 		}
 
-		void operator()(sol::object obj, const EventHandleKey &key) const
+		TE_FORCEINLINE void operator()(sol::object obj, const EventHandleKey &key) const
 		{
-			if (auto &&func = std::get_if<sol::protected_function>(&function); func != nullptr)
+			if (auto func = std::get_if<Lua>(&function); func != nullptr)
 			{
-				auto &&result = (*func)(obj, key);
+				auto result = (*func)(obj, key);
 				if (!result.valid()) [[unlikely]]
 				{
 					sol::error err = result;
 					throw err;
 				}
 			}
-			else
+			else if (auto func = std::get_if<Cpp>(&function); func != nullptr)
 			{
-				// TODO
+				(*func)(obj, key);
+			}
+			else [[unlikely]]
+			{
+				throw std::runtime_error("Unknown function");
 			}
 		}
 	};

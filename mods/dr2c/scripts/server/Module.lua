@@ -16,7 +16,9 @@ SModule.eventSUpdate = events:new(N_("SUpdate"), {
 	"Network",
 })
 
-events:add(N_("GUpdate"), function(e)
-	--- @class dr2c.E.SUpdate : dr2c.E.GUpdate
-	events:invoke(SModule.eventSUpdate, e)
-end, N_("ServerUpdate"), nil, "Main")
+events:add("TickUpdate", function(e)
+	--- @class dr2c.E.SUpdate : Events.E.TickUpdate
+	local e_ = e
+
+	events:invoke(SModule.eventSUpdate, e_)
+end, N_("ServerUpdate"), "Server", "Primary")

@@ -17,7 +17,7 @@ using namespace tudov;
 
 AbstractEvent::AbstractEvent(IEventManager &eventManager, EventID eventID, ScriptID scriptID)
     : eventManager(eventManager),
-      _id(eventID),
+      _eventID(eventID),
       _scriptID(scriptID)
 {
 }
@@ -33,7 +33,7 @@ Context &AbstractEvent::GetContext() noexcept
 
 EventID AbstractEvent::GetID() const noexcept
 {
-	return _id;
+	return _eventID;
 }
 
 ScriptID AbstractEvent::GetScriptID() const noexcept

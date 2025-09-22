@@ -64,7 +64,6 @@ namespace tudov
 		friend LuaBindings;
 
 	  private:
-	  private:
 		Context &_context;
 		KeyboardID _keyboardID;
 		std::unordered_map<WindowID, impl::KeyboardCodeEntry<EKeyCode>> _windowHoldingKeyCodes;

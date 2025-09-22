@@ -127,7 +127,7 @@ bool Window::HandleEvent(AppEvent &appEvent) noexcept
 		// }
 		// else
 		// {
-		// 	runtimeEvent = &GetEventManager().GetCoreEvents().KeyDown();
+		// 	runtimeEvent = &GetEventManager().GetCoreEvents().KeyboardPress();
 		// }
 
 		// EventKeyData data{
@@ -246,7 +246,7 @@ std::float_t Window::GetGUIScale() const noexcept
 
 std::variant<sol::nil_t, std::double_t, sol::string_view> Window::LuaGetKey() const noexcept
 {
-	auto &&key = GetKey();
+	auto key = GetKey();
 	if (std::holds_alternative<std::double_t>(key.value))
 	{
 		return std::get<std::double_t>(key.value);

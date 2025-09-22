@@ -12,11 +12,14 @@
 #include "system/KeyboardManager.hpp"
 
 #include "event/AppEvent.hpp"
+#include "event/CoreEvents.hpp"
 #include "event/CoreEventsData.hpp"
 #include "event/EventManager.hpp"
+#include "event/RuntimeEvent.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "program/WindowManager.hpp"
 #include "system/Keyboard.hpp"
+#include "system/LogMicros.hpp"
 #include "util/Definitions.hpp"
 #include "util/Micros.hpp"
 
@@ -31,6 +34,7 @@ KeyboardManager::KeyboardManager(Context &context) noexcept
 {
 	std::int32_t count;
 	SDL_KeyboardID *keyboardIDs = SDL_GetKeyboards(&count);
+	++count;
 
 	_keyboardList.reserve(count);
 	_keyboardMap.reserve(count);
@@ -38,11 +42,15 @@ KeyboardManager::KeyboardManager(Context &context) noexcept
 	for (std::int32_t index = count; index < count; ++index)
 	{
 		auto id = keyboardIDs[index];
-		auto keyboard = std::make_shared<Keyboard>(_context, id);
-
-		_keyboardList.emplace_back(keyboard);
-		_keyboardMap[id] = keyboard;
+		AddKeyboard(std::make_shared<Keyboard>(_context, id));
 	}
+}
+
+void KeyboardManager::AddKeyboard(const std::shared_ptr<Keyboard> &keyboard) noexcept
+{
+	_keyboardList.emplace_back(keyboard);
+	_keyboardMap[keyboard->GetKeyboardID()] = keyboard;
+	_keyboards.emplace_back(keyboard);
 }
 
 Context &KeyboardManager::GetContext() noexcept
@@ -55,9 +63,51 @@ Log &KeyboardManager::GetLog() noexcept
 	return *Log::Get(TE_NAMEOF(KeyboardManager));
 }
 
+void KeyboardManager::PreInitialize() noexcept
+{
+	EventHandleFunction func{[this](sol::object e, const EventHandleKey &key)
+	{
+		OnKeyboardDeviceAdded(e, key);
+	}};
+
+	try
+	{
+		GetEventManager().GetCoreEvents().KeyboardAdded().Add(func, TE_NAMEOF(KeyboardManager::OnKeyboardDeviceAdded), RuntimeEvent::DefaultOrders[0]);
+	}
+	catch (const std::exception &e)
+	{
+		TE_ERROR("Error adding event handler: {}", e.what());
+	}
+}
+
+void KeyboardManager::PostDeinitialize() noexcept
+{
+	try
+	{
+		GetEventManager().GetCoreEvents().KeyboardAdded().Remove(TE_NAMEOF(KeyboardManager::OnKeyboardDeviceAdded));
+	}
+	catch (const std::exception &e)
+	{
+		TE_ERROR("Error removing event handler: {}", e.what());
+	}
+}
+
+void KeyboardManager::OnKeyboardDeviceAdded(sol::object e, const EventHandleKey &key) noexcept
+{
+	auto data = CoreEventData::Extract<EventKeyboardDeviceData>(e);
+	if (data == nullptr) [[unlikely]]
+	{
+		TE_WARN("Failed to add keyboard device!");
+
+		return;
+	}
+
+	AddKeyboard(std::make_shared<Keyboard>(_context, data->keyboardID));
+}
+
 bool KeyboardManager::HandleEvent(AppEvent &appEvent) noexcept
 {
-	for (std::shared_ptr<IKeyboard> &keyboard : _keyboardList)
+	for (std::shared_ptr<Keyboard> &keyboard : _keyboardList)
 	{
 		if (keyboard->HandleEvent(appEvent))
 		{
@@ -88,7 +138,7 @@ std::shared_ptr<IKeyboard> KeyboardManager::GetKeyboardByID(KeyboardID id) noexc
 
 std::vector<std::shared_ptr<IKeyboard>> *KeyboardManager::GetKeyboards() noexcept
 {
-	return &_keyboardList;
+	return &_keyboards;
 }
 
 std::shared_ptr<Keyboard> KeyboardManager::LuaGetKeyboardAt(sol::object index) noexcept

@@ -19,13 +19,12 @@ namespace tudov
 {
 	struct AddHandlerArgs
 	{
-		EventID eventID;
-		ScriptID scriptID;
 		EventHandleFunction function;
 		std::optional<std::string> name;
 		std::optional<std::string> order;
 		std::optional<EventHandleKey> key;
 		std::optional<std::double_t> sequence;
+		ScriptID scriptID;
 		std::string stacktrace;
 	};
 } // namespace tudov

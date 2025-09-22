@@ -70,7 +70,7 @@ bool Keyboard::HandleEvent(AppEvent &appEvent) noexcept
 		RuntimeEvent *runtimeEvent;
 		if (!key.down)
 		{
-			runtimeEvent = &GetEventManager().GetCoreEvents().KeyUp();
+			runtimeEvent = &GetEventManager().GetCoreEvents().KeyboardRelease();
 
 			if (auto &entry = _windowHoldingKeyCodes[windowID]; !entry.set.contains(keyCode)) [[likely]]
 			{
@@ -84,11 +84,11 @@ bool Keyboard::HandleEvent(AppEvent &appEvent) noexcept
 		}
 		else if (key.repeat)
 		{
-			runtimeEvent = &GetEventManager().GetCoreEvents().KeyRepeat();
+			runtimeEvent = &GetEventManager().GetCoreEvents().KeyboardRepeat();
 		}
 		else
 		{
-			runtimeEvent = &GetEventManager().GetCoreEvents().KeyDown();
+			runtimeEvent = &GetEventManager().GetCoreEvents().KeyboardPress();
 
 			if (auto it = _windowHoldingKeyCodes.find(windowID); it != _windowHoldingKeyCodes.end()) [[likely]]
 			{
@@ -107,7 +107,7 @@ bool Keyboard::HandleEvent(AppEvent &appEvent) noexcept
 			}
 		}
 
-		EventKeyData data{
+		EventKeyboardData data{
 		    .window = window,
 		    .windowID = windowID,
 		    .keyboard = shared_from_this(),

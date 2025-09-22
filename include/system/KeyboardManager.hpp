@@ -24,6 +24,7 @@
 namespace tudov
 {
 	struct IKeyboard;
+	struct EventHandleKey;
 	class Keyboard;
 	class LuaBindings;
 
@@ -57,8 +58,9 @@ namespace tudov
 
 	  private:
 		Context &_context;
-		std::vector<std::shared_ptr<IKeyboard>> _keyboardList;
-		std::unordered_map<std::uint32_t, std::shared_ptr<IKeyboard>> _keyboardMap;
+		std::vector<std::shared_ptr<Keyboard>> _keyboardList;
+		std::unordered_map<std::uint32_t, std::shared_ptr<Keyboard>> _keyboardMap;
+		std::vector<std::shared_ptr<IKeyboard>> _keyboards;
 
 	  public:
 		explicit KeyboardManager(Context &context) noexcept;
@@ -66,11 +68,18 @@ namespace tudov
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;
 
+		void PreInitialize() noexcept override;
+		void PostDeinitialize() noexcept override;
+
 		bool HandleEvent(AppEvent &appEvent) noexcept override;
 
 		std::shared_ptr<IKeyboard> GetKeyboardAt(std::int32_t index) noexcept override;
 		std::shared_ptr<IKeyboard> GetKeyboardByID(KeyboardID id) noexcept override;
 		std::vector<std::shared_ptr<IKeyboard>> *GetKeyboards() noexcept override;
+
+	  private:
+		void AddKeyboard(const std::shared_ptr<Keyboard> &keyboard) noexcept;
+		void OnKeyboardDeviceAdded(sol::object e, const EventHandleKey &key) noexcept;
 
 	  private:
 		std::shared_ptr<Keyboard> LuaGetKeyboardAt(sol::object index) noexcept;

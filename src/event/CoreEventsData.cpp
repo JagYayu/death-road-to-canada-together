@@ -20,7 +20,23 @@
 #include "sol/forward.hpp"
 #include "sol/protected_function_result.hpp"
 
+#include <memory>
+
 using namespace tudov;
+
+std::shared_ptr<CoreEventData> CoreEventData::Extract(sol::object e) noexcept
+{
+	if (e.is<sol::table>()) [[likely]]
+	{
+		auto data = e.as<sol::table>()["data"];
+		if (data.valid() && data.is<std::shared_ptr<CoreEventData>>()) [[likely]]
+		{
+			return data.get<std::shared_ptr<CoreEventData>>();
+		}
+	}
+
+	return nullptr;
+}
 
 EventDebugProvideData::EventDebugProvideData(Context &context, IDebugManager &debugManager) noexcept
     : context(context),

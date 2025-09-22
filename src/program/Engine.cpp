@@ -117,13 +117,6 @@ void Engine::LoadingThread() noexcept
 
 Engine::~Engine() noexcept
 {
-	_state = EState::Quit;
-
-	if (_loadingThread.joinable())
-	{
-		_loadingThread.join();
-	}
-
 	switch (_state)
 	{
 	case EState::Initialized:
@@ -304,6 +297,8 @@ void Engine::Deinitialize() noexcept
 		return;
 	}
 
+	std::lock_guard<std::timed_mutex> guard{_loadingMutex};
+
 	if (_loadingThread.joinable())
 	{
 		_loadingThread.join();
@@ -436,7 +431,6 @@ std::uint64_t Engine::GetLoadingBeginTick() const noexcept
 
 Engine::LoadingInfo Engine::GetLoadingInfo() noexcept
 {
-	std::lock_guard<std::mutex> lock{_loadingInfoMutex};
 	return _loadingInfo;
 }
 
@@ -444,14 +438,10 @@ void Engine::SetLoadingInfo(const LoadingInfoArgs &loadingInfo) noexcept
 {
 	if (_loadingState == ELoadingState::InProgress)
 	{
-		std::lock_guard<std::timed_mutex> guard{_loadingMutex};
-
-		_loadingInfoMutex.lock();
 		_loadingInfo.title = loadingInfo.title.has_value() ? loadingInfo.title.value() : _loadingInfo.title;
 		_loadingInfo.description = loadingInfo.description.has_value() ? loadingInfo.description.value() : _loadingInfo.description;
 		_loadingInfo.progressValue = loadingInfo.progressValue.has_value() ? loadingInfo.progressValue.value() : _loadingInfo.progressValue;
 		_loadingInfo.progressTotal = loadingInfo.progressTotal.has_value() ? loadingInfo.progressTotal.value() : _loadingInfo.progressTotal;
-		_loadingInfoMutex.unlock();
 	}
 }
 

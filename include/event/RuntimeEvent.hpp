@@ -40,6 +40,9 @@ namespace tudov
 		using InvocationCache = std::vector<EventHandler *>;
 		using ProgressionID = std::uint32_t;
 
+	  public:
+		static std::vector<std::string> DefaultOrders;
+
 	  private:
 		struct Progression
 		{
@@ -67,6 +70,7 @@ namespace tudov
 		bool _handlersSortedCache;
 		std::optional<InvocationCache> _invocationCache;
 		std::unordered_map<EventHandleKey, InvocationCache, EventHandleKey::Hash, EventHandleKey::Equal> _invocationCaches;
+		std::string_view _defaultOrder;
 		std::vector<std::string> _orders;
 		std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> _keys;
 		std::vector<EventHandler> _handlers;
@@ -75,7 +79,7 @@ namespace tudov
 		ScriptID _invokingScriptID;
 
 	  public:
-		explicit RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = {""}, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys = {}, ScriptID scriptID = false);
+		explicit RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = DefaultOrders, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys = {}, ScriptID scriptID = false);
 		~RuntimeEvent() noexcept override;
 
 	  public:
@@ -92,7 +96,12 @@ namespace tudov
 		std::tuple<std::size_t, std::size_t> GetProgression() const noexcept;
 		ScriptID GetInvokingScriptID() const noexcept;
 
+		/**
+		 * Prefer using the another overload while this is mainly for internal usage.
+		 */
 		void Add(const AddHandlerArgs &args) override;
+		void Add(const EventHandleFunction &function, std::string_view name, std::optional<std::string_view> order = std::nullopt, std::optional<EventHandleKey> key = std::nullopt, std::optional<std::double_t> sequence = std::nullopt);
+		void Remove(std::string_view name);
 
 		void Invoke(sol::object e = {}, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
 		[[deprecated]] void InvokeUncached(sol::object e = sol::lua_nil, const EventHandleKey &key = {});

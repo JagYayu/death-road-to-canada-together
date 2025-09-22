@@ -160,4 +160,8 @@ events:add(N_("CUpdate"), function(e)
 	CUIMenu.update()
 end, "Test")
 
+events:add("MouseMove", function(e)
+	
+end, "MouseMove")
+
 return CUIMenu

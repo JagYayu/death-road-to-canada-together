@@ -36,6 +36,14 @@ namespace tudov
 
 	struct CoreEventData
 	{
+		static std::shared_ptr<CoreEventData> Extract(sol::object e) noexcept;
+
+		template <typename T>
+		static std::shared_ptr<T> Extract(sol::object e) noexcept
+		{
+			std::shared_ptr<CoreEventData> data = Extract(e);
+			return data != nullptr ? std::static_pointer_cast<T>(data) : nullptr;
+		}
 	};
 
 	struct EventDebugProvideData : public CoreEventData
@@ -196,15 +204,20 @@ namespace tudov
 		std::float_t relativeY;
 	};
 
-	struct EventKeyData : public CoreEventData
+	struct EventKeyboardData : public CoreEventData
 	{
 		std::shared_ptr<IWindow> window;
-		std::uint32_t windowID;
+		WindowID windowID;
 		std::shared_ptr<IKeyboard> keyboard;
-		std::uint32_t keyboardID;
+		KeyboardID keyboardID;
 		EScanCode scanCode;
 		EKeyCode keyCode;
 		EKeyModifier modifier;
+	};
+
+	struct EventKeyboardDeviceData : public CoreEventData
+	{
+		KeyboardID keyboardID;
 	};
 
 	struct EventWindowResizeData : public CoreEventData

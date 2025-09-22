@@ -257,7 +257,7 @@ void PrimaryWindow::SetShowLoadingFrame(bool value) noexcept
 
 EventHandleKey PrimaryWindow::GetKey() const noexcept
 {
-	static EventHandleKey key = "Main";
+	static EventHandleKey key = "Primary";
 	return key;
 }
 

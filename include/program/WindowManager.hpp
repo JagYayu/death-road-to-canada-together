@@ -31,7 +31,7 @@ namespace tudov
 	{
 	  private:
 		Context &_context;
-		std::weak_ptr<IWindow> _primaryWindow;
+		std::shared_ptr<IWindow> _primaryWindow;
 		std::vector<std::shared_ptr<IWindow>> _subWindows;
 		std::vector<std::shared_ptr<IWindow>> _windows;
 		std::shared_ptr<IDebugManager> _debugManager;

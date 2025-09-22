@@ -24,7 +24,7 @@ namespace tudov
 	class AbstractEvent : public IContextProvider
 	{
 	  protected:
-		EventID _id;
+		EventID _eventID;
 		ScriptID _scriptID;
 
 	  public:

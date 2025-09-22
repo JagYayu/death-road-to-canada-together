@@ -50,7 +50,14 @@ std::shared_ptr<IWindow> WindowManager::GetWindowByID(WindowID windowID) noexcep
 	return nullptr;
 }
 
-TE_GEN_GETTER_SMART_PTR(std::shared_ptr, IWindow, WindowManager::GetPrimaryWindow, _primaryWindow, noexcept);
+std::shared_ptr<IWindow> WindowManager::GetPrimaryWindow() noexcept
+{
+	return _primaryWindow;
+}
+std::shared_ptr<const IWindow> WindowManager::GetPrimaryWindow() const noexcept
+{
+	return _primaryWindow;
+}
 
 std::vector<std::shared_ptr<IWindow>> &WindowManager::GetSubWindows() noexcept
 {
@@ -106,9 +113,9 @@ bool WindowManager::IsEmpty() noexcept
 
 void WindowManager::InitializePrimaryWindow() noexcept
 {
-	if (!_primaryWindow.expired())
+	if (_primaryWindow != nullptr)
 	{
-		Log::Get("WindowManager")->Error("Engine main window has already been initialized!");
+		Error("Engine main window has already been initialized!");
 	}
 
 	const auto &primaryWindow = std::make_shared<PrimaryWindow>(_context);

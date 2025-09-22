@@ -29,6 +29,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
+#include <optional>
+#include <stdexcept>
 #include <utility>
 
 using namespace tudov;
@@ -50,6 +52,12 @@ RuntimeEvent::RuntimeEvent(IEventManager &eventManager, EventID eventID, const s
 		_orders.emplace_back("");
 	}
 }
+
+std::vector<std::string> RuntimeEvent::DefaultOrders = {
+    "Shared",
+    "Client",
+    "Server",
+};
 
 RuntimeEvent::~RuntimeEvent() noexcept
 {
@@ -123,38 +131,38 @@ void RuntimeEvent::Add(const AddHandlerArgs &args)
 	else
 	{
 		static std::uint64_t autoID;
-		name = std::format("{}-{}", args.scriptID, autoID++);
+		name = std::format("AutoGen:{}-{}", args.scriptID, autoID++);
 	}
 
 	for (const EventHandler &handler : _handlers)
 	{
 		if (handler.name == name) [[unlikely]]
 		{
-			throw EventHandlerAddDuplicateException(GetContext(), args.eventID, args.scriptID, name, args.stacktrace);
+			throw EventHandlerAddDuplicateException(GetContext(), _eventID, args.scriptID, name, args.stacktrace);
 		}
 	}
 
 	auto optArgOrder = args.order;
-	std::string order = optArgOrder.has_value() ? optArgOrder.value() : _orders[0];
+	std::string order = optArgOrder.has_value() ? optArgOrder.value() : _orders[_orders.size() - 1];
 
 	auto it = std::find(_orders.begin(), _orders.end(), order);
 	if (it == _orders.end()) [[unlikely]]
 	{
 		// auto &&message = std::format("Invalid event handler order \"{}\"", order);
-		throw EventHandlerAddBadOrderException(GetContext(), args.eventID, args.scriptID, order, args.stacktrace);
+		throw EventHandlerAddBadOrderException(GetContext(), _eventID, args.scriptID, order, args.stacktrace);
 	}
 
 	EventHandleKey key = args.key.value_or(EventHandler::emptyKey);
 	if (key != EventHandler::emptyKey && _keys.size() > 0 && !_keys.contains(key)) [[unlikely]]
 	{
-		throw EventHandlerAddBadKeyException(GetContext(), args.eventID, args.scriptID, key, args.stacktrace);
+		throw EventHandlerAddBadKeyException(GetContext(), _eventID, args.scriptID, key, args.stacktrace);
 	}
 
 	auto optArgSequence = args.sequence;
 	std::double_t sequence = optArgSequence.has_value() ? optArgSequence.value() : EventHandler::defaultSequence;
 
 	_handlers.emplace_back(EventHandler{
-	    .eventID = args.eventID,
+	    .eventID = _eventID,
 	    .scriptID = args.scriptID,
 	    .function = args.function,
 	    .name = name,
@@ -163,6 +171,41 @@ void RuntimeEvent::Add(const AddHandlerArgs &args)
 	    .sequence = sequence,
 	});
 	ClearCaches();
+}
+
+void RuntimeEvent::Add(const EventHandleFunction &function, std::string_view name, std::optional<std::string_view> order, std::optional<EventHandleKey> key, std::optional<std::double_t> sequence)
+{
+	AddHandlerArgs args{
+	    .function = function,
+	    .name = std::string(name),
+	    .order = order.has_value() ? std::make_optional<std::string>(order.value()) : std::nullopt,
+	    .key = key,
+	    .sequence = sequence,
+	    .scriptID = 0,
+	    .stacktrace = "",
+	};
+	Add(args);
+}
+
+void RuntimeEvent::Remove(std::string_view name)
+{
+	auto it = std::find_if(_handlers.begin(), _handlers.end(), [&name](const EventHandler &handler)
+	{
+		return handler.name == name;
+	});
+
+	if (it == _handlers.end())
+	{
+		throw std::runtime_error(std::format("Could not find handler \"{}\"", name));
+	}
+	else if (it->scriptID != 0)
+	{
+		throw std::runtime_error(std::format("Could not manually remove handler added by scripts"));
+	}
+	else
+	{
+		_handlers.erase(it);
+	}
 }
 
 std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
@@ -508,7 +551,7 @@ void RuntimeEvent::ClearCaches()
 		_invocationCache = std::nullopt;
 		_invocationCaches.clear();
 
-		TE_TRACE("Runtime event <{}> cleared caches", _id);
+		TE_TRACE("Runtime event <{}> cleared caches", _eventID);
 	}
 }
 
@@ -528,7 +571,7 @@ void RuntimeEvent::ClearInvalidScriptsHandlers(const IScriptProvider &scriptProv
 {
 	ClearScriptHandlersImpl([this, &scriptProvider](const EventHandler &handler)
 	{
-		return !scriptProvider.IsValidScript(handler.scriptID);
+		return handler.scriptID != 0 && !scriptProvider.IsValidScript(handler.scriptID);
 	});
 }
 
@@ -544,6 +587,6 @@ void RuntimeEvent::ClearScriptsHandlers()
 {
 	ClearScriptHandlersImpl([](const EventHandler &handler)
 	{
-		return !!handler.eventID;
+		return handler.eventID != 0;
 	});
 }
