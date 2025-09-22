@@ -45,18 +45,18 @@ function CUIWidget.new(widgetType, args)
 
 	--- @class dr2c.UIWidget.Args
 	--- @field border? dr2c.UI.DrawBorder
-	--- @field margin? Rectangle
-	--- @field padding? Rectangle
-	--- @field rectangle? Rectangle
+	--- @field margin? TE.Rectangle
+	--- @field padding? TE.Rectangle
+	--- @field rectangle? TE.Rectangle
 	--- @field selectable? boolean @default true
 	args = args or Table.empty
 
 	--- @class dr2c.UIWidget
 	--- @field draw? fun(self: self)
 	--- @field update? fun(self: self)
-	--- @field margin Rectangle
-	--- @field padding Rectangle
-	--- @field rectangle Rectangle
+	--- @field margin TE.Rectangle
+	--- @field padding TE.Rectangle
+	--- @field rectangle TE.Rectangle
 	--- @field widgets? dr2c.UIWidget[]
 	local widget = {
 		type = widgetType,

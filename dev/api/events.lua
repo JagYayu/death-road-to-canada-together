@@ -13,11 +13,11 @@ error("this is a lua library module")
 --- @class Events.E.DebugSnapshot
 
 --- @class Events.E.KeyDown
---- @field window Window?
---- @field windowID WindowID
---- @field keyboard Keyboard?
---- @field keyboardID KeyboardID
---- @field scanCode EScanCode
+--- @field window TE.Window?
+--- @field windowID TE.WindowID
+--- @field keyboard TE.Keyboard?
+--- @field keyboardID TE.KeyboardID
+--- @field scanCode TE.EScanCode
 --- @field keyCode integer
 --- @field mod integer
 
@@ -36,7 +36,7 @@ error("this is a lua library module")
 --- @class Events.E.TickLoad
 
 --- @class Events.E.TickRender
---- @field window Window
+--- @field window TE.Window
 
 --- @class Events.E.TickUpdate
 

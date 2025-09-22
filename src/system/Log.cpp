@@ -29,7 +29,7 @@ using namespace tudov;
 
 constexpr bool SingleThread = false;
 
-static constexpr decltype(auto) defaultModule = "Log";
+static constexpr decltype(auto) defaultModule = TE_NAMEOF(Log);
 static uint32_t logCount = 0;
 static std::unique_ptr<std::thread> logWorker = nullptr;
 static std::ofstream fileStream;

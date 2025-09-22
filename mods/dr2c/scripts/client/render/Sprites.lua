@@ -9,7 +9,7 @@
 --
 --]]
 
---- @class dr2c.SpriteTable : RectangleF
+--- @class dr2c.SpriteTable : TE.Rectangle
 --- @field [0] ImageID
 
 --- @class dr2c.CSprites
@@ -17,7 +17,7 @@ local CRenderSprites = {}
 
 local String = require("tudov.String")
 local Table = require("tudov.Table")
-local json = require("json")
+local json = require("lib.json")
 
 local tonumber = tonumber
 

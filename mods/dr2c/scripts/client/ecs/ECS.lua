@@ -255,6 +255,7 @@ local function spawnEntityImpl(entry)
 
 	if type(entry.components) == "table" then
 		-- TODO
+		error("not implement yet", 2)
 
 		for _, index, value in Table.sortedPairs(entry.components) do
 			--
@@ -555,6 +556,8 @@ function CECS.countEntitiesByType(entityTypeOrID)
 	return counter
 end
 
+--- @param entitySchemaField string
+--- @return table
 local function allocateArchetypeComponentsPool(entitySchemaField)
 	local entitiesSchema = CECSSchema.getEntitiesSchema()
 	local componentsPool = Table.new(#entitiesSchema, 0)

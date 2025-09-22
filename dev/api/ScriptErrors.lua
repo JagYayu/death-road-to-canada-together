@@ -1,7 +1,7 @@
 --- @meta
 error("this is a lua library module")
 
---- @class ScriptErrors
+--- @class TE.ScriptErrors
 scriptErrors = {}
 
 --- Import from engine

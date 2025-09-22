@@ -213,36 +213,36 @@ namespace tudov
 		{
 		}
 
-		inline TValue LuaGet1() noexcept
+		inline TValue LuaGetX() noexcept
 		{
 			return Base::array[0];
 		}
-		inline TValue LuaGet2() noexcept
+		inline TValue LuaGetY() noexcept
 		{
 			return Base::array[1];
 		}
-		inline TValue LuaGet3() noexcept
+		inline TValue LuaGetW() noexcept
 		{
 			return Base::array[2];
 		}
-		inline TValue LuaGet4() noexcept
+		inline TValue LuaGetH() noexcept
 		{
 			return Base::array[3];
 		}
 
-		inline void LuaSet1(TValue value) noexcept
+		inline void LuaSetX(TValue value) noexcept
 		{
 			Base::array[0] = value;
 		}
-		inline void LuaSet2(TValue value) noexcept
+		inline void LuaSetY(TValue value) noexcept
 		{
 			Base::array[1] = value;
 		}
-		inline void LuaSet3(TValue value) noexcept
+		inline void LuaSetW(TValue value) noexcept
 		{
 			Base::array[2] = value;
 		}
-		inline void LuaSet4(TValue value) noexcept
+		inline void LuaSetH(TValue value) noexcept
 		{
 			Base::array[3] = value;
 		}

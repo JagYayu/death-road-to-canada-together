@@ -12,9 +12,9 @@
 --- @class dr2c.CModule
 local CModule = {}
 
---- @type Window
+--- @type TE.Window
 local window = engine.primaryWindow
---- @type Renderer
+--- @type TE.Renderer
 local renderer = window.renderer
 
 function CModule.getRenderer()
@@ -52,7 +52,7 @@ CModule.eventCRender = events:new(N_("CRender"), {
 --- @param e Events.E.TickRender
 events:add(N_("GRender"), function(e)
 	--- @class dr2c.E.CRender : Events.E.TickRender
-	--- @field renderer Renderer
+	--- @field renderer TE.Renderer
 
 	--- @cast e dr2c.E.CRender
 

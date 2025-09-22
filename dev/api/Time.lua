@@ -1,7 +1,7 @@
 --- @meta
 error("this is a lua library module")
 
---- @class Time
+--- @class TE.Time
 Time = {}
 
 --- Get startup system time in seconds since epoch.

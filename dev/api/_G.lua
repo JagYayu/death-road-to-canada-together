@@ -11,8 +11,26 @@ error("this is a lua library module")
 
 --- @alias Serializable boolean | number | string | table<Serializable, Serializable>
 
+--- @alias Double number
+
+--- @class Float : number
+
+--- @class Int8 : integer
+
+--- @class Int16 : integer
+
+--- @class Int32 : integer
+
+--- @class Int64 : integer
+
 --- 0~255
 --- @class UInt8 : integer
+
+--- @class UInt16 : integer
+
+--- @class UInt32 : integer
+
+--- @class UInt64 : integer
 
 --- @class Rectangle
 --- @field [1] number
@@ -20,19 +38,9 @@ error("this is a lua library module")
 --- @field [3] number
 --- @field [4] number
 
---- @class RectangleF : userdata
---- @field x number
---- @field y number
---- @field w number
---- @field h number
-
 --- @class Vector
 --- @field [1] number
 --- @field [2] number
-
---- @class VectorF : userdata
---- @field x number
---- @field y number
 
 --- *Mod Scope*
 --- Insert prefix of current script's namespace at the start of `str`.

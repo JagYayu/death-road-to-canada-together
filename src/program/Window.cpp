@@ -21,12 +21,12 @@
 #include "mod/ScriptEngine.hpp"
 #include "program/Engine.hpp"
 #include "program/WindowManager.hpp"
+#include "system/ScanCode.hpp"
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"
 #include "sol/string_view.hpp"
 #include "sol/types.hpp"
-#include "system/ScanCode.hpp"
 
 #include <cmath>
 #include <memory>

@@ -26,6 +26,6 @@ ScriptException::ScriptException(Context &context, ScriptID scriptID, std::strin
 std::string_view ScriptException::What() const noexcept
 {
 	std::string_view scriptName = GetScriptProvider().GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
-	_what = std::format("Script exception <{}>\"{}\"{}", scriptID, scriptName, traceback);
+	_what = std::format("Script exception <{}>{}{}", scriptID, scriptName, traceback);
 	return _what;
 }

@@ -14,6 +14,7 @@
 #include "Application.hpp"
 #include "Context.hpp"
 #include "debug/Debug.hpp"
+#include "program/Context.hpp"
 #include "program/EngineComponent.hpp"
 #include "system/Log.hpp"
 
@@ -35,7 +36,7 @@ namespace tudov
 	/**
 	 * @brief Tudov game engine
 	 */
-	class Engine : public Application, public IDebugProvider, private ILogProvider
+	class Engine : public Application, public IContextProvider, public IDebugProvider, private ILogProvider
 	{
 		friend Context;
 		friend EngineData;
@@ -112,8 +113,7 @@ namespace tudov
 
 		std::shared_ptr<Log> _log;
 
-	  public:
-		Context context;
+		Context _context;
 
 	  public:
 		explicit Engine() noexcept;
@@ -126,6 +126,7 @@ namespace tudov
 		void Event(AppEvent &appEvent) noexcept override;
 		void Deinitialize() noexcept override;
 
+		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;
 		void ProvideDebug(IDebugManager &debugManager) noexcept override;
 

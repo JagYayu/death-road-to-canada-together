@@ -4,7 +4,7 @@ error("this is a lua library module")
 --- @class Engine
 engine = {}
 
---- @type Window
+--- @type TE.Window
 engine.primaryWindow = {}
 
 --- @return string

@@ -147,7 +147,7 @@ ScriptID ScriptProvider::AddScriptImpl(std::string_view scriptName, TextID scrip
 	}
 
 	const std::string &name = result.first->second.name;
-	TE_TRACE("Add script <{}>\"{}\"", scriptID, name);
+	TE_TRACE("Add script <{}>{}", scriptID, name);
 	_scriptName2ID.emplace(name, scriptID);
 	++_versionID;
 	_iteratorEntries = std::nullopt;
@@ -237,7 +237,7 @@ bool ScriptProvider::RemoveScriptImpl(ScriptID scriptID) noexcept
 		return false;
 	}
 
-	TE_TRACE("Remove script <{}>\"{}\"", scriptID, it->second.name);
+	TE_TRACE("Remove script <{}>{}", scriptID, it->second.name);
 	_scriptName2ID.erase(it->second.name);
 	_scriptID2Entry.erase(it);
 	++_versionID;

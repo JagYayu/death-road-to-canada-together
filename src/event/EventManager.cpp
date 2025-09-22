@@ -87,7 +87,7 @@ void EventManager::OnScriptsLoaded()
 
 		if (_runtimeEvents.contains(eventID))
 		{
-			auto &&msg = std::format("Loadtime events contains a duplicated event <{}>\"{}\"", eventID, GetEventNameByID(eventID)->data());
+			auto &&msg = std::format("Loadtime events contains a duplicated event <{}>{}", eventID, GetEventNameByID(eventID)->data());
 
 			ScriptID scriptID = loadtimeEvent->GetScriptID();
 			if (scriptID == 0)
@@ -96,7 +96,7 @@ void EventManager::OnScriptsLoaded()
 			}
 
 			IScriptProvider &scriptProvider = GetScriptProvider();
-			TE_ERROR("{}, source script: <{}>\"{}\"", msg, scriptID, scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN&"));
+			TE_ERROR("{}, source script: <{}>{}", msg, scriptID, scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN&"));
 
 			continue;
 		}
@@ -113,8 +113,8 @@ void EventManager::OnScriptsLoaded()
 
 			GetScriptLoader().MarkScriptLoadError(scriptID);
 
-			TE_ERROR("Attempt to add handlers to non-exist event <{}>\"{}\", source script <{}>\"{}\"", eventID, eventName, scriptID, scriptName);
-			GetScriptErrors().AddLoadtimeError(scriptID, std::format("Attempt to add handlers to non-exist event <{}>\"{}\"{}", eventID, eventName, loadtimeEvent->GetScriptTraceBack()));
+			TE_ERROR("Attempt to add handlers to non-exist event <{}>{}, source script <{}>{}", eventID, eventName, scriptID, scriptName);
+			GetScriptErrors().AddLoadtimeError(scriptID, std::format("Attempt to add handlers to non-exist event <{}>{}{}", eventID, eventName, loadtimeEvent->GetScriptTraceBack()));
 		}
 	}
 
@@ -153,7 +153,7 @@ void EventManager::EmplaceRuntimeEventFromLoadtimeEvent(const std::shared_ptr<Lo
 		}
 		else
 		{
-			TE_TRACE("Loadtime event converted to a runtime event <{}>\"{}\"", id, GetEventNameByID(id).value_or("$UNKNOWN$"));
+			TE_TRACE("Loadtime event converted to a runtime event <{}>{}", id, GetEventNameByID(id).value_or("$UNKNOWN$"));
 			TE_ASSERT(_runtimeEvents.try_emplace(id, runtimeEvent).second);
 		}
 	}
@@ -263,7 +263,7 @@ void EventManager::PreInitialize() noexcept
 			if (it->second->GetScriptID() == scriptID)
 			{
 				EventID eventID = it->second->GetID();
-				TE_TRACE("Remove event <{}>\"{}\" from script <{}>\"{}\"", eventID, _eventID2Name[eventID], scriptID, scriptName);
+				TE_TRACE("Remove event <{}>{} from script <{}>{}", eventID, _eventID2Name[eventID], scriptID, scriptName);
 
 				DeallocEventID(it->first);
 				it = _runtimeEvents.erase(it);
@@ -429,7 +429,7 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		if (!registryEvent.has_value())
 		{
 			auto &&loadtimeEvent = std::make_shared<LoadtimeEvent>(*this, eventID, scriptID);
-			TE_TRACE("Script <{}> added handler to loadtime event <{}>\"{}\"", scriptID, eventID, eventName);
+			TE_TRACE("Script <{}> added handler to loadtime event <{}>{}", scriptID, eventID, eventName);
 			registryEvent = *(_loadtimeEvents.try_emplace(eventID, loadtimeEvent).first->second);
 		}
 
@@ -479,7 +479,7 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 			if (!eventID)
 			{
 				eventID = AllocEventID(eventName);
-				TE_TRACE("Script <{}> alloc event <{}>\"{}\"", scriptID, eventID, eventName);
+				TE_TRACE("Script <{}> alloc event <{}>{}", scriptID, eventID, eventName);
 			}
 		}
 		else
@@ -556,11 +556,11 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 			std::string_view scriptName = GetScriptProvider().GetScriptNameByID(sourceScriptID).value_or("$UNKNOWN");
 
 			LuaUtils::Deconstruct(orders_, keys_);
-			GetScriptEngine().ThrowError("Failed to new event <{}>\"{}\", already been registered from script <{}>\"{}\"",
+			GetScriptEngine().ThrowError("Failed to new event <{}>{}, already been registered from script <{}>{}",
 			                             eventID, eventName, sourceScriptID, scriptName.data());
 		}
 
-		TE_TRACE("Constructed loadtime event <{}>\"{}\" from script <{}>", eventID, eventName, scriptID);
+		TE_TRACE("Constructed loadtime event <{}>{} from script <{}>", eventID, eventName, scriptID);
 		return eventID;
 	}
 	catch (const std::exception &e)

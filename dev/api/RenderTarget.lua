@@ -1,7 +1,7 @@
 --- @meta
 error("this is a lua library module")
 
---- @class RenderTarget : userdata
+--- @class TE.RenderTarget : userdata
 local renderTarget = {}
 
 --- @return boolean resized

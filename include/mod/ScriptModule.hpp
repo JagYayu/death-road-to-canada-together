@@ -98,6 +98,9 @@ namespace tudov
 		bool _hasError;
 		sol::table _table;
 
+	  private:
+		static void ModuleFieldModifier(std::shared_ptr<ScriptModule> module, sol::object key, sol::object value) noexcept;
+
 	  public:
 		explicit ScriptModule(IScriptLoader &scriptLoader);
 		explicit ScriptModule(IScriptLoader &scriptLoader, ScriptID scriptID, const sol::protected_function &func);

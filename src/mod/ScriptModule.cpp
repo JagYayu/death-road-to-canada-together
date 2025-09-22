@@ -17,6 +17,7 @@
 #include "mod/ScriptProvider.hpp"
 #include "program/Engine.hpp"
 #include "system/LogMicros.hpp"
+#include "util/LuaUtils.hpp"
 #include "util/Utils.hpp"
 
 #include "sol/forward.hpp"
@@ -143,12 +144,43 @@ void CopyTableMetatableFields(sol::table dst, sol::table src)
 		if (field.valid() && field.is<sol::protected_function>())
 		{
 			auto f = field.as<sol::protected_function>();
-			dstMt[key] = [f, src](const sol::this_state &ts, sol::object, sol::variadic_args vargs)
+			dstMt[key] = [f, src](const sol::this_state &, sol::object, sol::variadic_args vargs)
 			{
 				return f(src, vargs);
 			};
 		}
 	}
+}
+
+void ScriptModule::ModuleFieldModifier(std::shared_ptr<ScriptModule> module, sol::object key, sol::object value) noexcept
+{
+	if (module == nullptr) [[unlikely]]
+	{
+		if (module->CanWarn())
+		{
+			module->Warn("Attempt to modify member from a deallocated module!");
+		}
+
+		return;
+	}
+
+	if (module->GetScriptLoader().GetLoadingScriptID() == 0) [[unlikely]]
+	{
+		module->GetScriptEngine().ThrowError("Cannot modify module field at script runtime!");
+	}
+
+	auto &&field = module->GetTable()[key];
+	if (!field.valid() || field.get_type() == sol::type::nil) [[unlikely]]
+	{
+		module->GetScriptEngine().ThrowError("Module field does not exists");
+	}
+
+	if (field.get_type() != value.get_type()) [[unlikely]]
+	{
+		module->GetScriptEngine().ThrowError("Module field's type mismatch value's type");
+	}
+
+	module->GetTable()[key] = value;
 }
 
 sol::table &ScriptModule::RawLoad()
@@ -216,12 +248,9 @@ sol::table &ScriptModule::RawLoad()
 
 	std::weak_ptr<ScriptModule> weakThis = shared_from_this();
 	metatable["__index"] = tbl;
-	metatable["__newindex"] = [weakThis](const sol::this_state &ts)
+	metatable["__newindex"] = [weakThis](const sol::this_state &, sol::object, const sol::object key, const sol::object value)
 	{
-		if (std::shared_ptr<ScriptModule> this_ = weakThis.lock(); this_ != nullptr)
-		{
-			this_->GetScriptEngine().ThrowError("Cannot override module");
-		}
+		ModuleFieldModifier(weakThis.lock(), key, value);
 	};
 
 	_fullyLoaded = true;
@@ -254,23 +283,26 @@ sol::table &ScriptModule::LazyLoad()
 	_table[sol::metatable_key] = metatable;
 
 	std::weak_ptr<ScriptModule> weakThis = shared_from_this();
-	metatable["__index"] = [weakThis](const sol::this_state &ts, sol::object, sol::object key) -> sol::object
+	metatable["__index"] = [weakThis](const sol::this_state &, sol::object, sol::object key) -> sol::object
 	{
-		if (std::shared_ptr<ScriptModule> this_ = weakThis.lock(); this_ != nullptr)
+		if (std::shared_ptr<ScriptModule> this_ = weakThis.lock(); this_ != nullptr) [[likely]]
 		{
 			return this_->FullLoad()[key];
+		}
+		else if (auto engine = Tudov::GetApplication<Engine>(); engine != nullptr)
+		{
+			auto &scriptEngine = engine->GetContext().GetScriptEngine();
+			LuaUtils::Deconstruct(engine);
+			scriptEngine.ThrowError("Attempt to access member from a deallocated module!");
 		}
 		else
 		{
 			return sol::nil;
 		}
 	};
-	metatable["__newindex"] = [weakThis](const sol::this_state &ts)
+	metatable["__newindex"] = [weakThis](const sol::this_state &, sol::object, sol::object key, sol::object value)
 	{
-		if (std::shared_ptr<ScriptModule> this_ = weakThis.lock(); this_ != nullptr)
-		{
-			this_->GetScriptEngine().ThrowError("Cannot override module");
-		}
+		ModuleFieldModifier(weakThis.lock(), key, value);
 	};
 
 	return _table;
@@ -309,7 +341,8 @@ sol::table &ScriptModule::FullLoad()
 	sol::table metatable = scriptEngine.CreateTable(0, 2);
 	_table[sol::metatable_key] = metatable;
 
-	metatable["__index"] = [this, &parent](const sol::this_state &ts, sol::object, sol::object key)
+	std::weak_ptr<ScriptModule> weakThis = shared_from_this();
+	metatable["__index"] = [this, &parent](const sol::this_state &, sol::object, sol::object key)
 	{
 		if (const auto &optPrevScriptID = FindPreviousInStack(parent._scriptLoopLoadStack, _scriptID); optPrevScriptID.has_value())
 		{
@@ -317,16 +350,16 @@ sol::table &ScriptModule::FullLoad()
 			auto optScriptName = scriptProvider.GetScriptNameByID(_scriptID);
 			auto optPrevScriptName = scriptProvider.GetScriptNameByID(*optPrevScriptID);
 
-			GetScriptEngine().ThrowError("Cyclic dependency detected between <{}>\"{}\" and <{}>\"{}\"", _scriptID, *optScriptName, *optPrevScriptID, *optPrevScriptName);
+			GetScriptEngine().ThrowError("Cyclic dependency detected between <{}>{} and <{}>{}", _scriptID, *optScriptName, *optPrevScriptID, *optPrevScriptName);
 		}
 		else
 		{
 			GetScriptEngine().ThrowError("Attempt to access incomplete module");
 		}
 	};
-	metatable["__newindex"] = [this, &parent](const sol::this_state &ts, sol::object, sol::object key, sol::object value)
+	metatable["__newindex"] = [weakThis](const sol::this_state &, sol::object, sol::object key, sol::object value)
 	{
-		throw std::runtime_error(std::format("Cannot override module"));
+		ModuleFieldModifier(weakThis.lock(), key, value);
 	};
 
 	parent._scriptLoopLoadStack.emplace_back(_scriptID);
@@ -341,7 +374,7 @@ sol::table &ScriptModule::FullLoad()
 		sol::error err = result;
 		auto message = err.what();
 
-		TE_ERROR("Error load script module <{}>\"{}\": {}", _scriptID, scriptName, message);
+		TE_ERROR("Error load script module <{}>{}: {}", _scriptID, scriptName, message);
 
 		// TODO use delegate event?
 		GetScriptErrors().AddLoadtimeError(_scriptID, message);
@@ -350,11 +383,11 @@ sol::table &ScriptModule::FullLoad()
 
 		tbl = scriptEngine.CreateTable();
 		sol::table metatable = scriptEngine.CreateTable();
-		metatable["__index"] = [this, scriptName](const sol::this_state &ts, sol::object, sol::object key)
+		metatable["__index"] = [this, scriptName](const sol::this_state &, sol::object, sol::object key)
 		{
 			if (_parentContext) [[likely]]
 			{
-				GetScriptEngine().ThrowError("Cascaded error occurred: <{}>\"{}\"", _scriptID, scriptName);
+				GetScriptEngine().ThrowError("Cascaded error occurred: <{}>{}", _scriptID, scriptName);
 			}
 		};
 		tbl[sol::metatable_key] = metatable;

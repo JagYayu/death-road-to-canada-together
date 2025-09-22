@@ -1,7 +1,7 @@
 --- @meta
 error("this is a lua library module")
 
---- @enum EScanCode
+--- @enum TE.EScanCode
 EScanCode = {
 	A = 4,
 	AcBack = 282,

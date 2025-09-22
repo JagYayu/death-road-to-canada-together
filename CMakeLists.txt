@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
 if(MSVC)
-    add_compile_options(/FS /Zc:preprocessor)
+    add_compile_options(/bigobj /FS /Zc:preprocessor)
 endif()
 
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS

@@ -1,6 +1,6 @@
 --- @meta
 error("this is a lua library module")
 
---- @enum EKeyCode
+--- @enum TE.EKeyCode
 EKeyCode = {
 }

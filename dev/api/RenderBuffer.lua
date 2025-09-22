@@ -1,16 +1,16 @@
 --- @meta
 error("this is a lua library module")
 
---- @class RenderBuffer.AddRectangleArgs : userdata
+--- @class TE.RenderBuffer.AddRectangleArgs : userdata
 --- @field texture DrawArgTexture?
 --- @field destination Rectangle
 --- @field source Rectangle?
 --- @field color Color?
 
---- @class RenderBuffer : userdata
+--- @class TE.RenderBuffer : userdata
 local renderBuffer = {}
 
---- @param args RenderBuffer.AddRectangleArgs
+--- @param args TE.RenderBuffer.AddRectangleArgs
 function renderBuffer:addRectangle(args) end
 
 function renderBuffer:addVertices() end

@@ -1,7 +1,7 @@
 --- @meta
 error("this is a lua library module")
 
---- @class RandomDevice
+--- @class TE.RandomDevice
 RandomDevice = {}
 
 --- @param min number

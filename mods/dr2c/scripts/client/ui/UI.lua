@@ -32,7 +32,6 @@ CUI.eventRenderUI = events:new(N_("CRenderUI"), {
 events:add(N_("CRender"), function(e)
 	local w, h = e.window:getSize()
 	scale = math.min(w, h) / 480
-	-- print(scale)
 
 	--- @alias dr2c.E.CRenderUI dr2c.E.CRender
 	events:invoke(CUI.eventRenderUI, e)

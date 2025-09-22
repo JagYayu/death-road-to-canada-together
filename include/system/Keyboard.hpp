@@ -15,8 +15,10 @@
 #include "Log.hpp"
 #include "ScanCode.hpp"
 #include "program/Context.hpp"
-#include "sol/forward.hpp"
 #include "util/Definitions.hpp"
+
+#include "sol/forward.hpp"
+
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>

@@ -32,12 +32,12 @@ function CRenderUtils.copyDrawBorder(border)
 	}
 end
 
---- @param rect Rectangle | table
+--- @param rect TE.Rectangle | table
 --- @param x number?
 --- @param y number?
 --- @param w number?
 --- @param h number?
---- @return Rectangle
+--- @return TE.Rectangle
 function CRenderUtils.copyRectangle(rect, x, y, w, h)
 	return {
 		tonumber(rect[1]) or x or 0,

@@ -28,7 +28,7 @@ std::string_view EventHandlerAddDuplicateException::What() const noexcept
 {
 	std::string_view eventName = GetEventManager().GetEventNameByID(eventID).value_or("$UNKNOWN$");
 	std::string_view scriptName = GetScriptProvider().GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
-	_what = std::format("Duplicated event handler name: \"{}\", event <{}>\"{}\", script <{}>\"{}\"{}",
+	_what = std::format("Duplicated event handler name: \"{}\", event <{}>{}, script <{}>{}{}",
 	                    name, eventID, eventName, scriptID, scriptName, traceback);
 	return _what;
 }

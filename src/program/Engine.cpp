@@ -60,9 +60,9 @@ Engine::Engine() noexcept
       _loadingState(ELoadingState::Done),
       _loadingThread()
 {
-	context = Context(this);
+	_context = Context(this);
 
-	_data = std::make_unique<EngineData>(context);
+	_data = std::make_unique<EngineData>(_context);
 
 	_loadingThread = std::thread(std::bind(&Engine::LoadingThread, this));
 }
@@ -352,6 +352,11 @@ void Engine::InitializeResources() noexcept
 {
 }
 
+Context &Engine::GetContext() noexcept
+{
+	return _context;
+}
+
 Log &Engine::GetLog() noexcept
 {
 	return *_log;
@@ -360,7 +365,7 @@ Log &Engine::GetLog() noexcept
 void Engine::ProvideDebug(IDebugManager &debugManager) noexcept
 {
 	{
-		EventDebugProvideData data{context, debugManager};
+		EventDebugProvideData data{_context, debugManager};
 		_data->_eventManager->GetCoreEvents().DebugProvide().Invoke(&data, {}, EEventInvocation::None);
 	}
 
@@ -452,10 +457,13 @@ void Engine::SetLoadingInfo(const LoadingInfoArgs &loadingInfo) noexcept
 
 void Engine::TriggerLoadPending() noexcept
 {
-	std::lock_guard<std::timed_mutex> guard{_loadingMutex};
-	if (_loadingState == ELoadingState::Done)
+	if (_loadingMutex.try_lock())
 	{
-		_loadingState = ELoadingState::Pending;
+		if (_loadingState == ELoadingState::Done)
+		{
+			_loadingState = ELoadingState::Pending;
+		}
+		_loadingMutex.unlock();
 	}
 }
 

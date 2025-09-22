@@ -14,6 +14,7 @@
 #include "event/AppEvent.hpp"
 #include "event/CoreEventsData.hpp"
 #include "event/EventManager.hpp"
+#include "mod/ScriptEngine.hpp"
 #include "program/WindowManager.hpp"
 #include "system/Keyboard.hpp"
 #include "util/Definitions.hpp"
@@ -85,6 +86,11 @@ std::shared_ptr<IKeyboard> KeyboardManager::GetKeyboardByID(KeyboardID id) noexc
 	return nullptr;
 }
 
+std::vector<std::shared_ptr<IKeyboard>> *KeyboardManager::GetKeyboards() noexcept
+{
+	return &_keyboardList;
+}
+
 std::shared_ptr<Keyboard> KeyboardManager::LuaGetKeyboardAt(sol::object index) noexcept
 {
 	return std::dynamic_pointer_cast<Keyboard>(GetKeyboardAt(index.is<std::int32_t>() ? index.as<std::int32_t>() : 0));
@@ -93,4 +99,15 @@ std::shared_ptr<Keyboard> KeyboardManager::LuaGetKeyboardAt(sol::object index) n
 std::shared_ptr<Keyboard> KeyboardManager::LuaGetKeyboardByID(sol::object id) noexcept
 {
 	return std::dynamic_pointer_cast<Keyboard>(GetKeyboardByID(id.is<KeyboardID>() ? id.as<KeyboardID>() : 0));
+}
+
+sol::table KeyboardManager::LuaListKeyboards() noexcept
+{
+	sol::table result = GetScriptEngine().CreateTable(_keyboardList.size(), 0);
+	for (std::size_t index = 0; index < _keyboardList.size(); ++index)
+	{
+		result[index + 1] = _keyboardList[index];
+	}
+
+	return result;
 }

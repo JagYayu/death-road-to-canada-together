@@ -240,7 +240,7 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 	{
 		auto &&sourceName = scriptProvider.GetScriptNameByID(source);
 		auto &&targetName = scriptProvider.GetScriptNameByID(target);
-		TE_WARN("Attempt to link invalid scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
+		TE_WARN("Attempt to link invalid scripts to reverse dependency map: <{}>{} <- <{}>{}",
 		        source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
 		        target, targetName.has_value() ? targetName->data() : "#INVALID#");
 
@@ -250,7 +250,7 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 	{
 		auto &&sourceName = scriptProvider.GetScriptNameByID(source);
 		auto &&targetName = scriptProvider.GetScriptNameByID(target);
-		TE_WARN("Attempt to link static scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
+		TE_WARN("Attempt to link static scripts to reverse dependency map: <{}>{} <- <{}>{}",
 		        source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
 		        target, targetName.has_value() ? targetName->data() : "#INVALID#");
 
@@ -261,7 +261,7 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 	dependencies.insert(source);
 	// _scriptDependencyGraph.AddLink(from, to);
 
-	TE_TRACE("Link scripts to reverse dependency map: <{}>\"{}\" <- <{}>\"{}\"",
+	TE_TRACE("Link scripts to reverse dependency map: <{}>{} <- <{}>{}",
 	         source, scriptProvider.GetScriptNameByID(source)->data(),
 	         target, scriptProvider.GetScriptNameByID(target)->data());
 }
@@ -335,7 +335,7 @@ std::shared_ptr<IScriptModule> ScriptLoader::Load(ScriptID scriptID)
 	const auto &scriptCode = scriptProvider.GetScriptCode(scriptID);
 	if (scriptCode == nullptr) [[unlikely]]
 	{
-		TE_WARN("Attempt to load invalid script <{}>\"{}\": script code not found, textID: {}",
+		TE_WARN("Attempt to load invalid script <{}>{}: script code not found, textID: {}",
 		        scriptID, scriptName->data(), scriptProvider.GetScriptTextID(scriptID));
 		return nullptr;
 	}
@@ -351,7 +351,7 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 		return it->second;
 	}
 
-	TE_DEBUG("Loading script <{}>\"{}\" ...", scriptID, scriptName);
+	TE_DEBUG("Loading script <{}>{} ...", scriptID, scriptName);
 
 	sol::load_result result = GetScriptEngine().LoadFunction(std::format("<{}>{}", scriptID, scriptName), scriptCode);
 	if (result.valid())
@@ -364,7 +364,7 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 		if (GetScriptProvider().IsStaticScript(scriptName))
 		{
 			scriptModule->RawLoad();
-			TE_TRACE("Raw loaded script <{}>\"{}\"", scriptID, scriptName);
+			TE_TRACE("Raw loaded script <{}>{}", scriptID, scriptName);
 		}
 		else
 		{
@@ -379,7 +379,7 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 			}
 
 			GetScriptEngine().InitializeScript(scriptID, scriptName, modUID, sandboxed, function);
-			TE_TRACE("Lazy loaded script <{}>\"{}\"", scriptID, scriptName);
+			TE_TRACE("Lazy loaded script <{}>{}", scriptID, scriptName);
 		}
 
 		_onLoadedScript(scriptID, scriptName);
@@ -391,7 +391,7 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 	else
 	{
 		sol::error err = result;
-		TE_ERROR("Failed to parse script <{}>\"{}\": {}", scriptID, scriptName, err.what());
+		TE_ERROR("Failed to parse script <{}>{}: {}", scriptID, scriptName, err.what());
 
 		auto &&scriptModule = std::make_shared<ScriptModule>(*this, scriptID, sol::protected_function());
 		auto &&[_, inserted] = _scriptModules.try_emplace(scriptID, scriptModule);
@@ -466,7 +466,7 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 		return;
 	}
 
-	TE_TRACE("Unloading script <{}>\"{}\" ...", scriptID, scriptName->data());
+	TE_TRACE("Unloading script <{}>{} ...", scriptID, scriptName->data());
 
 	if (!_scriptModules.erase(scriptID))
 	{
@@ -508,7 +508,7 @@ void ScriptLoader::HotReloadScripts(const std::vector<ScriptID> &scriptIDs)
 		for (auto scriptID : scriptIDs)
 		{
 			auto optScriptName = scriptProvider.GetScriptNameByID(scriptID);
-			_log->Trace("<{}>\"{}\"", scriptID, optScriptName.has_value() ? optScriptName->data() : "#INVALID#");
+			_log->Trace("<{}>{}", scriptID, optScriptName.has_value() ? optScriptName->data() : "#INVALID#");
 		}
 	}
 

@@ -1,27 +1,28 @@
 --- @meta
 error("this is a lua library module")
 
---- @class ImageManager
+--- @class TE.ImageID : integer
+
+--- @class TE.ImageManager
 images = {}
 
 --- @param imagePath string
---- @return ImageID
+--- @return TE.ImageID
 function images:getID(imagePath) end
 
---- @param imageID ImageID
---- @return Image
+--- @param imageID TE.ImageID
+--- @return TE.Image
 function images:get(imageID) end
 
---- @class Image
+--- @class TE.Image
 local image = {}
 
---- @return integer
+--- @return integer width
 function image.getWidth() end
 
---- @return integer
+--- @return integer height
 function image.getHeight() end
 
---- @return integer, integer
+--- @return integer width
+--- @return integer height
 function image.getSize() end
-
---- @class ImageID : integer

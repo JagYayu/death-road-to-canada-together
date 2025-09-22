@@ -14,7 +14,7 @@ local Color = require("tudov.Color")
 --- @class dr2c.CUIDraw
 local CUIDraw = {}
 
---- @type Renderer
+--- @type TE.Renderer
 local renderer
 
 local drawRectArgs = DrawRectArgs()

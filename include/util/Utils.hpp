@@ -79,7 +79,7 @@ namespace tudov
 		try
 		{
 			nlohmann::json j = v;
-			return std::format("<{}>\"{}\"", v, j.get<std::string_view>());
+			return std::format("<{}>{}", v, j.get<std::string_view>());
 		}
 		catch (const nlohmann::json::exception &)
 		{
@@ -219,6 +219,30 @@ namespace tudov
 		static constexpr auto ToUnderlying(T value) noexcept
 		{
 			return static_cast<std::underlying_type_t<T>>(value);
+		}
+
+		template <typename TReturn, typename TClass, typename... TArgs>
+		static constexpr auto Overload(TReturn (TClass::*pointerMemberFunction)(TArgs...)) -> TReturn (TClass::*)(TArgs...) noexcept
+		{
+			return pointerMemberFunction;
+		}
+
+		template <typename TReturn, typename TClass, typename... TArgs>
+		static constexpr auto OverloadConst(TReturn (TClass::*pointerMemberFunction)(TArgs...) const) -> TReturn (TClass::*)(TArgs...) const noexcept
+		{
+			return pointerMemberFunction;
+		}
+
+		template <typename TReturn, typename TClass, typename... TArgs>
+		static constexpr auto OverloadNoexcept(TReturn (TClass::*pointerMemberFunction)(TArgs...) noexcept) noexcept -> TReturn (TClass::*)(TArgs...) noexcept
+		{
+			return pointerMemberFunction;
+		}
+
+		template <typename TReturn, typename TClass, typename... TArgs>
+		static constexpr auto OverloadConstNoexcept(TReturn (TClass::*pointerMemberFunction)(TArgs...) const noexcept) noexcept -> TReturn (TClass::*)(TArgs...) const noexcept
+		{
+			return pointerMemberFunction;
 		}
 	};
 } // namespace tudov

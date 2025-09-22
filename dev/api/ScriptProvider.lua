@@ -1,7 +1,7 @@
 --- @meta
 error("this is a lua library module")
 
---- @class ScriptProvider
+--- @class TE.ScriptProvider
 scriptProvider = {}
 
 --- @return integer

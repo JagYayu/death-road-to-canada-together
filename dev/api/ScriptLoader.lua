@@ -1,7 +1,7 @@
 --- @meta
 error("this is a lua library module")
 
---- @class ScriptLoader
+--- @class TE.ScriptLoader
 scriptLoader = {}
 
 --- @return integer

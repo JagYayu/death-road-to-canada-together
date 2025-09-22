@@ -20,6 +20,52 @@
 #include <tuple>
 #include <vector>
 
+namespace tudov::impl
+{
+	template <typename T>
+	struct LuaArray
+	{
+		std::vector<T> vector;
+
+		T Get(std::size_t index) const noexcept
+		{
+			return vector[index];
+		}
+
+		void Set(std::size_t index, T value) noexcept
+		{
+			vector[index] = value;
+		}
+
+		void Clear() noexcept
+		{
+			vector.clear();
+		}
+
+		std::size_t GetCount() noexcept
+		{
+			return vector.size();
+		}
+
+		std::size_t GetCapacity() noexcept
+		{
+			return vector.capacity();
+		}
+	};
+
+	using LuaArrayBit = LuaArray<bool>;
+	using LuaArrayI8 = LuaArray<std::int8_t>;
+	using LuaArrayI16 = LuaArray<std::int16_t>;
+	using LuaArrayI32 = LuaArray<std::int32_t>;
+	using LuaArrayI64 = LuaArray<std::int64_t>;
+	using LuaArrayU8 = LuaArray<std::uint8_t>;
+	using LuaArrayU16 = LuaArray<std::uint16_t>;
+	using LuaArrayU32 = LuaArray<std::uint32_t>;
+	using LuaArrayU64 = LuaArray<std::uint64_t>;
+	using LuaArrayF32 = LuaArray<std::float_t>;
+	using LuaArrayF64 = LuaArray<std::double_t>;
+} // namespace tudov::impl
+
 namespace tudov
 {
 	class Engine;

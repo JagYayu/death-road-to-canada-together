@@ -11,9 +11,11 @@
 
 #include "mod/LuaBindings.hpp"
 
+#include "program/Window.hpp"
 #include "system/Keyboard.hpp"
 #include "system/KeyboardManager.hpp"
 #include "system/Mouse.hpp"
+#include "system/MouseButton.hpp"
 #include "system/MouseManager.hpp"
 #include "system/OperatingSystem.hpp"
 #include "system/RandomDevice.hpp"
@@ -38,6 +40,27 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	        {"Debug", ELogVerbosity::Debug},
 	        {"Trace", ELogVerbosity::Trace},
 	        {"Fatal", ELogVerbosity::Fatal},
+	    });
+
+	TE_ENUM(
+	    EMouseButton,
+	    {
+	        {"None", EMouseButton::None},
+	        {"Left", EMouseButton::Left},
+	        {"Middle", EMouseButton::Middle},
+	        {"Right", EMouseButton::Right},
+	        {"Extra1", EMouseButton::Extra1},
+	        {"Extra2", EMouseButton::Extra2},
+	    });
+
+	TE_ENUM(
+	    EMouseButtonFlag,
+	    {
+	        {"Left", EMouseButtonFlag::Left},
+	        {"Middle", EMouseButtonFlag::Middle},
+	        {"Right", EMouseButtonFlag::Right},
+	        {"Extra1", EMouseButtonFlag::Extra1},
+	        {"Extra2", EMouseButtonFlag::Extra2},
 	    });
 
 	TE_ENUM(
@@ -70,11 +93,24 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	TE_USERTYPE(
 	    KeyboardManager,
 	    "getKeyboardAt", &KeyboardManager::LuaGetKeyboardAt,
-	    "getKeyboardByID", &KeyboardManager::LuaGetKeyboardByID);
+	    "getKeyboardByID", &KeyboardManager::LuaGetKeyboardByID,
+	    "listKeyboards", &KeyboardManager::LuaListKeyboards);
 
 	TE_USERTYPE(
 	    Mouse,
-	    "getMouseID", &Mouse::GetMouseID);
+	    "getFocusedWindow", &Mouse::LuaGetFocusedWindow,
+	    "getID", &Mouse::GetMouseID,
+	    "getName", &Mouse::GetMouseName,
+	    "getPosition", &Mouse::GetMousePosition,
+	    "getState", &Mouse::GetMouseState,
+	    "isButtonDown", &Mouse::IsMouseButtonDown,
+	    "isButtonsDown", &Mouse::IsMouseButtonsDown);
+
+	TE_USERTYPE(
+	    MouseManager,
+	    "getMouseAt", &MouseManager::GetMouseAt,
+	    "getMouseByID", &MouseManager::GetMouseByID,
+	    "getPrimaryMouse", &MouseManager::LuaGetPrimaryMouse);
 
 	TE_CLASS(
 	    OperatingSystem,

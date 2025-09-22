@@ -1,7 +1,7 @@
 --- @meta
 error("this is a lua library module")
 
---- @enum VFS.PathListOption
+--- @enum TE.VFS.PathListOption
 EPathListOption = {
 	All = 255,
 	Directory = 2,
@@ -12,11 +12,11 @@ EPathListOption = {
 	Sorted = 8,
 }
 
---- @class VFS.ListEntry
+--- @class TE.VFS.ListEntry
 --- @field isDirectory boolean
 --- @field path string
 
---- @class VFS
+--- @class TE.VFS
 vfs = {}
 
 --- @param path string
@@ -24,8 +24,8 @@ vfs = {}
 function vfs:exists(path) end
 
 --- @param directory string?
---- @param options VFS.PathListOption
---- @return VFS.ListEntry[] paths
+--- @param options TE.VFS.PathListOption
+--- @return TE.VFS.ListEntry[] paths
 function vfs:list(directory, options) end
 
 --- @param file string?

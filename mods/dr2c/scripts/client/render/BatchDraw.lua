@@ -1,6 +1,6 @@
 local BatchDraw = {}
 
---- @type Renderer[]
+--- @type TE.Renderer[]
 local batchDrawRendererStack = {}
 
 function BatchDraw.begin(renderer)

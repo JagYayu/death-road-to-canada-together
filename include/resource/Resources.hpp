@@ -104,7 +104,7 @@ namespace tudov
 			};
 			_path2ID[_id2Entry[id].path] = id;
 
-			TE_TRACE("Loaded resource <{}>\"{}\"", id, path);
+			TE_TRACE("Loaded resource <{}>{}", id, path);
 
 			return id;
 		}
@@ -118,7 +118,7 @@ namespace tudov
 				return;
 			}
 
-			TE_TRACE("Unloaded resource <{}>\"{}\"", id, it->second.path);
+			TE_TRACE("Unloaded resource <{}>{}\"", id, it->second.path);
 
 			_path2ID.erase(std::string_view(it->second.path));
 			_id2Entry.erase(it);

@@ -28,7 +28,7 @@ std::string_view EventHandlerAddBadKeyException::What() const noexcept
 {
 	std::string_view eventName = GetEventManager().GetEventNameByID(eventID).value_or("$UNKNOWN$");
 	std::string_view scriptName = GetScriptProvider().GetScriptNameByID(eventID).value_or("$UNKNOWN$");
-	_what = std::format("Bad event handler key: \"{}\", event <{}>\"{}\", script <{}>\"{}\"{}",
+	_what = std::format("Bad event handler key: \"{}\", event <{}>{}, script <{}>{}{}",
 	                    key.ToString(), eventID, eventName, scriptID, scriptName, traceback);
 	return _what;
 }

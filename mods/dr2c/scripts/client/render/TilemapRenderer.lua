@@ -20,7 +20,7 @@ local CRenderSprites = require("dr2c.client.render.Sprites")
 -- 	"",
 -- })
 
---- @param renderer Renderer
+--- @param renderer TE.Renderer
 --- @param tilemap table
 local function draw(renderer, tilemap)
 	local CRenderSprites_getSpriteTable = CRenderSprites.getSpriteTable

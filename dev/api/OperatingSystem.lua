@@ -1,7 +1,7 @@
 --- @meta
 error("this is a lua library module")
 
---- @enum EOperatingSystem
+--- @enum TE.EOperatingSystem
 EOperatingSystem = {
 	Unknown = 0,
 	Windows = 1,
@@ -11,10 +11,10 @@ EOperatingSystem = {
 	IOS = 5,
 }
 
---- @class OperatingSystem
+--- @class TE.OperatingSystem
 OperatingSystem = {}
 
---- @return EOperatingSystem
+--- @return TE.EOperatingSystem
 function OperatingSystem.getType() end
 
 --- @return boolean

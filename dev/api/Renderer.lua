@@ -1,21 +1,21 @@
 --- @meta
 error("this is a lua library module")
 
---- @class Texture
+--- @class TE.Texture
 
 --- @alias DrawArgFont Font | FontID
 
---- @alias DrawArgTexture Image | ImageID | RenderTarget
+--- @alias DrawArgTexture TE.Image | ImageID | TE.RenderTarget
 
---- @class DrawRectArgs : userdata
+--- @class TE.DrawRectArgs : userdata
 --- @field texture DrawArgTexture?
---- @field destination RectangleF
---- @field source RectangleF?
+--- @field destination TE.Rectangle
+--- @field source TE.Rectangle?
 --- @field color Color
 --- @field angle number
 --- @field origin Vector
 
---- @class DrawTextArgs : userdata
+--- @class TE.DrawTextArgs : userdata
 --- @field text string
 --- @field font DrawArgFont
 --- @field characterSize number
@@ -30,32 +30,32 @@ error("this is a lua library module")
 --- @field shadow number
 --- @field shadowColor Color
 
---- @return DrawRectArgs
+--- @return TE.DrawRectArgs
 function DrawRectArgs() end
 
---- @return DrawTextArgs
+--- @return TE.DrawTextArgs
 function DrawTextArgs() end
 
---- @class Renderer : userdata
+--- @class TE.Renderer : userdata
 local renderer = {}
 
---- @param renderTarget RenderTarget
+--- @param renderTarget TE.RenderTarget
 function renderer:beginTarget(renderTarget) end
 
---- @return RenderTarget
+--- @return TE.RenderTarget
 function renderer:endTarget() end
 
 function renderer:clear() end
 
---- @return RenderBuffer
+--- @return TE.RenderBuffer
 function renderer:newRenderBuffer() end
 
 --- @param width integer
 --- @param height integer
---- @return RenderTarget
+--- @return TE.RenderTarget
 function renderer:newRenderTarget(width, height) end
 
---- @param args DrawRectArgs
+--- @param args TE.DrawRectArgs
 function renderer:drawRect(args) end
 
 --- @param x number
@@ -63,7 +63,7 @@ function renderer:drawRect(args) end
 --- @param text string
 function renderer:drawDebugText(x, y, text) end
 
---- @param args DrawTextArgs
+--- @param args TE.DrawTextArgs
 --- @return number x
 --- @return number y
 --- @return number w

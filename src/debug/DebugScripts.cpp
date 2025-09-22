@@ -355,7 +355,7 @@ void DebugScripts::UpdateAndRenderProvidedScripts(IWindow &window) noexcept
 
 			if (ImGui::Button(std::format("{}##{}", "Print", scriptID).data()))
 			{
-				TE_DEBUG("Inspect script <{}>\"{}\": 'module', 'snapshot', 'persists'", scriptID, scriptName);
+				TE_DEBUG("Inspect script <{}>{}: 'module', 'snapshot', 'persists'", scriptID, scriptName);
 
 				IScriptEngine &scriptEngine = window.GetScriptEngine();
 				std::string clipboardText;

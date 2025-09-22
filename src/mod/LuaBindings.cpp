@@ -30,9 +30,11 @@
 
 #include "sol/forward.hpp"
 #include "sol/property.hpp"
+
 #include <memory>
 
 using namespace tudov;
+using namespace tudov::impl;
 
 bool LuaBindings::RegisterInstallation(std::string_view name, const TInstallation &installation)
 {
@@ -68,6 +70,14 @@ decltype(auto) GetPrimaryWindowFromContext(Context &context) noexcept
 #define TE_USERTYPE(Class, ...) lua.new_usertype<Class>(#Class, __VA_ARGS__)
 #define TE_CLASS(Class, ...)    lua.create_named_table(("" #Class ""), __VA_ARGS__)
 
+#define TE_USERDATA_LUA_ARRAY(Type) TE_USERTYPE( \
+	LuaArray##Type,                              \
+	"clear", &LuaArray##Type::Clear,             \
+	"get", &LuaArray##Type::Get,                 \
+	"getCapacity", &LuaArray##Type::GetCapacity, \
+	"getCount", &LuaArray##Type::GetCount,       \
+	"set", &LuaArray##Type::Set);
+
 void LuaBindings::Install(sol::state &lua, Context &context)
 {
 	InstallEvent(lua, context);
@@ -96,6 +106,18 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	        {"Sorted", EPathListOption::Sorted},
 	        {"FullPath", EPathListOption::FullPath},
 	    });
+
+	TE_USERDATA_LUA_ARRAY(Bit);
+	TE_USERDATA_LUA_ARRAY(F32);
+	TE_USERDATA_LUA_ARRAY(F64);
+	TE_USERDATA_LUA_ARRAY(I8);
+	TE_USERDATA_LUA_ARRAY(I16);
+	TE_USERDATA_LUA_ARRAY(I32);
+	TE_USERDATA_LUA_ARRAY(I64);
+	TE_USERDATA_LUA_ARRAY(U8);
+	TE_USERDATA_LUA_ARRAY(U16);
+	TE_USERDATA_LUA_ARRAY(U32);
+	TE_USERDATA_LUA_ARRAY(U64);
 
 	TE_USERTYPE(
 	    DrawRectArgs,
@@ -149,10 +171,10 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	TE_USERTYPE(
 	    RectangleF,
 	    sol::call_constructor, sol::constructors<RectangleF()>(),
-	    "x", sol::property(&RectangleF::LuaGet1, &RectangleF::LuaSet1),
-	    "y", sol::property(&RectangleF::LuaGet2, &RectangleF::LuaSet2),
-	    "w", sol::property(&RectangleF::LuaGet3, &RectangleF::LuaSet3),
-	    "h", sol::property(&RectangleF::LuaGet4, &RectangleF::LuaSet4));
+	    "x", sol::property(&RectangleF::LuaGetX, &RectangleF::LuaSetX),
+	    "y", sol::property(&RectangleF::LuaGetY, &RectangleF::LuaSetY),
+	    "w", sol::property(&RectangleF::LuaGetW, &RectangleF::LuaSetW),
+	    "h", sol::property(&RectangleF::LuaGetH, &RectangleF::LuaSetH));
 
 	TE_USERTYPE(
 	    RenderBuffer,
@@ -205,6 +227,7 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	    "getKey", &Window::LuaGetKey,
 	    "getSize", &Window::GetSize,
 	    "getWidth", &Window::GetWidth,
+	    "getWindowID", &Window::GetWindowID,
 	    "renderer", &Window::renderer,
 	    "shouldClose", &Window::ShouldClose);
 
@@ -258,6 +281,8 @@ const std::vector<std::string_view> &LuaBindings::GetModGlobalsMigration() const
 		    "EDisconnectionCode",
 		    "EEventInvocation",
 		    "ELogVerbosity",
+		    "EMouseButton",
+		    "EMouseButtonFlag",
 		    "EOperatingSystem",
 		    "EPathListOption",
 		    "EServerSessionState",
@@ -278,6 +303,8 @@ const std::vector<std::string_view> &LuaBindings::GetModGlobalsMigration() const
 		    "events",
 		    "fonts",
 		    "images",
+		    "keyboards",
+		    "mouses",
 		    "mods",
 		    "network",
 		    "scriptEngine",

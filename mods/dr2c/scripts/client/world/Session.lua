@@ -10,7 +10,7 @@
 --]]
 
 local Enum = require("tudov.Enum")
-local json = require("json")
+local json = require("lib.json")
 
 local CClient = require("dr2c.client.network.Client")
 local GMessage = require("dr2c.shared.network.Message")
