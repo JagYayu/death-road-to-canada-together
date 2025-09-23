@@ -214,9 +214,10 @@ end
 
 --- @generic T
 --- @param tbl table<any, T>
+--- @param capacity integer?
 --- @return T[]
-function Table.getValueList(tbl)
-	local valueList = {}
+function Table.getValueList(tbl, capacity)
+	local valueList = capacity and table_new(capacity, 0) or {}
 
 	for _, v in pairs(tbl) do
 		valueList[#valueList + 1] = v
@@ -704,6 +705,10 @@ function Table.readonly(tbl)
 	return tableToReadonly(tbl, {})
 end
 
+--- @param l any
+--- @param r any
+--- @param visited table<any, true>
+--- @return boolean
 local function deepEqualsImpl(l, r, visited)
 	if l == r then
 		return true
@@ -742,19 +747,24 @@ end
 
 --- @param l table
 --- @param r table
+--- @return boolean
 function Table.deepEquals(l, r)
 	return deepEqualsImpl(l, r, {})
 end
 
-function Table.lowerBound(tbl, value)
-	local first, count = 1, #tbl
+--- @generic T
+--- @param list T[]
+--- @param value T
+--- @return integer
+function Table.lowerBound(list, value)
+	local first, count = 1, #list
 	local step, index
 
 	while count > 0 do
 		step = floor(count / 2)
 		index = first + step
 
-		if value > tbl[index] then
+		if value > list[index] then
 			first = index + 1
 			count = count - step - 1
 		else

@@ -18,6 +18,7 @@ local CRenderUtils = require("dr2c.client.render.Utils")
 --- @class dr2c.CUIWidget
 local CUIWidget = {}
 
+--- @alias dr2c.UIWidgetID string | integer | nil
 --- @alias dr2c.UIWidgetType dr2c.CUIWidget.Type
 
 CUIWidget.Type = Enum.sequence({
@@ -44,22 +45,25 @@ function CUIWidget.new(widgetType, args)
 	widgetType = tonumber(widgetType) or CUIWidget.Type.Box
 
 	--- @class dr2c.UIWidget.Args
+	--- @field id? dr2c.UIWidgetID
 	--- @field border? dr2c.UI.DrawBorder
-	--- @field margin? TE.Rectangle
-	--- @field padding? TE.Rectangle
-	--- @field rectangle? TE.Rectangle
+	--- @field margin? Rectangle
+	--- @field padding? Rectangle
+	--- @field rectangle? Rectangle
 	--- @field selectable? boolean @default true
 	args = args or Table.empty
 
 	--- @class dr2c.UIWidget
 	--- @field draw? fun(self: self)
 	--- @field update? fun(self: self)
-	--- @field margin TE.Rectangle
-	--- @field padding TE.Rectangle
-	--- @field rectangle TE.Rectangle
+	--- @field id dr2c.UIWidgetID?
+	--- @field margin Rectangle
+	--- @field padding Rectangle
+	--- @field rectangle Rectangle
 	--- @field widgets? dr2c.UIWidget[]
 	local widget = {
 		type = widgetType,
+		id = args.id,
 		border = CRenderUtils.copyDrawBorder(args.border or Table.empty),
 		margin = CRenderUtils.copyRectangle(args.margin or Table.empty),
 		padding = CRenderUtils.copyRectangle(args.padding or Table.empty),

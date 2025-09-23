@@ -9,10 +9,12 @@
 --
 --]]
 
---- @class dr2c.CRenderUtils
-local CRenderUtils = {}
+local Geometry = require("tudov.Geometry")
 
 local tonumber = tonumber
+
+--- @class dr2c.CRenderUtils
+local CRenderUtils = {}
 
 --- @param border dr2c.UI.DrawBorder | table
 function CRenderUtils.copyDrawBorder(border)
@@ -32,19 +34,6 @@ function CRenderUtils.copyDrawBorder(border)
 	}
 end
 
---- @param rect TE.Rectangle | table
---- @param x number?
---- @param y number?
---- @param w number?
---- @param h number?
---- @return TE.Rectangle
-function CRenderUtils.copyRectangle(rect, x, y, w, h)
-	return {
-		tonumber(rect[1]) or x or 0,
-		tonumber(rect[2]) or y or 0,
-		tonumber(rect[3]) or w or 0,
-		tonumber(rect[4]) or h or 0,
-	}
-end
+CRenderUtils.copyRectangle = Geometry.copyLuaRect
 
 return CRenderUtils

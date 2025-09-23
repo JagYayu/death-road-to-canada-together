@@ -27,7 +27,7 @@ events:add(CUIMenu.eventCMenu, function(e)
 		}
 	end
 
-	local w = CUIWidget.newFlex({
+	local widget = CUIWidget.newFlex({
 		rectangle = newFlexRectangle(),
 		vertical = true,
 	})
@@ -39,7 +39,7 @@ events:add(CUIMenu.eventCMenu, function(e)
 		4,
 	}
 
-	w:addChild(CUIWidget.newButton({
+	widget:addChild(CUIWidget.newButton({
 		label = "START",
 		margin = margin,
 		scale = CUI.getScale(),
@@ -48,7 +48,7 @@ events:add(CUIMenu.eventCMenu, function(e)
 		},
 	}))
 
-	w:addChild(CUIWidget.newButton({
+	widget:addChild(CUIWidget.newButton({
 		label = "OPTIONS",
 		margin = margin,
 		scale = CUI.getScale(),
@@ -57,7 +57,7 @@ events:add(CUIMenu.eventCMenu, function(e)
 		},
 	}))
 
-	w:addChild(CUIWidget.newButton({
+	widget:addChild(CUIWidget.newButton({
 		label = "EXIT",
 		margin = margin,
 		scale = CUI.getScale(),
@@ -66,12 +66,12 @@ events:add(CUIMenu.eventCMenu, function(e)
 		},
 	}))
 
-	e.menu.widgets[#e.menu.widgets + 1] = w
+	e.menu.canvas:addWidget(widget)
 
 	local update = e.menu.update
-	--- @param self dr2c.Menu
+	--- @param self dr2c.UIMenu
 	function e.menu.update(self)
-		w.rectangle = newFlexRectangle()
+		widget.rectangle = newFlexRectangle()
 
 		update(self)
 	end

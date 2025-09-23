@@ -9,13 +9,15 @@
 --
 --]]
 
+local ScriptEngine = require("ScriptEngine")
+
 --- @class TE.SortedList.Data
 --- @field compare fun(l: any, r: any): boolean?
 
 --- @class TE.SortedList
 local SortedList = {}
 
-function SortedList:insert()
+function SortedList:insert(value)
 	--
 end
 
@@ -37,5 +39,7 @@ end
 function SortedList.new()
 	return SortedList.setmetatable(SortedList.create())
 end
+
+ScriptEngine.lockMetatable(sortedListMetatable)
 
 return SortedList

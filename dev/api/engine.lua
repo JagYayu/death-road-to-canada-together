@@ -12,4 +12,5 @@ function engine:getVersion() end
 
 function engine:quit() end
 
+--- @warn It is not recommended to call this function every frame. It will cause the screen to flicker at current version of engine.
 function engine:triggerLoadPending() end

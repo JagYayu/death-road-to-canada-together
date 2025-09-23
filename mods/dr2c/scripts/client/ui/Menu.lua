@@ -12,6 +12,8 @@
 local Enum = require("tudov.Enum")
 local Table = require("tudov.Table")
 
+local CUICanvas = require("dr2c.client.ui.Canvas")
+
 --- @class dr2c.MenuEntry
 
 --- @class dr2c.CUIMenu
@@ -24,7 +26,7 @@ CUIMenu.Type = Enum.sequence({
 	Generic = 2,
 })
 
---- @type dr2c.Menu[]
+--- @type dr2c.UIMenu[]
 local menuStack = {}
 
 --- @type dr2c.UIWidget?
@@ -52,7 +54,7 @@ end
 
 function CUIMenu.update()
 	for _, menu in Table.reversedPairs(menuStack) do
-		if menu.update then
+		if menu then
 			menu:update()
 		end
 	end
@@ -63,34 +65,16 @@ CUIMenu.eventCMenu = events:new(N_("CMenu"), {
 	"Overrides",
 })
 
---- @param self dr2c.Menu
+--- @param self dr2c.UIMenu
 local function metatableMenuDraw(self)
-	selectedWidget = nil
-	local mouseX
-	local mouseY
-	for _, widget in ipairs(self.widgets) do
-		-- widget.rectangle
-		if widget.selectable then
-			--
-		end
-	end
+	self.canvas:draw()
 
-	for _, widget in ipairs(self.widgets) do
-		local draw = widget.draw
-		if draw then
-			draw(widget)
-		end
-	end
+	-- print(self.canvas.selectedWidget)
 end
 
---- @param self dr2c.Menu
+--- @param self dr2c.UIMenu
 local function metatableMenuUpdate(self)
-	for _, widget in ipairs(self.widgets) do
-		local update = widget.update
-		if update then
-			update(widget)
-		end
-	end
+	self.canvas:update()
 end
 
 CUIMenu.metatable = {
@@ -102,19 +86,19 @@ CUIMenu.metatable = {
 
 --- @param menuType dr2c.MenuType
 --- @param menuArgs table?
---- @return dr2c.Menu?
+--- @return dr2c.UIMenu?
 function CUIMenu.open(menuType, menuArgs)
-	--- @class dr2c.Menu : table
-	--- @field draw? fun(self: self)
+	--- @class dr2c.UIMenu
+	--- @field draw fun(self: self)
 	--- @field update fun(self: self)
+	--- @field canvas dr2c.UICanvas
+	--- @field type dr2c.MenuType
 	--- @field animationTime number?
 	--- @field content string
 	--- @field title string?
-	--- @field type dr2c.MenuType
-	--- @field widgets dr2c.UIWidget[]
 	local menu = {
+		canvas = CUICanvas.new(),
 		type = menuType,
-		widgets = {},
 	}
 
 	setmetatable(menu, CUIMenu.metatable)
@@ -159,9 +143,5 @@ events:add(N_("CUpdate"), function(e)
 
 	CUIMenu.update()
 end, "Test")
-
-events:add("MouseMove", function(e)
-	
-end, "MouseMove")
 
 return CUIMenu

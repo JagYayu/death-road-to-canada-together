@@ -29,7 +29,7 @@ events:add(CUIMenu.eventCMenu, function(e)
 	flex:addChild(CUIWidget.newButton({
 		label = "START",
 	}))
-	e.menu.widgets[#e.menu.widgets + 1] = flex
+	e.menu.canvas:addWidget(flex)
 
 	e.initialized = true
 end, "InitializeGeneric", "Initialize", CUIMenu.Type.Generic)
