@@ -26,7 +26,7 @@ local reloadPending = true
 --- @type table<string, dr2c.SpriteTable[]>
 local spriteTablesMap = {}
 
-local eventSpritesLoad = events:new(N_("SpritesLoad"), {
+local eventSpritesLoad = TE.events:new(N_("SpritesLoad"), {
 	"Register",
 })
 
@@ -36,7 +36,7 @@ local function registerSpritesImpl(e, sprites)
 	for spriteName, spriteInfos in pairs(sprites) do
 		for index, spriteInfo in ipairs(spriteInfos) do
 			local imageName = spriteInfo.image
-			local imageID = fonts:getID(imageName)
+			local imageID = TE.fonts:getID(imageName)
 
 			if imageID then
 				local spriteTable = {
@@ -62,7 +62,7 @@ function CRenderSprites.registerSprites(sprites)
 		error(("bad argument #1 to 'tbl' (table expected, got %s)"):format(type(sprites)))
 	end
 
-	events:add(eventSpritesLoad, function(e)
+	TE.events:add(eventSpritesLoad, function(e)
 		registerSpritesImpl(e, sprites)
 	end)
 end
@@ -72,12 +72,12 @@ local function registerSpritesFromFileImpl(filePath, noLog, hint, func)
 		error(("bad argument #1 to 'filePath' (string expected, got %s)"):format(type(filePath)))
 	end
 
-	events:add(eventSpritesLoad, function(e)
-		if not (noLog or vfs:exists(filePath)) then
+	TE.events:add(eventSpritesLoad, function(e)
+		if not (noLog or TE.vfs:exists(filePath)) then
 			log.warn("File not found: " .. filePath)
 		end
 
-		local success, result = pcall(func, vfs:readFile(filePath))
+		local success, result = pcall(func, TE.vfs:readFile(filePath))
 		if success then
 			registerSpritesImpl(e, result)
 		elseif not noLog then
@@ -108,13 +108,13 @@ function CRenderSprites.registerSpritesFromLuaFile(filePath, noLog, chunkname, m
 end
 
 local function registerSpritesFromDirectoryImpl(path, options, suffix, func)
-	if not vfs:exists(path) then
+	if not TE.vfs:exists(path) then
 		error(('Directory "%s" does not exist!'):format(path))
 	end
 
 	options = options
 		or bit.bor(EPathListOption.File, EPathListOption.Recursed, EPathListOption.Sorted, EPathListOption.FullPath)
-	local entries = vfs:list(path, options)
+	local entries = TE.vfs:list(path, options)
 
 	for _, entry in ipairs(entries) do
 		if String.hasSuffix(entry.path, suffix) then
@@ -142,7 +142,7 @@ function CRenderSprites.reloadImmediately()
 	}
 	local new = e.new
 
-	events:invoke(eventSpritesLoad, e, nil, EEventInvocation.None)
+	TE.events:invoke(eventSpritesLoad, e, nil, EEventInvocation.None)
 
 	spriteTablesMap = new
 
@@ -151,10 +151,10 @@ end
 
 function CRenderSprites.reload()
 	reloadPending = true
-	engine:triggerLoadPending()
+	TE.engine:triggerLoadPending()
 end
 
-events:add(N_("CLoad"), function(e)
+TE.events:add(N_("CLoad"), function(e)
 	if reloadPending then
 		CRenderSprites.reloadImmediately()
 	end
@@ -170,7 +170,7 @@ function CRenderSprites.getSpriteTable(spriteName, spriteIndex)
 	end
 end
 
-events:add("DebugSnapshot", function(e)
+TE.events:add("DebugSnapshot", function(e)
 	e.reloadPending = reloadPending
 	e.spriteTablesMap = spriteTablesMap
 end, scriptName, nil, scriptName)

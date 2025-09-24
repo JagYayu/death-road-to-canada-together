@@ -18,7 +18,7 @@ local CUIDraw = {}
 local renderer
 
 local drawRectArgs = DrawRectArgs()
-drawRectArgs.texture = images:getID("mods/dr2c/gfx/UI.png")
+drawRectArgs.texture = TE.images:getID("mods/dr2c/gfx/UI.png")
 drawRectArgs.source = { x = 0, y = 0, w = 0, h = 0 }
 local drawRectDst = drawRectArgs.destination
 local drawRectSrc = drawRectArgs.source
@@ -30,13 +30,13 @@ function CUIDraw.setTexture(drawTexture)
 	drawRectArgs.texture = drawTexture
 end
 
-local uiTexture = images:getID("mods/dr2c/gfx/UI.png")
+local uiTexture = TE.images:getID("mods/dr2c/gfx/UI.png")
 local uiTextureX = 0
 local uiTextureY = 0
 local uiTextureWidth = 9
 local uiTextureHeight = 9
 local uiTextureSize = 4
-local uiFont = fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
+local uiFont = TE.fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
 
 --- @class dr2c.UI.DrawBorder
 --- @field x number? @Frame top left position
@@ -52,12 +52,14 @@ local uiFont = fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
 --- @field textureSize number?
 --- @field color Color?
 
-function CUIDraw.setRenderer(renderer_)
-	renderer = renderer_
+--- @param newRenderer TE.Renderer
+function CUIDraw.overrideRenderer(newRenderer)
+	renderer = newRenderer
 end
 
 --- 画一个通用的矩形边框
 --- @param args dr2c.UI.DrawBorder
+--- @return boolean
 function CUIDraw.drawBorder(args)
 	-- 绘制顺序：左上、上、右上、左、右、左下、下、右下
 
@@ -67,7 +69,7 @@ function CUIDraw.drawBorder(args)
 	local h = args.height
 	local sz = args.size
 	if not (x or y or w or h) then
-		return
+		return false
 	end
 
 	--- @cast x number
@@ -140,6 +142,8 @@ function CUIDraw.drawBorder(args)
 	drawRectDst.x = x - sz + w
 	drawRectDst.w = sz
 	renderer:drawRect(drawRectArgs)
+
+	return true
 end
 
 --- @class dr2c.UI.DrawButton
@@ -158,9 +162,10 @@ end
 --- @field border dr2c.UI.DrawBorder?
 
 --- @param args dr2c.UI.DrawButton
+--- @return boolean
 function CUIDraw.drawButton(args)
 	if not (args.x and args.y) then
-		return
+		return false
 	end
 
 	local border = args.border
@@ -222,10 +227,31 @@ function CUIDraw.drawButton(args)
 	drawTextArgs.shadow = 2
 	drawTextArgs.shadowColor = Color.Green
 	renderer:drawText(drawTextArgs)
+
+	return true
+end
+
+--- @class dr2c.UI.DrawSelectionBox
+--- @field x number
+--- @field y number
+--- @field width number
+--- @field height number
+--- @field time number?
+--- @field texture DrawArgTexture?
+--- @field textureX string?
+--- @field textureY string?
+--- @field textureWidth string?
+--- @field textureHeight string?
+function CUIDraw.drawSelectionBox(args)
+	local time = args.time or Time.getSystemTime()
+
+	local factor = math.sin(time * 2) + 1
+
+	-- renderer:
 end
 
 --- @param e dr2c.E.CRender
-events:add(N_("CRenderUI"), function(e)
+TE.events:add(N_("CRenderUI"), function(e)
 	renderer = e.renderer
 end, "BeginDraw", "Begin")
 

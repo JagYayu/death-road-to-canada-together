@@ -18,14 +18,14 @@ Utility.nan = 0 / 0
 
 --- @param levelOverride integer? @default: 3
 function Utility.assertLoadtime(levelOverride)
-	if scriptLoader:getLoadingScriptID() == 0 then
+	if TE.scriptLoader:getLoadingScriptID() == 0 then
 		error("Function must be called in script run time!", levelOverride or 3)
 	end
 end
 
 --- @param levelOverride integer? @default: 3
 function Utility.assertRuntime(levelOverride)
-	if scriptLoader:getLoadingScriptID() ~= 0 then
+	if TE.scriptLoader:getLoadingScriptID() ~= 0 then
 		error("Function must be called in script run time!", levelOverride or 3)
 	end
 end

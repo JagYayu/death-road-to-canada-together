@@ -44,14 +44,14 @@ function CWorldRoom.getEntityIDsInRoom(roomID)
 end
 
 --- @param e dr2c.E.CWorldTickProcess
-events:add(N_("CWorldTickProcess"), function(e)
+TE.events:add(N_("CWorldTickProcess"), function(e)
 	if e.entitiesChanged then
 		entityIDsInRoomCache = {}
 	end
 end, "ClearEntityIDsInRoomCache", "ECS", nil, 1)
 
 --- @param e dr2c.E.CWorldRollback
-events:add(N_("CWorldRollback"), function(e)
+TE.events:add(N_("CWorldRollback"), function(e)
 	if not e.suppressed then
 		entityIDsInRoomCache = {}
 	end

@@ -54,7 +54,7 @@ function CClient.getPrivateAttribute(privateAttribute)
 	return clientPrivateAttributes[privateAttribute]
 end
 
-events:add(N_("CUpdate"), function(e)
+TE.events:add(N_("CUpdate"), function(e)
 	-- local session = CClient.getNetworkSession()
 	-- if not session then
 	-- 	return
@@ -83,7 +83,7 @@ events:add(N_("CUpdate"), function(e)
 	-- setPublicAttribute(clientID, PublicAttribute.Statistics, {})
 	-- setPublicAttribute(clientID, PublicAttribute.DisplayName, nil)
 	-- setPublicAttribute(clientID, PublicAttribute.Room, nil)
-	-- setPublicAttribute(clientID, PublicAttribute.Version, engine:getVersion())
+	-- setPublicAttribute(clientID, PublicAttribute.Version, TE.engine:getVersion())
 	-- setPublicAttribute(clientID, PublicAttribute.ContentHash, 0)
 	-- setPublicAttribute(clientID, PublicAttribute.ModsHash, 0)
 	-- setPublicAttribute(clientID, PublicAttribute.SocketType, session:getSocketType())
@@ -91,16 +91,16 @@ events:add(N_("CUpdate"), function(e)
 	-- setPrivateAttribute(clientID, PrivateAttribute.SecretStatistics, nil)
 end, N_("InitializeLocalClientAttributes"), "Network")
 
-CClient.eventCConnect = events:new(N_("CConnect"), {
+CClient.eventCConnect = TE.events:new(N_("CConnect"), {
 	"Reset",
 	"Initialize",
 })
 
-CClient.eventCDisconnect = events:new(N_("CDisconnect"), {
+CClient.eventCDisconnect = TE.events:new(N_("CDisconnect"), {
 	"Reset",
 })
 
-CClient.eventCMessage = events:new(N_("CMessage"), {
+CClient.eventCMessage = TE.events:new(N_("CMessage"), {
 	"Overrides",
 	"Receive",
 	"PlayerInputBuffer",
@@ -156,11 +156,11 @@ end
 local function invokeEventClientConnect()
 	--- @class dr2c.E.ClientConnect
 	local e = {}
-	events:invoke(CClient.eventCConnect, e)
+	TE.events:invoke(CClient.eventCConnect, e)
 end
 
 --- @param e Events.E.ClientConnect
-events:add("ClientConnect", function(e)
+TE.events:add("ClientConnect", function(e)
 	invokeEventClientConnect()
 end)
 
@@ -170,11 +170,11 @@ local function invokeEventClientDisconnect(clientID)
 		clientID = clientID,
 	}
 
-	events:invoke(CClient.eventCDisconnect, e)
+	TE.events:invoke(CClient.eventCDisconnect, e)
 end
 
 --- @param e Events.E.ClientConnect
-events:add("ClientDisconnect", function(e)
+TE.events:add("ClientDisconnect", function(e)
 	invokeEventClientDisconnect(e.data.clientID)
 end)
 
@@ -189,11 +189,11 @@ local function invokeEventClientMessage(messageContent, messageType)
 		type = messageType,
 	}
 
-	events:invoke(CClient.eventCMessage, e, messageType)
+	TE.events:invoke(CClient.eventCMessage, e, messageType)
 end
 
 --- @param e Events.E.ClientMessage
-events:add("ClientMessage", function(e)
+TE.events:add("ClientMessage", function(e)
 	if type(e.data) ~= "userdata" then
 		return
 	end
@@ -206,19 +206,19 @@ end, "clientMessage", nil, CClient.sessionSlot)
 local throttleClientUpdateClientsPrivateAttributeRequests = GUtilsThrottle.newTime(0.25)
 
 --- @param e dr2c.E.ClientUpdate
-events:add(N_("CUpdate"), function(e)
+TE.events:add(N_("CUpdate"), function(e)
 	e.networkThrottle = throttleClientUpdateClientsPrivateAttributeRequests()
 end, "AssignNetworkThrottle", "Network", nil, -1)
 
 local sendClientVerifyingAttributesTime = 0
 
-CClient.eventCCollectVerifyAttributes = events:new(N_("CCollectVerifyAttributes"), {
+CClient.eventCCollectVerifyAttributes = TE.events:new(N_("CCollectVerifyAttributes"), {
 	"Public",
 	"Private",
 	"State",
 })
 
-events:add(N_("CCollectVerifyAttributes"), function(e)
+TE.events:add(N_("CCollectVerifyAttributes"), function(e)
 	e.attributes[#e.attributes + 1] = {
 		public = true,
 		attribute = GNetworkClient.PublicAttribute.State,
@@ -236,7 +236,7 @@ local function invokeEventClientCollectVerifyAttributes(pe)
 		attributes = attributes,
 	}
 
-	events:invoke(CClient.eventCCollectVerifyAttributes, e)
+	TE.events:invoke(CClient.eventCCollectVerifyAttributes, e)
 
 	if log.canTrace() then
 		log.trace("Collected verify attributes: ", attributes)
@@ -246,7 +246,7 @@ local function invokeEventClientCollectVerifyAttributes(pe)
 end
 
 --- @param e dr2c.E.ClientUpdate
-events:add(N_("CUpdate"), function(e)
+TE.events:add(N_("CUpdate"), function(e)
 	if e.networkThrottle then
 		return
 	end

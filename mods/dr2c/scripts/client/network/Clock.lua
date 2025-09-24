@@ -31,11 +31,11 @@ function CClock.sync()
 	CClient.sendReliable(GMessage.Type.Clock)
 end
 
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	clientClockTimeOffset = e.content.timeOffset
 end, "ReceiveClockTime", "Receive", GMessage.Type.Clock)
 
-events:add(N_("CConnect"), function(e)
+TE.events:add(N_("CConnect"), function(e)
 	CClock.sync()
 end, "SyncClockTime", "Initialize")
 

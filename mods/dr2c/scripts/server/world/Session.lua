@@ -18,21 +18,21 @@ local SServer = require("dr2c.server.network.Server")
 --- @class dr2c.SWorldSession : dr2c.WorldSession
 local SWorldSession = GWorldSession.new()
 
-SWorldSession.eventSWorldSessionStart = events:new(N_("SWorldSessionStart"), {
+SWorldSession.eventSWorldSessionStart = TE.events:new(N_("SWorldSessionStart"), {
 	"Reset",
 	"Level",
 })
 
-SWorldSession.eventSWorldSessionFinish = events:new(N_("SWorldSessionFinish"), {
+SWorldSession.eventSWorldSessionFinish = TE.events:new(N_("SWorldSessionFinish"), {
 	"Level",
 	"Reset",
 })
 
-SWorldSession.eventSWorldSessionPause = events:new(N_("SWorldSessionPause"), {
+SWorldSession.eventSWorldSessionPause = TE.events:new(N_("SWorldSessionPause"), {
 	"Time",
 })
 
-SWorldSession.eventSWorldSessionUnpause = events:new(N_("SWorldSessionUnpause"), {
+SWorldSession.eventSWorldSessionUnpause = TE.events:new(N_("SWorldSessionUnpause"), {
 	"Time",
 })
 
@@ -61,7 +61,7 @@ function SWorldSession.start(clientID, args)
 		attributes = worldSessionAttributes,
 		suppressed = nil,
 	}
-	events:invoke(SWorldSession.eventSWorldSessionStart, e)
+	TE.events:invoke(SWorldSession.eventSWorldSessionStart, e)
 
 	if not e.suppressed then
 		SServer.broadcastReliable(GMessage.Type.WorldSessionStart, {
@@ -75,7 +75,7 @@ function SWorldSession.start(clientID, args)
 end
 
 --- @param e dr2c.E.SMessage
-events:add(N_("SMessage"), function(e)
+TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.start(e.clientID, e.content)
 end, "ReceiveWorldSessionStart", "Receive", GMessage.Type.WorldSessionStart)
 
@@ -83,7 +83,7 @@ function SWorldSession.restart()
 	-- TODO
 end
 
-events:add(N_("SMessage"), function(e)
+TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.restart()
 end, "ReceiveWorldSessionRestart", "Receive", GMessage.Type.WorldSessionRestart)
 
@@ -91,14 +91,14 @@ function SWorldSession.finish()
 	SWorldSession.resetAttributes()
 
 	local e = {}
-	events:invoke(SWorldSession.eventSWorldSessionFinish, e)
+	TE.events:invoke(SWorldSession.eventSWorldSessionFinish, e)
 
 	if not e.suppressed then
 		SServer.broadcastReliable(GMessage.Type.WorldSessionFinish)
 	end
 end
 
-events:add(N_("SMessage"), function(e)
+TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.finish()
 end, "ReceiveWorldSessionFinish", "Receive", GMessage.Type.WorldSessionFinish)
 
@@ -110,7 +110,7 @@ function SWorldSession.pause()
 	end
 
 	local e = {}
-	events:invoke(SWorldSession.eventSWorldSessionPause, e)
+	TE.events:invoke(SWorldSession.eventSWorldSessionPause, e)
 
 	if not e.suppressed then
 		local time = Time.getSystemTime()
@@ -126,7 +126,7 @@ function SWorldSession.pause()
 	end
 end
 
-events:add(N_("SMessage"), function(e)
+TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.pause()
 end, "ReceiveWorldSessionPause", "Receive", GMessage.Type.WorldSessionPause)
 
@@ -138,7 +138,7 @@ function SWorldSession.unpause()
 	end
 
 	local e = {}
-	events:invoke(SWorldSession.eventSWorldSessionUnpause, e)
+	TE.events:invoke(SWorldSession.eventSWorldSessionUnpause, e)
 
 	if not e.suppressed then
 		local time = Time.getSystemTime()
@@ -148,7 +148,7 @@ function SWorldSession.unpause()
 
 		SServer.broadcastReliable(GMessage.Type.WorldSessionUnpause, time)
 
-		events:invoke(SWorldSession.eventSWorldSessionUnpause)
+		TE.events:invoke(SWorldSession.eventSWorldSessionUnpause)
 
 		return true
 	else
@@ -156,7 +156,7 @@ function SWorldSession.unpause()
 	end
 end
 
-events:add(N_("SMessage"), function(e)
+TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.pause()
 end, "ReceiveWorldSessionUnpause", "Receive", GMessage.Type.WorldSessionUnpause)
 

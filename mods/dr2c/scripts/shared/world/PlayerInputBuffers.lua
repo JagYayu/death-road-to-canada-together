@@ -35,7 +35,7 @@ end)
 
 --- @return dr2c.PlayerInputBuffers
 function GPlayerInputBuffers.new()
-	local scriptName = scriptLoader:getLoadingScriptName()
+	local scriptName = TE.scriptLoader:getLoadingScriptName()
 	if scriptName ~= "" and playersTickInputsDataModules[scriptName] then
 		return playersTickInputsDataModules[scriptName]
 	end

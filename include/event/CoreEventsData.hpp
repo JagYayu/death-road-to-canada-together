@@ -30,6 +30,7 @@ namespace tudov
 	enum class EKeyModifier : std::uint32_t;
 	enum class ESocketType : std::uint8_t;
 	class Context;
+	class ScriptModule;
 	struct IDebugManager;
 	struct IWindow;
 	struct IKeyboard;
@@ -222,5 +223,12 @@ namespace tudov
 
 	struct EventWindowResizeData : public CoreEventData
 	{
+	};
+
+	struct EventScriptUnloadData : public CoreEventData
+	{
+		ScriptID scriptID;
+		std::string_view scriptName;
+		sol::table module;
 	};
 } // namespace tudov

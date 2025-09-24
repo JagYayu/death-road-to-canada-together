@@ -2,10 +2,10 @@
 error("this is a lua library module")
 
 --- @class TE.ScriptErrors
-scriptErrors = {}
+TE.scriptErrors = {}
 
 --- Import from engine
-function scriptErrors.addLoadtimeError(scriptID, traceback) end
+function TE.scriptErrors.addLoadtimeError(scriptID, traceback) end
 
 --- Import from engine
-function scriptErrors.addRuntimeError() end
+function TE.scriptErrors.addRuntimeError() end

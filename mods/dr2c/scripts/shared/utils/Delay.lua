@@ -39,7 +39,7 @@ function GUtilsDelay.register(args)
 	end
 
 	local function eventsAdd(entry)
-		events:add(
+		TE.events:add(
 			entry.event or "CUpdate",
 			func,
 			"UtilsDelayHandler" .. registeredDelayLatestID,

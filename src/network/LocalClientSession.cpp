@@ -159,7 +159,7 @@ bool LocalClientSession::Update()
 			    .serverSlot = messageEntry.serverSlot,
 			};
 
-			coreEvents.ClientConnect().Invoke(&data, data.socketType, EEventInvocation::None);
+			coreEvents.ClientConnect().Invoke(&data, EventHandleKey(data.socketType), EEventInvocation::None);
 		}
 		else if (std::holds_alternative<LocalSessionMessage::Disconnect>(messageEntry.variant))
 		{
@@ -173,7 +173,7 @@ bool LocalClientSession::Update()
 			    .serverSlot = messageEntry.serverSlot,
 			};
 
-			coreEvents.ClientDisconnect().Invoke(&data, data.socketType, EEventInvocation::None);
+			coreEvents.ClientDisconnect().Invoke(&data, EventHandleKey(data.socketType), EEventInvocation::None);
 		}
 		else if (std::holds_alternative<LocalSessionMessage::Receive>(messageEntry.variant))
 		{
@@ -212,7 +212,7 @@ void LocalClientSession::UpdateReceive(LocalSessionMessage &messageEntry) noexce
 	}
 	else
 	{
-		GetEventManager().GetCoreEvents().ClientMessage().Invoke(&data, data.socketType, EEventInvocation::None);
+		GetEventManager().GetCoreEvents().ClientMessage().Invoke(&data, EventHandleKey(data.socketType), EEventInvocation::None);
 	}
 }
 

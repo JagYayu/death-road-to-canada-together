@@ -55,10 +55,10 @@ privateAttributeRequestLatestID = persist("privateAttributeRequestLatestID", fun
 	return privateAttributeRequestLatestID
 end)
 
-CClients.eventCClientAdded = events:new(N_("CClientAdded"), {
+CClients.eventCClientAdded = TE.events:new(N_("CClientAdded"), {
 	"PlayerInputBuffer",
 })
-CClients.eventCClientRemoved = events:new(N_("CClientRemoved"), {
+CClients.eventCClientRemoved = TE.events:new(N_("CClientRemoved"), {
 	"PlayerInputBuffer",
 })
 
@@ -82,7 +82,7 @@ function CClients.addClient(clientID)
 	local e = {
 		clientID = clientID,
 	}
-	events:invoke(CClients.eventCClientAdded, e)
+	TE.events:invoke(CClients.eventCClientAdded, e)
 end
 
 --- @param clientID Network.ClientID
@@ -98,7 +98,7 @@ function CClients.removeClient(clientID)
 	local e = {
 		clientID = clientID,
 	}
-	events:invoke(CClients.eventCClientRemoved, e)
+	TE.events:invoke(CClients.eventCClientRemoved, e)
 end
 
 --- @param clientID Network.ClientID
@@ -165,14 +165,14 @@ function CClients.setPrivateAttribute(clientID, privateAttribute, attributeValue
 	attributes[privateAttribute] = attributeValue
 end
 
-events:add(N_("CDisconnect"), function(e)
+TE.events:add(N_("CDisconnect"), function(e)
 	clientsPublicAttributes = {}
 	clientsPrivateAttributes = {}
 	privateAttributeRequests = {}
 end, N_("ResetClients"), "Reset")
 
 --- @param e dr2c.E.CMessage
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	local clientID = e.content.clientID
 
 	if log.canTrace() then
@@ -182,7 +182,7 @@ events:add(N_("CMessage"), function(e)
 	CClients.addClient(clientID)
 end, "ReceiveClientConnect", "Receive", GMessage.Type.ClientConnect)
 
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	local clientID = e.content.clientID
 
 	if log.canTrace() then
@@ -203,7 +203,7 @@ local function initializeClientsAttributes(serverClientsPublicAttributes)
 end
 
 --- @param e dr2c.E.CMessage
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	initializeClientsAttributes(e.content)
 end, "InitializeClientsAttributes", "Receive", GMessage.Type.Clients)
 
@@ -232,17 +232,17 @@ local function receiveClientAttribute(e, validate, clientsAttributes)
 end
 
 --- @param e dr2c.E.CMessage
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	receiveClientAttribute(e, GClient.validatePublicAttribute, clientsPublicAttributes)
 end, "ReceiveClientPublicAttribute", "Receive", GMessage.Type.ClientPublicAttribute)
 
 --- @param e dr2c.E.CMessage
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	receiveClientAttribute(e, GClient.validatePrivateAttribute, clientsPrivateAttributes)
 end, "ReceiveClientPrivateAttribute", "Receive", GMessage.Type.ClientPrivateAttribute)
 
 --- @param e dr2c.E.CMessage
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	local content = e.content
 	if type(content) ~= "table" or type(content.clientID) ~= "number" or type(content.attribute) ~= "number" then
 		return
@@ -254,7 +254,7 @@ events:add(N_("CMessage"), function(e)
 	end
 end, "ClearPrivateAttributeCache", "Receive", GMessage.Type.ClientPrivateAttributeChanged)
 
-events:add(N_("CUpdate"), function(e)
+TE.events:add(N_("CUpdate"), function(e)
 	if e.networkThrottle then
 		return
 	end

@@ -4,6 +4,9 @@ error("this is a lua library module")
 --- @class metatable
 --- @field _TE_locked true? @A marker field, means this metatable is locked by engine and inaccessible to sandboxed scripts.
 
+--- @class userdata
+--- @field getTypeID? fun(): TE.TypeID?
+
 --- @diagnostic disable-next-line: duplicate-doc-alias
 --- @alias N_Hint string
 
@@ -41,6 +44,15 @@ error("this is a lua library module")
 --- @class Vector
 --- @field [1] number
 --- @field [2] number
+
+--- @class TE.TypeID
+
+--- @class TE.TudovEngine
+TE = {}
+
+--- @param value userdata | any?
+--- @return TE.TypeID
+function TE.getUserdataTypeID(value) end
 
 --- *Mod Scope*
 --- Insert prefix of current script's namespace at the start of `str`.

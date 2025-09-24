@@ -23,7 +23,7 @@ function CServer.getAttribute(attribute)
 	return serverAttributes[attribute]
 end
 
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	local content = e.content
 	if type(content) ~= "table" then
 		return

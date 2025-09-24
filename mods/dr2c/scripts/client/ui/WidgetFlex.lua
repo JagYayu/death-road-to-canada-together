@@ -16,6 +16,8 @@ local CUIWidget = require("dr2c.client.ui.Widget")
 --- @class dr2c.CUIWidgetFlex
 local CUIWidgetFlex = {}
 
+CUIWidgetFlex.UIWidgetType = CUIWidget.Type.Flex
+
 --- @param widget dr2c.UIWidget
 local function addChild(self, widget)
 	self.widgets[#self.widgets + 1] = widget
@@ -100,7 +102,7 @@ CUIWidgetFlex.metatable = {
 }
 
 --- @param e dr2c.E.CWidget
-events:add(CUIWidget.eventCWidget, function(e)
+TE.events:add(CUIWidget.eventCWidget, function(e)
 	--- @class dr2c.UIWidgetFlex.Args : dr2c.UIWidget.Args
 	--- @field marginX? number
 	--- @field marginY? number

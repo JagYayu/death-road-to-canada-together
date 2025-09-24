@@ -3,7 +3,7 @@ local TestSynchrony = {}
 
 local drawTextArgs = DrawTextArgs()
 
-drawTextArgs.font = fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
+drawTextArgs.font = TE.fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
 
 function TestSynchrony.enable()
 	local Function = require("tudov.Function")
@@ -25,7 +25,7 @@ function TestSynchrony.enable()
 	local i = 0
 
 	--- @param e dr2c.E.CRender
-	events:add(N_("CRenderCamera"), function(e)
+	TE.events:add(N_("CRenderCamera"), function(e)
 		local renderer = e.renderer
 
 		i = i + 1
@@ -68,7 +68,7 @@ function TestSynchrony.enable()
 		-- end
 	end, "TestSynchronyInfo", "Debug")
 
-	events:add(N_("CWorldTickProcess"), function(e)
+	TE.events:add(N_("CWorldTickProcess"), function(e)
 		if CECS.countEntitiesByType("Character") < 2 then
 			print("Spawn a Character")
 			CECS.spawnEntity("Character")

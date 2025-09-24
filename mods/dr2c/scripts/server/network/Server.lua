@@ -41,7 +41,7 @@ function SNetworkServer.getNetworkSession()
 	return network:getServer(SNetworkServer.sessionSlot)
 end
 
-events:add(N_("SUpdate"), function()
+TE.events:add(N_("SUpdate"), function()
 	if serverAttributes then
 		return
 	end
@@ -56,7 +56,7 @@ events:add(N_("SUpdate"), function()
 		[GNetworkServer.Attribute.Clients] = session:getClients(),
 		[GNetworkServer.Attribute.MaxClients] = session:getMaxClients(),
 		[GNetworkServer.Attribute.StartupTime] = Time.getStartupTime(),
-		[GNetworkServer.Attribute.Version] = engine:getVersion(),
+		[GNetworkServer.Attribute.Version] = TE.engine:getVersion(),
 		[GNetworkServer.Attribute.Mods] = {}, -- TODO get from mod manager
 		[GNetworkServer.Attribute.HasPassword] = session:getPassword() ~= "",
 		[GNetworkServer.Attribute.Rooms] = { SNetworkRoom.defaultRoomID },
@@ -173,38 +173,38 @@ function SNetworkServer.broadcastUnreliable(messageType, messageContent, channel
 	end
 end
 
-SNetworkServer.eventSHost = events:new(N_("SHost"), {
+SNetworkServer.eventSHost = TE.events:new(N_("SHost"), {
 	"Reset",
 	"Initialize",
 })
 
-SNetworkServer.eventSShutdown = events:new(N_("SShutdown"), {
+SNetworkServer.eventSShutdown = TE.events:new(N_("SShutdown"), {
 	"Reset",
 })
 
-SNetworkServer.eventSConnect = events:new(N_("SConnect"), {
+SNetworkServer.eventSConnect = TE.events:new(N_("SConnect"), {
 	"Reset",
 	"Clients",
 	"PlayerInputBuffer",
 })
 
-SNetworkServer.eventSDisconnect = events:new(N_("SDisconnect"), {
+SNetworkServer.eventSDisconnect = TE.events:new(N_("SDisconnect"), {
 	"Clients",
 	"Reset",
 })
 
-SNetworkServer.eventSMessage = events:new(N_("SMessage"), {
+SNetworkServer.eventSMessage = TE.events:new(N_("SMessage"), {
 	"Overrides",
 	"Receive",
 	"Broadcast",
 })
 
-events:add("ServerHost", function(e)
-	events:invoke(SNetworkServer.eventSHost, {})
+TE.events:add("ServerHost", function(e)
+	TE.events:invoke(SNetworkServer.eventSHost, {})
 end)
 
-events:add("ServerShutdown", function(e)
-	events:invoke(SNetworkServer.eventSShutdown, {})
+TE.events:add("ServerShutdown", function(e)
+	TE.events:invoke(SNetworkServer.eventSShutdown, {})
 end)
 
 --- @param clientID Network.ClientID
@@ -215,11 +215,11 @@ local function invokeEventServerConnect(clientID)
 		clientID = clientID,
 	}
 
-	events:invoke(SNetworkServer.eventSConnect, e)
+	TE.events:invoke(SNetworkServer.eventSConnect, e)
 end
 
 --- @param e Events.E.ServerMessage
-events:add("ServerConnect", function(e)
+TE.events:add("ServerConnect", function(e)
 	invokeEventServerConnect(e.data.clientID)
 end)
 
@@ -230,11 +230,11 @@ local function invokeEventServerDisconnect(clientID)
 		clientID = clientID,
 	}
 
-	events:invoke(SNetworkServer.eventSDisconnect, e, nil, EEventInvocation.None)
+	TE.events:invoke(SNetworkServer.eventSDisconnect, e, nil, EEventInvocation.None)
 end
 
 --- @param e Events.E.ServerDisconnect
-events:add("ServerDisconnect", function(e)
+TE.events:add("ServerDisconnect", function(e)
 	invokeEventServerDisconnect(e.data.clientID)
 end)
 
@@ -253,11 +253,11 @@ local function invokeEventServerMessage(clientID, messageContent, messageType)
 	}
 
 	--- @diagnostic disable-next-line: param-type-mismatch
-	events:invoke(SNetworkServer.eventSMessage, e, messageType)
+	TE.events:invoke(SNetworkServer.eventSMessage, e, messageType)
 end
 
 --- @param e Events.E.ServerMessage
-events:add("ServerMessage", function(e)
+TE.events:add("ServerMessage", function(e)
 	local messageType, messageContent = GNetworkMessage.unpack(e.data.message)
 
 	if GNetworkMessage.isUnessential(messageType) then
@@ -269,7 +269,7 @@ events:add("ServerMessage", function(e)
 end, "ServerMessage", nil, SNetworkServer.sessionSlot)
 
 --- @param e dr2c.E.SConnect
-events:add(SNetworkServer.eventSConnect, function(e)
+TE.events:add(SNetworkServer.eventSConnect, function(e)
 	local clientID = e.clientID
 
 	if log.canTrace() then
@@ -288,7 +288,7 @@ events:add(SNetworkServer.eventSConnect, function(e)
 end, "BroadcastClientConnectState", "Clients")
 
 --- @param e dr2c.E.SMessage
-events:add(SNetworkServer.eventSMessage, function(e)
+TE.events:add(SNetworkServer.eventSMessage, function(e)
 	if e.broadcast then
 		SNetworkServer.broadcastReliable(e.type, e.broadcast)
 	end

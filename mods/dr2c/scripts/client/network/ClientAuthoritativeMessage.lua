@@ -33,7 +33,7 @@ function CNetworkClientAuthoritativeMessage.register(messageType, response)
 	end
 
 	--- @param e dr2c.E.CMessage
-	events:add(N_("CMessage"), function(e)
+	TE.events:add(N_("CMessage"), function(e)
 		local permissions = CNetworkClient.getPublicAttribute(GNetworkClient.PublicAttribute.Permissions)
 		if not (permissions and EnumFlag.hasAll1(permissions, GNetworkClient.Permission.Authority)) then
 			return

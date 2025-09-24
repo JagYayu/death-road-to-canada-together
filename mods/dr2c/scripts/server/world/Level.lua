@@ -3,6 +3,6 @@ local SWorldLevel = {}
 function SWorldLevel.getRooms()
 end
 
--- events:
+-- TE.events:
 
 return SWorldLevel

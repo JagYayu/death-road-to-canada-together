@@ -83,7 +83,7 @@ void LocalServerSession::Host(const HostArgs &args)
 	    .socketType = ESocketType::Local,
 	    .serverSlot = _serverSessionSlot,
 	};
-	GetEventManager().GetCoreEvents().ServerHost().Invoke(&data, {}, EEventInvocation::None);
+	GetEventManager().GetCoreEvents().ServerHost().Invoke(&data, nullptr, EEventInvocation::None);
 
 	_sessionState = EServerSessionState::Hosting;
 
@@ -118,7 +118,7 @@ void LocalServerSession::Shutdown()
 	    .socketType = ESocketType::Local,
 	    .serverSlot = _serverSessionSlot,
 	};
-	GetEventManager().GetCoreEvents().ServerShutdown().Invoke(&data, {}, EEventInvocation::None);
+	GetEventManager().GetCoreEvents().ServerShutdown().Invoke(&data, nullptr, EEventInvocation::None);
 
 	_sessionState = EServerSessionState::Shutdown;
 }
@@ -286,7 +286,7 @@ bool LocalServerSession::Update()
 				    .serverSlot = messageEntry.serverSlot,
 				};
 
-				coreEvents.ServerConnect().Invoke(&data, data.socketType, EEventInvocation::None);
+				coreEvents.ServerConnect().Invoke(&data, EventHandleKey(data.socketType), EEventInvocation::None);
 
 				std::shared_ptr<LocalClientSession> client = event.localClient.lock();
 				_hostInfo->localClients[clientID] = client;
@@ -329,7 +329,7 @@ bool LocalServerSession::Update()
 			    .serverSlot = messageEntry.serverSlot,
 			};
 
-			GetEventManager().GetCoreEvents().ServerMessage().Invoke(&eventData, _serverSessionSlot, EEventInvocation::None);
+			GetEventManager().GetCoreEvents().ServerMessage().Invoke(&eventData, EventHandleKey(_serverSessionSlot), EEventInvocation::None);
 
 			if (eventData.broadcast != "")
 			{

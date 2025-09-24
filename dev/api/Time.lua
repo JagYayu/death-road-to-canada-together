@@ -12,8 +12,8 @@ function Time.getStartupTime() end
 --- @return number seconds
 function Time.getSystemTime() end
 
---- @class Timer
-Timer = {}
+--- @class Timer : function
+local Timer = {}
 
 --- @param paused boolean?
 --- @return Timer

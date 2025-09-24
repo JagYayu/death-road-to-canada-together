@@ -20,7 +20,7 @@
 local renderTarget
 local drawOnce = true
 
-events:add(N_("CRender"), function(e)
+TE.events:add(N_("CRender"), function(e)
 	--
 end, N_("renderSprites"))
 

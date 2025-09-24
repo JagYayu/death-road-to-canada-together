@@ -21,7 +21,7 @@ function CUI.getScale()
 	return scale
 end
 
-CUI.eventRenderUI = events:new(N_("CRenderUI"), {
+CUI.eventRenderUI = TE.events:new(N_("CRenderUI"), {
 	"Begin",
 	"Menu",
 	"Test",
@@ -29,12 +29,12 @@ CUI.eventRenderUI = events:new(N_("CRenderUI"), {
 })
 
 --- @param e dr2c.E.CRender
-events:add(N_("CRender"), function(e)
+TE.events:add(N_("CRender"), function(e)
 	local w, h = e.window:getSize()
 	scale = math.min(w, h) / 480
 
 	--- @alias dr2c.E.CRenderUI dr2c.E.CRender
-	events:invoke(CUI.eventRenderUI, e)
+	TE.events:invoke(CUI.eventRenderUI, e)
 end, N_("RenderUI"), "UI")
 
 return CUI

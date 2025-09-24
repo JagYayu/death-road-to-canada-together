@@ -11,8 +11,10 @@
 
 local Table = require("tudov.Table")
 local Geometry = require("tudov.Geometry")
+local Enum = require("tudov.Enum")
 
 local CSystemInput = require("dr2c.client.system.Input")
+local CUIWidget = require("dr2c.client.ui.Widget")
 
 --- @class dr2c.CUICanvas
 local CUICanvas = {}
@@ -156,12 +158,13 @@ function CUICanvas.new(args)
 		index = canvasLatestIndex,
 		widgets = {},
 		selectedWidget = nil,
-		window = args.window or engine.primaryWindow,
+		window = args.window or TE.engine.primaryWindow,
 	}
 
 	Table.setProxyMetatable(canvas, CUICanvas.metatable)
 
 	canvasCount = canvasCount + 1
+	canvasMap[canvasLatestIndex] = canvas
 
 	return canvas
 end
@@ -194,26 +197,53 @@ local function canvasSelectWidgetAtMouse(canvas, mouseX, mouseY)
 	return false
 end
 
-events:add(N_("CUpdate"), function(e)
-	if not next(canvasMap) then
-		return
-	end
-
-	--- @type dr2c.UICanvas[]
-	local canvasList = Table.getValueList(canvasMap, canvasCount)
-	table.sort(canvasList, compareCanvas)
-
+local function handleCanvasesSelection(canvases)
 	local mouseX, mouseY = CSystemInput.getMousePosition()
 
-	for _, canvas in ipairs(canvasList) do
+	for _, canvas in ipairs(canvases) do
 		if canvas.visible and canvas:contains(mouseX, mouseY) then
 			if canvasSelectWidgetAtMouse(canvas, mouseX, mouseY) then
 				break
 			end
 		end
 	end
+end
 
-	--
+TE.events:add(N_("CUpdate"), function(e)
+	if not next(canvasMap) then
+		return
+	end
+
+	--- @type dr2c.UICanvas[]
+	local canvasList = Table.getValueList(canvasMap, canvasCount)
+
+	table.sort(canvasList, compareCanvas)
+
+	handleCanvasesSelection(canvasList)
 end, "UICanvasHandleInput", "Inputs", nil, 1)
+
+TE.events:add("ScriptUnload", function(e)
+	--- If a module representing a certain widget type is unloaded, call this function to remove all corresponding widgets within all canvases.
+	--- However it may result in errors if some widget module don't have `UIWidgetType` field.
+
+	local widgetType = e.data.module.UIWidgetType
+	if not (widgetType and Enum.hasValue(CUIWidget.Type, widgetType)) then
+		return
+	end
+
+	--- @param widget dr2c.UIWidget
+	local function func(widget, seenSet)
+		if widget.type == widgetType then
+			return true
+		end
+
+		Table.listRemoveIf(widget.widgets, func, seenSet)
+		return false
+	end
+
+	for _, canvas in pairs(canvasMap) do
+		Table.listRemoveIf(canvas.widgets, func, {})
+	end
+end, "ClientUICanvasUnloadTypedWidget", "Client")
 
 return CUICanvas

@@ -473,7 +473,7 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 		    .key = key,
 		    .value = sol::nil,
 		};
-		GetEventManager().GetCoreEvents().ModGlobalsIndex().Invoke(&eventData, eventKey);
+		GetEventManager().GetCoreEvents().ScriptGlobalIndex().Invoke(&eventData, eventKey);
 		return eventData.value;
 	};
 	modGlobals[sol::metatable_key] = metatable;

@@ -2,10 +2,10 @@
 error("this is a lua library module")
 
 --- @class TE.ScriptLoader
-scriptLoader = {}
+TE.scriptLoader = {}
 
 --- @return integer
-function scriptLoader:getLoadingScriptID() end
+function TE.scriptLoader:getLoadingScriptID() end
 
 --- @return string
-function scriptLoader:getLoadingScriptName() end
+function TE.scriptLoader:getLoadingScriptName() end

@@ -33,6 +33,8 @@ namespace tudov
 		TE_CONSTANT WindowTitle = "DR2C Together";
 		TE_CONSTANT WindowWidth = 1280ui32;
 		TE_CONSTANT WindowHeight = 720ui32;
+
+		TE_CONSTANT ImplStrUnknown = "$UNKNOWN$";
 	};
 
 	TE_CONSTANT AppName = Constants::AppName;

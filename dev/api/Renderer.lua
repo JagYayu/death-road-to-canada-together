@@ -5,7 +5,7 @@ error("this is a lua library module")
 
 --- @alias DrawArgFont Font | FontID
 
---- @alias DrawArgTexture TE.Image | ImageID | TE.RenderTarget
+--- @alias DrawArgTexture TE.Image | TE.ImageID | TE.RenderTarget
 
 --- @class TE.DrawRectArgs : userdata
 --- @field texture DrawArgTexture?

@@ -12,13 +12,13 @@
 --- @class dr2c.SModule
 local SModule = {}
 
-SModule.eventSUpdate = events:new(N_("SUpdate"), {
+SModule.eventSUpdate = TE.events:new(N_("SUpdate"), {
 	"Network",
 })
 
-events:add("TickUpdate", function(e)
+TE.events:add("TickUpdate", function(e)
 	--- @class dr2c.E.SUpdate : Events.E.TickUpdate
 	local e_ = e
 
-	events:invoke(SModule.eventSUpdate, e_)
+	TE.events:invoke(SModule.eventSUpdate, e_)
 end, N_("ServerUpdate"), "Server", "Primary")

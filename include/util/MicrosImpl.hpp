@@ -9,11 +9,6 @@
  *
  */
 
-#ifdef TE_MICROS_IMPL_HPP
-#	error "MicrosImpl.hpp" file should be include in ".cpp" file without duplication.
-#endif
-#define TE_MICROS_IMPL_HPP
-
 #define TE_MICRO_END static_assert(true)
 
 #define TE_GEN_GETTER_REF(Return, Function, Member, Suffix) \
@@ -37,3 +32,20 @@
 		return SmartPointer<Return>(Member);                                    \
 	}                                                                           \
 	TE_MICRO_END
+
+#pragma region LuaBindings
+
+#define TE_LB_ENUM(Class, ...) lua.new_enum<Class>( \
+	#Class,                                         \
+	__VA_ARGS__)
+
+#define TE_LB_USERTYPE(Class, ...) lua.new_usertype<Class>( \
+	#Class,                                                 \
+	"getTypeID", []() { return TypeID{&typeid(Class)}; },  \
+	__VA_ARGS__)
+
+#define TE_LB_CLASS(Class, ...) lua.create_named_table( \
+	("" #Class ""),                                     \
+	__VA_ARGS__)
+
+#pragma endregion

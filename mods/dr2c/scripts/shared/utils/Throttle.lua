@@ -143,7 +143,7 @@ function GThrottle.getAll()
 	return instances
 end
 
-events:add("DebugSnapshot", function(e)
+TE.events:add("DebugSnapshot", function(e)
 	e.instances = instances
 end, scriptName, nil, scriptName)
 

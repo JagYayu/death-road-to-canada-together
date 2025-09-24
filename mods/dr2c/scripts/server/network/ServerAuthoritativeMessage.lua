@@ -62,7 +62,7 @@ function SNetworkServerAuthoritativeMessage.register(messageType, onReceived, ar
 	serverRegisteredAuthoritativeRequestsMap[messageType] = requests
 
 	--- @param e dr2c.E.SMessage
-	events:add(N_("SMessage"), function(e)
+	TE.events:add(N_("SMessage"), function(e)
 		if not SNetworkClients.isAuthoritativeClient(e.clientID) then
 			return
 		end
@@ -126,7 +126,7 @@ local function serverAuthoritativeRequestHandle(request, _, time)
 end
 
 --- @param e dr2c.E.SUpdate
-events:add(N_("SUpdate"), function(e)
+TE.events:add(N_("SUpdate"), function(e)
 	for _, requests in pairs(serverRegisteredAuthoritativeRequestsMap) do
 		if requests[1] then
 			Table.listRemoveIf(requests, serverAuthoritativeRequestHandle, Time.getSystemTime())

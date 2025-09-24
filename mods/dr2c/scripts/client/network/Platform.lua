@@ -18,7 +18,7 @@ function CPlatform.getType()
 	return GPlatform.Type.Standalone
 end
 
-events:add(N_("CCollectVerifyAttributes"), function(e)
+TE.events:add(N_("CCollectVerifyAttributes"), function(e)
 	e.attributes[#e.attributes + 1] = {
 		public = true,
 		attribute = GClient.PublicAttribute.Platform,

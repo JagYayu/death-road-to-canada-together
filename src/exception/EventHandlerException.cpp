@@ -13,6 +13,7 @@
 
 #include "event/EventManager.hpp"
 #include "mod/ScriptProvider.hpp"
+#include "data/Constants.hpp"
 
 using namespace tudov;
 
@@ -24,8 +25,8 @@ EventHandlerException::EventHandlerException(Context &context, EventID eventID, 
 
 std::string_view EventHandlerException::What() const noexcept
 {
-	std::string_view eventName = GetEventManager().GetEventNameByID(eventID).value_or("$UNKNOWN$");
-	std::string_view scriptName = GetScriptProvider().GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
+	std::string_view eventName = GetEventManager().GetEventNameByID(eventID).value_or(Constants::ImplStrUnknown);
+	std::string_view scriptName = GetScriptProvider().GetScriptNameByID(scriptID).value_or(Constants::ImplStrUnknown);
 	_what = std::format("Bad event handler event <{}>{}, script <{}>{}{}",
 	                    eventID, eventName, scriptID, scriptName, traceback);
 	return _what;

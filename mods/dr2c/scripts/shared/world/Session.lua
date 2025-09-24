@@ -90,7 +90,7 @@ end
 
 --- @return dr2c.WorldSession worldSessionModule
 function GWorldSession.new()
-	local scriptName = scriptLoader:getLoadingScriptName()
+	local scriptName = TE.scriptLoader:getLoadingScriptName()
 	if scriptName ~= "" and worldSessionModules[scriptName] then
 		return worldSessionModules[scriptName]
 	end
@@ -156,7 +156,7 @@ function GWorldSession.new()
 	return WorldSession
 end
 
-events:add("DebugSnapshot", function(e)
+TE.events:add("DebugSnapshot", function(e)
 	e.worldSessionModules = worldSessionModules
 end, scriptName, nil, scriptName)
 

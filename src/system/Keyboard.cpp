@@ -117,7 +117,7 @@ bool Keyboard::HandleEvent(AppEvent &appEvent) noexcept
 		    .modifier = static_cast<EKeyModifier>(key.mod),
 		};
 
-		runtimeEvent->Invoke(&data, _keyboardID, EEventInvocation::None);
+		runtimeEvent->Invoke(&data, EventHandleKey(_keyboardID), EEventInvocation::None);
 
 		return true;
 	}

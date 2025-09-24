@@ -24,7 +24,7 @@ local filterControllable = CECS.filter({
 	"GameObject",
 })
 
-events:add(N_("CWorldTickProcess"), function(e)
+TE.events:add(N_("CWorldTickProcess"), function(e)
 	local CECS_getComponent = CECS.getComponent
 
 	local playerInputs = e.playerInputs

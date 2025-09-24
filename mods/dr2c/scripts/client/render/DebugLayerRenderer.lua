@@ -21,7 +21,7 @@ local filterTest = CECS.filter({
 })
 
 --- @param e dr2c.E.CRender
-events:add(N_("CRenderCamera"), function(e)
+TE.events:add(N_("CRenderCamera"), function(e)
 	local renderer = e.renderer
 
 	local CECS_getComponent = CECS.getComponent

@@ -124,11 +124,11 @@ componentsPoolEntityTransient = persist("componentsPoolEntityTransient", functio
 	return componentsPoolEntityTransient
 end)
 
-local eventEntitySpawned = events:new(N_("CEntitySpawn"), {
+local eventEntitySpawned = TE.events:new(N_("CEntitySpawn"), {
 	"",
 })
 
-local eventEntityDespawned = events:new(N_("CEntityDespawn"), {
+local eventEntityDespawned = TE.events:new(N_("CEntityDespawn"), {
 	"",
 })
 
@@ -269,7 +269,7 @@ local function spawnEntityImpl(entry)
 		components = entry.components,
 		unpack(entry),
 	}
-	events:invoke(eventEntitySpawned, e)
+	TE.events:invoke(eventEntitySpawned, e)
 end
 
 local function isEntityIDMatched(entity, entityID)
@@ -296,7 +296,7 @@ local function despawnEntityImpl(entry)
 		entityTypeID = entityTypeID,
 		unpack(entry),
 	}
-	events:invoke(eventEntityDespawned, e)
+	TE.events:invoke(eventEntityDespawned, e)
 end
 
 local function convertEntityImpl(entry)
@@ -607,7 +607,7 @@ function CECS.setSerialTable(data)
 end
 
 --- @param e dr2c.E.CWorldTickProcess
-events:add(N_("CWorldTickProcess"), function(e)
+TE.events:add(N_("CWorldTickProcess"), function(e)
 	if isIteratingEntities then
 		isIteratingEntities = false
 
@@ -620,34 +620,34 @@ Did an error occurred while iterating entities? Or not calling iterators inside 
 	e.entitiesChanged = CECS.update()
 end, "UpdateECS", "ECS")
 
-events:add(N_("CConnect"), CECS.clearEntities, "InitializeECS", "Initialize")
+TE.events:add(N_("CConnect"), CECS.clearEntities, "InitializeECS", "Initialize")
 
-events:add(N_("CDisconnect"), CECS.clearEntities, "ResetECS", "Reset")
+TE.events:add(N_("CDisconnect"), CECS.clearEntities, "ResetECS", "Reset")
 
-events:add(N_("CSnapshotCollect"), function(e)
+TE.events:add(N_("CSnapshotCollect"), function(e)
 	e.snapshot.ecs = CECS.getSerialTable()
 end, "CollectECSSerialTable", "ECS")
 
-events:add(N_("CSnapshotDispense"), function(e)
+TE.events:add(N_("CSnapshotDispense"), function(e)
 	CECS.setSerialTable(e.snapshot.ecs)
 end, "DispenseECSSerialTable", "ECS")
 
 --- @param e {}
-events:add(N_("CEntitySchemaLoaded"), function(e)
+TE.events:add(N_("CEntitySchemaLoaded"), function(e)
 	componentsPoolArchetypeConstant = allocateArchetypeComponentsPool("componentsArchetypeConstant")
 end, "ResetArchetypeConstantComponents", "Components")
 
 --- @param e {}
-events:add(N_("CEntitySchemaLoaded"), function(e)
+TE.events:add(N_("CEntitySchemaLoaded"), function(e)
 	if not hasNewFilter or not log.canWarn() then
 		return
 	end
 
 	local componentsSchema = CECSSchema.getComponentsSchema()
 
-	local function validate(validation, list, schema)
+	local function validate(validation, list)
 		for _, componentTypeOrID in ipairs(list) do
-			if not componentsSchema[componentTypeOrID] then
+			if not componentsSchema[componentTypeOrID] and log.canWarn() then
 				local fmt = "Invalid component '%s' detected in entity filter%s"
 				log.warn(fmt:format(componentTypeOrID, validation.traceback))
 			end

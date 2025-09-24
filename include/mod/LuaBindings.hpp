@@ -18,6 +18,7 @@
 #include <functional>
 #include <string_view>
 #include <tuple>
+#include <typeinfo>
 #include <vector>
 
 namespace tudov::impl
@@ -69,6 +70,11 @@ namespace tudov::impl
 namespace tudov
 {
 	class Engine;
+	class Localization;
+	class BinariesResources;
+	class FontResources;
+	class ImageResources;
+	class TextResources;
 
 	/**
 	 * Interface Class
@@ -89,6 +95,25 @@ namespace tudov
 
 	class LuaBindings : public ILuaBindings
 	{
+	  private:
+		struct TE
+		{
+			Engine *engine;
+			Localization *i18n;
+			VirtualFileSystem *vfs;
+			BinariesResources *binaries;
+			FontResources *fonts;
+			ImageResources *images;
+			TextResources *texts;
+		};
+
+		struct TypeID
+		{
+			const std::type_info *typeinfo;
+
+			bool LuaEqualTo(const TypeID &) const noexcept;
+		};
+
 	  private:
 		std::vector<std::tuple<std::string, TInstallation>> _installations;
 		mutable std::vector<std::string_view> _modGlobalsMigration;

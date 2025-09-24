@@ -57,11 +57,11 @@ clientSnapshots = persist("clientSnapshots", function()
 	return clientSnapshots
 end)
 
-local eventClientSnapshotCollect = events:new(N_("CSnapshotCollect"), {
+local eventClientSnapshotCollect = TE.events:new(N_("CSnapshotCollect"), {
 	"ECS",
 })
 
-local eventClientSnapshotDispense = events:new(N_("CSnapshotDispense"), {
+local eventClientSnapshotDispense = TE.events:new(N_("CSnapshotDispense"), {
 	"ECS",
 })
 
@@ -85,7 +85,7 @@ function CWorldSnapshot.getSnapshot(snapshotID)
 end
 
 --- @param index any
---- @return nil
+--- @return dr2c.SnapshotID?
 function CWorldSnapshot.getSnapshotID(index)
 	local firstID = clientSnapshots.first
 	return firstID and (firstID + index - 1) or nil
@@ -106,7 +106,7 @@ end
 --- @param default any?
 --- @return dr2c.SnapshotID snapshotID
 function CWorldSnapshot.registerVariable(name, default)
-	local scriptName = scriptLoader:getLoadingScriptName()
+	local scriptName = TE.scriptLoader:getLoadingScriptName()
 	if scriptName then
 		name = ("%s_%s"):format(name, scriptName)
 	end
@@ -115,6 +115,8 @@ function CWorldSnapshot.registerVariable(name, default)
 	local id
 
 	if snapshotRegistrationTable[name] then
+		-- Override already existed snapshot registration.
+
 		local entry = snapshotRegistrationTable[name]
 		id = entry[1]
 		entry[3] = buffer
@@ -143,7 +145,7 @@ function CWorldSnapshot.serialize()
 	-- Utility.assertRuntime()
 
 	local collection = {}
-	events:invoke(eventClientSnapshotCollect, {
+	TE.events:invoke(eventClientSnapshotCollect, {
 		snapshot = collection,
 	})
 
@@ -168,7 +170,7 @@ function CWorldSnapshot.deserialize(data)
 		entry[4] = collection[entry[1]]
 	end
 
-	events:invoke(eventClientSnapshotDispense, {
+	TE.events:invoke(eventClientSnapshotDispense, {
 		snapshot = collection,
 	})
 end
@@ -188,7 +190,7 @@ function CWorldSnapshot.deliver()
 end
 
 --- @param e dr2c.E.CMessage
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	if hasServer then
 		CWorldSnapshot.dropBackward(e.content.snapshotID)
 
@@ -276,20 +278,20 @@ local function resetSnapshots()
 	CWorldSnapshot.clearAll()
 end
 
-events:add(N_("CConnect"), resetSnapshots, N_("ResetSnapshot"), "Reset")
+TE.events:add(N_("CConnect"), resetSnapshots, N_("ResetSnapshot"), "Reset")
 
-events:add(N_("CDisconnect"), resetSnapshots, N_("ResetSnapshot"), "Reset")
+TE.events:add(N_("CDisconnect"), resetSnapshots, N_("ResetSnapshot"), "Reset")
 
-events:add(N_("CWorldSessionStart"), resetSnapshots, "ResetSnapshots", "Reset")
+TE.events:add(N_("CWorldSessionStart"), resetSnapshots, "ResetSnapshots", "Reset")
 
-events:add(N_("CWorldSessionFinish"), resetSnapshots, "ResetSnapshots", "Reset")
+TE.events:add(N_("CWorldSessionFinish"), resetSnapshots, "ResetSnapshots", "Reset")
 
-events:add(N_("CWorldTickProcess"), function(e)
-	-- Save snapshot every tick
+TE.events:add(N_("CWorldTickProcess"), function(e)
+	-- Save snapshot every tick, for now :)
 	CWorldSnapshot.save(e.tick)
 end, "SaveSnapshot", "SnapshotSave")
 
-events:add(N_("CWorldRollback"), function(e)
+TE.events:add(N_("CWorldRollback"), function(e)
 	if e.suppressed then
 		return
 	end
@@ -298,7 +300,7 @@ events:add(N_("CWorldRollback"), function(e)
 		CWorldSnapshot.dropBackward(e.tick)
 
 		if log.canTrace() then
-			-- log.trace("Rollback snapshot to tick " .. e.tick)
+			log.trace("Rollback: load snapshot to tick " .. e.tick)
 		end
 	else
 		e.suppressed = true

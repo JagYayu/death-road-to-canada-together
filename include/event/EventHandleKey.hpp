@@ -58,7 +58,12 @@ namespace tudov
 		{
 		}
 
-		inline EventHandleKey(std::double_t number) noexcept
+		inline EventHandleKey(std::nullptr_t) noexcept
+		    : EventHandleKey()
+		{
+		}
+
+		inline explicit EventHandleKey(std::double_t number) noexcept
 		    : value(number)
 		{
 		}
@@ -68,7 +73,7 @@ namespace tudov
 		{
 		}
 
-		inline EventHandleKey(const char *str) noexcept
+		inline explicit EventHandleKey(const char *str) noexcept
 		    : value(str)
 		{
 		}

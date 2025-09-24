@@ -103,8 +103,8 @@ namespace tudov
 		void Add(const EventHandleFunction &function, std::string_view name, std::optional<std::string_view> order = std::nullopt, std::optional<EventHandleKey> key = std::nullopt, std::optional<std::double_t> sequence = std::nullopt);
 		void Remove(std::string_view name);
 
-		void Invoke(sol::object e = {}, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default);
-		[[deprecated]] void InvokeUncached(sol::object e = sol::lua_nil, const EventHandleKey &key = {});
+		void Invoke(sol::object e = {}, const EventHandleKey &key = nullptr, EEventInvocation options = EEventInvocation::Default);
+		[[deprecated]] void InvokeUncached(sol::object e = sol::lua_nil, const EventHandleKey &key = nullptr);
 
 		void ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider);
 		void ClearSpecificScriptHandlers(const IScriptProvider &scriptProvider, ScriptID scriptID);
@@ -120,7 +120,7 @@ namespace tudov
 
 	  public:
 		template <typename TData>
-		void Invoke(TData *data, const EventHandleKey &key = {}, EEventInvocation options = EEventInvocation::Default) noexcept
+		void Invoke(TData *data, const EventHandleKey &key = nullptr, EEventInvocation options = EEventInvocation::Default) noexcept
 		{
 			if (data != nullptr)
 			{

@@ -35,7 +35,7 @@ function GWorldSnapshot.getAll()
 end
 
 function GWorldSnapshot.new()
-	local scriptName = scriptLoader:getLoadingScriptName()
+	local scriptName = TE.scriptLoader:getLoadingScriptName()
 	if scriptName ~= "" and worldSnapshotModules[scriptName] then
 		return worldSnapshotModules[scriptName]
 	end
@@ -136,7 +136,7 @@ function GWorldSnapshot.new()
 	return WorldSnapshot
 end
 
-events:add("DebugSnapshot", function(e)
+TE.events:add("DebugSnapshot", function(e)
 	e.worldSnapshotModules = worldSnapshotModules
 end, scriptName, nil, scriptName)
 

@@ -17,7 +17,7 @@ local CECS = require("dr2c.client.ecs.ECS")
 --- @class dr2c.CInput
 local CInput = {}
 
-local primaryWindowID = engine.primaryWindow:getWindowID()
+local primaryWindowID = TE.engine.primaryWindow:getWindowID()
 local primaryKeyboard = keyboards:getKeyboardAt(1)
 local primaryMouse = mouses:getPrimaryMouse()
 
@@ -83,7 +83,7 @@ else
 	eventHandlerCacheHeldInputCodes = Function.empty
 end
 
-events:add(N_("CUpdate"), eventHandlerCacheHeldInputCodes, "CacheHeldInputCodes", "Inputs")
+TE.events:add(N_("CUpdate"), eventHandlerCacheHeldInputCodes, "CacheHeldInputCodes", "Inputs")
 
 --- @return number mouseX
 --- @return number mouseY

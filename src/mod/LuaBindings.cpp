@@ -27,6 +27,7 @@
 #include "resource/FontResources.hpp"
 #include "resource/GlobalResourcesCollection.hpp"
 #include "resource/ImageResources.hpp"
+#include "util/MicrosImpl.hpp"
 
 #include "sol/forward.hpp"
 #include "sol/property.hpp"
@@ -35,6 +36,15 @@
 
 using namespace tudov;
 using namespace tudov::impl;
+
+bool LuaBindings::TypeID::LuaEqualTo(const TypeID &typeID) const noexcept
+{
+	if (this->typeinfo == nullptr || typeID.typeinfo == nullptr)
+	{
+		return false;
+	}
+	return *this->typeinfo == *typeID.typeinfo;
+}
 
 bool LuaBindings::RegisterInstallation(std::string_view name, const TInstallation &installation)
 {
@@ -66,27 +76,17 @@ decltype(auto) GetPrimaryWindowFromContext(Context &context) noexcept
 	});
 }
 
-#define TE_ENUM(Class, ...)     lua.new_enum<Class>(#Class, __VA_ARGS__)
-#define TE_USERTYPE(Class, ...) lua.new_usertype<Class>(#Class, __VA_ARGS__)
-#define TE_CLASS(Class, ...)    lua.create_named_table(("" #Class ""), __VA_ARGS__)
-
-#define TE_USERDATA_LUA_ARRAY(Type) TE_USERTYPE( \
-	LuaArray##Type,                              \
-	"clear", &LuaArray##Type::Clear,             \
-	"get", &LuaArray##Type::Get,                 \
-	"getCapacity", &LuaArray##Type::GetCapacity, \
-	"getCount", &LuaArray##Type::GetCount,       \
+#define TE_USERDATA_LUA_ARRAY(Type) TE_LB_USERTYPE( \
+	LuaArray##Type,                                 \
+	"clear", &LuaArray##Type::Clear,                \
+	"get", &LuaArray##Type::Get,                    \
+	"getCapacity", &LuaArray##Type::GetCapacity,    \
+	"getCount", &LuaArray##Type::GetCount,          \
 	"set", &LuaArray##Type::Set);
 
 void LuaBindings::Install(sol::state &lua, Context &context)
 {
-	InstallEvent(lua, context);
-	InstallMod(lua, context);
-	InstallNetwork(lua, context);
-	InstallScanCode(lua, context);
-	InstallSystem(lua, context);
-
-	TE_ENUM(
+	TE_LB_ENUM(
 	    EDebugConsoleCode,
 	    {
 	        {"None", EDebugConsoleCode::None},
@@ -95,7 +95,7 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	        {"Warn", EDebugConsoleCode::Warn},
 	    });
 
-	TE_ENUM(
+	TE_LB_ENUM(
 	    EPathListOption,
 	    {
 	        {"All", EPathListOption::All},
@@ -119,7 +119,7 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	TE_USERDATA_LUA_ARRAY(U32);
 	TE_USERDATA_LUA_ARRAY(U64);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    DrawRectArgs,
 	    sol::call_constructor, sol::constructors<DrawRectArgs()>(),
 	    "angle", sol::property(&DrawRectArgs::LuaGetAngle, &DrawRectArgs::LuaSetAngle),
@@ -129,7 +129,7 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	    "source", sol::property(&DrawRectArgs::LuaGetSource, &DrawRectArgs::LuaSetSource),
 	    "texture", sol::property(&DrawRectArgs::LuaGetTexture, &DrawRectArgs::LuaSetTexture));
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    DrawTextArgs,
 	    sol::call_constructor, sol::constructors<DrawTextArgs()>(),
 	    "alignX", sol::property(&DrawTextArgs::GetAlignX, &DrawTextArgs::SetAlignX),
@@ -146,29 +146,29 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	    "x", sol::property(&DrawTextArgs::GetX, &DrawTextArgs::SetX),
 	    "y", sol::property(&DrawTextArgs::GetY, &DrawTextArgs::SetY));
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    Engine,
 	    "getVersion", &Engine::LuaGetVersion,
 	    "primaryWindow", GetPrimaryWindowFromContext(context),
 	    "quit", &Engine::Quit,
 	    "triggerLoadPending", &Engine::TriggerLoadPending);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    FontResources,
 	    "getID", &FontResources::LuaGetID,
 	    "getPath", &FontResources::LuaGetPath);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    ImageResources,
 	    "getID", &ImageResources::LuaGetID,
 	    "getPath", &ImageResources::LuaGetPath);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    Log,
 	    "canOutput", &Log::CanOutput,
 	    "output", &Log::LuaOutput);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    RectangleF,
 	    sol::call_constructor, sol::constructors<RectangleF()>(),
 	    "x", sol::property(&RectangleF::LuaGetX, &RectangleF::LuaSetX),
@@ -176,13 +176,13 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	    "w", sol::property(&RectangleF::LuaGetW, &RectangleF::LuaSetW),
 	    "h", sol::property(&RectangleF::LuaGetH, &RectangleF::LuaSetH));
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    RenderBuffer,
 	    "addRectangle", &RenderBuffer::LuaAddRectangle,
 	    "clear", &RenderBuffer::Clear,
 	    "draw", &RenderBuffer::LuaDraw);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    RenderTarget,
 	    // "getBlendMode", &RenderTarget::GetBlendMode,
 	    "getCameraTargetScale", &RenderTarget::GetCameraTargetScale,
@@ -204,7 +204,7 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	    "snapCameraScale", &RenderTarget::SnapCameraScale,
 	    "update", &RenderTarget::Update);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    Renderer,
 	    "beginTarget", &Renderer::LuaBeginTarget,
 	    "clear", &Renderer::LuaClear,
@@ -214,13 +214,17 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	    "newRenderBuffer", &Renderer::NewRenderBuffer,
 	    "newRenderTarget", &Renderer::LuaNewRenderTarget);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
+	    TypeID,
+	    sol::meta_function::equal_to, &TypeID::LuaEqualTo);
+
+	TE_LB_USERTYPE(
 	    VirtualFileSystem,
 	    "exists", &VirtualFileSystem::LuaExists,
 	    "list", &VirtualFileSystem::LuaList,
 	    "readFile", &VirtualFileSystem::LuaReadFile);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    Window,
 	    "close", &Window::Close,
 	    "getHeight", &Window::GetHeight,
@@ -231,15 +235,23 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	    "renderer", &Window::renderer,
 	    "shouldClose", &Window::ShouldClose);
 
-	lua["engine"] = &context.GetEngine();
-	lua["localization"] = &dynamic_cast<Localization &>(context.GetLocalization());
-	lua["vfs"] = &dynamic_cast<VirtualFileSystem &>(context.GetVirtualFileSystem());
-
 	auto &collection = context.GetGlobalResourcesCollection();
-	lua["binaries"] = &collection.GetBinariesResources();
-	lua["fonts"] = &collection.GetFontResources();
-	lua["images"] = &collection.GetImageResources();
-	lua["texts"] = &collection.GetTextResources();
+
+	TE_LB_CLASS(
+	    TE,
+	    "binaries", &collection.GetBinariesResources(),
+	    "engine", &context.GetEngine(),
+	    "fonts", &collection.GetFontResources(),
+	    "images", &collection.GetImageResources(),
+	    "i18n", &dynamic_cast<Localization &>(context.GetLocalization()),
+	    "texts", &collection.GetTextResources(),
+	    "vfs", &dynamic_cast<VirtualFileSystem &>(context.GetVirtualFileSystem()));
+
+	InstallEvent(lua, context);
+	InstallMod(lua, context);
+	InstallNetwork(lua, context);
+	InstallScanCode(lua, context);
+	InstallSystem(lua, context);
 }
 
 const std::vector<std::string_view> &LuaBindings::GetModGlobalsMigration() const noexcept
@@ -292,6 +304,7 @@ const std::vector<std::string_view> &LuaBindings::GetModGlobalsMigration() const
 		    "DrawRectArgs",
 		    "DrawTextArgs",
 		    "RectangleF",
+		    "TE",
 		    "Timer",
 		    // C++ static classes
 		    "OperatingSystem",

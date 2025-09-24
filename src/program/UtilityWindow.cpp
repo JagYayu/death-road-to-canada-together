@@ -25,11 +25,11 @@ EventHandleKey MakeUtilityWindowKey(std::string_view keyName) noexcept
 {
 	if (keyName.empty())
 	{
-		return "Utility";
+		return EventHandleKey("Utility");
 	}
 	else
 	{
-		return (std::string("Utility_") + keyName.data()).data();
+		return EventHandleKey(std::string("Utility_") + keyName.data());
 	}
 }
 
@@ -49,7 +49,7 @@ UtilityWindow::~UtilityWindow() noexcept
 
 EventHandleKey UtilityWindow::GetKey() const noexcept
 {
-	return "Utility_";
+	return EventHandleKey(); // TODO "Utility_";
 }
 
 void UtilityWindow::InitializeWindow(std::int32_t width, std::int32_t height, std::string_view title) noexcept

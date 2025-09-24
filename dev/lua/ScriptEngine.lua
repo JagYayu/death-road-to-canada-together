@@ -13,6 +13,7 @@ local ffi = require("ffi")
 local jit_util = require("jit.util")
 local inspect = require("inspect")
 
+local pcall = pcall
 local type = type
 
 local lockedTables = setmetatable({}, { __mode = "k" })
@@ -97,21 +98,21 @@ local function lockMetatable(mt)
 	end
 end
 
+local function getUserdataTypeIDImpl(userdata)
+	return userdata.getTypeID()
+end
+
 local function initialize(luaGlobals)
 	jit.off()
 	-- jit.opt.start("maxtrace=8000", "maxrecord=16000", "maxmcode=40960")
 
-	function luaGlobals.hasLockedMetatable(tbl)
-		local mt = debug.getmetatable(tbl)
-		if type(mt) == "table" then
-			return not not lockedTables[mt]
+	--- @param value userdata | any?
+	--- @return TE.TypeID?
+	function luaGlobals.TE.getUserdataTypeID(value)
+		if type(value) == "userdata" then
+			local success, result = pcall(getUserdataTypeIDImpl, value)
+			return success and result or nil
 		end
-	end
-
-	--- @param mt metatable
-	--- @return boolean
-	function luaGlobals.isLocked(mt)
-		return not not lockedTables[mt]
 	end
 
 	-- Lock all core metatables

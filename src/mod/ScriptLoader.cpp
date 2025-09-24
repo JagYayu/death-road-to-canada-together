@@ -11,7 +11,10 @@
 
 #include "mod/ScriptLoader.hpp"
 
+#include "data/Constants.hpp"
 #include "event/CoreEvents.hpp"
+#include "event/CoreEventsData.hpp"
+#include "event/EventHandleKey.hpp"
 #include "event/RuntimeEvent.hpp"
 #include "misc/Text.hpp"
 #include "mod/ModManager.hpp"
@@ -303,7 +306,7 @@ void ScriptLoader::LoadAllScripts()
 
 	PostLoadScripts();
 
-	TE_DEBUG("{}", "Loaded provided scripts");
+	TE_DEBUG("Loaded all provided scripts");
 }
 
 std::shared_ptr<IScriptModule> ScriptLoader::Load(std::string_view scriptName)
@@ -457,23 +460,36 @@ std::vector<ScriptID> ScriptLoader::UnloadInvalidScripts()
 
 void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts)
 {
-	auto scriptName = GetScriptProvider().GetScriptNameByID(scriptID);
-	if (!scriptName.has_value()) [[unlikely]]
+	if (!_scriptModules.contains(scriptID))
+	{
+		TE_TRACE("Script <{}> has already unloaded", scriptID);
+
+		return;
+	}
+
+	auto optScriptName = GetScriptProvider().GetScriptNameByID(scriptID);
+	if (!optScriptName.has_value()) [[unlikely]]
 	{
 		TE_WARN("Attempt to unload invalid script <{}> ...", scriptID);
 
 		return;
 	}
+	std::string_view scriptName = optScriptName.value();
 
-	TE_TRACE("Unloading script <{}>{} ...", scriptID, scriptName->data());
+	TE_TRACE("Unloading script <{}>{} ...", scriptID, scriptName);
 
-	if (!_scriptModules.erase(scriptID))
+	_onUnloadScript(scriptID, scriptName);
+
 	{
-		TE_TRACE("{}", "Already unloaded");
-		return;
+		EventScriptUnloadData data{
+		    .scriptID = scriptID,
+		    .scriptName = scriptName,
+		    .module = _scriptModules.at(scriptID)->GetTable(),
+		};
+		GetEventManager().GetCoreEvents().ScriptUnload().Invoke(&data, EventHandleKey(scriptName));
 	}
 
-	_onUnloadScript(scriptID, scriptName.value());
+	TE_ASSERT(_scriptModules.erase(scriptID));
 
 	for (ScriptID dependency : GetScriptDependencies(scriptID))
 	{
@@ -540,13 +556,13 @@ void ScriptLoader::ProcessFullLoads()
 		{
 			try
 			{
-				TE_TRACE("Fully loading script \"{}\"", GetScriptProvider().GetScriptNameByID(scriptID).value());
+				TE_TRACE("Fully loading script <{}>{}", scriptID, GetScriptProvider().GetScriptNameByID(scriptID).value());
 				scriptModule->FullLoad();
-				TE_TRACE("Fully loaded script \"{}\"", GetScriptProvider().GetScriptNameByID(scriptID).value());
+				TE_TRACE("Fully loaded script <{}>{}", scriptID, GetScriptProvider().GetScriptNameByID(scriptID).value());
 			}
 			catch (std::exception &e)
 			{
-				TE_TRACE("Error full load script \"{}\": {}", GetScriptProvider().GetScriptNameByID(scriptID).value(), e.what());
+				TE_TRACE("Error full load script <{}>{}: {}", scriptID, GetScriptProvider().GetScriptNameByID(scriptID).value(), e.what());
 			}
 		}
 	}

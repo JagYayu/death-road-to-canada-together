@@ -20,16 +20,13 @@
 #include "system/OperatingSystem.hpp"
 #include "system/RandomDevice.hpp"
 #include "system/Time.hpp"
+#include "util/MicrosImpl.hpp"
 
 using namespace tudov;
 
-#define TE_ENUM(Class, ...)     lua.new_enum<Class>(#Class, __VA_ARGS__)
-#define TE_USERTYPE(Class, ...) lua.new_usertype<Class>(#Class, __VA_ARGS__)
-#define TE_CLASS(Class, ...)    lua.create_named_table(("" #Class ""), __VA_ARGS__)
-
 void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 {
-	TE_ENUM(
+	TE_LB_ENUM(
 	    ELogVerbosity,
 	    {
 	        {"All", ELogVerbosity::All},
@@ -42,7 +39,7 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	        {"Fatal", ELogVerbosity::Fatal},
 	    });
 
-	TE_ENUM(
+	TE_LB_ENUM(
 	    EMouseButton,
 	    {
 	        {"None", EMouseButton::None},
@@ -53,7 +50,7 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	        {"Extra2", EMouseButton::Extra2},
 	    });
 
-	TE_ENUM(
+	TE_LB_ENUM(
 	    EMouseButtonFlag,
 	    {
 	        {"Left", EMouseButtonFlag::Left},
@@ -63,7 +60,7 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	        {"Extra2", EMouseButtonFlag::Extra2},
 	    });
 
-	TE_ENUM(
+	TE_LB_ENUM(
 	    EOperatingSystem,
 	    {
 	        {"Unknown", EOperatingSystem::Unknown},
@@ -74,7 +71,7 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	        {"IOS", EOperatingSystem::IOS},
 	    });
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    Timer,
 	    sol::call_constructor, sol::constructors<Timer(), Timer(bool paused)>(),
 	    "getTime", &Timer::GetTime,
@@ -82,7 +79,7 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	    "reset", &Timer::Reset,
 	    "unpause", &Timer::Unpause);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    Keyboard,
 	    "getKeyboardID", &Keyboard::GetKeyboardID,
 	    "isKeyCodeHeld", &Keyboard::LuaIsKeyCodeHeld,
@@ -90,13 +87,13 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	    "listHeldKeyCodes", &Keyboard::LuaListHeldKeyCodes,
 	    "listHeldScanCodes", &Keyboard::LuaListHeldScanCodes);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    KeyboardManager,
 	    "getKeyboardAt", &KeyboardManager::LuaGetKeyboardAt,
 	    "getKeyboardByID", &KeyboardManager::LuaGetKeyboardByID,
 	    "listKeyboards", &KeyboardManager::LuaListKeyboards);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    Mouse,
 	    "getFocusedWindow", &Mouse::LuaGetFocusedWindow,
 	    "getID", &Mouse::GetMouseID,
@@ -106,24 +103,24 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	    "isButtonDown", &Mouse::IsMouseButtonDown,
 	    "isButtonsDown", &Mouse::IsMouseButtonsDown);
 
-	TE_USERTYPE(
+	TE_LB_USERTYPE(
 	    MouseManager,
 	    "getMouseAt", &MouseManager::GetMouseAt,
 	    "getMouseByID", &MouseManager::GetMouseByID,
 	    "getPrimaryMouse", &MouseManager::LuaGetPrimaryMouse);
 
-	TE_CLASS(
+	TE_LB_CLASS(
 	    OperatingSystem,
 	    "getType", &OperatingSystem::GetType,
 	    "isMobile", &OperatingSystem::IsMobile,
 	    "isPC", &OperatingSystem::IsPC);
 
-	TE_CLASS(
+	TE_LB_CLASS(
 	    RandomDevice,
 	    "entropy", &RandomDevice::Entropy,
 	    "generate", &RandomDevice::LuaGenerate);
 
-	TE_CLASS(
+	TE_LB_CLASS(
 	    Time,
 	    "getStartupTime", &Time::GetStartupTime,
 	    "getSystemTime", &Time::GetSystemTime);

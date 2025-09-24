@@ -11,6 +11,7 @@
 
 #include "event/EventManager.hpp"
 
+#include "data/Constants.hpp"
 #include "event/AbstractEvent.hpp"
 #include "event/CoreEvents.hpp"
 #include "event/LoadtimeEvent.hpp"
@@ -109,7 +110,7 @@ void EventManager::OnScriptsLoaded()
 		{
 			std::string_view eventName = _eventID2Name[eventID];
 			ScriptID scriptID = loadtimeEvent->GetScriptID();
-			std::string_view scriptName = scriptProvider.GetScriptNameByID(scriptID).value_or("$UNKNOWN$");
+			std::string_view scriptName = scriptProvider.GetScriptNameByID(scriptID).value_or(Constants::ImplStrUnknown);
 
 			GetScriptLoader().MarkScriptLoadError(scriptID);
 
@@ -153,7 +154,7 @@ void EventManager::EmplaceRuntimeEventFromLoadtimeEvent(const std::shared_ptr<Lo
 		}
 		else
 		{
-			TE_TRACE("Loadtime event converted to a runtime event <{}>{}", id, GetEventNameByID(id).value_or("$UNKNOWN$"));
+			TE_TRACE("Loadtime event converted to a runtime event <{}>{}", id, GetEventNameByID(id).value_or(Constants::ImplStrUnknown));
 			TE_ASSERT(_runtimeEvents.try_emplace(id, runtimeEvent).second);
 		}
 	}
@@ -263,7 +264,7 @@ void EventManager::PreInitialize() noexcept
 			if (it->second->GetScriptID() == scriptID)
 			{
 				EventID eventID = it->second->GetID();
-				TE_TRACE("Remove event <{}>{} from script <{}>{}", eventID, _eventID2Name[eventID], scriptID, scriptName);
+				TE_TRACE("Remove event <{}>{}, source script <{}>{}", eventID, _eventID2Name[eventID], scriptID, scriptName);
 
 				DeallocEventID(it->first);
 				it = _runtimeEvents.erase(it);
@@ -274,7 +275,7 @@ void EventManager::PreInitialize() noexcept
 			}
 		}
 
-		auto &&scriptProvider = GetScriptProvider();
+		IScriptProvider &scriptProvider = GetScriptProvider();
 		for (auto &&[_, event] : _runtimeEvents)
 		{
 			event->ClearSpecificScriptHandlers(scriptProvider, scriptID);
@@ -322,9 +323,9 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		IScriptEngine &scriptEngine = GetScriptEngine();
 
 		ScriptID scriptID = GetScriptLoader().GetLoadingScriptID();
-		if (!scriptID)
+		if (scriptID == 0) [[unlikely]]
 		{
-			throw std::runtime_error("Failed to add event handler: must add at script load time");
+			GetScriptEngine().ThrowError("Failed to add event handler: must add at script load time");
 		}
 
 		EventID eventID;
@@ -428,9 +429,20 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		auto &&registryEvent = TryGetRegistryEvent(eventID);
 		if (!registryEvent.has_value())
 		{
+			TE_TRACE("Add handler {} to loadtime event <{}>{}, source script <{}>{}", name_.value_or(Constants::ImplStrUnknown),
+			         eventID, eventName,
+			         scriptID, GetScriptProvider().GetScriptNameByID(scriptID).value_or(Constants::ImplStrUnknown));
+
 			auto &&loadtimeEvent = std::make_shared<LoadtimeEvent>(*this, eventID, scriptID);
-			TE_TRACE("Script <{}> added handler to loadtime event <{}>{}", scriptID, eventID, eventName);
-			registryEvent = *(_loadtimeEvents.try_emplace(eventID, loadtimeEvent).first->second);
+			auto result = _loadtimeEvents.try_emplace(eventID, loadtimeEvent);
+			TE_ASSERT(result.second);
+			registryEvent = *result.first->second;
+		}
+		else
+		{
+			TE_TRACE("Add handler {} to runtime event <{}>{}, source script <{}>{}", name_.value_or(Constants::ImplStrUnknown),
+			         eventID, eventName,
+			         scriptID, GetScriptProvider().GetScriptNameByID(scriptID).value_or(Constants::ImplStrUnknown));
 		}
 
 		registryEvent->get().Add({

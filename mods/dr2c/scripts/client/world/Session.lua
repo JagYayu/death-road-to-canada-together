@@ -45,61 +45,61 @@ function CWorldSession.unpause()
 	return CClient.sendReliable(GMessage.Type.WorldSessionUnpause)
 end
 
-CWorldSession.eventCWorldSessionStart = events:new(N_("CWorldSessionStart"), {
+CWorldSession.eventCWorldSessionStart = TE.events:new(N_("CWorldSessionStart"), {
 	"Reset",
 	"Level",
 	"Rooms",
 })
 
-CWorldSession.eventCWorldSessionFinish = events:new(N_("CWorldSessionFinish"), {
+CWorldSession.eventCWorldSessionFinish = TE.events:new(N_("CWorldSessionFinish"), {
 	"Rooms",
 	"Level",
 	"Reset",
 })
 
-CWorldSession.eventCWorldSessionRestart = events:new(N_("CWorldSessionRestart"), {
+CWorldSession.eventCWorldSessionRestart = TE.events:new(N_("CWorldSessionRestart"), {
 	"", -- TODO
 })
 
-CWorldSession.eventCWorldSessionPause = events:new(N_("CWorldSessionPause"), {
+CWorldSession.eventCWorldSessionPause = TE.events:new(N_("CWorldSessionPause"), {
 	"Time",
 })
 
-CWorldSession.eventCWorldSessionUnpause = events:new(N_("CWorldSessionUnpause"), {
+CWorldSession.eventCWorldSessionUnpause = TE.events:new(N_("CWorldSessionUnpause"), {
 	"Time",
 })
 
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	if not e.suppressed then
 		CWorldSession.setAttributes(e.content.attributes)
 
-		events:invoke(CWorldSession.eventCWorldSessionStart, {})
+		TE.events:invoke(CWorldSession.eventCWorldSessionStart, {})
 	elseif log.canWarn() then
 		log.warn(("Cannot start world session: "):format(e.suppressed))
 	end
 end, "StartWorldSession", "Receive", GMessage.Type.WorldSessionStart)
 
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	if not e.suppressed then
 		CWorldSession.resetAttributes()
 
-		events:invoke(CWorldSession.eventCWorldSessionFinish, {})
+		TE.events:invoke(CWorldSession.eventCWorldSessionFinish, {})
 	elseif log.canWarn() then
 		log.warn(("Cannot finish world session: "):format(e.suppressed))
 	end
 end, "FinishWorldSession", "Receive", GMessage.Type.WorldSessionFinish)
 
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	local internal = CWorldSession.getAttribute(GWorldSession.Attribute.Internal)
 	if internal.state == GWorldSession.State.Playing then
 		internal.state = GWorldSession.State.Paused
 		internal.pausedTime = e.content
 
-		events:invoke(CWorldSession.eventCWorldSessionPause)
+		TE.events:invoke(CWorldSession.eventCWorldSessionPause)
 	end
 end, "PauseWorldSession", "Receive", GMessage.Type.WorldSessionPause)
 
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	local internal = CWorldSession.getAttribute(GWorldSession.Attribute.Internal)
 	if internal.state == GWorldSession.State.Paused then
 		print("Unpause")
@@ -107,12 +107,12 @@ events:add(N_("CMessage"), function(e)
 		internal.state = GWorldSession.State.Paused
 		internal.elapsedPaused = internal.elapsedPaused + e.content - internal.timePaused
 
-		events:invoke(CWorldSession.eventCWorldSessionUnpause)
+		TE.events:invoke(CWorldSession.eventCWorldSessionUnpause)
 	end
 end, "UnpauseWorldSession", "Receive", GMessage.Type.WorldSessionUnpause)
 
 --- @param e Events.E.DebugCommand
-events:add("DebugProvide", function(e)
+TE.events:add("DebugProvide", function(e)
 	e.data:setDebugCommand({
 		name = "startWorldSession",
 		help = "startWorldSession [args]",
@@ -134,7 +134,7 @@ events:add("DebugProvide", function(e)
 	})
 end, "ProvideClientWorldSessionCommands")
 
--- events:add(N_("CScanCodeDown"), function(e)
+-- TE.events:add(N_("CScanCodeDown"), function(e)
 -- 	if CWorldSession.getState() == GWorldSession.State.Paused then
 -- 		CWorldSession.unpause()
 -- 	elseif CWorldSession.getState() == GWorldSession.State.Paused then

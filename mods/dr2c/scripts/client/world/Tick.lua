@@ -56,7 +56,7 @@ function CWorldTick.getProcessingTick()
 	return processingTick
 end
 
-CWorldTick.eventClientWorldTickProcess = events:new(N_("CWorldTickProcess"), {
+CWorldTick.eventClientWorldTickProcess = TE.events:new(N_("CWorldTickProcess"), {
 	"PlayerInputs",
 	"SnapshotSave",
 	"AccelThreadBegin",
@@ -97,19 +97,19 @@ function CWorldTick.process(targetTick)
 			tick = processingTick,
 			playerInputs = playerInputs,
 		}
-		events:invoke(CWorldTick.eventClientWorldTickProcess, e)
+		TE.events:invoke(CWorldTick.eventClientWorldTickProcess, e)
 	end
 
 	-- print(("processed %s ticks"):format(ticks))
 end
 
-events:add(N_("CUpdate"), function(e)
+TE.events:add(N_("CUpdate"), function(e)
 	if CWorldSession.getState() == GWorldSession.State.Playing then
 		CWorldTick.process()
 	end
 end, "ProcessWorldTicks", "World")
 
-events:add(N_("CWorldRollback"), function(e)
+TE.events:add(N_("CWorldRollback"), function(e)
 	if not e.suppressed then
 		latestTick = math.min(latestTick, e.tick - 1)
 	end

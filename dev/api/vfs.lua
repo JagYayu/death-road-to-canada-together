@@ -21,13 +21,13 @@ vfs = {}
 
 --- @param path string
 --- @return boolean exists
-function vfs:exists(path) end
+function TE.vfs:exists(path) end
 
 --- @param directory string?
 --- @param options TE.VFS.PathListOption
 --- @return TE.VFS.ListEntry[] paths
-function vfs:list(directory, options) end
+function TE.vfs:list(directory, options) end
 
 --- @param file string?
 --- @return string data
-function vfs:readFile(file) end
+function TE.vfs:readFile(file) end

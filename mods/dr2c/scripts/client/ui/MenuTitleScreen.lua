@@ -15,7 +15,7 @@ local CUIMenu = require("dr2c.client.ui.Menu")
 local CUIWidget = require("dr2c.client.ui.Widget")
 
 --- @param e dr2c.E.CMenu
-events:add(CUIMenu.eventCMenu, function(e)
+TE.events:add(CUIMenu.eventCMenu, function(e)
 	local function newFlexRectangle()
 		local windowW, windowH = CModule.getWindow():getSize()
 

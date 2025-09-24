@@ -11,6 +11,7 @@
 
 #include "exception/EventHandlerAddBadKeyException.hpp"
 
+#include "data/Constants.hpp"
 #include "event/EventManager.hpp"
 #include "mod/ScriptProvider.hpp"
 
@@ -26,8 +27,8 @@ EventHandlerAddBadKeyException::EventHandlerAddBadKeyException(Context &context,
 
 std::string_view EventHandlerAddBadKeyException::What() const noexcept
 {
-	std::string_view eventName = GetEventManager().GetEventNameByID(eventID).value_or("$UNKNOWN$");
-	std::string_view scriptName = GetScriptProvider().GetScriptNameByID(eventID).value_or("$UNKNOWN$");
+	std::string_view eventName = GetEventManager().GetEventNameByID(eventID).value_or(Constants::ImplStrUnknown);
+	std::string_view scriptName = GetScriptProvider().GetScriptNameByID(eventID).value_or(Constants::ImplStrUnknown);
 	_what = std::format("Bad event handler key: \"{}\", event <{}>{}, script <{}>{}{}",
 	                    key.ToString(), eventID, eventName, scriptID, scriptName, traceback);
 	return _what;

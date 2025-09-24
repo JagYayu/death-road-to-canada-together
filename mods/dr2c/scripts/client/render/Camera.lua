@@ -9,39 +9,45 @@
 --
 --]]
 
---- @class Camera
-local Camera = {}
 local Matrix3x3 = require("tudov.Matrix3x3")
+
+--- @class dr2c.CUICamera
+local CUICamera = {}
 
 local centerX = 0
 local centerY = 0
 
-function Camera.getCenter()
+--- @return integer x
+--- @return integer y
+function CUICamera.getCenter()
 	return centerX, centerY
 end
 
 --- @param x number
 --- @param y number
-function Camera.setCenter(x, y)
+function CUICamera.setCenter(x, y)
 	centerX = x
 	centerY = y
 end
 
-function Camera.getTargetCenterPosition()
+--- @return integer x
+--- @return integer y
+function CUICamera.getTargetCenterPosition()
 	return centerX, centerY
 end
 
+--- @type TE.RenderTarget?
 local renderTarget
 local renderTargetWidth = 960 * 0.5
 local renderTargetHeight = 640 * 0.5
 
-function Camera.getRenderTarget()
+function CUICamera.getRenderTarget()
 	return renderTarget
 end
 
-local imageID = images:getID("gfx/cars/cars_unique_110x96.png")
+local imageID = TE.images:getID("gfx/cars/cars_unique_110x96.png")
 
-local eventRenderCamera = events:new(N_("CRenderCamera"), {
+local eventRenderCamera = TE.events:new(N_("CRenderCamera"), {
 	"Begin",
 	"Tilemap",
 	"Sprites",
@@ -53,7 +59,7 @@ local eventRenderCamera = events:new(N_("CRenderCamera"), {
 local drawRectArgs = DrawRectArgs()
 
 --- @param e dr2c.E.CRender
-events:add(N_("CRender"), function(e)
+TE.events:add(N_("CRender"), function(e)
 	local snapScale
 	local renderer = e.renderer
 	if not renderTarget then
@@ -77,7 +83,7 @@ events:add(N_("CRender"), function(e)
 	renderTarget:setCameraTargetPosition(0, 0)
 	renderTarget:setCameraTargetScale(scale, scale)
 
-	events:invoke(eventRenderCamera, e)
+	TE.events:invoke(eventRenderCamera, e)
 
 	drawRectArgs.texture = imageID
 
@@ -100,4 +106,4 @@ events:add(N_("CRender"), function(e)
 	renderer:drawRect(drawRectArgs)
 end, N_("RenderCamera"), "Camera")
 
-return Camera
+return CUICamera

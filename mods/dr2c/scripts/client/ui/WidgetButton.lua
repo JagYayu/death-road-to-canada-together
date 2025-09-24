@@ -16,19 +16,24 @@ local CUIDraw = require("dr2c.client.ui.Draw")
 local CUIWidget = require("dr2c.client.ui.Widget")
 local CUIWidgetBox = require("dr2c.client.ui.WidgetBox")
 
+--- @class dr2c.CUIWidgetButton
 local CUIWidgetButton = {}
+
+CUIWidgetButton.UIWidgetType = CUIWidget.Type.Button
 
 --- @param self dr2c.UIWidgetButton
 local function draw(self)
+	local args = self.drawButtonArgs
+	local margin = self.margin
 	local rect = self.rectangle
 
-	self.drawButtonArgs.x = rect[1]
-	self.drawButtonArgs.y = rect[2]
-	self.drawButtonArgs.width = rect[3]
-	self.drawButtonArgs.height = rect[4]
-	self.drawButtonArgs.border = self.border
+	args.x = rect[1] + margin[1]
+	args.y = rect[2] + margin[2]
+	args.width = rect[3] - (margin[1] + margin[3])
+	args.height = rect[4] - (margin[2] + margin[4])
+	args.border = self.border
 
-	CUIDraw.drawButton(self.drawButtonArgs)
+	CUIDraw.drawButton(args)
 end
 
 CUIWidgetButton.metatable = {
@@ -38,7 +43,7 @@ CUIWidgetButton.metatable = {
 }
 
 --- @param e dr2c.E.CWidget
-events:add(CUIWidget.eventCWidget, function(e)
+TE.events:add(CUIWidget.eventCWidget, function(e)
 	--- @class dr2c.UIWidgetButton.Args : dr2c.UIWidget.Args
 	--- @field alignX? number
 	--- @field alignY? number
@@ -67,6 +72,6 @@ events:add(CUIWidget.eventCWidget, function(e)
 	e.widget = setmetatable(widget, CUIWidgetButton.metatable)
 
 	e.initialized = true
-end, "Button", "Initialize", CUIWidget.Type.Button)
+end, "Button", "Initialize", CUIWidgetButton.UIWidgetType)
 
 return CUIWidgetButton

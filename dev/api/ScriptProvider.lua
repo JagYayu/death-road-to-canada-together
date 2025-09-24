@@ -2,7 +2,12 @@
 error("this is a lua library module")
 
 --- @class TE.ScriptProvider
-scriptProvider = {}
+TE.scriptProvider = {}
 
+--- @param scriptName string
 --- @return integer
-function scriptProvider.getScriptTextID() end
+function TE.scriptProvider:getScriptIDByName(scriptName) end
+
+--- @param scriptID integer
+--- @return string
+function TE.scriptProvider:getScriptNameByID(scriptID) end

@@ -79,7 +79,7 @@ function CPlayerInput.getPlayerMoveArg(playerID)
 end
 
 --- @param e dr2c.E.ClientUpdate
-events:add(N_("CUpdate"), function(e)
+TE.events:add(N_("CUpdate"), function(e)
 	local nextWorldTick = CWorldTick.getCurrentTick() + 1
 	if nextWorldTick <= 0 then
 		return
@@ -115,7 +115,7 @@ events:add(N_("CUpdate"), function(e)
 	end
 end, "HandlePlayersContinuousInputs", "Inputs")
 
-events:add(N_("CUpdate"), function(e)
+TE.events:add(N_("CUpdate"), function(e)
 	local clientID = CNetworkClient.getClientID()
 	if not clientID then
 		return

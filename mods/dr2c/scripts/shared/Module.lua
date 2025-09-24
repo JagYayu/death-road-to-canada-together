@@ -21,14 +21,14 @@ function GModule.getTick()
 	return tick
 end
 
-events:add("TickUpdate", function(e)
+TE.events:add("TickUpdate", function(e)
 	tick = tick + 1
 
 	network:update()
 
-	-- events:invoke(GModule.eventGUpdate, e, nil, EEventInvocation.None)
+	-- TE.events:invoke(GModule.eventGUpdate, e, nil, EEventInvocation.None)
 end, N_("SharedUpdate"), "Shared")
 
-engine:triggerLoadPending()
+TE.engine:triggerLoadPending()
 
 return GModule

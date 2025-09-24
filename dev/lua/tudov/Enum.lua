@@ -301,7 +301,7 @@ function Enum.getAllMetadata()
 	return enumerationsMetadata
 end
 
-events:add("DebugSnapshot", function(e)
+TE.events:add("DebugSnapshot", function(e)
 	e.enumerationsMetadata = enumerationsMetadata
 end, scriptName, nil, scriptName)
 

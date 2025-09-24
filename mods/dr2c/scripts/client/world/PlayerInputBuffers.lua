@@ -23,12 +23,12 @@ local GPlayerInputBuffers = require("dr2c.shared.world.PlayerInputBuffers")
 local CPlayerInputBuffers = GPlayerInputBuffers.new()
 
 --- @param e dr2c.E.CClientAdded
-events:add(N_("CClientAdded"), function(e)
+TE.events:add(N_("CClientAdded"), function(e)
 	CPlayerInputBuffers.addPlayer(e.clientID)
 end, "AddPlayerToPlayerInputBuffers", "PlayerInputBuffer")
 
 --- @param e dr2c.E.CMessage
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	local playerID = e.content.playerID
 
 	if CPlayerInputBuffers.hasPlayer(playerID) then
@@ -39,10 +39,10 @@ events:add(N_("CMessage"), function(e)
 	end
 end, "ReceivePlayerInput", "Receive", GMessage.Type.PlayerInputs)
 
-events:add(N_("CConnect"), function(e)
+TE.events:add(N_("CConnect"), function(e)
 	CPlayerInputBuffers.clear()
 end, "ClearPlayerInputBuffers", "Initialize")
 
-events:add(N_("CDisconnect"), CPlayerInputBuffers.clear, "ClearPlayerInputBuffers", "Reset")
+TE.events:add(N_("CDisconnect"), CPlayerInputBuffers.clear, "ClearPlayerInputBuffers", "Reset")
 
 return CPlayerInputBuffers

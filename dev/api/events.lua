@@ -182,6 +182,8 @@ error("this is a lua library module")
 --- @alias Events.Event "MouseButtonUp"
 --- @alias Events.Event "MouseMove"
 --- @alias Events.Event "MouseWheel"
+--- @alias Events.Event "ScriptGlobalIndex"
+--- @alias Events.Event "ScriptUnload"
 --- @alias Events.Event "ScriptsLoaded"
 --- @alias Events.Event "ServerConnect"
 --- @alias Events.Event "ServerDisconnect"
@@ -218,7 +220,7 @@ local RuntimeEvent = {}
 function RuntimeEvent.getInvokingScriptID() end
 
 --- @class Events
-events = {}
+TE.events = {}
 
 --- @alias Events.Key number | string
 
@@ -240,16 +242,16 @@ events = {}
 --- @param order Events.Order?
 --- @param key (string | integer)?
 --- @param sequence integer?
-function events:add(event, func, name, order, key, sequence) end
+function TE.events:add(event, func, name, order, key, sequence) end
 
 --- @param event Events.Event
 --- @param e any
 --- @param key Events.Key?
 --- @param options Events.EEventInvocation? @default: `EEventInvocation.Default`
-function events:invoke(event, e, key, options) end
+function TE.events:invoke(event, e, key, options) end
 
 --- @param event string
 --- @param orders string[]?
 --- @param keys (number|string)[]?
 --- @return Events.EventID
-function events:new(event, orders, keys) end
+function TE.events:new(event, orders, keys) end

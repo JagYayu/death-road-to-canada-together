@@ -104,7 +104,7 @@ bool Window::HandleEvent(AppEvent &appEvent) noexcept
 			    // window.
 			};
 
-			runtimeEvent.Invoke(&data, windowID, EEventInvocation::None);
+			runtimeEvent.Invoke(&data, EventHandleKey(windowID), EEventInvocation::None);
 		}
 	}
 	else if (sdlEvent.type == SDL_EVENT_KEY_DOWN || sdlEvent.type == SDL_EVENT_KEY_UP)
@@ -161,7 +161,7 @@ bool Window::HandleEvent(AppEvent &appEvent) noexcept
 		    .relativeY = motion.yrel,
 		};
 
-		runtimeEvent.Invoke(&data, windowID, EEventInvocation::None);
+		runtimeEvent.Invoke(&data, EventHandleKey(windowID), EEventInvocation::None);
 	}
 	else
 	{

@@ -10,3 +10,7 @@ function renderTarget:resizeToFit() end
 --- @param scaleX number
 --- @param scaleY number
 function renderTarget:setCameraTargetScale(scaleX, scaleY) end
+
+function renderTarget:snapCameraScale() end
+
+function renderTarget:update() end

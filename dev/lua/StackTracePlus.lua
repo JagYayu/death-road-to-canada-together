@@ -89,7 +89,6 @@ for _, name in ipairs({
 	"newproxy",
 	"setfenv",
 	"unpack",
-	-- TODO: add table.* etc functions
 }) do
 	if _G[name] then
 		m_known_functions[_G[name]] = name

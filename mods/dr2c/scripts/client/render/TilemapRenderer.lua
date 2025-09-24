@@ -14,7 +14,7 @@ local CRenderFocus = require("dr2c.client.render.Focus")
 local CRoom = require("dr2c.client.world.Room")
 local CRenderSprites = require("dr2c.client.render.Sprites")
 
--- events:new("", {
+-- TE.events:new("", {
 -- 	"",
 -- }, {
 -- 	"",
@@ -60,7 +60,7 @@ local testTilemap = {
 }
 
 --- @param e dr2c.E.CRender
-events:add(N_("CRenderCamera"), function(e)
+TE.events:add(N_("CRenderCamera"), function(e)
 	local room = CRoom.getRoom(CRenderFocus.getFocusedRoomID())
 	if room then
 		draw(e.renderer, room.tilemap)

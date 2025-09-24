@@ -209,7 +209,7 @@ bool ReliableUDPClientSession::Update()
 
 			TE_TRACE("Connected to server! event, host: {}, port: {}", data.host, data.port);
 
-			coreEvents.ClientConnect().Invoke(&data, _clientSessionSlot, EEventInvocation::None);
+			coreEvents.ClientConnect().Invoke(&data, EventHandleKey(_clientSessionSlot), EEventInvocation::None);
 
 			break;
 		}
@@ -228,7 +228,7 @@ bool ReliableUDPClientSession::Update()
 
 			TE_TRACE("Disconnected from server! event, host: {}, port: {}", eventData.host, eventData.port);
 
-			coreEvents.ClientMessage().Invoke(&eventData, _clientSessionSlot, EEventInvocation::None);
+			coreEvents.ClientMessage().Invoke(&eventData, EventHandleKey(_clientSessionSlot), EEventInvocation::None);
 
 			_clientSessionID = 0;
 
@@ -275,7 +275,7 @@ void ReliableUDPClientSession::UpdateENetReceive(_ENetEvent &event) noexcept
 	}
 	else
 	{
-		GetEventManager().GetCoreEvents().ClientMessage().Invoke(&data, _clientSessionSlot, EEventInvocation::None);
+		GetEventManager().GetCoreEvents().ClientMessage().Invoke(&data, EventHandleKey(_clientSessionSlot), EEventInvocation::None);
 	}
 
 	enet_packet_destroy(event.packet);

@@ -22,7 +22,7 @@ GPlayers.Attribute = Enum.sequence({
 	ClientID = 1,
 })
 
-local eventClientPlayersUpdateMaxPerClient = events:new(N_("CPlayersUpdateMaxPerClient"), {
+local eventClientPlayersUpdateMaxPerClient = TE.events:new(N_("CPlayersUpdateMaxPerClient"), {
 	"Overrides",
 	"Cache",
 })
@@ -31,7 +31,7 @@ function GPlayers.updateMaxPerClient()
 	local e = {
 		maximum = 4,
 	}
-	events:invoke(eventClientPlayersUpdateMaxPerClient, e)
+	TE.events:invoke(eventClientPlayersUpdateMaxPerClient, e)
 
 	GPlayers.MaxPerClient = tonumber(e.maximum)
 end

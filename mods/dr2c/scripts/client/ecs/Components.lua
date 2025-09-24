@@ -22,7 +22,7 @@ local CComponents = {}
 local function registerImpl(trait, name, fields, dependencies, ...)
 	local extras = { ... }
 
-	events:add(CECSSchema.eventEntitySchemaLoadComponents, function(e)
+	TE.events:add(CECSSchema.eventEntitySchemaLoadComponents, function(e)
 		local CEntitySchema = require("dr2c.client.ecs.ECSSchema")
 
 		e.new[name] = {
@@ -74,7 +74,7 @@ end
 --- @param source string
 function CComponents.addDependency(target, source)
 	--- @param e dr2c.E.ClientEntitySchemaLoadComponents
-	events:add(N_("CEntitySchemaLoadComponents"), function(e)
+	TE.events:add(N_("CEntitySchemaLoadComponents"), function(e)
 		--- @class dr2c.E.ClientEntitySchemaLoadComponents
 		--- @field dependencies table<string, table<string, true>>
 

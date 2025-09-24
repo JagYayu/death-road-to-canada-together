@@ -11,6 +11,7 @@
 
 #include "event/RuntimeEvent.hpp"
 
+#include "data/Constants.hpp"
 #include "debug/EventProfiler.hpp"
 #include "event/AbstractEvent.hpp"
 #include "event/EventHandler.hpp"
@@ -142,13 +143,11 @@ void RuntimeEvent::Add(const AddHandlerArgs &args)
 		}
 	}
 
-	auto optArgOrder = args.order;
-	std::string order = optArgOrder.has_value() ? optArgOrder.value() : _orders[_orders.size() - 1];
+	std::string order = args.order.value_or(_orders[_orders.size() - 1]);
 
 	auto it = std::find(_orders.begin(), _orders.end(), order);
 	if (it == _orders.end()) [[unlikely]]
 	{
-		// auto &&message = std::format("Invalid event handler order \"{}\"", order);
 		throw EventHandlerAddBadOrderException(GetContext(), _eventID, args.scriptID, order, args.stacktrace);
 	}
 
@@ -579,7 +578,18 @@ void RuntimeEvent::ClearSpecificScriptHandlers(const IScriptProvider &scriptProv
 {
 	ClearScriptHandlersImpl([this, scriptID](const EventHandler &handler)
 	{
-		return handler.scriptID == scriptID;
+		if (handler.scriptID == scriptID)
+		{
+			TE_TRACE("Remove handler \"{}\" from event <{}>{}, source script <{}>{}", handler.name,
+			         handler.eventID, eventManager.GetEventNameByID(handler.eventID).value_or(Constants::ImplStrUnknown),
+			         handler.scriptID, GetScriptProvider().GetScriptNameByID(handler.scriptID).value_or(Constants::ImplStrUnknown));
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	});
 }
 

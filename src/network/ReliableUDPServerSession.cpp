@@ -209,7 +209,7 @@ bool ReliableUDPServerSession::Update() noexcept
 				enet_peer_send(event.peer, 0, packet);
 			}
 
-			coreEvents.ServerConnect().Invoke(&eventData, _serverSessionSlot, EEventInvocation::None);
+			coreEvents.ServerConnect().Invoke(&eventData, EventHandleKey(_serverSessionSlot), EEventInvocation::None);
 
 			break;
 		}
@@ -227,7 +227,7 @@ bool ReliableUDPServerSession::Update() noexcept
 
 			TE_TRACE("Disconnect event, host: {}, port: {}", eventData.host, eventData.port);
 
-			coreEvents.ServerDisconnect().Invoke(&eventData, _serverSessionSlot, EEventInvocation::None);
+			coreEvents.ServerDisconnect().Invoke(&eventData, EventHandleKey(_serverSessionSlot), EEventInvocation::None);
 
 			TE_ASSERT(_clientIDPeerBimap.EraseByValue(event.peer));
 
@@ -270,7 +270,7 @@ void ReliableUDPServerSession::UpdateENetReceive(_ENetEvent &event) noexcept
 
 	// TE_TRACE("Received event, host: {}, port: {}", eventData.host, eventData.port, eventData.message);
 
-	GetEventManager().GetCoreEvents().ServerMessage().Invoke(&eventData, _serverSessionSlot, EEventInvocation::None);
+	GetEventManager().GetCoreEvents().ServerMessage().Invoke(&eventData, EventHandleKey(_serverSessionSlot), EEventInvocation::None);
 
 	if (eventData.broadcast != "")
 	{

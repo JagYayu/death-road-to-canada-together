@@ -33,7 +33,7 @@ CUIWidget.Type = Enum.sequence({
 	Textbox = 8,
 })
 
-CUIWidget.eventCWidget = events:new(N_("CWidgetNew"), {
+CUIWidget.eventCWidget = TE.events:new(N_("CWidgetNew"), {
 	"Initialize",
 	"Overrides",
 })
@@ -79,7 +79,7 @@ function CUIWidget.new(widgetType, args)
 		key = widgetType,
 	}
 
-	events:invoke(CUIWidget.eventCWidget, e, widgetType)
+	TE.events:invoke(CUIWidget.eventCWidget, e, widgetType)
 
 	if not e.initialized then
 		error(("Invalid widget type %s"):format(widgetType), 2)

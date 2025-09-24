@@ -2,15 +2,15 @@
 error("this is a lua library module")
 
 --- @class Fonts
-fonts = {}
+TE.fonts = {}
 
 --- @param imagePath string
 --- @return FontID
-function fonts:getID(imagePath) end
+function TE.fonts:getID(imagePath) end
 
 --- @param imageID FontID
 --- @return Font
-function fonts:get(imageID) end
+function TE.fonts:get(imageID) end
 
 --- @class Font
 local font = {}

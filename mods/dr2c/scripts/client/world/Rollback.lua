@@ -17,7 +17,7 @@ local CRollback = {}
 
 local rollbackPending
 
-local eventClientWorldRollback = events:new(N_("CWorldRollback"), {
+local eventClientWorldRollback = TE.events:new(N_("CWorldRollback"), {
 	"Snapshot",
 	"Tick",
 	"Reset",
@@ -32,11 +32,11 @@ function CRollback.apply(worldTick)
 		tick = worldTick,
 		suppressed = nil,
 	}
-	events:invoke(eventClientWorldRollback, e)
+	TE.events:invoke(eventClientWorldRollback, e)
 end
 
 --- @param e dr2c.E.CMessage
-events:add(N_("CMessage"), function(e)
+TE.events:add(N_("CMessage"), function(e)
 	local worldTick = e.content.worldTick
 	if not worldTick then
 		return
@@ -49,7 +49,7 @@ events:add(N_("CMessage"), function(e)
 	end
 end, "RollbackPending", "Rollback", GMessage.Type.PlayerInputs)
 
-events:add(N_("CUpdate"), function(e)
+TE.events:add(N_("CUpdate"), function(e)
 	if rollbackPending then
 		CRollback.apply(rollbackPending)
 

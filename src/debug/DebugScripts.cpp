@@ -11,6 +11,7 @@
 
 #include "debug/DebugScripts.hpp"
 
+#include "data/Constants.hpp"
 #include "debug/DebugUtils.hpp"
 #include "event/CoreEvents.hpp"
 #include "event/EventInvocation.hpp"
@@ -182,7 +183,7 @@ void DebugScripts::UpdateAndRenderErrorsArea(IWindow &window, const ErrorsArea &
 			ImGui::Text("%s", std::format("{:%H:%M:%S}", error->time).data());
 			ImGui::NextColumn();
 
-			std::string_view scriptName = scriptProvider.GetScriptNameByID(error->scriptID).value_or("$UNKNOWN$");
+			std::string_view scriptName = scriptProvider.GetScriptNameByID(error->scriptID).value_or(Constants::ImplStrUnknown);
 			if (_filterText[0] != '\0' && scriptName.find(_filterText) == std::string::npos)
 			{
 				continue;
@@ -372,7 +373,7 @@ void DebugScripts::UpdateAndRenderProvidedScripts(IWindow &window) noexcept
 
 				{
 					sol::table snapshot = scriptEngine.CreateTable();
-					eventDebugSnapshot.Invoke(snapshot, scriptName.data(), EEventInvocation::None);
+					eventDebugSnapshot.Invoke(snapshot, EventHandleKey(scriptName), EEventInvocation::None);
 					std::string text = scriptEngine.Inspect(snapshot);
 
 					TE_INFO("{}", text);

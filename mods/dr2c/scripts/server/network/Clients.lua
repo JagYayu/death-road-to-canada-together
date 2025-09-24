@@ -94,7 +94,7 @@ function SNetworkClients.addClient(clientID, verified)
 end
 
 --- @param e dr2c.E.SConnect
-events:add(N_("SConnect"), function(e)
+TE.events:add(N_("SConnect"), function(e)
 	SNetworkClients.addClient(e.clientID)
 end, "AddUnverifiedClient", "Clients")
 
@@ -148,7 +148,7 @@ local function onVerifiedClient(clientID)
 end
 
 --- @param e dr2c.E.SMessage
-events:add(N_("SMessage"), function(e)
+TE.events:add(N_("SMessage"), function(e)
 	local clientID = e.clientID
 
 	local attributes = clientsPublicAttributes[clientID]
@@ -208,7 +208,7 @@ local function updateUnverifiedClientsFunc(entry)
 	end
 end
 
-events:add(N_("SUpdate"), function(e)
+TE.events:add(N_("SUpdate"), function(e)
 	Table.listRemoveIf(unverifiedClients, updateUnverifiedClientsFunc)
 end, N_("UpdateUnverifiedClients"), "Network", nil, -1)
 

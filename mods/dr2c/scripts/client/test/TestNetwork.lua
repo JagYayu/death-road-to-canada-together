@@ -10,7 +10,7 @@ local function errorHandler(message)
 	end
 end
 
-events:add(N_("CUpdate"), function()
+TE.events:add(N_("CUpdate"), function()
 	if connectionState == 0 then
 		xpcall(network.serverHostRUDP, errorHandler, network, {
 			host = "localhost",

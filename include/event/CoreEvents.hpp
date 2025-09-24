@@ -72,10 +72,22 @@ namespace tudov
 		 */
 		[[nodiscard]] virtual RuntimeEvent &DebugSnapshot() noexcept = 0;
 
-		// Other events.
+		// Mod events.
 
-		[[nodiscard]] virtual RuntimeEvent &ModGlobalsIndex() noexcept = 0;
+		/**
+		 * Invoke when a script attempts to access a non-exist global variable.
+		 */
+		[[nodiscard]] virtual RuntimeEvent &ScriptGlobalIndex() noexcept = 0;
+
+		/**
+		 * Invoke when Script Loader completes a full script loads.
+		 */
 		[[nodiscard]] virtual RuntimeEvent &ScriptsLoaded() noexcept = 0;
+
+		/**
+		 * Invoke when a script was unloaded.
+		 */
+		[[nodiscard]] virtual RuntimeEvent &ScriptUnload() noexcept = 0;
 
 		// [[nodiscard]] virtual RuntimeEvent &LocalizationUpdateTexts() noexcept = 0;
 
@@ -106,13 +118,14 @@ namespace tudov
 		TRuntimeEvent _keyboardRelease;
 		TRuntimeEvent _keyboardAdded;
 		TRuntimeEvent _keyboardRemoved;
-		TRuntimeEvent _modGlobalsIndex;
 		TRuntimeEvent _mouseMotion;
 		TRuntimeEvent _mouseButtonDown;
 		TRuntimeEvent _mouseButtonUp;
 		TRuntimeEvent _mouseWheel;
 		TRuntimeEvent _mouseAdded;
 		TRuntimeEvent _mouseRemoved;
+		TRuntimeEvent _scriptGlobalIndex;
+		TRuntimeEvent _scriptUnload;
 		TRuntimeEvent _scriptsLoaded;
 		TRuntimeEvent _serverAuthenticate;
 		TRuntimeEvent _serverConnect;
@@ -144,7 +157,8 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &MouseWheel() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseAdded() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseRemoved() noexcept override;
-		[[nodiscard]] RuntimeEvent &ModGlobalsIndex() noexcept override;
+		[[nodiscard]] RuntimeEvent &ScriptGlobalIndex() noexcept override;
+		[[nodiscard]] RuntimeEvent &ScriptUnload() noexcept override;
 		[[nodiscard]] RuntimeEvent &ScriptsLoaded() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerAuthenticate() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerConnect() noexcept override;

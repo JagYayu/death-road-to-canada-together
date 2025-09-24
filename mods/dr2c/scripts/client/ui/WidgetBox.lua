@@ -15,6 +15,8 @@ local CUIWidget = require("dr2c.client.ui.Widget")
 --- @class dr2c.CUIWidgetBox
 local CUIWidgetBox = {}
 
+CUIWidgetBox.UIWidgetType = CUIWidget.Type.Box
+
 --- @param self dr2c.UIWidget
 local function draw(self)
 	local rect = self.rectangle
@@ -35,7 +37,7 @@ CUIWidgetBox.metatable = {
 }
 
 --- @param e dr2c.E.CWidget
-events:add(CUIWidget.eventCWidget, function(e)
+TE.events:add(CUIWidget.eventCWidget, function(e)
 	e.widget = setmetatable(e.widget, CUIWidgetBox.metatable)
 
 	e.initialized = true

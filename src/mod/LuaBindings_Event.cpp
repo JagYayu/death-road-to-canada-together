@@ -15,43 +15,55 @@
 #include "event/EventInvocation.hpp"
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
+#include "util/MicrosImpl.hpp"
+#include <memory>
 
 using namespace tudov;
 
-#define TE_ENUM(Class, ...)     lua.new_enum<Class>(#Class, __VA_ARGS__)
-#define TE_USERTYPE(Class, ...) lua.new_usertype<Class>(#Class, __VA_ARGS__)
-
 void LuaBindings::InstallEvent(sol::state &lua, Context &context) noexcept
 {
-	TE_ENUM(EEventInvocation,
-	        {
-	            {"All", EEventInvocation::All},
-	            {"None", EEventInvocation::None},
-	            {"CacheHandlers", EEventInvocation::CacheHandlers},
-	            {"NoProfiler", EEventInvocation::NoProfiler},
-	            {"TrackProgression", EEventInvocation::TrackProgression},
-	            {"Default", EEventInvocation::Default},
-	        });
+	TE_LB_ENUM(
+	    EEventInvocation,
+	    {
+	        {"All", EEventInvocation::All},
+	        {"None", EEventInvocation::None},
+	        {"CacheHandlers", EEventInvocation::CacheHandlers},
+	        {"NoProfiler", EEventInvocation::NoProfiler},
+	        {"TrackProgression", EEventInvocation::TrackProgression},
+	        {"Default", EEventInvocation::Default},
+	    });
 
-	TE_USERTYPE(RuntimeEvent,
-	            "getInvokingScriptID", &RuntimeEvent::GetInvokingScriptID,
-	            "getNextTrackID", &RuntimeEvent::GetNextTrackID);
+	TE_LB_USERTYPE(
+	    RuntimeEvent,
+	    "getInvokingScriptID", &RuntimeEvent::GetInvokingScriptID,
+	    "getNextTrackID", &RuntimeEvent::GetNextTrackID);
 
-	TE_USERTYPE(EventDebugProvideData,
-	            "setDebugCommand", &EventDebugProvideData::LuaSetDebugCommand);
+	TE_LB_USERTYPE(
+	    EventDebugProvideData,
+	    "setDebugCommand", &EventDebugProvideData::LuaSetDebugCommand);
 
-	TE_USERTYPE(EventManager,
-	            "add", &EventManager::LuaAdd,
-	            "getInvokingEvent", &EventManager::GetInvokingEvent,
-	            "new", &EventManager::LuaNew,
-	            "invoke", &EventManager::LuaInvoke);
+	TE_LB_USERTYPE(
+	    EventManager,
+	    "add", &EventManager::LuaAdd,
+	    "getInvokingEvent", &EventManager::GetInvokingEvent,
+	    "new", &EventManager::LuaNew,
+	    "invoke", &EventManager::LuaInvoke);
 
-	TE_USERTYPE(EventMouseMotionData,
-	            "mouseID", &EventMouseMotionData::mouseID,
-	            "relativeX", &EventMouseMotionData::relativeX,
-	            "relativeY", &EventMouseMotionData::relativeY,
-	            "x", &EventMouseMotionData::x,
-	            "y", &EventMouseMotionData::y);
+		std::weak_ptr<int> a;
 
-	lua["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
+	TE_LB_USERTYPE(
+	    EventMouseMotionData,
+	    "mouseID", &EventMouseMotionData::mouseID,
+	    "relativeX", &EventMouseMotionData::relativeX,
+	    "relativeY", &EventMouseMotionData::relativeY,
+	    "x", &EventMouseMotionData::x,
+	    "y", &EventMouseMotionData::y);
+
+	TE_LB_USERTYPE(
+	    EventScriptUnloadData,
+	    "module", &EventScriptUnloadData::module,
+	    "scriptID", &EventScriptUnloadData::scriptID,
+	    "scriptName", &EventScriptUnloadData::scriptName);
+
+	lua["TE"]["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
 }

@@ -60,16 +60,23 @@ function CUIMenu.update()
 	end
 end
 
-CUIMenu.eventCMenu = events:new(N_("CMenu"), {
+CUIMenu.eventCMenu = TE.events:new(N_("CMenu"), {
 	"Initialize",
 	"Overrides",
 })
 
 --- @param self dr2c.UIMenu
 local function metatableMenuDraw(self)
-	self.canvas:draw()
+	local canvas = self.canvas
 
-	-- print(self.canvas.selectedWidget)
+	canvas:draw()
+
+	local widget = self.canvas.selectedWidget
+	if widget then
+
+		-- widget.rectangle[1]
+		-- widget.rectangle[2]
+	end
 end
 
 --- @param self dr2c.UIMenu
@@ -109,7 +116,7 @@ function CUIMenu.open(menuType, menuArgs)
 		menu = menu,
 		args = menuArgs,
 	}
-	events:invoke(CUIMenu.eventCMenu, e, menuType)
+	TE.events:invoke(CUIMenu.eventCMenu, e, menuType)
 
 	if e.initialized then
 		menu:update()
@@ -128,11 +135,11 @@ function CUIMenu.closeAll()
 	menuStack = {}
 end
 
-events:add(N_("CRenderUI"), CUIMenu.draw, "RenderMenu", "Menu")
+TE.events:add(N_("CRenderUI"), CUIMenu.draw, "RenderMenu", "Menu")
 
 local testOnce = true
 
-events:add(N_("CUpdate"), function(e)
+TE.events:add(N_("CUpdate"), function(e)
 	if testOnce then
 		CUIMenu.closeAll()
 		CUIMenu.open(CUIMenu.Type.TitleScreen)

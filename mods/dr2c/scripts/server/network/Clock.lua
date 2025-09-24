@@ -26,7 +26,7 @@ function SClock.getTime()
 	return Time.getSystemTime() + serverClockTimeOffset
 end
 
-events:add(N_("SMessage"), function(e)
+TE.events:add(N_("SMessage"), function(e)
 	SServer.broadcastReliable(GMessage.Type.Clock, {
 		timeOffset = serverClockTimeOffset,
 	})

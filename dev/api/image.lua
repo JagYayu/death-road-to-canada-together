@@ -4,15 +4,15 @@ error("this is a lua library module")
 --- @class TE.ImageID : integer
 
 --- @class TE.ImageManager
-images = {}
+TE.images = {}
 
 --- @param imagePath string
 --- @return TE.ImageID
-function images:getID(imagePath) end
+function TE.images:getID(imagePath) end
 
 --- @param imageID TE.ImageID
 --- @return TE.Image
-function images:get(imageID) end
+function TE.images:get(imageID) end
 
 --- @class TE.Image
 local image = {}

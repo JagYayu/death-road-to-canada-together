@@ -37,15 +37,15 @@ local function resetSnapshots()
 	SWorldSnapshot.clear()
 end
 
-events:add(N_("SConnect"), resetSnapshots, "ResetSnapshots", "Reset")
+TE.events:add(N_("SConnect"), resetSnapshots, "ResetSnapshots", "Reset")
 
-events:add(N_("SDisconnect"), resetSnapshots, "ResetSnapshots", "Reset")
+TE.events:add(N_("SDisconnect"), resetSnapshots, "ResetSnapshots", "Reset")
 
-events:add(N_("SWorldSessionStart"), resetSnapshots, "ResetSnapshots", "Reset")
+TE.events:add(N_("SWorldSessionStart"), resetSnapshots, "ResetSnapshots", "Reset")
 
-events:add(N_("SWorldSessionFinish"), resetSnapshots, "ResetSnapshots", "Reset")
+TE.events:add(N_("SWorldSessionFinish"), resetSnapshots, "ResetSnapshots", "Reset")
 
-events:add(N_("SUpdate"), function(e)
+TE.events:add(N_("SUpdate"), function(e)
 	-- 没有任何快照请求，直接返回
 	if not serverSnapshotRequests[1] then
 		return
@@ -99,7 +99,7 @@ events:add(N_("SUpdate"), function(e)
 end, "responseSnapshotRequests", "Network", nil, 1)
 
 --- @param e dr2c.E.SMessage
-events:add(N_("SMessage"), function(e)
+TE.events:add(N_("SMessage"), function(e)
 	serverSnapshotRequests[#serverSnapshotRequests + 1] = {
 		clientID = e.clientID,
 		snapshotID = e.content.snapshotID,

@@ -266,7 +266,7 @@ function CECSSchema.entityHasNonComponents(entityTypeOrID, componentTypeOrIDs)
 	return true
 end
 
-CECSSchema.eventEntitySchemaLoadComponents = events:new(N_("CEntitySchemaLoadComponents"), {
+CECSSchema.eventEntitySchemaLoadComponents = TE.events:new(N_("CEntitySchemaLoadComponents"), {
 	"Register",
 	"Dependency",
 	"Override",
@@ -274,7 +274,7 @@ CECSSchema.eventEntitySchemaLoadComponents = events:new(N_("CEntitySchemaLoadCom
 	"Finalize",
 })
 
-CECSSchema.eventEntitySchemaLoadEntities = events:new(N_("CEntitySchemaLoadEntities"), {
+CECSSchema.eventEntitySchemaLoadEntities = TE.events:new(N_("CEntitySchemaLoadEntities"), {
 	"Register",
 	"Override",
 	"Validate",
@@ -293,7 +293,7 @@ local function reloadComponentsSchema(oldComponentsSchema)
 	}
 	local newComponentsSchema = e.new
 
-	events:invoke(CECSSchema.eventEntitySchemaLoadComponents, e, nil, EEventInvocation.None)
+	TE.events:invoke(CECSSchema.eventEntitySchemaLoadComponents, e, nil, EEventInvocation.None)
 
 	for state, componentType, entry in Table.sortedPairs(newComponentsSchema) do
 		local componentTypeID = state[2]
@@ -400,7 +400,7 @@ local function reloadEntitiesSchema(oldEntitiesSchema, tempComponentsSchema)
 	}
 	local newEntitiesSchema = e.new
 
-	events:invoke(CECSSchema.eventEntitySchemaLoadEntities, e, nil, EEventInvocation.None)
+	TE.events:invoke(CECSSchema.eventEntitySchemaLoadEntities, e, nil, EEventInvocation.None)
 
 	for state, entityType, entityComponents in Table.sortedPairs(newEntitiesSchema) do
 		local entityTypeID = state[2]
@@ -427,7 +427,7 @@ local function reloadEntitiesSchema(oldEntitiesSchema, tempComponentsSchema)
 	return tempEntitiesSchema
 end
 
-CECSSchema.eventCECSLoaded = events:new(N_("CEntitySchemaLoaded"), {
+CECSSchema.eventCECSLoaded = TE.events:new(N_("CEntitySchemaLoaded"), {
 	"Components",
 	"Filters",
 })
@@ -439,20 +439,20 @@ function CECSSchema.reloadImmediately()
 	componentsSchema = tempComponentsSchema
 	entitiesSchema = tempEntitiesSchema
 
-	events:invoke(CECSSchema.eventCECSLoaded, {})
+	TE.events:invoke(CECSSchema.eventCECSLoaded, {})
 
 	reloadPending = false
 end
 
 function CECSSchema.reload()
 	reloadPending = true
-	engine:triggerLoadPending()
+	TE.engine:triggerLoadPending()
 end
 
 CECSSchema.reload()
 
 --- @param e dr2c.E.CLoad
-events:add(N_("CLoad"), function(e)
+TE.events:add(N_("CLoad"), function(e)
 	if reloadPending then
 		CECSSchema.reloadImmediately()
 
