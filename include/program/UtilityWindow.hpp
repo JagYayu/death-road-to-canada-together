@@ -20,7 +20,7 @@ namespace tudov
 {
 	struct EventHandleKey;
 
-	class UtilityWindow : public Window
+	class UtilityWindow final : public Window
 	{
 	  private:
 		std::unique_ptr<EventHandleKey> _key;

@@ -24,33 +24,48 @@ namespace tudov
 	{
 		friend LuaBindings;
 
+	  public:
+		using Type = std::int32_t;
+
 	  private:
-		std::vector<int32_t> _parts;
+		std::vector<Type> _parts;
 
 	  public:
 		static const Version Latest;
 
 	  public:
-		Version();
-		Version(int32_t major, int32_t minor = 0, int32_t patch = 0);
-		Version(std::string_view str);
+		Version() noexcept;
+		Version(Type major, Type minor = 0, Type patch = 0) noexcept;
+		Version(std::string_view str) noexcept;
 		~Version() noexcept = default;
 
 	  public:
-		int32_t Major() const;
-		int32_t Minor() const;
-		int32_t Patch() const;
+		Type &Major();
+		Type &Minor();
+		Type &Patch();
+		Type Major() const;
+		Type Minor() const;
+		Type Patch() const;
 
-		int32_t operator[](size_t i) const;
-		size_t Size() const;
-
-		std::vector<int32_t>::const_iterator begin() const;
-		std::vector<int32_t>::const_iterator end() const;
+		Type operator[](std::size_t i) const;
 
 		auto operator<=>(const Version &other) const;
 		bool operator==(const Version &other) const;
 
 		friend std::ostream &operator<<(std::ostream &os, const Version &v);
+
+		std::size_t GetSize() const;
+
+		std::vector<Type>::const_iterator begin() const;
+		std::vector<Type>::const_iterator end() const;
+
+	  private:
+		Type LuaGetMajor() noexcept;
+		Type LuaGetMinor() noexcept;
+		Type LuaGetPatch() noexcept;
+		void LuaSetMajor(Type value) noexcept;
+		void LuaSetMinor(Type value) noexcept;
+		void LuaSetPatch(Type value) noexcept;
 	};
 
 	void from_json(const nlohmann::json &j, Version &v);

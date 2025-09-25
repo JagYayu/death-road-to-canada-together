@@ -113,7 +113,7 @@ namespace tudov
 
 	class Log;
 
-	class ScriptProvider : public IScriptProvider, private ILogProvider
+	class ScriptProvider final : public IScriptProvider, private ILogProvider
 	{
 	  public:
 		using ScriptID = std::uint64_t;

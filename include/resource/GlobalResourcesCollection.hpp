@@ -33,7 +33,7 @@ namespace tudov
 	 * Manage all kinds of game resources.
 	 * Automatically monitor VFS, load/unload/update resources when VFS has any event triggered.
 	 */
-	class GlobalResourcesCollection : public IEngineComponent, private ILogProvider
+	class GlobalResourcesCollection final : public IEngineComponent, private ILogProvider
 	{
 	  protected:
 		Context &_context;

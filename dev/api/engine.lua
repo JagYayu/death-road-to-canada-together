@@ -2,15 +2,26 @@
 error("this is a lua library module")
 
 --- @class Engine
-TE.engine = {}
+local engine = {}
 
 --- @type TE.Window
-TE.engine.primaryWindow = {}
+engine.primaryWindow = {}
+
+--- @return number
+function engine:getBeginTick() end
+
+--- @return number
+function engine:getTick() end
+
+--- @return number
+function engine:getLoadingBeginTick() end
 
 --- @return string
-function TE.engine:getVersion() end
+function engine:getVersion() end
 
-function TE.engine:quit() end
+function engine:quit() end
 
 --- @warn It is not recommended to call this function every frame. It will cause the screen to flicker at current version of engine.
-function TE.engine:triggerLoadPending() end
+function engine:triggerLoadPending() end
+
+TE.engine = engine

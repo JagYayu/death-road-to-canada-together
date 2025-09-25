@@ -47,7 +47,7 @@ namespace tudov
 		}
 	};
 
-	class MouseManager : public IMouseManager, private ILogProvider
+	class MouseManager final : public IMouseManager, private ILogProvider
 	{
 		friend LuaBindings;
 

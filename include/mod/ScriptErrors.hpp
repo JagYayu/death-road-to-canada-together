@@ -31,7 +31,7 @@ namespace tudov
 {
 	class LuaBindings;
 
-	struct ScriptError
+	struct ScriptError final
 	{
 		std::chrono::time_point<std::chrono::system_clock> time;
 		ScriptID scriptID;
@@ -80,7 +80,7 @@ namespace tudov
 		}
 	};
 
-	class ScriptErrors : public IScriptErrors
+	class ScriptErrors final : public IScriptErrors
 	{
 		friend LuaBindings;
 

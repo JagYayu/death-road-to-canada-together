@@ -26,7 +26,7 @@ namespace tudov
 
 	class ScriptEngine;
 
-	class FontResources : public Resources<Font>
+	class FontResources final : public Resources<Font>
 	{
 	  public:
 		FontResources() noexcept;

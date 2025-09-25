@@ -33,7 +33,7 @@ using namespace tudov;
 Context *ScriptModule::_parentContext = nullptr;
 std::weak_ptr<Log> ScriptModule::_parentLog = std::shared_ptr<Log>(nullptr);
 
-ScriptModule::ScriptModule(IScriptLoader &scriptLoader)
+ScriptModule::ScriptModule(IScriptLoader &scriptLoader) noexcept
     : _scriptLoader(scriptLoader),
       _scriptID(0),
       _func(),
@@ -43,7 +43,7 @@ ScriptModule::ScriptModule(IScriptLoader &scriptLoader)
 {
 }
 
-ScriptModule::ScriptModule(IScriptLoader &scriptLoader, ScriptID scriptID, const sol::protected_function &func)
+ScriptModule::ScriptModule(IScriptLoader &scriptLoader, ScriptID scriptID, const sol::protected_function &func) noexcept
     : _scriptLoader(scriptLoader),
       _scriptID(scriptID),
       _func(func),

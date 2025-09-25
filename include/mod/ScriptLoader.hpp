@@ -129,8 +129,14 @@ namespace tudov
 		 */
 		virtual void AddReverseDependency(ScriptID source, ScriptID target) = 0;
 
+		/**
+		 * Load all scripts immediately.
+		 */
 		virtual void LoadAllScripts() = 0;
 
+		/**
+		 * Unload all scripts immediately.
+		 */
 		virtual void UnloadAllScripts() = 0;
 
 		/**
@@ -238,16 +244,24 @@ namespace tudov
 		}
 	};
 
-	class ScriptLoader : public IScriptLoader, private ILogProvider
+	class ScriptLoader final : public IScriptLoader, private ILogProvider
 	{
 		friend LuaBindings;
 		friend ScriptModule;
+
+	  private:
+		enum class EFlag
+		{
+			Loading = 1 << 0,
+			Unloading = 1 << 1,
+		};
 
 	  protected:
 		Context &_context;
 		std::shared_ptr<Log> _log;
 		std::unordered_map<ScriptID, std::shared_ptr<ScriptModule>> _scriptModules;
 		std::unordered_map<ScriptID, std::set<ScriptID>> _scriptReversedDependencies;
+		EFlag _flags;
 
 		// Set this value when a script module is doing whatever loads.
 		ScriptID _loadingScript;
@@ -309,7 +323,7 @@ namespace tudov
 	  protected:
 		void CheckScriptProvider() const noexcept;
 		std::shared_ptr<ScriptModule> LoadImpl(ScriptID scriptID, std::string_view scriptName, std::string_view code, std::string_view mod);
-		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts);
+		void UnloadImpl(ScriptID scriptID, std::vector<ScriptID> *unloadedScripts);
 		void PostLoadScripts();
 
 	  private:

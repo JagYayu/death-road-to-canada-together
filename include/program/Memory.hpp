@@ -19,4 +19,4 @@ namespace tudov
 	{
 		static std::size_t GetHeapUsage() noexcept;
 	};
-}
+} // namespace tudov

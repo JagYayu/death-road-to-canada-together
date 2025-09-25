@@ -55,7 +55,6 @@ Engine::Engine() noexcept
       _beginTick(0),
       _previousTick(0),
       _framerate(0),
-      _firstTick(false),
       _logicThread(),
       _loadingState(ELoadingState::Done),
       _loadingThread()
@@ -252,12 +251,12 @@ void Engine::ProcessTick() noexcept
 		_data->_eventManager->GetCoreEvents().TickUpdate().Invoke();
 	}
 
-	for (const std::unique_ptr<AppEvent> &event : _sdlEvents)
+	for (const std::unique_ptr<AppEvent> &event : _appEvents)
 	{
 		HandleEvent(*event);
 	}
-	_sdlEvents.clear();
-	_sdlEvents.reserve(0);
+	_appEvents.clear();
+	_appEvents.reserve(0);
 }
 
 void Engine::HandleEvent(AppEvent &appEvent) noexcept
@@ -284,9 +283,9 @@ void Engine::Event(AppEvent &appEvent) noexcept
 		return;
 	}
 
-	if (_sdlEvents.size() < 999) [[likely]]
+	if (_appEvents.size() < 999) [[likely]]
 	{
-		_sdlEvents.emplace_back(std::make_unique<AppEvent>(*appEvent.sdlEvent));
+		_appEvents.emplace_back(std::make_unique<AppEvent>(*appEvent.sdlEvent));
 	}
 }
 
@@ -457,7 +456,7 @@ void Engine::TriggerLoadPending() noexcept
 	}
 }
 
-sol::string_view Engine::LuaGetVersion() const noexcept
+std::shared_ptr<Version> Engine::LuaGetVersion() const noexcept
 {
-	return "0.1.0";
+	return std::make_shared<Version>(GetAppVersion());
 }

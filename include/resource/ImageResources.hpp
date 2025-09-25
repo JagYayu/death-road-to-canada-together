@@ -28,7 +28,7 @@ namespace tudov
 	class LuaBindings;
 	class ScriptEngine;
 
-	class ImageResources : public Resources<Image>
+	class ImageResources final : public Resources<Image>
 	{
 		friend LuaBindings;
 

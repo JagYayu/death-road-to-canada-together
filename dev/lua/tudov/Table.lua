@@ -17,6 +17,7 @@ local table_new = require("table.new")
 
 local floor = math.floor
 local ipairs = ipairs
+local math_min = math.min
 local pairs = pairs
 local remove = table.remove
 local type = type
@@ -200,10 +201,13 @@ end
 
 --- @generic T
 --- @param tbl table<T, any>
---- @param keys table? @An alias of return table, to avoid GC in specific situations.
+--- @param keys (table | integer)? @An alias of return table, to avoid GC in specific situations.
 --- @return T[]
 function Table.getKeyList(tbl, keys)
-	local keyList = keys or {}
+	local keysType = type(keys)
+	local keyList = keysType == "number" and table_new(keys, 0) --
+		or keysType == "table" and keys
+		or {}
 
 	for k in pairs(tbl) do
 		keyList[#keyList + 1] = k
@@ -214,10 +218,13 @@ end
 
 --- @generic T
 --- @param tbl table<any, T>
---- @param capacity integer?
+--- @param values (table | integer)?
 --- @return T[]
-function Table.getValueList(tbl, capacity)
-	local valueList = capacity and table_new(capacity, 0) or {}
+function Table.getValueList(tbl, values)
+	local valuesType = type(values)
+	local valueList = valuesType == "number" and table_new(values, 0) --
+		or valuesType == "table" and values
+		or {}
 
 	for _, v in pairs(tbl) do
 		valueList[#valueList + 1] = v
@@ -228,10 +235,18 @@ end
 
 --- @generic K, V
 --- @param tbl table<K, V>
+--- @param keys (table | integer)?
+--- @param values (table | integer)?
 --- @return K[], V[]
-function Table.getKeyValueLists(tbl)
-	local keyList = {}
-	local valueList = {}
+function Table.getKeyValueLists(tbl, keys, values)
+	local keysType = type(keys)
+	local keyList = keysType == "number" and table_new(keys, 0) --
+		or keysType == "table" and keys
+		or {}
+	local valuesType = type(values)
+	local valueList = valuesType == "number" and table_new(values, 0) --
+		or valuesType == "table" and values
+		or {}
 
 	for k, v in pairs(tbl) do
 		local i = #keyList + 1
@@ -558,9 +573,9 @@ function Table.listFindFirst(list, value)
 	return findImpl(list, value, ipairs)
 end
 
---- @generic K, V, Arg...
+--- @generic K, V, TArgs...
 --- @param tbl table<K, V>
---- @param func fun(value: V, key: K, ...: Arg...): boolean
+--- @param func fun(value: V, key: K, ...: TArgs...): boolean
 --- @return K? key
 --- @return V? value
 --- @nodiscard
@@ -596,10 +611,10 @@ function Table.listConcat(l, r)
 	return l
 end
 
---- @generic T, Arg...
+--- @generic T, TArgs...
 --- @param list table<integer, T>
---- @param func fun(value: T, index: integer, ...: Arg...): boolean
---- @param ... Arg...
+--- @param func fun(value: T, index: integer, ...: TArgs...): boolean
+--- @param ... TArgs...
 --- @return integer? index
 --- @return T? value
 --- @nodiscard
@@ -607,30 +622,52 @@ function Table.listFindFirstIf(list, func, ...)
 	return findFirstIfImpl(list, func, ipairs, ...)
 end
 
---- @generic T, Arg...
---- @param list table<integer, T>
---- @param func fun(value: T, index: integer, ...: Arg...): boolean
---- @param ... Arg...
+--- Same as `Table.listFindFirstIf`, but only return a value instead of a pair.
+--- @generic TValue, TArgs...
+--- @param list table<integer, TValue>
+--- @param func fun(value: TValue, index: integer, ...: TArgs...): boolean
+--- @param ... TArgs...
+--- @return TValue? value
+--- @nodiscard
+function Table.listFindFirstValueIf(list, func, ...)
+	local _, value = findFirstIfImpl(list, func, ipairs, ...)
+	return value
+end
+
+--- @generic TValue, TArgs...
+--- @param list table<integer, TValue>
+--- @param func fun(value: TValue, index: integer, ...: TArgs...): boolean
+--- @param ... TArgs...
 --- @return integer? index
---- @return T? value
+--- @return TValue? value
 --- @nodiscard
 function Table.listFindLastIf(list, func, ...)
 	return findFirstIfImpl(list, func, Table.reversedPairs, ...)
 end
 
---- @warn This function removes table's hash part.
+--- @generic TValue, TArgs...
+--- @param list table<integer, TValue>
+--- @param func fun(value: TValue, index: integer, ...: TArgs...): boolean
+--- @param ... TArgs...
+--- @return TValue? value
+--- @nodiscard
+function Table.listFindLastValueIf(list, func, ...)
+	local _, value = findFirstIfImpl(list, func, Table.reversedPairs, ...)
+	return value
+end
+
 --- @generic T
 --- @param list T[]
+--- @param length integer?
 --- @return T[]
-function Table.listShrinkToFit(list, length)
-	local l = list
+function Table.listShrink(list, length)
+	local result = table_new(#list, 0)
 
-	list = table_new(#l, 0)
-	for i = 1, length do
-		list[i] = l[i]
+	for i = 1, length and math_min(#list, length) or #list do
+		result[i] = list[i]
 	end
 
-	return list
+	return result
 end
 
 --- @generic T

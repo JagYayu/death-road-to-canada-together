@@ -22,7 +22,7 @@ namespace tudov
 	struct IDebugManager;
 	class RenderTarget;
 
-	class PrimaryWindow : public Window
+	class PrimaryWindow final : public Window
 	{
 	  protected:
 		std::weak_ptr<IDebugManager> _debugManager;

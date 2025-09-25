@@ -18,6 +18,7 @@
 #include "event/EventManager.hpp"
 #include "event/RuntimeEvent.hpp"
 #include "i18n/Localization.hpp"
+#include "mod/ModManager.hpp"
 #include "mod/ScriptEngine.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
@@ -26,6 +27,7 @@
 #include "resource/GlobalResourcesCollection.hpp"
 #include "system/LogMicros.hpp"
 #include "util/SystemUtils.hpp"
+
 
 #include "imgui.h"
 
@@ -282,6 +284,11 @@ void DebugScripts::UpdateAndRenderProvidedScripts(IWindow &window) noexcept
 {
 	IScriptLoader &scriptLoader = window.GetScriptLoader();
 	RuntimeEvent &eventDebugSnapshot = window.GetEventManager().GetCoreEvents().DebugSnapshot();
+
+	if (ImGui::Button("Reload all"))
+	{
+		scriptLoader.LoadAllScripts();
+	}
 
 	ImGui::Columns(3, "ScriptColumns", true);
 	// ImGui::SetColumnWidth(0, 100 * scale);

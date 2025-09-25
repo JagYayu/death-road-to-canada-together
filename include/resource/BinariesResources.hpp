@@ -25,7 +25,7 @@ namespace tudov
 	class LuaBindings;
 	class ScriptEngine;
 
-	class BinariesResources : public Resources<Binaries>
+	class BinariesResources final : public Resources<Binaries>
 	{
 		friend LuaBindings;
 

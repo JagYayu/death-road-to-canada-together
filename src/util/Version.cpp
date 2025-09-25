@@ -13,27 +13,36 @@
 
 #include <cstdint>
 #include <sstream>
+#include <stdexcept>
 
 using namespace tudov;
 
-Version::Version()
+Version::Version() noexcept
     : _parts{0, 0, 0}
 {
 }
 
-Version::Version(int32_t major, int32_t minor, int32_t patch)
+Version::Version(Type major, Type minor, Type patch) noexcept
     : _parts{major, minor, patch}
 {
 }
 
-Version::Version(std::string_view str)
+Version::Version(std::string_view str) noexcept
 {
 	std::stringstream ss{str.data()};
 	std::string token;
 	while (std::getline(ss, token, '.'))
 	{
-		_parts.push_back(std::stoi(token));
+		try
+		{
+			_parts.emplace_back(std::stoi(token));
+		}
+		catch (const std::invalid_argument &)
+		{
+			_parts.emplace_back(0);
+		}
 	}
+
 	while (_parts.size() < 3)
 	{
 		_parts.push_back(0);
@@ -41,37 +50,52 @@ Version::Version(std::string_view str)
 	_parts.shrink_to_fit();
 }
 
-int32_t Version::Major() const
+Version::Type &Version::Major()
 {
 	return _parts[0];
 }
 
-int32_t Version::Minor() const
+Version::Type &Version::Minor()
 {
 	return _parts[1];
 }
 
-int32_t Version::Patch() const
+Version::Type &Version::Patch()
 {
 	return _parts[2];
 }
 
-int32_t Version::operator[](size_t i) const
+Version::Type Version::Major() const
+{
+	return _parts[0];
+}
+
+Version::Type Version::Minor() const
+{
+	return _parts[1];
+}
+
+Version::Type Version::Patch() const
+{
+	return _parts[2];
+}
+
+Version::Type Version::operator[](size_t i) const
 {
 	return _parts[i];
 }
 
-size_t Version::Size() const
+size_t Version::GetSize() const
 {
 	return _parts.size();
 }
 
-std::vector<int32_t>::const_iterator Version::begin() const
+std::vector<Version::Type>::const_iterator Version::begin() const
 {
 	return _parts.begin();
 }
 
-std::vector<int32_t>::const_iterator Version::end() const
+std::vector<Version::Type>::const_iterator Version::end() const
 {
 	return _parts.end();
 }
@@ -96,6 +120,36 @@ std::ostream &tudov::operator<<(std::ostream &os, const Version &v)
 {
 	os << v.Major() << "." << v.Minor() << "." << v.Patch();
 	return os;
+}
+
+Version::Type Version::LuaGetMajor() noexcept
+{
+	return Major();
+}
+
+Version::Type Version::LuaGetMinor() noexcept
+{
+	return Minor();
+}
+
+Version::Type Version::LuaGetPatch() noexcept
+{
+	return Patch();
+}
+
+void Version::LuaSetMajor(Type value) noexcept
+{
+	Major() = value;
+}
+
+void Version::LuaSetMinor(Type value) noexcept
+{
+	Minor() = value;
+}
+
+void Version::LuaSetPatch(Type value) noexcept
+{
+	Patch() = value;
 }
 
 void tudov::from_json(const nlohmann::json &j, Version &v)

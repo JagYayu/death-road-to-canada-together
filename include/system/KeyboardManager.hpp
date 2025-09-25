@@ -52,7 +52,7 @@ namespace tudov
 		}
 	};
 
-	class KeyboardManager : public IKeyboardManager, private ILogProvider
+	class KeyboardManager final : public IKeyboardManager, private ILogProvider
 	{
 		friend LuaBindings;
 

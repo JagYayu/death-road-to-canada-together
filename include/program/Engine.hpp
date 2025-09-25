@@ -36,7 +36,7 @@ namespace tudov
 	/**
 	 * @brief Tudov game engine
 	 */
-	class Engine : public Application, public IContextProvider, public IDebugProvider, private ILogProvider
+	class Engine final : public Application, public IContextProvider, public IDebugProvider, private ILogProvider
 	{
 		friend Context;
 		friend EngineData;
@@ -98,18 +98,16 @@ namespace tudov
 		std::uint64_t _beginTick;
 		std::float_t _previousTick;
 		std::float_t _framerate;
-		bool _firstTick;
-		std::vector<std::unique_ptr<AppEvent>> _sdlEvents;
+		std::vector<std::unique_ptr<AppEvent>> _appEvents;
 		std::unique_ptr<EngineData> _data;
 
-		std::thread _logicThread;
 		// Background loading thread
+		std::thread _logicThread;
 		ELoadingState _loadingState;
 		std::thread _loadingThread;
 		std::timed_mutex _loadingMutex;
 		std::uint64_t _loadingBeginNS;
 		LoadingInfo _loadingInfo;
-		// std::mutex _loadingInfoMutex;
 
 		std::shared_ptr<Log> _log;
 
@@ -189,6 +187,6 @@ namespace tudov
 		}
 
 	  private:
-		sol::string_view LuaGetVersion() const noexcept;
+		std::shared_ptr<Version> LuaGetVersion() const noexcept;
 	};
 } // namespace tudov

@@ -59,7 +59,7 @@ namespace tudov
 		}
 	};
 
-	class Keyboard : public IKeyboard, public IContextProvider, public std::enable_shared_from_this<Keyboard>, private ILogProvider
+	class Keyboard final : public IKeyboard, public IContextProvider, public std::enable_shared_from_this<Keyboard>, private ILogProvider
 	{
 		friend LuaBindings;
 

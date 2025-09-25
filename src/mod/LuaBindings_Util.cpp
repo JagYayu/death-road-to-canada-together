@@ -1,0 +1,29 @@
+/**
+ * @file mod/LuaBindings_Util.cpp
+ * @author JagYayu
+ * @brief
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+ *
+ */
+
+#include "mod/LuaBindings.hpp"
+
+#include "event/CoreEventsData.hpp"
+#include "sol/property.hpp"
+#include "util/MicrosImpl.hpp"
+#include "util/Version.hpp"
+
+using namespace tudov;
+
+void LuaBindings::InstallUtil(sol::state &lua, Context &context) noexcept
+{
+	TE_LB_USERTYPE(
+	    Version,
+	    sol::call_constructor, sol::constructors<Version(), Version(Version::Type major, Version::Type minor, Version::Type patch)>(),
+	    "major", sol::property(&Version::LuaGetMajor, &Version::LuaSetMajor),
+	    "minor", sol::property(&Version::LuaGetMinor, &Version::LuaSetMinor),
+	    "patch", sol::property(&Version::LuaGetPatch, &Version::LuaSetPatch));
+}

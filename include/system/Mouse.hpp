@@ -67,7 +67,7 @@ namespace tudov
 		std::shared_ptr<Window> LuaGetFocusedWindow() noexcept;
 	};
 
-	class PrimaryMouse : public Mouse, public IContextProvider
+	class PrimaryMouse final : public Mouse, public IContextProvider
 	{
 	  private:
 		Context &_context;

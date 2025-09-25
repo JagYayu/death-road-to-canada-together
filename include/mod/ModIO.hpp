@@ -13,7 +13,7 @@
 
 namespace tudov
 {
-	class ModIO : public IModPortal
+	class ModIO final : public IModPortal
 	{
 	  public:
 		explicit ModIO() noexcept;

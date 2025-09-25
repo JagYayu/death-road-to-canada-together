@@ -11,7 +11,6 @@
 
 #include "mod/ScriptLoader.hpp"
 
-#include "data/Constants.hpp"
 #include "event/CoreEvents.hpp"
 #include "event/CoreEventsData.hpp"
 #include "event/EventHandleKey.hpp"
@@ -28,7 +27,6 @@
 #include "util/Definitions.hpp"
 #include "util/StringUtils.hpp"
 
-#include <algorithm>
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
 #include <sol/types.hpp>
@@ -56,6 +54,7 @@ ScriptLoader::ScriptLoader(Context &context) noexcept
       _onUnloadScript(),
       _onFailedLoadScript(),
       _scriptReversedDependencies(),
+      _flags(),
       _parseErrorScripts(),
       _scriptProviderVersion()
 {
@@ -63,6 +62,7 @@ ScriptLoader::ScriptLoader(Context &context) noexcept
 
 ScriptLoader::~ScriptLoader() noexcept
 {
+	UnloadAllScripts();
 }
 
 Context &ScriptLoader::GetContext() noexcept
@@ -270,7 +270,9 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 
 void ScriptLoader::LoadAllScripts()
 {
-	TE_DEBUG("{}", "Loading provided scripts ...");
+	TE_DEBUG("Loading provided scripts ...");
+
+	UnloadAllScripts();
 
 	IScriptProvider &scriptProvider = GetScriptProvider();
 
@@ -282,11 +284,6 @@ void ScriptLoader::LoadAllScripts()
 	});
 
 	_onPreLoadAllScripts();
-
-	if (!_scriptModules.empty())
-	{
-		UnloadAllScripts();
-	}
 
 	_scriptModules.clear();
 
@@ -409,23 +406,40 @@ std::shared_ptr<ScriptModule> ScriptLoader::LoadImpl(ScriptID scriptID, std::str
 
 void ScriptLoader::UnloadAllScripts()
 {
+	if (_scriptModules.empty())
+	{
+		return;
+	}
+
+	TE_DEBUG("Unloading loaded scripts ...");
+
 	IScriptProvider &scriptProvider = GetScriptProvider();
 
-	for (auto it : _scriptModules)
+	std::vector<ScriptID> keys{};
+	keys.reserve(_scriptModules.size());
+	for (auto [scriptID, _] : _scriptModules)
 	{
-		if (!scriptProvider.GetScriptNameByID(it.first))
+		if (scriptProvider.GetScriptNameByID(scriptID).has_value())
 		{
-			UnloadScript(it.first);
+			keys.emplace_back(scriptID);
 		}
 	}
 
+	for (ScriptID scriptID : keys)
+	{
+		UnloadScript(scriptID);
+	}
+
+	_scriptModules.clear();
 	_parseErrorScripts.clear();
+
+	TE_DEBUG("Unloaded loaded scripts ...");
 }
 
 std::vector<ScriptID> ScriptLoader::UnloadScript(ScriptID scriptID)
 {
 	std::vector<ScriptID> unloadedScripts{};
-	UnloadImpl(scriptID, unloadedScripts);
+	UnloadImpl(scriptID, &unloadedScripts);
 	return unloadedScripts;
 }
 
@@ -444,7 +458,7 @@ std::vector<ScriptID> ScriptLoader::UnloadScriptsBy(std::string_view modUID)
 	}
 	for (auto scriptID : unloadingScripts)
 	{
-		UnloadImpl(scriptID, unloadedScripts);
+		UnloadImpl(scriptID, &unloadedScripts);
 	}
 
 	return std::move(unloadedScripts);
@@ -458,7 +472,7 @@ std::vector<ScriptID> ScriptLoader::UnloadInvalidScripts()
 	// return std::move(unloadedScripts);
 }
 
-void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloadedScripts)
+void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> *unloadedScripts)
 {
 	if (!_scriptModules.contains(scriptID))
 	{
@@ -478,8 +492,6 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 
 	TE_TRACE("Unloading script <{}>{} ...", scriptID, scriptName);
 
-	_onUnloadScript(scriptID, scriptName);
-
 	{
 		EventScriptUnloadData data{
 		    .scriptID = scriptID,
@@ -489,12 +501,17 @@ void ScriptLoader::UnloadImpl(ScriptID scriptID, std::vector<ScriptID> &unloaded
 		GetEventManager().GetCoreEvents().ScriptUnload().Invoke(&data, EventHandleKey(scriptName));
 	}
 
+	_onUnloadScript(scriptID, scriptName);
+
 	TE_ASSERT(_scriptModules.erase(scriptID));
 
-	for (ScriptID dependency : GetScriptDependencies(scriptID))
+	if (unloadedScripts != nullptr)
 	{
-		UnloadScript(dependency);
-		unloadedScripts.emplace_back(dependency);
+		for (ScriptID dependency : GetScriptDependencies(scriptID))
+		{
+			UnloadScript(dependency);
+			unloadedScripts->emplace_back(dependency);
+		}
 	}
 
 	_scriptReversedDependencies.erase(scriptID);

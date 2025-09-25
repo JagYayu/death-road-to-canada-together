@@ -84,7 +84,7 @@ namespace tudov
 		}
 	};
 
-	struct ScriptModule : public IScriptModule, public IContextProvider, private ILogProvider, public std::enable_shared_from_this<ScriptModule>
+	struct ScriptModule final : public IScriptModule, public IContextProvider, private ILogProvider, public std::enable_shared_from_this<ScriptModule>
 	{
 	  protected:
 		static Context *_parentContext;
@@ -102,8 +102,8 @@ namespace tudov
 		static void ModuleFieldModifier(std::shared_ptr<ScriptModule> module, sol::object key, sol::object value) noexcept;
 
 	  public:
-		explicit ScriptModule(IScriptLoader &scriptLoader);
-		explicit ScriptModule(IScriptLoader &scriptLoader, ScriptID scriptID, const sol::protected_function &func);
+		explicit ScriptModule(IScriptLoader &scriptLoader) noexcept;
+		explicit ScriptModule(IScriptLoader &scriptLoader, ScriptID scriptID, const sol::protected_function &func) noexcept;
 
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;

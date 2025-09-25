@@ -13,12 +13,12 @@
 
 using namespace tudov;
 
-Mod::Mod(ModManager &modManager)
+Mod::Mod(ModManager &modManager) noexcept
     : _modManager(modManager)
 {
 }
 
-Mod::Mod(ModManager &modManager, const ModConfig &config)
+Mod::Mod(ModManager &modManager, const ModConfig &config) noexcept
     : _modManager(modManager),
       _config(config)
 {

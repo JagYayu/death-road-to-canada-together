@@ -26,7 +26,7 @@ namespace tudov
 
 	class ScriptEngine;
 
-	class TextureResources : public Resources<Texture>
+	class TextureResources final : public Resources<Texture>
 	{
 	  public:
 		explicit TextureResources() noexcept;

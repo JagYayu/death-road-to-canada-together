@@ -120,6 +120,7 @@ namespace tudov
 
 	  public:
 		explicit LuaBindings() noexcept = default;
+		~LuaBindings() noexcept = default;
 
 		bool RegisterInstallation(std::string_view key, const TInstallation &installation) override;
 		void Install(sol::state &lua, Context &context) override;
@@ -131,6 +132,7 @@ namespace tudov
 		void InstallNetwork(sol::state &lua, Context &context) noexcept;
 		void InstallScanCode(sol::state &lua, Context &context) noexcept;
 		void InstallSystem(sol::state &lua, Context &context) noexcept;
+		void InstallUtil(sol::state &lua, Context &context) noexcept;
 	};
 
 	struct [[deprecated("DO NOT USE")]] ILuaBindingsProvider

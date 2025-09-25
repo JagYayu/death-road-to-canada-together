@@ -68,8 +68,9 @@ namespace tudov
 		std::vector<FontID> _fonts;
 
 	  public:
-		explicit Mod(ModManager &modManager);
-		explicit Mod(ModManager &modManager, const ModConfig &config);
+		explicit Mod(ModManager &modManager) noexcept;
+		explicit Mod(ModManager &modManager, const ModConfig &config) noexcept;
+		~Mod() noexcept = default;
 
 		ModManager &GetModManager() noexcept override;
 		ModConfig &GetConfig() noexcept override;

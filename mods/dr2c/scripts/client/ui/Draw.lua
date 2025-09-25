@@ -15,20 +15,15 @@ local Color = require("tudov.Color")
 local CUIDraw = {}
 
 --- @type TE.Renderer
-local renderer
+local renderer = TE.engine.primaryWindow.renderer
 
 local drawRectArgs = DrawRectArgs()
-drawRectArgs.texture = TE.images:getID("mods/dr2c/gfx/UI.png")
+drawRectArgs.texture = 0
 drawRectArgs.source = { x = 0, y = 0, w = 0, h = 0 }
 local drawRectDst = drawRectArgs.destination
 local drawRectSrc = drawRectArgs.source
 
 local drawTextArgs = DrawTextArgs()
-
---- @param drawTexture DrawArgTexture
-function CUIDraw.setTexture(drawTexture)
-	drawRectArgs.texture = drawTexture
-end
 
 local uiTexture = TE.images:getID("mods/dr2c/gfx/UI.png")
 local uiTextureX = 0
@@ -39,11 +34,11 @@ local uiTextureSize = 4
 local uiFont = TE.fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
 
 --- @class dr2c.UI.DrawBorder
---- @field x number? @Frame top left position
---- @field y number? @Frame top left position
---- @field width number? @Frame middle width
---- @field height number? @Frame middle height
---- @field size number? @Corner size (width & height)
+--- @field x number @Frame top left position
+--- @field y number @Frame top left position
+--- @field width number @Frame middle width
+--- @field height number @Frame middle height
+--- @field size number @Corner size (width & height)
 --- @field texture DrawArgTexture?
 --- @field textureX number?
 --- @field textureY number?
@@ -63,20 +58,15 @@ end
 function CUIDraw.drawBorder(args)
 	-- 绘制顺序：左上、上、右上、左、右、左下、下、右下
 
-	local x = args.x
-	local y = args.y
 	local w = args.width
 	local h = args.height
-	local sz = args.size
-	if not (x or y or w or h) then
+	if w <= 0 or h <= 0 then
 		return false
 	end
 
-	--- @cast x number
-	--- @cast y number
-	--- @cast w number
-	--- @cast h number
-	--- @cast sz number
+	local x = args.x
+	local y = args.y
+	local sz = args.size
 
 	local tx = args.textureX or uiTextureX
 	local ty = args.textureY or uiTextureY
@@ -115,11 +105,11 @@ function CUIDraw.drawBorder(args)
 	drawRectDst.x = x
 	drawRectDst.y = y + sz
 	drawRectDst.w = sz
-	drawRectDst.h = h
+	drawRectDst.h = h - sz * 2
 	renderer:drawRect(drawRectArgs)
 
 	drawRectSrc.x = tx + (tw - tsz)
-	drawRectDst.x = x - sz + w
+	drawRectDst.x = x + w - sz
 	renderer:drawRect(drawRectArgs)
 
 	drawRectSrc.x = tx
@@ -127,7 +117,7 @@ function CUIDraw.drawBorder(args)
 	drawRectSrc.w = tsz
 	drawRectSrc.h = tsz
 	drawRectDst.x = x
-	drawRectDst.y = y + sz + h
+	drawRectDst.y = y + h - sz
 	drawRectDst.h = sz
 	renderer:drawRect(drawRectArgs)
 
@@ -139,7 +129,7 @@ function CUIDraw.drawBorder(args)
 
 	drawRectSrc.x = tw - tsz
 	drawRectSrc.w = tsz
-	drawRectDst.x = x - sz + w
+	drawRectDst.x = x + w - sz
 	drawRectDst.w = sz
 	renderer:drawRect(drawRectArgs)
 
@@ -164,7 +154,7 @@ end
 --- @param args dr2c.UI.DrawButton
 --- @return boolean
 function CUIDraw.drawButton(args)
-	if not (args.x and args.y) then
+	if not (args.x and args.y and args.width and args.height) then
 		return false
 	end
 
@@ -176,18 +166,16 @@ function CUIDraw.drawButton(args)
 			border.color = Color.gray(192)
 		end
 
-		if args.held then
+		if args.held then -- TODO 这啥？
 			border.x = args.x
 			border.y = args.y
 			border.width = args.width
 			border.height = args.height
-			border.size = uiTextureSize
 		else
 			border.x = args.x
 			border.y = args.y
 			border.width = args.width
 			border.height = args.height
-			border.size = uiTextureSize
 		end
 
 		CUIDraw.drawBorder(args.border)
@@ -209,7 +197,7 @@ function CUIDraw.drawButton(args)
 		drawRectDst.x = args.x + borderSize
 		drawRectDst.y = args.y + borderSize
 		drawRectDst.w = args.width - borderSize * 2
-		drawRectDst.h = args.height - borderSize
+		drawRectDst.h = args.height - borderSize * 2
 		renderer:drawRect(drawRectArgs)
 	end
 
@@ -217,8 +205,8 @@ function CUIDraw.drawButton(args)
 	drawTextArgs.text = tostring(args.text)
 	drawTextArgs.alignX = args.alignX or 0
 	drawTextArgs.alignY = args.alignY or 0
-	drawTextArgs.x = args.x + args.width * 0.5 + borderSize
-	drawTextArgs.y = args.y + args.height * 0.5 + borderSize
+	drawTextArgs.x = args.x + args.width * 0.5
+	drawTextArgs.y = args.y + args.height * 0.5
 	-- drawTextArgs.maxWidth = args.width - borderSize * 2
 	drawTextArgs.scale = (args.held and 0.8 or 1) * (args.scale or 1)
 	drawTextArgs.color = Color.White
@@ -247,7 +235,7 @@ function CUIDraw.drawSelectionBox(args)
 
 	local factor = math.sin(time * 2) + 1
 
-	-- renderer:
+	drawRectArgs.texture = args.texture or uiTexture
 end
 
 --- @param e dr2c.E.CRender

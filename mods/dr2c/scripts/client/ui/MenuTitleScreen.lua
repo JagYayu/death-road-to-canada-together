@@ -16,6 +16,7 @@ local CUIWidget = require("dr2c.client.ui.Widget")
 
 --- @param e dr2c.E.CMenu
 TE.events:add(CUIMenu.eventCMenu, function(e)
+	--- @return Rectangle
 	local function newFlexRectangle()
 		local windowW, windowH = CModule.getWindow():getSize()
 
@@ -27,53 +28,53 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 		}
 	end
 
-	local widget = CUIWidget.newFlex({
+	local root = CUIWidget.newFlex({
 		rectangle = newFlexRectangle(),
 		vertical = true,
 	})
 
-	local margin = {
-		4,
-		4,
-		4,
-		4,
+	local uiScale = CUI.getScale()
+
+	local commonMargin = {
+		uiScale,
+		uiScale,
+		uiScale,
+		uiScale,
 	}
 
-	widget:addChild(CUIWidget.newButton({
+	local commonBorder = {
+		size = 8 * uiScale,
+	}
+
+	root:addChild(CUIWidget.newButton({
 		label = "START",
-		margin = margin,
-		scale = CUI.getScale(),
-		border = {
-			size = 4 * CUI.getScale(),
-		},
+		margin = commonMargin,
+		scale = uiScale,
+		border = commonBorder,
 	}))
 
-	widget:addChild(CUIWidget.newButton({
+	root:addChild(CUIWidget.newButton({
 		label = "OPTIONS",
-		margin = margin,
-		scale = CUI.getScale(),
-		border = {
-			size = 4 * CUI.getScale(),
-		},
+		margin = commonMargin,
+		scale = uiScale,
+		border = commonBorder,
 	}))
 
-	widget:addChild(CUIWidget.newButton({
+	root:addChild(CUIWidget.newButton({
 		label = "EXIT",
-		margin = margin,
-		scale = CUI.getScale(),
-		border = {
-			size = 40 * CUI.getScale(),
-		},
+		margin = commonMargin,
+		scale = uiScale,
+		border = commonBorder,
 	}))
 
-	e.menu.canvas:addWidget(widget)
+	e.menu.canvas:addWidget(root)
 
 	local update = e.menu.update
 	--- @param self dr2c.UIMenu
 	function e.menu.update(self)
-		widget.rectangle = newFlexRectangle()
+		root.rectangle = newFlexRectangle()
 
-		update(self)
+		-- update(self)
 	end
 
 	e.initialized = true

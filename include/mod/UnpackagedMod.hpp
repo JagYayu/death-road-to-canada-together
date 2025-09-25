@@ -31,7 +31,7 @@ namespace tudov
 	enum class EPathType : int;
 	class FileSystemWatch;
 
-	class UnpackagedMod : public Mod, public IUnpackagedMod, public IContextProvider, private ILogProvider
+	class UnpackagedMod final : public Mod, public IUnpackagedMod, public IContextProvider, private ILogProvider
 	{
 	  private:
 		std::shared_ptr<Log> _log;

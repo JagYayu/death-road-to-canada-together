@@ -17,13 +17,14 @@ local tonumber = tonumber
 local CRenderUtils = {}
 
 --- @param border dr2c.UI.DrawBorder | table
+--- @return dr2c.UI.DrawBorder
 function CRenderUtils.copyDrawBorder(border)
 	return {
-		x = tonumber(border.x),
-		y = tonumber(border.y),
-		width = tonumber(border.width),
-		height = tonumber(border.height),
-		size = tonumber(border.size),
+		x = tonumber(border.x) or 0,
+		y = tonumber(border.y) or 0,
+		width = tonumber(border.width) or 0,
+		height = tonumber(border.height) or 0,
+		size = tonumber(border.size) or 1,
 		texture = border.texture,
 		textureX = tonumber(border.textureX),
 		textureY = tonumber(border.textureY),

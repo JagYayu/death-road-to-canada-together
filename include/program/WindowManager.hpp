@@ -27,7 +27,40 @@ namespace tudov
 	struct IDebugManager;
 	struct IWindow;
 
-	class WindowManager : public IEngineComponent, private ILogProvider
+	struct IWindowManager : public IEngineComponent
+	{
+		virtual ~IWindowManager() noexcept = default;
+
+		virtual std::shared_ptr<IWindow> GetWindowByID(WindowID windowID) noexcept = 0;
+
+		virtual std::shared_ptr<IWindow> GetPrimaryWindow() noexcept = 0;
+
+		virtual std::shared_ptr<const IWindow> GetPrimaryWindow() const noexcept = 0;
+
+		virtual std::vector<std::shared_ptr<IWindow>> &GetSubWindows() noexcept = 0;
+
+		virtual const std::vector<std::shared_ptr<IWindow>> &GetSubWindows() const noexcept = 0;
+
+		virtual std::shared_ptr<IDebugManager> GetDebugManager() noexcept = 0;
+
+		virtual std::shared_ptr<const IDebugManager> GetDebugManager() const noexcept = 0;
+
+		virtual void AddSubWindow(const std::shared_ptr<IWindow> &window) = 0;
+
+		virtual void RemoveSubWindow(const std::shared_ptr<IWindow> &window) = 0;
+
+		virtual bool IsEmpty() noexcept = 0;
+
+		virtual void InitializePrimaryWindow() noexcept = 0;
+
+		virtual void CloseWindows() noexcept = 0;
+
+		virtual void HandleEvents() noexcept = 0;
+
+		virtual void Render() noexcept = 0;
+	};
+
+	class WindowManager final : public IWindowManager, private ILogProvider
 	{
 	  private:
 		Context &_context;
@@ -38,29 +71,30 @@ namespace tudov
 
 	  public:
 		explicit WindowManager(Context &context) noexcept;
+		~WindowManager() noexcept override = default;
 
-		Context& GetContext() noexcept override;
+		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;
 
 		bool HandleEvent(AppEvent &appEvent) noexcept override;
 
-		std::shared_ptr<IWindow> GetWindowByID(WindowID windowID) noexcept;
-		std::shared_ptr<IWindow> GetPrimaryWindow() noexcept;
-		std::shared_ptr<const IWindow> GetPrimaryWindow() const noexcept;
-		std::vector<std::shared_ptr<IWindow>> &GetSubWindows() noexcept;
-		const std::vector<std::shared_ptr<IWindow>> &GetSubWindows() const noexcept;
+		std::shared_ptr<IWindow> GetWindowByID(WindowID windowID) noexcept override;
+		std::shared_ptr<IWindow> GetPrimaryWindow() noexcept override;
+		std::shared_ptr<const IWindow> GetPrimaryWindow() const noexcept override;
+		std::vector<std::shared_ptr<IWindow>> &GetSubWindows() noexcept override;
+		const std::vector<std::shared_ptr<IWindow>> &GetSubWindows() const noexcept override;
 
-		std::shared_ptr<IDebugManager> GetDebugManager() noexcept;
-		std::shared_ptr<const IDebugManager> GetDebugManager() const noexcept;
+		std::shared_ptr<IDebugManager> GetDebugManager() noexcept override;
+		std::shared_ptr<const IDebugManager> GetDebugManager() const noexcept override;
 
-		void AddSubWindow(const std::shared_ptr<IWindow> &window);
-		void RemoveSubWindow(const std::shared_ptr<IWindow> &window);
+		void AddSubWindow(const std::shared_ptr<IWindow> &window) override;
+		void RemoveSubWindow(const std::shared_ptr<IWindow> &window) override;
 
-		bool IsEmpty() noexcept;
-		void InitializePrimaryWindow() noexcept;
-		void CloseWindows() noexcept;
-		void HandleEvents() noexcept;
-		void Render() noexcept;
+		bool IsEmpty() noexcept override;
+		void InitializePrimaryWindow() noexcept override;
+		void CloseWindows() noexcept override;
+		void HandleEvents() noexcept override;
+		void Render() noexcept override;
 
 		inline std::vector<std::shared_ptr<IWindow>>::iterator begin() noexcept
 		{

@@ -44,9 +44,15 @@ CUIWidget.eventCWidget = TE.events:new(N_("CWidgetNew"), {
 function CUIWidget.new(widgetType, args)
 	widgetType = tonumber(widgetType) or CUIWidget.Type.Box
 
+	--- @class dr2c.UIWidget.Args.Border : dr2c.UI.DrawBorder
+	--- @field x nil
+	--- @field y nil
+	--- @field width nil
+	--- @field height nil
+
 	--- @class dr2c.UIWidget.Args
 	--- @field id? dr2c.UIWidgetID
-	--- @field border? dr2c.UI.DrawBorder
+	--- @field border? dr2c.UIWidget.Args.Border
 	--- @field margin? Rectangle
 	--- @field padding? Rectangle
 	--- @field rectangle? Rectangle

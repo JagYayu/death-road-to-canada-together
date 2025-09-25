@@ -123,7 +123,7 @@ namespace tudov
 	class Log;
 	class ScriptError;
 
-	class ScriptEngine : public IScriptEngine, private ILogProvider
+	class ScriptEngine final : public IScriptEngine, private ILogProvider
 	{
 	  private:
 		struct PersistVariable

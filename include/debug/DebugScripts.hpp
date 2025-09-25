@@ -47,9 +47,6 @@ namespace tudov
 			return "Scripts";
 		}
 
-	  public:
-		std::weak_ptr<IWindow> window;
-
 	  protected:
 		std::atomic<bool> _isOpeningScriptEditor = false;
 		std::thread _openScriptEditorThread;

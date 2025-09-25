@@ -148,6 +148,9 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 
 	TE_LB_USERTYPE(
 	    Engine,
+	    "getBeginTick", &Engine::GetBeginTick,
+	    "getTick", &Engine::GetTick,
+	    "getLoadingBeginTick", &Engine::GetLoadingBeginTick,
 	    "getVersion", &Engine::LuaGetVersion,
 	    "primaryWindow", GetPrimaryWindowFromContext(context),
 	    "quit", &Engine::Quit,

@@ -62,7 +62,7 @@ namespace tudov
 	class LuaBindings;
 	class UnpackagedMod;
 
-	class ModManager : public IModManager, public IDebugProvider, private ILogProvider
+	class ModManager final : public IModManager, public IDebugProvider, private ILogProvider
 	{
 		friend LuaBindings;
 

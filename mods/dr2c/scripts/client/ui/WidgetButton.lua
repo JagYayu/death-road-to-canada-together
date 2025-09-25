@@ -12,6 +12,7 @@
 local Table = require("tudov.Table")
 local Color = require("tudov.Color")
 
+local CRenderUtils = require("dr2c.client.render.Utils")
 local CUIDraw = require("dr2c.client.ui.Draw")
 local CUIWidget = require("dr2c.client.ui.Widget")
 local CUIWidgetBox = require("dr2c.client.ui.WidgetBox")
@@ -36,9 +37,15 @@ local function draw(self)
 	CUIDraw.drawButton(args)
 end
 
+--- @param self dr2c.UIWidgetButton
+local function update(self)
+	-- args
+end
+
 CUIWidgetButton.metatable = {
 	__index = {
 		draw = draw,
+		update = update,
 	},
 }
 
@@ -55,6 +62,7 @@ TE.events:add(CUIWidget.eventCWidget, function(e)
 	local widget = e.widget
 
 	local label = args.label and tostring(args.label) or nil
+	local scale = tonumber(args.scale) or 1
 
 	--- @type dr2c.UI.DrawButton
 	widget.drawButtonArgs = {
@@ -63,10 +71,10 @@ TE.events:add(CUIWidget.eventCWidget, function(e)
 		width = widget.rectangle[3],
 		height = widget.rectangle[4],
 		text = label,
-		scale = tonumber(args.scale) or 1,
+		scale = scale,
 		alignX = tonumber(args.alignX) or 0.5,
 		alignY = tonumber(args.alignY) or 0.5,
-		border = widget.border,
+		border = CRenderUtils.copyDrawBorder(args.border or Table.empty),
 	}
 
 	e.widget = setmetatable(widget, CUIWidgetButton.metatable)

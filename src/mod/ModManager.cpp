@@ -338,7 +338,7 @@ void ModManager::UpdateScripts() noexcept
 		}
 	}
 
-	// When reloading updated scripts, we should also collect all scripts with errors, which may be fixed after.
+	// When reloading updated scripts, we should also collect all scripts with errors, they might be fixed after this time.
 	for (ScriptID scriptID : GetScriptLoader().CollectErrorScripts())
 	{
 		scriptIDs.emplace_back(scriptID);

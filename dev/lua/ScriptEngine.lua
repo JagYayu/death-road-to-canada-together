@@ -1,7 +1,7 @@
 --[[
 -- @module ScriptEngine
 -- @author JagYayu
--- @brief Core module for Tudov Modding Engine
+-- @brief Core module for Tudov Engine
 -- @version 1.0
 -- @date 2025
 --
@@ -82,6 +82,8 @@ local function estimateMemorySizeImpl(value, extraArgs, visitedTables)
 end
 
 local function estimateMemorySize(value, extraArgs)
+	error("NOT IMPLEMENT YET", 2)
+
 	if type(extraArgs) ~= "table" then
 		extraArgs = estimateMemoryDefaultExtraArgs
 	end
@@ -106,9 +108,12 @@ local function initialize(luaGlobals)
 	jit.off()
 	-- jit.opt.start("maxtrace=8000", "maxrecord=16000", "maxmcode=40960")
 
+	--- @type TE.TudovEngine
+	local TE = luaGlobals.TE
+
 	--- @param value userdata | any?
 	--- @return TE.TypeID?
-	function luaGlobals.TE.getUserdataTypeID(value)
+	function TE.getUserdataTypeID(value)
 		if type(value) == "userdata" then
 			local success, result = pcall(getUserdataTypeIDImpl, value)
 			return success and result or nil

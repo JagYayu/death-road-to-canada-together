@@ -21,6 +21,7 @@ local CUICanvas = {}
 
 --- @type dr2c.UICanvas?
 local canvasSelected
+--- @type integer
 local canvasCount = 0
 
 --- @type integer
@@ -52,12 +53,12 @@ end
 
 --- @param self dr2c.UICanvas
 local function metatableCanvasUpdate(self)
-	for _, widget in ipairs(self.widgets) do
-		local update = widget.update
-		if update then
-			update(widget)
-		end
-	end
+	-- for _, widget in ipairs(self.widgets) do
+	-- 	local update = widget.update
+	-- 	if update then
+	-- 		update(widget)
+	-- 	end
+	-- end
 end
 
 --- @param self dr2c.UICanvas
@@ -83,10 +84,10 @@ end
 local function metatableSelectWidget(self, widgetOrID)
 	local type = type
 
+	--- @type dr2c.UIWidget?
 	local widget
 	if type(widgetOrID) == "string" or type(widgetOrID) == "number" then
-		local _
-		_, widget = Table.listFindFirstIf(self.widgets, widgetHasSameID, widgetOrID)
+		widget = Table.listFindFirstValueIf(self.widgets, widgetHasSameID, widgetOrID)
 	elseif type(widgetOrID) == "table" then
 		widget = widgetOrID
 	end
@@ -104,7 +105,7 @@ end
 --- @param x number
 --- @param y number
 local function metatableContains(self, x, y)
-	local windowW, windowH = (self.window or engine.primaryWindow):getSize()
+	local windowW, windowH = (self.window or TE.engine.primaryWindow):getSize()
 
 	return x > (self.x or 0) * windowW
 		and y > (self.y or 0) * windowH
@@ -115,7 +116,7 @@ end
 CUICanvas.metatable = {
 	__index = {
 		draw = metatableCanvasDraw,
-		update = metatableCanvasUpdate,
+		-- update = metatableCanvasUpdate,
 		addWidget = metatableAddWidget,
 		selectWidget = metatableSelectWidget,
 		contains = metatableContains,
@@ -223,26 +224,28 @@ TE.events:add(N_("CUpdate"), function(e)
 end, "UICanvasHandleInput", "Inputs", nil, 1)
 
 TE.events:add("ScriptUnload", function(e)
-	--- If a module representing a certain widget type is unloaded, call this function to remove all corresponding widgets within all canvases.
-	--- However it may result in errors if some widget module don't have `UIWidgetType` field.
+	--- If a module representing a certain widget type is unloaded,
+	--- call this function to remove all corresponding widgets within all canvases.
 
 	local widgetType = e.data.module.UIWidgetType
-	if not (widgetType and Enum.hasValue(CUIWidget.Type, widgetType)) then
+	if not widgetType then
 		return
 	end
 
+	local seenSet = {}
+
 	--- @param widget dr2c.UIWidget
-	local function func(widget, seenSet)
-		if widget.type == widgetType then
+	local function func(widget)
+		if seenSet[widget] or widget.type == widgetType then
 			return true
 		end
 
-		Table.listRemoveIf(widget.widgets, func, seenSet)
+		Table.listRemoveIf(widget.widgets, func)
 		return false
 	end
 
 	for _, canvas in pairs(canvasMap) do
-		Table.listRemoveIf(canvas.widgets, func, {})
+		Table.listRemoveIf(canvas.widgets, func)
 	end
 end, "ClientUICanvasUnloadTypedWidget", "Client")
 

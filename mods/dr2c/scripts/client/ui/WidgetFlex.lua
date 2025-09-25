@@ -35,15 +35,6 @@ end
 
 --- @param self dr2c.UIWidgetFlex
 local function draw(self)
-	for _, drawFunction in ipairs(self.widgetsDrawFunctions) do
-		drawFunction()
-	end
-end
-
---- @param self dr2c.UIWidgetFlex
-local function update(self)
-	self.widgetsDrawFunctions = {}
-
 	local x = self.rectangle[1]
 	local y = self.rectangle[2]
 	local w = self.rectangle[3]
@@ -55,18 +46,15 @@ local function update(self)
 		for i, widget in ipairs(self.widgets) do
 			if widget.draw then
 				local cy = y + (i - 1) * hh
-				local ch = hh
 
-				self.widgetsDrawFunctions[#self.widgetsDrawFunctions + 1] = function()
-					local rect = widget.rectangle
+				local rect = widget.rectangle
 
-					rect[1] = x
-					rect[2] = cy
-					rect[3] = w
-					rect[4] = ch
+				rect[1] = x
+				rect[2] = cy
+				rect[3] = w
+				rect[4] = hh
 
-					widget:draw()
-				end
+				widget:draw()
 			end
 		end
 	else
@@ -77,16 +65,14 @@ local function update(self)
 				local cx = x + (i - 1) * ww
 				local cw = ww
 
-				self.widgetsDrawFunctions[#self.widgetsDrawFunctions + 1] = function()
-					local rect = widget.rectangle
+				local rect = widget.rectangle
 
-					rect[1] = cx
-					rect[2] = y
-					rect[3] = cw
-					rect[4] = h
+				rect[1] = cx
+				rect[2] = y
+				rect[3] = cw
+				rect[4] = h
 
-					widget:draw()
-				end
+				widget:draw()
 			end
 		end
 	end
@@ -97,7 +83,6 @@ CUIWidgetFlex.metatable = {
 		addChild = addChild,
 		draw = draw,
 		setWeight = setWeight,
-		update = update,
 	},
 }
 
@@ -138,8 +123,6 @@ TE.events:add(CUIWidget.eventCWidget, function(e)
 	else
 		widget.weights = {}
 	end
-
-	widget.widgetsDrawFunctions = {}
 
 	e.widget = setmetatable(widget, CUIWidgetFlex.metatable)
 

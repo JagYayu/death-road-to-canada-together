@@ -9,7 +9,7 @@
 --
 --]]
 
-local CUI = require("dr2c.client.ui.UI")
+local CUIDraw = require("dr2c.client.ui.Draw")
 local CUIWidget = require("dr2c.client.ui.Widget")
 
 --- @class dr2c.CUIWidgetBox
@@ -27,7 +27,7 @@ local function draw(self)
 	border.width = rect[3]
 	border.height = rect[4]
 
-	CUI.drawBorder(border)
+	CUIDraw.drawBorder(border)
 end
 
 CUIWidgetBox.metatable = {
