@@ -37,6 +37,11 @@ namespace tudov
 		Version() noexcept;
 		Version(Type major, Type minor = 0, Type patch = 0) noexcept;
 		Version(std::string_view str) noexcept;
+		explicit Version(const Version &) noexcept = default;
+		Version(Version &&) noexcept = default;
+		Version &operator=(const Version &) noexcept = default;
+		Version &operator=(Version &&) noexcept = default;
+
 		~Version() noexcept = default;
 
 	  public:

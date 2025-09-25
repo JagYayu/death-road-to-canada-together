@@ -39,6 +39,10 @@ namespace tudov
 
 	  public:
 		explicit Resources() noexcept;
+		explicit Resources(const Resources &) noexcept = delete;
+		explicit Resources(Resources &&) noexcept = delete;
+		Resources &operator=(const Resources &) noexcept = delete;
+		Resources &operator=(Resources &&) noexcept = delete;
 		virtual ~Resources() noexcept = default;
 
 	  protected:

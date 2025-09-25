@@ -34,6 +34,11 @@ namespace tudov
 
 	  public:
 		explicit ImageResources() noexcept;
+		explicit ImageResources(const ImageResources &) noexcept = delete;
+		explicit ImageResources(ImageResources &&) noexcept = delete;
+		ImageResources &operator=(const ImageResources &) noexcept = delete;
+		ImageResources &operator=(ImageResources &&) noexcept = delete;
+		~ImageResources() noexcept = default;
 
 		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;
 		void UninstallFromScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;

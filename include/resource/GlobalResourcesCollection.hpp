@@ -52,6 +52,10 @@ namespace tudov
 		static EResourceType PathExtensionToResourceType(const std::filesystem::path &path) noexcept;
 
 		explicit GlobalResourcesCollection(Context &context) noexcept;
+		explicit GlobalResourcesCollection(const GlobalResourcesCollection &) noexcept = delete;
+		explicit GlobalResourcesCollection(GlobalResourcesCollection &&) noexcept = delete;
+		GlobalResourcesCollection &operator=(const GlobalResourcesCollection &) noexcept = delete;
+		GlobalResourcesCollection &operator=(GlobalResourcesCollection &&) noexcept = delete;
 		~GlobalResourcesCollection() noexcept = default;
 
 		Context &GetContext() noexcept override;

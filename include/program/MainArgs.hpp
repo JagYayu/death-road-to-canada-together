@@ -26,6 +26,11 @@ namespace tudov
 
 	  public:
 		explicit MainArgs() noexcept = default;
+		explicit MainArgs(const MainArgs &) noexcept = default;
+		explicit MainArgs(MainArgs &&) noexcept = default;
+		MainArgs &operator=(const MainArgs &) noexcept = default;
+		MainArgs &operator=(MainArgs &&) noexcept = default;
+		~MainArgs() noexcept = default;
 
 		explicit MainArgs(int argc, char **argv) noexcept
 		{

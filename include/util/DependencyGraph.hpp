@@ -99,6 +99,13 @@ class DependencyGraph
   public:
 	using TLink = std::vector<std::pair<TNode, TNode>>;
 
+	explicit DependencyGraph() noexcept = default;
+	explicit DependencyGraph(const DependencyGraph &) noexcept = default;
+	explicit DependencyGraph(DependencyGraph &&) noexcept = default;
+	DependencyGraph &operator=(const DependencyGraph &) noexcept = default;
+	DependencyGraph &operator=(DependencyGraph &&) noexcept = default;
+	~DependencyGraph() noexcept = default;
+
 	void Clear() noexcept
 	{
 		_forwardLinks.clear();

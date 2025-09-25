@@ -61,6 +61,10 @@ namespace tudov
 
 	  public:
 		explicit Font(std::string_view path, const std::vector<std::byte> &bytes) noexcept;
+		explicit Font(const Font &) noexcept = default;
+		explicit Font(Font &&) noexcept = default;
+		Font &operator=(const Font &) noexcept = default;
+		Font &operator=(Font &&) noexcept = default;
 		~Font() noexcept;
 
 		std::tuple<SDL_Texture *, std::int32_t, std::int32_t> GetTextInfo(SDL_Renderer *sdlRenderer, std::uint16_t characterSize, std::string_view text, std::int32_t maxWidth) noexcept;

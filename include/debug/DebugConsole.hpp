@@ -59,6 +59,10 @@ namespace tudov
 
 	  public:
 		explicit DebugConsole() noexcept;
+		explicit DebugConsole(const DebugConsole &) noexcept = default;
+		explicit DebugConsole(DebugConsole &&) noexcept = default;
+		DebugConsole &operator=(const DebugConsole &) noexcept = default;
+		DebugConsole &operator=(DebugConsole &&) noexcept = default;
 		~DebugConsole() noexcept override;
 
 	  public:

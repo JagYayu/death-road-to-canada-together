@@ -23,6 +23,10 @@ namespace tudov
 		EventID eventID;
 
 		explicit EventHandlerException(Context &context, EventID eventID, ScriptID scriptID, std::string traceback) noexcept;
+				explicit EventHandlerException(const EventHandlerException &) noexcept = default;
+		explicit EventHandlerException(EventHandlerException &&) noexcept = default;
+		EventHandlerException &operator=(const EventHandlerException &) noexcept = delete;
+		EventHandlerException &operator=(EventHandlerException &&) noexcept = delete;
 		~EventHandlerException() noexcept override = default;
 
 		std::string_view What() const noexcept override;

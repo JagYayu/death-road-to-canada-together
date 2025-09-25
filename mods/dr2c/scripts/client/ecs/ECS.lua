@@ -9,9 +9,10 @@
 --
 --]]
 
-local CECSSchema = require("dr2c.client.ecs.ECSSchema")
 local Table = require("tudov.Table")
 local String = require("tudov.String")
+
+local CECSSchema = require("dr2c.client.ecs.ECSSchema")
 
 local CECSSchema_ComponentTrait_ArchetypeConstant = CECSSchema.ComponentTrait.ArchetypeConstant
 local CECSSchema_ComponentTrait_ArchetypeSerializable = CECSSchema.ComponentTrait.ArchetypeSerializable
@@ -125,11 +126,11 @@ componentsPoolEntityTransient = persist("componentsPoolEntityTransient", functio
 end)
 
 local eventEntitySpawned = TE.events:new(N_("CEntitySpawn"), {
-	"",
+	"", -- TODO
 })
 
 local eventEntityDespawned = TE.events:new(N_("CEntityDespawn"), {
-	"",
+	"", -- TODO
 })
 
 --- @param l dr2c.Entity

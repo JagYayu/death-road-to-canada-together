@@ -30,6 +30,11 @@ namespace tudov
 	{
 		static constexpr std::int32_t DefaultSessionSlot = 0;
 
+		explicit INetworkManager() noexcept = default;
+		explicit INetworkManager(const INetworkManager &) noexcept = delete;
+		explicit INetworkManager(INetworkManager &&) noexcept = delete;
+		INetworkManager &operator=(const INetworkManager &) noexcept = delete;
+		INetworkManager &operator=(INetworkManager &&) noexcept = delete;
 		~INetworkManager() noexcept override = default;
 
 		/**

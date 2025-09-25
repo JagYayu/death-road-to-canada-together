@@ -35,6 +35,10 @@ namespace tudov
 
 	  public:
 		explicit GlobalStorage(IGlobalStorageManager &globalStorageManager) noexcept;
+		explicit GlobalStorage(const GlobalStorage &) noexcept = default;
+		explicit GlobalStorage(GlobalStorage &&) noexcept = default;
+		GlobalStorage &operator=(const GlobalStorage &) noexcept = delete;
+		GlobalStorage &operator=(GlobalStorage &&) noexcept = delete;
 		~GlobalStorage() noexcept override;
 
 		bool IsReady() noexcept override;

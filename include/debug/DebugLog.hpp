@@ -25,6 +25,10 @@ namespace tudov
 
 	  public:
 		explicit DebugLog() noexcept;
+		explicit DebugLog(const DebugLog &) noexcept = default;
+		explicit DebugLog(DebugLog &&) noexcept = default;
+		DebugLog &operator=(const DebugLog &) noexcept = default;
+		DebugLog &operator=(DebugLog &&) noexcept = default;
 		~DebugLog() noexcept override = default;
 
 		std::string_view GetName() noexcept override;

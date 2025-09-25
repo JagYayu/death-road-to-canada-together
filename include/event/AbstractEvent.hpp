@@ -32,6 +32,10 @@ namespace tudov
 
 	  protected:
 		explicit AbstractEvent(IEventManager &eventManager, EventID eventID, ScriptID scriptID = false);
+		explicit AbstractEvent(const AbstractEvent &) noexcept = default;
+		explicit AbstractEvent(AbstractEvent &&) noexcept = default;
+		AbstractEvent &operator=(const AbstractEvent &) noexcept = delete;
+		AbstractEvent &operator=(AbstractEvent &&) noexcept = delete;
 		virtual ~AbstractEvent() noexcept;
 
 	  public:

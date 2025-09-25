@@ -48,6 +48,10 @@ namespace tudov
 
 	  public:
 		explicit UnpackagedMod(ModManager &modManager, const std::filesystem::path &directory);
+		explicit UnpackagedMod(const UnpackagedMod &) noexcept = delete;
+		explicit UnpackagedMod(UnpackagedMod &&) noexcept = delete;
+		UnpackagedMod &operator=(const UnpackagedMod &) noexcept = delete;
+		UnpackagedMod &operator=(UnpackagedMod &&) noexcept = delete;
 		~UnpackagedMod() noexcept override;
 
 	  public:

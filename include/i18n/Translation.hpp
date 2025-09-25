@@ -29,6 +29,10 @@ namespace tudov
 
 	  public:
 		explicit Translation(std::string_view path) noexcept;
+		explicit Translation(const Translation &) noexcept = default;
+		explicit Translation(Translation &&) noexcept = default;
+		Translation &operator=(const Translation &) noexcept = default;
+		Translation &operator=(Translation &&) noexcept = default;
 		~Translation() noexcept;
 
 	  public:

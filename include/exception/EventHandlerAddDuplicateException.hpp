@@ -23,6 +23,10 @@ namespace tudov
 		std::string name;
 
 		explicit EventHandlerAddDuplicateException(Context &context, EventID eventID, ScriptID scriptID, std::string name, std::string traceback) noexcept;
+		explicit EventHandlerAddDuplicateException(const EventHandlerAddDuplicateException &) noexcept = default;
+		explicit EventHandlerAddDuplicateException(EventHandlerAddDuplicateException &&) noexcept = default;
+		EventHandlerAddDuplicateException &operator=(const EventHandlerAddDuplicateException &) noexcept = delete;
+		EventHandlerAddDuplicateException &operator=(EventHandlerAddDuplicateException &&) noexcept = delete;
 		~EventHandlerAddDuplicateException() noexcept override = default;
 
 		std::string_view What() const noexcept override;

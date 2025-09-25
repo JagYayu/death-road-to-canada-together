@@ -157,6 +157,10 @@ namespace tudov
 
 	  public:
 		explicit ScriptEngine(Context &context) noexcept;
+		explicit ScriptEngine(const ScriptEngine &) noexcept = delete;
+		explicit ScriptEngine(ScriptEngine &&) noexcept = delete;
+		ScriptEngine &operator=(const ScriptEngine &) noexcept = delete;
+		ScriptEngine &operator=(ScriptEngine &&) noexcept = delete;
 		~ScriptEngine() noexcept = default;
 
 	  public:

@@ -46,6 +46,10 @@ namespace tudov
 
 	  public:
 		explicit LocalClientSession(INetworkManager &network, NetworkSessionSlot clientSlot) noexcept;
+		explicit LocalClientSession(const LocalClientSession &) noexcept = default;
+		explicit LocalClientSession(LocalClientSession &&) noexcept = default;
+		LocalClientSession &operator=(const LocalClientSession &) noexcept = delete;
+		LocalClientSession &operator=(LocalClientSession &&) noexcept = delete;
 		~LocalClientSession() noexcept override = default;
 
 	  public:

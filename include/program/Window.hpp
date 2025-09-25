@@ -83,7 +83,11 @@ namespace tudov
 		std::shared_ptr<Renderer> renderer;
 
 	  public:
-		explicit Window(Context &context, std::string_view logName = "Window") noexcept;
+		explicit Window(Context &context, std::string_view logName = TE_NAMEOF(Window)) noexcept;
+		explicit Window(const Window &) noexcept = default;
+		explicit Window(Window &&) noexcept = default;
+		Window &operator=(const Window &) noexcept = delete;
+		Window &operator=(Window &&) noexcept = delete;
 		~Window() noexcept override;
 
 	  public:

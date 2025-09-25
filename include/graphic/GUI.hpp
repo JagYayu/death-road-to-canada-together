@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include "util/Micros.hpp"
+
 #include <cmath>
 #include <unordered_set>
 
@@ -27,7 +29,7 @@ namespace tudov
 		inline static std::unordered_set<SDL_Renderer *> _sdlRenderers{};
 
 	  public:
-		explicit GUI() noexcept = delete;
+		TE_STATIC_CLASS(GUI);
 
 		static void TryInit() noexcept;
 		static void Quit() noexcept;

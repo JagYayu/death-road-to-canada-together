@@ -93,6 +93,10 @@ namespace tudov
 
 	  public:
 		explicit EventManager(Context &context) noexcept;
+		explicit EventManager(const EventManager &) noexcept = delete;
+		explicit EventManager(EventManager &&) noexcept = delete;
+		EventManager &operator=(const EventManager &) noexcept = delete;
+		EventManager &operator=(EventManager &&) noexcept = delete;
 		~EventManager() noexcept override;
 
 	  public:

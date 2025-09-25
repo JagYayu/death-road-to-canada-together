@@ -64,6 +64,10 @@ namespace tudov
 
 	  public:
 		explicit Localization() noexcept;
+		explicit Localization(const Localization &) noexcept = default;
+		explicit Localization(Localization &&) noexcept = default;
+		Localization &operator=(const Localization &) noexcept = default;
+		Localization &operator=(Localization &&) noexcept = default;
 		~Localization() noexcept override = default;
 
 		Log &GetLog() noexcept override;

@@ -73,6 +73,10 @@ namespace tudov
 
 	  public:
 		explicit DebugManager() noexcept;
+		explicit DebugManager(const DebugManager &) noexcept = default;
+		explicit DebugManager(DebugManager &&) noexcept = default;
+		DebugManager &operator=(const DebugManager &) noexcept = default;
+		DebugManager &operator=(DebugManager &&) noexcept = default;
 		~DebugManager() noexcept override = default;
 
 		IDebugElement *GetElement(std::string_view elementName) noexcept override;

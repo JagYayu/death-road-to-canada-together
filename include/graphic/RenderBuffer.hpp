@@ -59,6 +59,10 @@ namespace tudov
 
 	  public:
 		explicit RenderBuffer(Renderer &renderer) noexcept;
+		explicit RenderBuffer(const RenderBuffer &) noexcept = default;
+		explicit RenderBuffer(RenderBuffer &&) noexcept = default;
+		RenderBuffer &operator=(const RenderBuffer &) noexcept = delete;
+		RenderBuffer &operator=(RenderBuffer &&) noexcept = delete;
 		~RenderBuffer() noexcept;
 
 		Context &GetContext() noexcept override;

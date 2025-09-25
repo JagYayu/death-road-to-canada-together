@@ -30,6 +30,11 @@ namespace tudov
 	{
 	  public:
 		FontResources() noexcept;
+				explicit FontResources(const FontResources &) noexcept = delete;
+		explicit FontResources(FontResources &&) noexcept = delete;
+		FontResources &operator=(const FontResources &) noexcept = delete;
+		FontResources &operator=(FontResources &&) noexcept = delete;
+		~FontResources() noexcept = default;
 
 		FontID LuaGetID(std::string_view fontPath) noexcept;
 		std::string_view LuaGetPath(FontID id) noexcept;

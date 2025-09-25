@@ -24,6 +24,10 @@ namespace tudov
 		EventHandleKey key;
 
 		explicit EventHandlerAddBadKeyException(Context &context, EventID eventID, ScriptID scriptID, EventHandleKey key, std::string traceback) noexcept;
+		explicit EventHandlerAddBadKeyException(const EventHandlerAddBadKeyException &) noexcept = default;
+		explicit EventHandlerAddBadKeyException(EventHandlerAddBadKeyException &&) noexcept = default;
+		EventHandlerAddBadKeyException &operator=(const EventHandlerAddBadKeyException &) noexcept = delete;
+		EventHandlerAddBadKeyException &operator=(EventHandlerAddBadKeyException &&) noexcept = delete;
 		~EventHandlerAddBadKeyException() noexcept override = default;
 
 		std::string_view What() const noexcept override;

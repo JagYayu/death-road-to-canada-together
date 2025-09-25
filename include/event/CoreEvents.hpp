@@ -140,6 +140,11 @@ namespace tudov
 
 	  public:
 		explicit CoreEvents(EventManager &eventManager) noexcept;
+		explicit CoreEvents(const CoreEvents &) noexcept = default;
+		explicit CoreEvents(CoreEvents &&) noexcept = default;
+		CoreEvents &operator=(const CoreEvents &) noexcept = default;
+		CoreEvents &operator=(CoreEvents &&) noexcept = default;
+		~CoreEvents() noexcept = default;
 
 		[[nodiscard]] RuntimeEvent &ClientConnect() noexcept override;
 		[[nodiscard]] RuntimeEvent &ClientDisconnect() noexcept override;

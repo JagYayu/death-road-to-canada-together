@@ -59,6 +59,10 @@ namespace tudov
 		std::weak_ptr<IWindow> window;
 
 		explicit DebugProfiler() noexcept = default;
+		explicit DebugProfiler(const DebugProfiler &) noexcept = delete;
+		explicit DebugProfiler(DebugProfiler &&) noexcept = delete;
+		DebugProfiler &operator=(const DebugProfiler &) noexcept = delete;
+		DebugProfiler &operator=(DebugProfiler &&) noexcept = delete;
 		~DebugProfiler() noexcept = default;
 
 		std::string_view GetName() noexcept override;

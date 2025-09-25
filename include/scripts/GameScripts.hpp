@@ -26,6 +26,11 @@ namespace tudov
 
 	  public:
 		explicit GameScripts(Context &context) noexcept;
+		explicit GameScripts(const GameScripts &) noexcept = delete;
+		explicit GameScripts(GameScripts &&) noexcept = delete;
+		GameScripts &operator=(const GameScripts &) noexcept = delete;
+		GameScripts &operator=(GameScripts &&) noexcept = delete;
+		~GameScripts() noexcept = default;
 
 		Context &GetContext() noexcept override;
 		void Initialize() noexcept override;

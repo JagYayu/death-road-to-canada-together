@@ -73,6 +73,10 @@ namespace tudov
 
 	  public:
 		explicit RenderTarget(Renderer &renderer, std::int32_t width, std::int32_t height) noexcept;
+		explicit RenderTarget(const RenderTarget &) noexcept = default;
+		explicit RenderTarget(RenderTarget &&) noexcept = default;
+		RenderTarget &operator=(const RenderTarget &) noexcept = delete;
+		RenderTarget &operator=(RenderTarget &&) noexcept = delete;
 		~RenderTarget() noexcept;
 
 	  public:

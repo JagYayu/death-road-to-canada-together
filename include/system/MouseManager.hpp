@@ -60,6 +60,11 @@ namespace tudov
 
 	  public:
 		explicit MouseManager(Context &context) noexcept;
+		explicit MouseManager(const MouseManager &) noexcept = delete;
+		explicit MouseManager(MouseManager &&) noexcept = delete;
+		MouseManager &operator=(const MouseManager &) noexcept = delete;
+		MouseManager &operator=(MouseManager &&) noexcept = delete;
+		~MouseManager() noexcept = default;
 
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;

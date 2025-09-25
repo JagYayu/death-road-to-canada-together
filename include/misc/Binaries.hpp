@@ -27,6 +27,10 @@ namespace tudov
 
 	  public:
 		explicit Binaries(std::string_view path, const std::vector<std::byte> &bytes) noexcept;
+		explicit Binaries(const Binaries &) noexcept = default;
+		explicit Binaries(Binaries &&) noexcept = default;
+		Binaries &operator=(const Binaries &) noexcept = default;
+		Binaries &operator=(Binaries &&) noexcept = default;
 		~Binaries() noexcept override = default;
 
 		std::string_view GetFilePath() const noexcept override;

@@ -37,6 +37,10 @@ namespace tudov
 		      _handlerID(0)
 		{
 		}
+		explicit DelegateEvent(const DelegateEvent &) noexcept = delete;
+		explicit DelegateEvent(DelegateEvent &&) noexcept = delete;
+		DelegateEvent &operator=(const DelegateEvent &) noexcept = delete;
+		DelegateEvent &operator=(DelegateEvent &&) noexcept = delete;
 
 		HandlerID operator+=(const HandlerType &handler)
 		{

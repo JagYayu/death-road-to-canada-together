@@ -71,6 +71,11 @@ namespace tudov
 
 	  public:
 		explicit Keyboard(Context &context, KeyboardID keyboardID) noexcept;
+		explicit Keyboard(const Keyboard &) noexcept = default;
+		explicit Keyboard(Keyboard &&) noexcept = default;
+		Keyboard &operator=(const Keyboard &) noexcept = delete;
+		Keyboard &operator=(Keyboard &&) noexcept = delete;
+		~Keyboard() noexcept = default;
 
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;

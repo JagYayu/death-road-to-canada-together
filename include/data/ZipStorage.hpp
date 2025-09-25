@@ -30,6 +30,10 @@ namespace tudov
 
 	  public:
 		explicit ZipStorage(std::span<std::byte> data);
+		explicit ZipStorage(const ZipStorage &) noexcept = default;
+		explicit ZipStorage(ZipStorage &&) noexcept = default;
+		ZipStorage &operator=(const ZipStorage &) noexcept = default;
+		ZipStorage &operator=(ZipStorage &&) noexcept = default;
 		~ZipStorage() noexcept override;
 
 		virtual bool CanRead() noexcept override;
@@ -42,7 +46,7 @@ namespace tudov
 
 		virtual EHierarchyElement Check(const std::filesystem::path &path) noexcept override;
 
-		virtual PathInfo GetPathInfo(const std::filesystem::path& path) noexcept override;
+		virtual PathInfo GetPathInfo(const std::filesystem::path &path) noexcept override;
 
 		virtual std::uint64_t GetPathSize(const std::filesystem::path &filePath) noexcept override;
 

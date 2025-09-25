@@ -22,7 +22,10 @@ namespace tudov
 	{
 	  public:
 		explicit ApplicationGlobalStorage(GlobalStorageManager &globalStorageManager) noexcept;
-		~ApplicationGlobalStorage() noexcept override= default;
+		explicit ApplicationGlobalStorage(const ApplicationGlobalStorage &) noexcept = default;
+		explicit ApplicationGlobalStorage(ApplicationGlobalStorage &&) noexcept = default;
+		ApplicationGlobalStorage &operator=(const ApplicationGlobalStorage &) noexcept = delete;
+		ApplicationGlobalStorage &operator=(ApplicationGlobalStorage &&) noexcept = delete;
 
 		IGlobalStorageManager &GetGlobalStorageManager() noexcept override;
 		Log &GetLog() noexcept override;

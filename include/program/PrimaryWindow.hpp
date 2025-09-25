@@ -36,6 +36,10 @@ namespace tudov
 
 	  public:
 		explicit PrimaryWindow(Context &context) noexcept;
+		explicit PrimaryWindow(const PrimaryWindow &) noexcept = default;
+		explicit PrimaryWindow(PrimaryWindow &&) noexcept = default;
+		PrimaryWindow &operator=(const PrimaryWindow &) noexcept = delete;
+		PrimaryWindow &operator=(PrimaryWindow &&) noexcept = delete;
 		~PrimaryWindow() noexcept override;
 
 	  protected:

@@ -284,6 +284,10 @@ namespace tudov
 
 	  public:
 		explicit ScriptLoader(Context &context) noexcept;
+		explicit ScriptLoader(const ScriptLoader &) noexcept = delete;
+		explicit ScriptLoader(ScriptLoader &&) noexcept = delete;
+		ScriptLoader &operator=(const ScriptLoader &) noexcept = delete;
+		ScriptLoader &operator=(ScriptLoader &&) noexcept = delete;
 		~ScriptLoader() noexcept override;
 
 	  public:

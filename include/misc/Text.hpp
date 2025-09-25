@@ -27,6 +27,10 @@ namespace tudov
 
 	  public:
 		explicit Text() noexcept = default;
+		explicit Text(const Text &) noexcept = default;
+		explicit Text(Text &&) noexcept = default;
+		Text &operator=(const Text &) noexcept = default;
+		Text &operator=(Text &&) noexcept = default;
 		~Text() noexcept override = default;
 
 		explicit Text(std::string_view path, const std::vector<std::byte> &bytes) noexcept;

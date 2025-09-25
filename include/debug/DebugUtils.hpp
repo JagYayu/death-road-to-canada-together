@@ -22,6 +22,10 @@ namespace tudov
 	struct DebugUtils
 	{
 		explicit DebugUtils() noexcept = delete;
+		explicit DebugUtils(const DebugUtils &) noexcept = delete;
+		explicit DebugUtils(DebugUtils &&) noexcept = delete;
+		DebugUtils &operator=(const DebugUtils &) noexcept = delete;
+		DebugUtils &operator=(DebugUtils &&) noexcept = delete;
 		~DebugUtils() noexcept = delete;
 
 		template <std::size_t Parts>

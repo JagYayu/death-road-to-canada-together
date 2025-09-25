@@ -120,6 +120,10 @@ namespace tudov
 
 	  public:
 		explicit LuaBindings() noexcept = default;
+		explicit LuaBindings(const LuaBindings &) noexcept = default;
+		explicit LuaBindings(LuaBindings &&) noexcept = default;
+		LuaBindings &operator=(const LuaBindings &) noexcept = default;
+		LuaBindings &operator=(LuaBindings &&) noexcept = default;
 		~LuaBindings() noexcept = default;
 
 		bool RegisterInstallation(std::string_view key, const TInstallation &installation) override;

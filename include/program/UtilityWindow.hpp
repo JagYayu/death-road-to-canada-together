@@ -27,10 +27,14 @@ namespace tudov
 
 	  public:
 		explicit UtilityWindow(Context &context, std::string_view logName, std::string_view keyName) noexcept;
+		explicit UtilityWindow(const UtilityWindow &) noexcept = delete;
+		explicit UtilityWindow(UtilityWindow &&) noexcept = default;
+		UtilityWindow &operator=(const UtilityWindow &) noexcept = delete;
+		UtilityWindow &operator=(UtilityWindow &&) noexcept = delete;
 		~UtilityWindow() noexcept override;
 
 		EventHandleKey GetKey() const noexcept override;
-		
+
 		void InitializeWindow(std::int32_t width, std::int32_t height, std::string_view title) noexcept override;
 		void DeinitializeWindow() noexcept override;
 	};

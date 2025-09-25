@@ -44,6 +44,10 @@ namespace tudov
 
 	  public:
 		explicit DebugFileSystem() noexcept;
+		explicit DebugFileSystem(const DebugFileSystem &) noexcept = default;
+		explicit DebugFileSystem(DebugFileSystem &&) noexcept = default;
+		DebugFileSystem &operator=(const DebugFileSystem &) noexcept = default;
+		DebugFileSystem &operator=(DebugFileSystem &&) noexcept = default;
 		~DebugFileSystem() noexcept override;
 
 	  public:

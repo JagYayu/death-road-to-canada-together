@@ -60,6 +60,10 @@ namespace tudov
 
 	  public:
 		explicit DebugScripts() noexcept = default;
+				explicit DebugScripts(const DebugScripts &) noexcept = delete;
+		explicit DebugScripts(DebugScripts &&) noexcept = delete;
+		DebugScripts &operator=(const DebugScripts &) noexcept = delete;
+		DebugScripts &operator=(DebugScripts &&) noexcept = delete;
 		~DebugScripts() noexcept;
 
 		Log &GetLog() noexcept override;

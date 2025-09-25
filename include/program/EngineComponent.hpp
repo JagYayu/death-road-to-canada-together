@@ -12,6 +12,7 @@
 #pragma once
 
 #include "Context.hpp"
+#include "util/ClassUtils.hpp"
 
 #include <cstdint>
 
@@ -24,7 +25,7 @@ namespace tudov
 	/**
 	 * As a core component of the engine, the subclass lifespan functions: "Initialize", "Reinitialize" are controlled by the engine.
 	 */
-	struct IEngineComponent : public IContextProvider
+	struct IEngineComponent : public IContextProvider, public NonCopyableMovable
 	{
 		~IEngineComponent() noexcept override = default;
 

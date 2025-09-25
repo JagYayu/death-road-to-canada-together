@@ -22,6 +22,10 @@ namespace tudov
 		std::string traceback;
 
 		explicit ScriptException(Context &context, ScriptID scriptID, std::string traceback) noexcept;
+		explicit ScriptException(const ScriptException &) noexcept = default;
+		explicit ScriptException(ScriptException &&) noexcept = default;
+		ScriptException &operator=(const ScriptException &) noexcept = delete;
+		ScriptException &operator=(ScriptException &&) noexcept = delete;
 		~ScriptException() noexcept override = default;
 
 		std::string_view What() const noexcept override;

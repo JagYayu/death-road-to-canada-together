@@ -22,6 +22,10 @@ namespace tudov
 	{
 	  public:
 		explicit ReadonlyGlobalStorage(GlobalStorageManager &globalStorageManager) noexcept;
+		explicit ReadonlyGlobalStorage(const ReadonlyGlobalStorage &) noexcept = default;
+		explicit ReadonlyGlobalStorage(ReadonlyGlobalStorage &&) noexcept = default;
+		ReadonlyGlobalStorage &operator=(const ReadonlyGlobalStorage &) noexcept = delete;
+		ReadonlyGlobalStorage &operator=(ReadonlyGlobalStorage &&) noexcept = delete;
 		~ReadonlyGlobalStorage() noexcept override = default;
 
 		IGlobalStorageManager &GetGlobalStorageManager() noexcept override;

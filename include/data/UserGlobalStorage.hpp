@@ -27,6 +27,10 @@ namespace tudov
 
 	  public:
 		explicit UserGlobalStorage(GlobalStorageManager &globalStorageManager, std::string_view username) noexcept;
+				explicit UserGlobalStorage(const UserGlobalStorage &) noexcept = default;
+		explicit UserGlobalStorage(UserGlobalStorage &&) noexcept = default;
+		UserGlobalStorage &operator=(const UserGlobalStorage &) noexcept = delete;
+		UserGlobalStorage &operator=(UserGlobalStorage &&) noexcept = delete;
 		~UserGlobalStorage() noexcept override = default;
 
 		std::string_view GetUsername() noexcept;

@@ -131,6 +131,10 @@ namespace tudov
 
 	  public:
 		explicit ScriptProvider(Context &context) noexcept;
+		explicit ScriptProvider(const ScriptProvider &) noexcept = delete;
+		explicit ScriptProvider(ScriptProvider &&) noexcept = delete;
+		ScriptProvider &operator=(const ScriptProvider &) noexcept = delete;
+		ScriptProvider &operator=(ScriptProvider &&) noexcept = delete;
 		~ScriptProvider() override;
 
 	  private:

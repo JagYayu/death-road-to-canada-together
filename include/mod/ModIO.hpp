@@ -17,6 +17,11 @@ namespace tudov
 	{
 	  public:
 		explicit ModIO() noexcept;
+		explicit ModIO(const ModIO &) noexcept = default;
+		explicit ModIO(ModIO &&) noexcept = default;
+		ModIO &operator=(const ModIO &) noexcept = default;
+		ModIO &operator=(ModIO &&) noexcept = default;
+		~ModIO() noexcept = default;
 
 		constexpr EModPortal GetModPortalType() const noexcept override;
 	};

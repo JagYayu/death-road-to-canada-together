@@ -30,6 +30,10 @@ namespace tudov
 	{
 	  public:
 		explicit TextureResources() noexcept;
+		explicit TextureResources(const TextureResources &) noexcept = delete;
+		explicit TextureResources(TextureResources &&) noexcept = delete;
+		TextureResources &operator=(const TextureResources &) noexcept = delete;
+		TextureResources &operator=(TextureResources &&) noexcept = delete;
 		~TextureResources() noexcept = default;
 
 		void InstallToScriptEngine(std::string_view name, ScriptEngine &scriptEngine) noexcept;

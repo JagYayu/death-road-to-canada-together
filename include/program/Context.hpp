@@ -46,6 +46,10 @@ namespace tudov
 
 	  public:
 		explicit Context(Engine *engine = nullptr) noexcept;
+		explicit Context(const Context &) noexcept = delete;
+		explicit Context(Context &&) noexcept = delete;
+		Context &operator=(const Context &) noexcept = delete;
+		Context &operator=(Context &&) noexcept = default;
 		~Context() noexcept = default;
 
 	  public:

@@ -186,7 +186,7 @@ TE.events:add(N_("CUpdate"), function(e)
 		print("test once")
 	end
 
-	-- CUIMenu.update()
+	CUIMenu.update()
 end, "Test")
 
 return CUIMenu

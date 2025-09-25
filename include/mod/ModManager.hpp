@@ -101,6 +101,10 @@ namespace tudov
 
 	  public:
 		explicit ModManager(Context &context) noexcept;
+		explicit ModManager(const ModManager &) noexcept = delete;
+		explicit ModManager(ModManager &&) noexcept = delete;
+		ModManager &operator=(const ModManager &) noexcept = delete;
+		ModManager &operator=(ModManager &&) noexcept = delete;
 		~ModManager() noexcept override;
 
 	  public:

@@ -33,6 +33,10 @@ namespace tudov
 
 	  public:
 		explicit Config() noexcept;
+		explicit Config(const Config &) noexcept = delete;
+		explicit Config(Config &&) noexcept = default;
+		Config &operator=(const Config &) noexcept = delete;
+		Config &operator=(Config &&) noexcept = default;
 		~Config() noexcept override;
 
 	  private:

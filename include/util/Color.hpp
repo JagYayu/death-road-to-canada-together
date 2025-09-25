@@ -59,6 +59,10 @@ namespace tudov
 		{
 		}
 
+		Color(const Color &) noexcept = default;
+		explicit Color(Color &&) noexcept = default;
+		Color &operator=(const Color &) noexcept = default;
+		Color &operator=(Color &&) noexcept = default;
 		~Color() noexcept = default;
 
 		inline constexpr bool operator==(const Color &other) const noexcept

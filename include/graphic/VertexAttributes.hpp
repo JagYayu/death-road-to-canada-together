@@ -15,6 +15,6 @@ namespace tudov
 {
 	class VertexAttributes
 	{
-		
+		//
 	};
-}
+} // namespace tudov

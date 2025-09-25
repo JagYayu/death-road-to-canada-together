@@ -47,6 +47,11 @@ namespace tudov
 
 	  public:
 		explicit EventProfiler() noexcept;
+		explicit EventProfiler(const EventProfiler &) noexcept = delete;
+		explicit EventProfiler(EventProfiler &&) noexcept = delete;
+		EventProfiler &operator=(const EventProfiler &) noexcept = delete;
+		EventProfiler &operator=(EventProfiler &&) noexcept = delete;
+		~EventProfiler() noexcept = default;
 
 		void BeginEvent(IScriptEngine &scriptEngine);
 		void EndEvent(IScriptEngine &scriptEngine);

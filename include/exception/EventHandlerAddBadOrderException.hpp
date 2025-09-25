@@ -23,6 +23,10 @@ namespace tudov
 		std::string order;
 
 		explicit EventHandlerAddBadOrderException(Context &context, EventID eventID, ScriptID scriptID, std::string order, std::string traceback) noexcept;
+		explicit EventHandlerAddBadOrderException(const EventHandlerAddBadOrderException &) noexcept = default;
+		explicit EventHandlerAddBadOrderException(EventHandlerAddBadOrderException &&) noexcept = default;
+		EventHandlerAddBadOrderException &operator=(const EventHandlerAddBadOrderException &) noexcept = delete;
+		EventHandlerAddBadOrderException &operator=(EventHandlerAddBadOrderException &&) noexcept = delete;
 		~EventHandlerAddBadOrderException() noexcept override = default;
 
 		std::string_view What() const noexcept override;

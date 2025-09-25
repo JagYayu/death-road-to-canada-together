@@ -43,6 +43,10 @@ namespace tudov
 
 	  public:
 		explicit Texture(Renderer &renderer) noexcept;
+		explicit Texture(const Texture &) noexcept = default;
+		explicit Texture(Texture &&) noexcept = default;
+		Texture &operator=(const Texture &) noexcept = delete;
+		Texture &operator=(Texture &&) noexcept = delete;
 		~Texture() noexcept override;
 
 		std::float_t GetWidth() const override;

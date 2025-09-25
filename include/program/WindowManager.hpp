@@ -71,6 +71,10 @@ namespace tudov
 
 	  public:
 		explicit WindowManager(Context &context) noexcept;
+		explicit WindowManager(const WindowManager &) noexcept = delete;
+		explicit WindowManager(WindowManager &&) noexcept = delete;
+		WindowManager &operator=(const WindowManager &) noexcept = delete;
+		WindowManager &operator=(WindowManager &&) noexcept = delete;
 		~WindowManager() noexcept override = default;
 
 		Context &GetContext() noexcept override;

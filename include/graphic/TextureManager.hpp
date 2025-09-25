@@ -29,6 +29,11 @@ namespace tudov
 
 	  public:
 		explicit TextureManager() noexcept;
+		explicit TextureManager(const TextureManager &) noexcept = default;
+		explicit TextureManager(TextureManager &&) noexcept = default;
+		TextureManager &operator=(const TextureManager &) noexcept = default;
+		TextureManager &operator=(TextureManager &&) noexcept = default;
+		~TextureManager() noexcept = default;
 
 		std::shared_ptr<Texture> GetTexture(TextureID textureID) noexcept;
 		std::tuple<std::shared_ptr<Texture>, TextureID> LoadTexture(Renderer &renderer) noexcept;

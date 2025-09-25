@@ -125,6 +125,10 @@ namespace tudov
 
 	  public:
 		explicit Log(std::string_view module) noexcept;
+		explicit Log(const Log &) noexcept = delete;
+		explicit Log(Log &&) noexcept = delete;
+		Log &operator=(const Log &) noexcept = delete;
+		Log &operator=(Log &&) noexcept = delete;
 		~Log() noexcept;
 
 		std::string_view GetModule() const;

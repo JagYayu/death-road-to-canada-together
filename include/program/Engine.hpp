@@ -17,6 +17,7 @@
 #include "program/Context.hpp"
 #include "program/EngineComponent.hpp"
 #include "system/Log.hpp"
+#include "util/ClassUtils.hpp"
 
 #include <cmath>
 #include <memory>
@@ -36,7 +37,11 @@ namespace tudov
 	/**
 	 * @brief Tudov game engine
 	 */
-	class Engine final : public Application, public IContextProvider, public IDebugProvider, private ILogProvider
+	class Engine final : public Application,
+	                     public NonCopyableMovable,
+	                     public IContextProvider,
+	                     public IDebugProvider,
+	                     private ILogProvider
 	{
 		friend Context;
 		friend EngineData;
@@ -115,6 +120,10 @@ namespace tudov
 
 	  public:
 		explicit Engine() noexcept;
+		explicit Engine(const Engine &) noexcept = delete;
+		explicit Engine(Engine &&) noexcept = delete;
+		Engine &operator=(const Engine &) noexcept = delete;
+		Engine &operator=(Engine &&) noexcept = delete;
 		~Engine() noexcept override;
 
 	  public:

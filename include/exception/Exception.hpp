@@ -30,6 +30,10 @@ namespace tudov
 	  public:
 		explicit Exception(Context &context) noexcept;
 		explicit Exception(Context &context, std::string_view what) noexcept;
+		explicit Exception(const Exception &) noexcept = default;
+		explicit Exception(Exception &&) noexcept = default;
+		Exception &operator=(const Exception &) noexcept = delete;
+		Exception &operator=(Exception &&) noexcept = delete;
 		~Exception() noexcept override = default;
 
 		Context &GetContext() noexcept override;

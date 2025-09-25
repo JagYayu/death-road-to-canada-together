@@ -48,6 +48,10 @@ namespace tudov
 
 	  public:
 		explicit GlobalStorageManager() noexcept;
+		explicit GlobalStorageManager(const GlobalStorageManager &) noexcept = default;
+		explicit GlobalStorageManager(GlobalStorageManager &&) noexcept = default;
+		GlobalStorageManager &operator=(const GlobalStorageManager &) noexcept = default;
+		GlobalStorageManager &operator=(GlobalStorageManager &&) noexcept = default;
 		~GlobalStorageManager() noexcept override = default;
 
 		// Context &GetContext() noexcept override;

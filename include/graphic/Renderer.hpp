@@ -90,6 +90,10 @@ namespace tudov
 
 	  public:
 		explicit Renderer(Window &window) noexcept;
+		explicit Renderer(const Renderer &) noexcept = default;
+		explicit Renderer(Renderer &&) noexcept = default;
+		Renderer &operator=(const Renderer &) noexcept = delete;
+		Renderer &operator=(Renderer &&) noexcept = delete;
 		~Renderer() noexcept = default;
 
 		Log &GetLog() noexcept override;

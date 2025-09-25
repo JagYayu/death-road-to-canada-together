@@ -44,6 +44,10 @@ namespace tudov
 
 	  public:
 		explicit ReliableUDPClientSession(INetworkManager &networkManager, NetworkSessionSlot clientSlot) noexcept;
+		explicit ReliableUDPClientSession(const ReliableUDPClientSession &) noexcept = default;
+		explicit ReliableUDPClientSession(ReliableUDPClientSession &&) noexcept = default;
+		ReliableUDPClientSession &operator=(const ReliableUDPClientSession &) noexcept = delete;
+		ReliableUDPClientSession &operator=(ReliableUDPClientSession &&) noexcept = delete;
 		~ReliableUDPClientSession() noexcept;
 
 	  private:

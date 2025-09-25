@@ -104,6 +104,11 @@ namespace tudov
 	  public:
 		explicit ScriptModule(IScriptLoader &scriptLoader) noexcept;
 		explicit ScriptModule(IScriptLoader &scriptLoader, ScriptID scriptID, const sol::protected_function &func) noexcept;
+		explicit ScriptModule(const ScriptModule &) noexcept = default;
+		explicit ScriptModule(ScriptModule &&) noexcept = default;
+		ScriptModule &operator=(const ScriptModule &) noexcept = delete;
+		ScriptModule &operator=(ScriptModule &&) noexcept = delete;
+		~ScriptModule() noexcept = default;
 
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;

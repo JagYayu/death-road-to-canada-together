@@ -80,6 +80,10 @@ namespace tudov
 
 	  public:
 		explicit RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders = DefaultOrders, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys = {}, ScriptID scriptID = false);
+		explicit RuntimeEvent(const RuntimeEvent &) noexcept = default;
+		RuntimeEvent(RuntimeEvent &&) noexcept = default;
+		RuntimeEvent &operator=(const RuntimeEvent &) noexcept = delete;
+		RuntimeEvent &operator=(RuntimeEvent &&) noexcept = delete;
 		~RuntimeEvent() noexcept override;
 
 	  public:

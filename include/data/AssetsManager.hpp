@@ -53,6 +53,10 @@ namespace tudov
 
 	  public:
 		explicit AssetsManager(Context &context) noexcept;
+		explicit AssetsManager(const AssetsManager &) noexcept = delete;
+		explicit AssetsManager(AssetsManager &&) noexcept = delete;
+		AssetsManager &operator=(const AssetsManager &) noexcept = delete;
+		AssetsManager &operator=(AssetsManager &&) noexcept = delete;
 		~AssetsManager() noexcept override;
 
 		Context &GetContext() noexcept override;

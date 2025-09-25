@@ -98,6 +98,10 @@ namespace tudov
 
 	  public:
 		explicit ScriptErrors(Context &context) noexcept;
+		explicit ScriptErrors(const ScriptErrors &) noexcept = delete;
+		explicit ScriptErrors(ScriptErrors &&) noexcept = delete;
+		ScriptErrors &operator=(const ScriptErrors &) noexcept = delete;
+		ScriptErrors &operator=(ScriptErrors &&) noexcept = delete;
 		~ScriptErrors() noexcept override = default;
 
 		Context &GetContext() noexcept override;

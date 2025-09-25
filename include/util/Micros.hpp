@@ -34,3 +34,16 @@
 #define TE_STATIC_CLASS(Class)          \
 	explicit Class() noexcept = delete; \
 	~Class() noexcept = delete
+
+#define TE_DEFAULT_FIVE_RULES_CLASS(Class)              \
+	~Class() noexcept = default;                        \
+	explicit Class(const Class &) noexcept = default;   \
+	explicit Class(Class &&) noexcept = default;        \
+	Class &operator=(const Class &) noexcept = default; \
+	Class &operator=(Class &&) noexcept = default
+
+#define TE_DEFAULT_FIVE_RULES_VIRTUAL_CLASS(Class)      \
+	explicit Class(const Class &) noexcept = default;   \
+	explicit Class(Class &&) noexcept = default;        \
+	Class &operator=(const Class &) noexcept = default; \
+	Class &operator=(Class &&) noexcept = default

@@ -64,6 +64,11 @@ namespace tudov
 
 	  public:
 		explicit KeyboardManager(Context &context) noexcept;
+		explicit KeyboardManager(const KeyboardManager &) noexcept = delete;
+		explicit KeyboardManager(KeyboardManager &&) noexcept = delete;
+		KeyboardManager &operator=(const KeyboardManager &) noexcept = delete;
+		KeyboardManager &operator=(KeyboardManager &&) noexcept = delete;
+		~KeyboardManager() noexcept = default;
 
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;

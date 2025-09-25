@@ -24,6 +24,11 @@ namespace tudov
 
 	  public:
 		explicit NetworkPeer(_ENetPeer *eNetPeer) noexcept;
+		explicit NetworkPeer(const NetworkPeer &) noexcept = default;
+		explicit NetworkPeer(NetworkPeer &&) noexcept = default;
+		NetworkPeer &operator=(const NetworkPeer &) noexcept = default;
+		NetworkPeer &operator=(NetworkPeer &&) noexcept = default;
+		~NetworkPeer() noexcept = default;
 
 		std::uint32_t GetConnectID() const noexcept;
 	};

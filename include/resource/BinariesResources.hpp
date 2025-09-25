@@ -31,6 +31,10 @@ namespace tudov
 
 	  public:
 		explicit BinariesResources() noexcept;
+		explicit BinariesResources(const BinariesResources &) noexcept = delete;
+		explicit BinariesResources(BinariesResources &&) noexcept = delete;
+		BinariesResources &operator=(const BinariesResources &) noexcept = delete;
+		BinariesResources &operator=(BinariesResources &&) noexcept = delete;
 		~BinariesResources() noexcept = default;
 	};
 } // namespace tudov

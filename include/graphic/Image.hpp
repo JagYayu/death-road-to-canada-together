@@ -32,6 +32,10 @@ namespace tudov
 
 	  public:
 		explicit Image(std::string_view path, const std::vector<std::byte> &bytes);
+		explicit Image(const Image &) noexcept = default;
+		explicit Image(Image &&) noexcept = default;
+		Image &operator=(const Image &) noexcept = default;
+		Image &operator=(Image &&) noexcept = default;
 		~Image() noexcept;
 
 		std::string_view GetFilePath() const noexcept override;

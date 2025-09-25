@@ -33,6 +33,10 @@ namespace tudov
 
 	  public:
 		explicit TextResources() noexcept = default;
+		explicit TextResources(const TextResources &) noexcept = delete;
+		explicit TextResources(TextResources &&) noexcept = delete;
+		TextResources &operator=(const TextResources &) noexcept = delete;
+		TextResources &operator=(TextResources &&) noexcept = delete;
 		~TextResources() override = default;
 	};
 } // namespace tudov

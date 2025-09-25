@@ -95,6 +95,10 @@ namespace tudov
 
 	  public:
 		explicit VirtualFileSystem(Context &context) noexcept;
+		explicit VirtualFileSystem(const VirtualFileSystem &) noexcept = default;
+		explicit VirtualFileSystem(VirtualFileSystem &&) noexcept = default;
+		VirtualFileSystem &operator=(const VirtualFileSystem &) noexcept = delete;
+		VirtualFileSystem &operator=(VirtualFileSystem &&) noexcept = delete;
 		~VirtualFileSystem() noexcept override = default;
 
 		Context &GetContext() noexcept override;

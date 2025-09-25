@@ -30,6 +30,11 @@ namespace tudov
 
 	  public:
 		explicit Timer() noexcept;
+		explicit Timer(const Timer &) noexcept = default;
+		explicit Timer(Timer &&) noexcept = default;
+		Timer &operator=(const Timer &) noexcept = default;
+		Timer &operator=(Timer &&) noexcept = default;
+
 		explicit Timer(bool paused) noexcept;
 
 		void Pause() noexcept;

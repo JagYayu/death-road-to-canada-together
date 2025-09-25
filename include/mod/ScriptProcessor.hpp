@@ -26,7 +26,7 @@ namespace tudov
 		ClosedSource = Obfuscate | LJEncode | Compress,
 	};
 
-	class ScriptProcessor
+	struct ScriptProcessor
 	{
 		TE_STATIC_CLASS(ScriptProcessor);
 

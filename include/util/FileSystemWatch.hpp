@@ -33,6 +33,10 @@ namespace tudov
 	  public:
 		explicit FileSystemWatch() noexcept;
 		explicit FileSystemWatch(const std::filesystem::path &path) noexcept;
+		explicit FileSystemWatch(const FileSystemWatch &) noexcept = delete;
+		explicit FileSystemWatch(FileSystemWatch &&) noexcept = delete;
+		FileSystemWatch &operator=(const FileSystemWatch &) noexcept = delete;
+		FileSystemWatch &operator=(FileSystemWatch &&) noexcept = delete;
 		~FileSystemWatch() noexcept;
 
 		decltype(_onCallback) &GetOnCallback() noexcept;

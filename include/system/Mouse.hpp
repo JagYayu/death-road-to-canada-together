@@ -54,6 +54,11 @@ namespace tudov
 
 	  public:
 		explicit Mouse(MouseID mouseID) noexcept;
+		explicit Mouse(const Mouse &) noexcept = default;
+		explicit Mouse(Mouse &&) noexcept = default;
+		Mouse &operator=(const Mouse &) noexcept = default;
+		Mouse &operator=(Mouse &&) noexcept = default;
+		~Mouse() noexcept = default;
 
 		MouseID GetMouseID() const noexcept override;
 		std::string_view GetMouseName() const noexcept override;

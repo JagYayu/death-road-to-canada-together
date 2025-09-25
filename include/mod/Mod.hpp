@@ -70,6 +70,10 @@ namespace tudov
 	  public:
 		explicit Mod(ModManager &modManager) noexcept;
 		explicit Mod(ModManager &modManager, const ModConfig &config) noexcept;
+		explicit Mod(const Mod &) noexcept = default;
+		explicit Mod(Mod &&) noexcept = default;
+		Mod &operator=(const Mod &) noexcept = delete;
+		Mod &operator=(Mod &&) noexcept = delete;
 		~Mod() noexcept = default;
 
 		ModManager &GetModManager() noexcept override;

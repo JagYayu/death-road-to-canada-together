@@ -65,6 +65,10 @@ namespace tudov
 
 	  public:
 		explicit EngineData(Context &context) noexcept;
+		explicit EngineData(const EngineData &) noexcept = delete;
+		explicit EngineData(EngineData &&) noexcept = delete;
+		EngineData &operator=(const EngineData &) noexcept = delete;
+		EngineData &operator=(EngineData &&) noexcept = delete;
 		~EngineData() noexcept = default;
 	};
 } // namespace tudov
