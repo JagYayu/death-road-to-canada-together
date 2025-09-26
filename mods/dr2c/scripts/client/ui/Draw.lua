@@ -10,6 +10,9 @@
 --]]
 
 local Color = require("tudov.Color")
+local Math = require("tudov.Math")
+
+local Math_lerp = Math.lerp
 
 --- @class dr2c.CUIDraw
 local CUIDraw = {}
@@ -25,12 +28,17 @@ local drawRectSrc = drawRectArgs.source
 
 local drawTextArgs = DrawTextArgs()
 
-local uiTexture = TE.images:getID("mods/dr2c/gfx/UI.png")
-local uiTextureX = 0
-local uiTextureY = 0
-local uiTextureWidth = 9
-local uiTextureHeight = 9
-local uiTextureSize = 4
+local uiBorderTexture = TE.images:getID("mods/dr2c/gfx/UI.png")
+local uiBorderTextureX = 0
+local uiBorderTextureY = 0
+local uiBorderTextureWidth = 9
+local uiBorderTextureHeight = 9
+local uiBorderTextureSize = 4
+local uiSelectionBoxTexture = TE.images:getID("gfx/misc/dr2c_particles.png")
+local uiSelectionBoxTextureX = 208
+local uiSelectionBoxTextureY = 128
+local uiSelectionBoxTextureWidth = 16
+local uiSelectionBoxTextureHeight = 16
 local uiFont = TE.fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
 
 --- @class dr2c.UI.DrawBorder
@@ -68,13 +76,13 @@ function CUIDraw.drawBorder(args)
 	local y = args.y
 	local sz = args.size
 
-	local tx = args.textureX or uiTextureX
-	local ty = args.textureY or uiTextureY
-	local tw = args.textureWidth or uiTextureWidth
-	local th = args.textureHeight or uiTextureHeight
-	local tsz = args.textureSize or uiTextureSize
+	local tx = args.textureX or uiBorderTextureX
+	local ty = args.textureY or uiBorderTextureY
+	local tw = args.textureWidth or uiBorderTextureWidth
+	local th = args.textureHeight or uiBorderTextureHeight
+	local tsz = args.textureSize or uiBorderTextureSize
 
-	drawRectArgs.texture = args.texture or uiTexture
+	drawRectArgs.texture = args.texture or uiBorderTexture
 	drawRectArgs.color = args.color or Color.White
 
 	drawRectSrc.x = tx
@@ -181,10 +189,10 @@ function CUIDraw.drawButton(args)
 		CUIDraw.drawBorder(args.border)
 	end
 
-	local borderSize = border and border.size or uiTextureSize
+	local borderSize = border and border.size or uiBorderTextureSize
 
 	do
-		drawRectArgs.texture = uiTexture
+		drawRectArgs.texture = uiBorderTexture
 		if args.hover then
 			drawRectArgs.color = Color.White
 		else
@@ -222,20 +230,82 @@ end
 --- @class dr2c.UI.DrawSelectionBox
 --- @field x number
 --- @field y number
---- @field width number
---- @field height number
---- @field time number?
+--- @field width number?
+--- @field height number?
+--- @field boxWidth number
+--- @field boxHeight number
 --- @field texture DrawArgTexture?
---- @field textureX string?
---- @field textureY string?
---- @field textureWidth string?
---- @field textureHeight string?
+--- @field textureX number?
+--- @field textureY number?
+--- @field textureWidth number?
+--- @field textureHeight number?
+--- @field textureOffsetX number?
+--- @field textureOffsetY number?
+--- @field time number?
+--- @field previousState { x: number, y: number, time: number }?
+
+--- @param args dr2c.UI.DrawSelectionBox
 function CUIDraw.drawSelectionBox(args)
-	local time = args.time or Time.getSystemTime()
+	local offsetFactor = (math.sin((args.time or Time.getSystemTime()) * 8) + 1) / 16
+	local x = args.x
+	local y = args.y
+	local bw = args.boxWidth
+	local bh = args.boxHeight
+	local tx = args.textureX or uiSelectionBoxTextureX
+	local ty = args.textureY or uiSelectionBoxTextureY
+	local tw = args.textureWidth or uiSelectionBoxTextureWidth
+	local th = args.textureHeight or uiSelectionBoxTextureHeight
+	local w = args.width or tw
+	local h = args.height or th
+	local tox = args.textureOffsetX or w / 2
+	local toy = args.textureOffsetY or h / 2
 
-	local factor = math.sin(time * 2) + 1
+	drawRectArgs.texture = args.texture or uiSelectionBoxTexture
+	drawRectArgs.color = Color.White
 
-	drawRectArgs.texture = args.texture or uiTexture
+	drawRectSrc.x = tx
+	drawRectSrc.y = ty
+	drawRectSrc.w = tw
+	drawRectSrc.h = th
+
+	-- 绘制顺序：左上、右上、左下、右下
+
+	local px, py
+	local prev = args.previousState
+	if prev then
+		local lerpFactor = Math.clamp(0, ((Time.getSystemTime() - prev.time) * 6) ^ 0.375, 1)
+		if lerpFactor >= 1 then
+			args.previousState = nil
+		end
+
+		px = Math_lerp(prev.x, x, lerpFactor) - tox
+		py = Math_lerp(prev.y, y, lerpFactor) - toy
+	else
+		px = x - tox
+		py = y - toy
+	end
+
+	drawRectDst.x = px - w * offsetFactor
+	drawRectDst.y = py - h * offsetFactor
+	drawRectDst.w = w
+	drawRectDst.h = h
+	renderer:drawRect(drawRectArgs)
+
+	drawRectDst.x = px + w * offsetFactor + w + bw
+	drawRectDst.w = -w
+	renderer:drawRect(drawRectArgs)
+
+	drawRectDst.x = px - w * offsetFactor
+	drawRectDst.y = py + h * offsetFactor + h + bh
+	drawRectDst.w = w
+	drawRectDst.h = -h
+	renderer:drawRect(drawRectArgs)
+
+	drawRectDst.x = px + w * offsetFactor + w + bw
+	drawRectDst.w = -w
+	renderer:drawRect(drawRectArgs)
+
+	return true
 end
 
 --- @param e dr2c.E.CRender

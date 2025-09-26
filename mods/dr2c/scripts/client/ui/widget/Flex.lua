@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.WidgetFlexHorizontal
+-- @module dr2c.client.ui.widget.Flex
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -11,7 +11,7 @@
 
 local Table = require("tudov.Table")
 
-local CUIWidget = require("dr2c.client.ui.Widget")
+local CUIWidget = require("dr2c.client.ui.widget.Widget")
 
 --- @class dr2c.CUIWidgetFlex
 local CUIWidgetFlex = {}

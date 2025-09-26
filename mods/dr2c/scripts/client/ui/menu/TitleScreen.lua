@@ -11,8 +11,8 @@
 
 local CUI = require("dr2c.client.ui.UI")
 local CModule = require("dr2c.client.Module")
-local CUIMenu = require("dr2c.client.ui.Menu")
-local CUIWidget = require("dr2c.client.ui.Widget")
+local CUIMenu = require("dr2c.client.ui.menu.Menu")
+local CUIWidget = require("dr2c.client.ui.widget.Widget")
 
 --- @param e dr2c.E.CMenu
 TE.events:add(CUIMenu.eventCMenu, function(e)
@@ -22,9 +22,9 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 
 		return {
 			windowW * 0.4,
-			windowH * 0.65,
+			windowH * 0.6,
 			windowW * 0.2,
-			windowH * 0.25,
+			windowH * 0.3,
 		}
 	end
 
@@ -36,10 +36,10 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 	local uiScale = CUI.getScale()
 
 	local commonMargin = {
-		uiScale,
-		uiScale,
-		uiScale,
-		uiScale,
+		0,
+		0,
+		0,
+		0,
 	}
 
 	local commonBorder = {
@@ -65,6 +65,11 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 		margin = commonMargin,
 		scale = uiScale,
 		border = commonBorder,
+		callback = function()
+			local ExitJumpscare = require("dr2c.client.ui.ExitJumpscare")
+
+			ExitJumpscare.trigger()
+		end,
 	}))
 
 	e.menu.canvas:addWidget(root)

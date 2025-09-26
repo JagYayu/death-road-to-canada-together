@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.WidgetButton
+-- @module dr2c.client.ui.widget.Button
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -14,8 +14,7 @@ local Color = require("tudov.Color")
 
 local CRenderUtils = require("dr2c.client.render.Utils")
 local CUIDraw = require("dr2c.client.ui.Draw")
-local CUIWidget = require("dr2c.client.ui.Widget")
-local CUIWidgetBox = require("dr2c.client.ui.WidgetBox")
+local CUIWidget = require("dr2c.client.ui.widget.Widget")
 
 --- @class dr2c.CUIWidgetButton
 local CUIWidgetButton = {}

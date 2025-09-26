@@ -165,6 +165,10 @@ function Color.darken(c, f)
 	return Color_rgba(r * f, g * f, b * f, a)
 end
 
+function Color.fade(c, f)
+	-- TODO
+end
+
 --- @param v UInt8?
 --- @return number c
 --- @nodiscard

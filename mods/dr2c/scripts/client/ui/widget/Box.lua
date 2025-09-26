@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.WidgetBox
+-- @module dr2c.client.ui.widget.Box
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -10,7 +10,7 @@
 --]]
 
 local CUIDraw = require("dr2c.client.ui.Draw")
-local CUIWidget = require("dr2c.client.ui.Widget")
+local CUIWidget = require("dr2c.client.ui.widget.Widget")
 
 --- @class dr2c.CUIWidgetBox
 local CUIWidgetBox = {}

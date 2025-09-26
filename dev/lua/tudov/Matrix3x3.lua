@@ -172,6 +172,4 @@ function Matrix3x3:multiplyVector(x, y)
 	return x * self[1] + y * self[2] + self[3], x * self[4] + y * self[5] + self[6]
 end
 
-setmetatable(Matrix3x3, metatable)
-
 return Matrix3x3

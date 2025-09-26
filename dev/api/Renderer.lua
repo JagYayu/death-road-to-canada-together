@@ -9,8 +9,8 @@ error("this is a lua library module")
 
 --- @class TE.DrawRectArgs : userdata
 --- @field texture DrawArgTexture?
---- @field destination TE.Rectangle
---- @field source TE.Rectangle?
+--- @field destination TE.RectangleF
+--- @field source TE.RectangleF?
 --- @field color Color
 --- @field angle number
 --- @field origin Vector

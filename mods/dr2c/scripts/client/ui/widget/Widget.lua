@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.Widget
+-- @module dr2c.client.ui.widget.Widget
 -- @author JagYayu
 -- @brief
 -- @version 1.0

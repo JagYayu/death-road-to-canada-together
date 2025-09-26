@@ -291,7 +291,7 @@ void Engine::Event(AppEvent &appEvent) noexcept
 
 void Engine::Deinitialize() noexcept
 {
-	if (_state != EState::Quit)
+	if (_state == EState::None || _state == EState::Deinitialized)
 	{
 		return;
 	}

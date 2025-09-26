@@ -9,27 +9,36 @@
 --
 --]]
 
---- @class dr2c.SpriteTable : TE.Rectangle
---- @field [0] ImageID
-
---- @class dr2c.CSprites
-local CRenderSprites = {}
-
 local String = require("tudov.String")
 local Table = require("tudov.Table")
 local json = require("lib.json")
 
 local tonumber = tonumber
 
+--- @class dr2c.CSprites
+local CRenderSprites = {}
+
+--- @class dr2c.SpriteTable : TE.RectangleF
+--- @field [0] TE.ImageID
+
+--- @class dr2c.Sprites
+--- @field image string
+--- @field x number
+--- @field y number
+--- @field w number
+--- @field h number
+
 local reloadPending = true
 
 --- @type table<string, dr2c.SpriteTable[]>
 local spriteTablesMap = {}
 
-local eventSpritesLoad = TE.events:new(N_("SpritesLoad"), {
+local eventCSpritesLoad = TE.events:new(N_("CSpritesLoad"), {
 	"Register",
 })
 
+--- @param e dr2c.E.CSpritesLoad
+--- @param sprites table<string, dr2c.Sprites>
 local function registerSpritesImpl(e, sprites)
 	local dst = e.new
 
@@ -56,13 +65,14 @@ local function registerSpritesImpl(e, sprites)
 	end
 end
 
---- @param sprites table<string, dr2c.SpriteTable>
+--- @param sprites table<string, dr2c.Sprites>
 function CRenderSprites.registerSprites(sprites)
 	if type(sprites) ~= "table" then
 		error(("bad argument #1 to 'tbl' (table expected, got %s)"):format(type(sprites)))
 	end
 
-	TE.events:add(eventSpritesLoad, function(e)
+	--- @param e dr2c.E.CSpritesLoad
+	TE.events:add(eventCSpritesLoad, function(e)
 		registerSpritesImpl(e, sprites)
 	end)
 end
@@ -72,7 +82,7 @@ local function registerSpritesFromFileImpl(filePath, noLog, hint, func)
 		error(("bad argument #1 to 'filePath' (string expected, got %s)"):format(type(filePath)))
 	end
 
-	TE.events:add(eventSpritesLoad, function(e)
+	TE.events:add(eventCSpritesLoad, function(e)
 		if not (noLog or TE.vfs:exists(filePath)) then
 			log.warn("File not found: " .. filePath)
 		end
@@ -136,13 +146,14 @@ function CRenderSprites.registerSpritesFromLuaDirectory(path, options)
 end
 
 function CRenderSprites.reloadImmediately()
+	--- @class dr2c.E.CSpritesLoad
 	local e = {
 		new = {},
 		old = spriteTablesMap,
 	}
 	local new = e.new
 
-	TE.events:invoke(eventSpritesLoad, e, nil, EEventInvocation.None)
+	TE.events:invoke(eventCSpritesLoad, e, nil, EEventInvocation.None)
 
 	spriteTablesMap = new
 

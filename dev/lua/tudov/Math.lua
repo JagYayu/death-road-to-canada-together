@@ -181,7 +181,13 @@ Math.Q1616 = Q1616
 --- @return number
 --- @nodiscard
 function Math.clamp(l, v, r)
-	return math_max(l, math_min(r, v))
+	if v < l then
+		return l
+	elseif v > r then
+		return r
+	else
+		return v
+	end
 end
 
 --- @param a number

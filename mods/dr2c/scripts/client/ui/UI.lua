@@ -25,6 +25,7 @@ CUI.eventRenderUI = TE.events:new(N_("CRenderUI"), {
 	"Begin",
 	"Menu",
 	"Test",
+	"Exit",
 	"End",
 })
 

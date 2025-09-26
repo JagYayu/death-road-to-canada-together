@@ -1,6 +1,6 @@
 --[[
-	-- @module dr2c.client.ui.Canvas
-	-- @author JagYayu
+-- @module dr2c.client.ui.Canvas
+-- @author JagYayu
 -- @brief
 -- @version 1.0
 -- @date 2025
@@ -14,15 +14,12 @@ local Geometry = require("tudov.Geometry")
 local Enum = require("tudov.Enum")
 
 local CSystemInput = require("dr2c.client.system.Input")
-local CUIWidget = require("dr2c.client.ui.Widget")
 
 --- @class dr2c.CUICanvas
 local CUICanvas = {}
 
 --- @type dr2c.UICanvas?
 local canvasSelected
---- @type integer
-local canvasCount = 0
 
 --- @type integer
 local canvasLatestIndex = 0
@@ -121,9 +118,6 @@ CUICanvas.metatable = {
 		selectWidget = metatableSelectWidget,
 		contains = metatableContains,
 	},
-	__gc = function()
-		canvasCount = canvasCount - 1
-	end,
 }
 
 --- @param args table?
@@ -162,9 +156,8 @@ function CUICanvas.new(args)
 		window = args.window or TE.engine.primaryWindow,
 	}
 
-	Table.setProxyMetatable(canvas, CUICanvas.metatable)
+	setmetatable(canvas, CUICanvas.metatable)
 
-	canvasCount = canvasCount + 1
 	canvasMap[canvasLatestIndex] = canvas
 
 	return canvas
@@ -183,12 +176,17 @@ end
 --- @param canvas dr2c.UICanvas
 --- @param mouseX number
 --- @param mouseY number
+--- @param widgets dr2c.UIWidget[]
 --- @return boolean
-local function canvasSelectWidgetAtMouse(canvas, mouseX, mouseY)
+local function canvasSelectWidgetAtMouse(canvas, mouseX, mouseY, widgets)
 	local rectContains = Geometry.luaRectContains
 
-	for _, widget in ipairs(canvas.widgets) do
-		if rectContains(widget.rectangle, mouseX, mouseY) then
+	for _, widget in ipairs(widgets) do
+		if widget.widgets then
+			if canvasSelectWidgetAtMouse(canvas, mouseX, mouseY, widget.widgets) then
+				return true
+			end
+		elseif rectContains(widget.rectangle, mouseX, mouseY) then
 			canvas:selectWidget(widget)
 
 			return true
@@ -203,20 +201,23 @@ local function handleCanvasesSelection(canvases)
 
 	for _, canvas in ipairs(canvases) do
 		if canvas.visible and canvas:contains(mouseX, mouseY) then
-			if canvasSelectWidgetAtMouse(canvas, mouseX, mouseY) then
+			if canvasSelectWidgetAtMouse(canvas, mouseX, mouseY, canvas.widgets) then
 				break
 			end
 		end
 	end
 end
 
+--- @type dr2c.UICanvas[]
+local canvasList = {}
+
 TE.events:add(N_("CUpdate"), function(e)
 	if not next(canvasMap) then
 		return
 	end
 
-	--- @type dr2c.UICanvas[]
-	local canvasList = Table.getValueList(canvasMap, canvasCount)
+	Table.clear(canvasList)
+	canvasList = Table.getValueList(canvasMap, canvasList)
 
 	table.sort(canvasList, compareCanvas)
 

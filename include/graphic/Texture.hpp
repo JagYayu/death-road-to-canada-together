@@ -15,6 +15,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <string_view>
 #include <tuple>
 
 struct SDL_GPUTexture;
@@ -55,6 +56,7 @@ namespace tudov
 
 		void Initialize(std::int32_t width, std::int32_t height, SDL_PixelFormat format, SDL_TextureAccess access = SDL_TEXTUREACCESS_TARGET);
 		void Initialize(Image &image);
+		[[deprecated]] void InitializeImGUI(std::string_view fileName);
 
 		SDL_Texture *GetSDLTextureHandle() noexcept;
 

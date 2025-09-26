@@ -16,11 +16,16 @@ local table_clear = require("table.clear")
 local table_new = require("table.new")
 
 local floor = math.floor
+local getmetatable = getmetatable
 local ipairs = ipairs
 local math_min = math.min
+local newproxy = newproxy
 local pairs = pairs
 local remove = table.remove
+local setmetatable = setmetatable
 local type = type
+
+assert(type(_G.newproxy) == "function", "`_G.newproxy` is not a function!")
 
 --- @class TE.Table
 local Table = {}
@@ -683,17 +688,17 @@ function Table.listToSet(list)
 	return set
 end
 
-assert(type(_G.newproxy) == "function", "`_G.newproxy` is not a function!")
-
 --- @generic T : table
 --- @param table T
 --- @param metatable metatable
 --- @return T
 function Table.setProxyMetatable(table, metatable)
 	local instance = newproxy(true)
+
 	--- @diagnostic disable-next-line: invisible
 	getmetatable(instance).__gc = metatable.__gc
 	metatable[instance] = true
+
 	return setmetatable(table, metatable)
 end
 

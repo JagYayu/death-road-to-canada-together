@@ -12,6 +12,7 @@
 local Enum = require("tudov.Enum")
 local Table = require("tudov.Table")
 
+local CUI = require("dr2c.client.ui.UI")
 local CUIDraw = require("dr2c.client.ui.Draw")
 local CUICanvas = require("dr2c.client.ui.Canvas")
 
@@ -19,8 +20,6 @@ local CUICanvas = require("dr2c.client.ui.Canvas")
 
 --- @class dr2c.CUIMenu
 local CUIMenu = {}
-
-local defaultSelectionBoxImageID = TE.images:getID("gfx/misc/dr2c_particles")
 
 --- @alias dr2c.MenuType dr2c.CUIMenu.Type
 
@@ -43,10 +42,14 @@ function CUIMenu.getAll()
 	return menuStack
 end
 
+--- @deprecated
 --- @return dr2c.UIWidget?
 function CUIMenu.getSelectedWidget()
 	return selectedWidget
 end
+
+--- @type { [1]: dr2c.UIWidget }
+local previousSelectedWidget = setmetatable({}, { __mode = "v" })
 
 function CUIMenu.draw()
 	local menu = menuStack[#menuStack]
@@ -62,10 +65,26 @@ function CUIMenu.draw()
 		return
 	end
 
-	-- CUIDraw.setTexture(drawTexture)
+	local selectionBox = menu.selectionBox
+	local rectangle = widget.rectangle
+	selectionBox.x = rectangle[1]
+	selectionBox.y = rectangle[2]
+	selectionBox.boxWidth = rectangle[3]
+	selectionBox.boxHeight = rectangle[4]
 
-	-- widget.rectangle[1]
-	-- widget.rectangle[2]
+	if previousSelectedWidget[1] ~= widget then
+		local prevWidget = previousSelectedWidget[1]
+		if prevWidget then
+			selectionBox.previousState = {
+				x = prevWidget.rectangle[1],
+				y = prevWidget.rectangle[2],
+				time = Time.getSystemTime(),
+			}
+		end
+		previousSelectedWidget[1] = widget
+	end
+
+	CUIDraw.drawSelectionBox(menu.selectionBox)
 end
 
 CUIMenu.eventCMenu = TE.events:new(N_("CMenu"), {
@@ -73,44 +92,20 @@ CUIMenu.eventCMenu = TE.events:new(N_("CMenu"), {
 	"Overrides",
 })
 
---- @param self dr2c.UIMenu
-local function metatableMenuDraw(self)
-	local canvas = self.canvas
-
-	canvas:draw()
-
-	-- self.selectionBox
-
-	local widget = self.canvas.selectedWidget
-	if widget then
-		-- widget.rectangle[1]
-		-- widget.rectangle[2]
-	end
-end
-
---- @param self dr2c.UIMenu
-local function metatableMenuUpdate(self)
-	-- self.canvas:update()
-end
-
--- CUIMenu.metatable = {
--- 	__index = {
--- 		draw = metatableMenuDraw,
--- 		update = metatableMenuUpdate,
--- 	},
--- }
-
---- @param selectionBox dr2c.UIMenu.SelectionBox | table
---- @return dr2c.UIMenu.SelectionBox
+--- @param selectionBox dr2c.UI.DrawSelectionBox | table
+--- @return dr2c.UI.DrawSelectionBox
 local function copyMenuSelectionBox(selectionBox)
-	--- @class dr2c.UIMenu.SelectionBox
+	local scale = CUI.getScale()
 
+	--- @type dr2c.UI.DrawSelectionBox
 	return {
-		texture = selectionBox.texture or defaultSelectionBoxImageID,
 		x = tonumber(selectionBox.x) or 0,
 		y = tonumber(selectionBox.y) or 0,
-		w = tonumber(selectionBox.w) or 0,
-		h = tonumber(selectionBox.h) or 0,
+		width = 32 * scale,
+		height = 32 * scale,
+		boxWidth = 0,
+		boxHeight = 0,
+		-- TODO 还缺几个字段复制
 	}
 end
 
@@ -124,7 +119,7 @@ local function createMenu(menuType, menuArgs)
 	--- @field canvas dr2c.UICanvas
 	--- @field type dr2c.MenuType
 	--- @field args table?
-	--- @field selectionBox dr2c.UIMenu.SelectionBox
+	--- @field selectionBox dr2c.UI.DrawSelectionBox
 	--- @field animationTime number?
 	--- @field content string
 	--- @field title string?
@@ -161,7 +156,7 @@ end
 
 function CUIMenu.update()
 	for i, menu in ipairs(menuStack) do
-		menuStack[i] = createMenu(menu.type, menu.args)
+		-- menuStack[i] = createMenu(menu.type, menu.args)
 	end
 end
 

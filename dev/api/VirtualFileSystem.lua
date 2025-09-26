@@ -17,17 +17,19 @@ EPathListOption = {
 --- @field path string
 
 --- @class TE.VFS
-vfs = {}
+local vfs = {}
 
 --- @param path string
 --- @return boolean exists
-function TE.vfs:exists(path) end
+function vfs:exists(path) end
 
 --- @param directory string?
 --- @param options TE.VFS.PathListOption
 --- @return TE.VFS.ListEntry[] paths
-function TE.vfs:list(directory, options) end
+function vfs:list(directory, options) end
 
 --- @param file string?
 --- @return string data
-function TE.vfs:readFile(file) end
+function vfs:readFile(file) end
+
+TE.vfs = vfs

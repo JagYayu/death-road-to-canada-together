@@ -10,8 +10,8 @@
 --]]
 
 local CModule = require("dr2c.client.Module")
-local CUIMenu = require("dr2c.client.ui.Menu")
-local CUIWidget = require("dr2c.client.ui.Widget")
+local CUIMenu = require("dr2c.client.ui.menu.Menu")
+local CUIWidget = require("dr2c.client.ui.widget.Widget")
 
 --- @param e dr2c.E.CMenu
 TE.events:add(CUIMenu.eventCMenu, function(e)
