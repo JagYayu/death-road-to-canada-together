@@ -1,3 +1,6 @@
+--- [Sprites Definition]
+--- "gfx/tiles/street.png"
+
 local w = 24
 local h = 24
 

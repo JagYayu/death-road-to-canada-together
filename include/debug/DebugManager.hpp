@@ -54,6 +54,7 @@ namespace tudov
 	struct IWindow;
 	class DebugConsole;
 	class DebugLog;
+	class DebugMods;
 	class DebugProfiler;
 	class DebugScripts;
 	class DebugFileSystem;
@@ -68,6 +69,7 @@ namespace tudov
 		std::shared_ptr<DebugConsole> console;
 		std::shared_ptr<DebugFileSystem> fileSystem;
 		std::shared_ptr<DebugLog> log;
+		// std::shared_ptr<DebugMods> mods;
 		std::shared_ptr<DebugProfiler> profiler;
 		std::shared_ptr<DebugScripts> scripts;
 

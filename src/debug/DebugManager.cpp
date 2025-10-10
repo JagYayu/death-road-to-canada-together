@@ -14,6 +14,7 @@
 #include "debug/DebugConsole.hpp"
 #include "debug/DebugFileSystem.hpp"
 #include "debug/DebugLog.hpp"
+#include "debug/DebugMods.hpp"
 #include "debug/DebugProfiler.hpp"
 #include "debug/DebugScripts.hpp"
 #include "program/Window.hpp"
@@ -28,6 +29,7 @@ DebugManager::DebugManager() noexcept
     : console(std::make_shared<DebugConsole>()),
       fileSystem(std::make_shared<DebugFileSystem>()),
       log(std::make_shared<DebugLog>()),
+    //   mods(std::make_shared<DebugMods>()),
       profiler(std::make_shared<DebugProfiler>()),
       scripts(std::make_shared<DebugScripts>()),
       _elements(),
@@ -37,6 +39,7 @@ DebugManager::DebugManager() noexcept
 	    console,
 	    fileSystem,
 	    log,
+	    // mods,
 	    profiler,
 	    scripts,
 	};

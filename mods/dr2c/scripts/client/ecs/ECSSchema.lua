@@ -92,7 +92,7 @@ entitiesSchema = persist("entitiesSchema", function()
 	return entitiesSchema
 end)
 
---- @warn No not modify returned table unless you know what it means
+--- @warn Do not modify returned table unless you know what it means
 --- @return dr2c.ECSSchema.Components @Readonly
 function CECSSchema.getComponentsSchema()
 	return componentsSchema

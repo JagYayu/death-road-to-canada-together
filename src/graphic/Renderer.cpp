@@ -224,7 +224,7 @@ void Renderer::DrawRect(Texture *texture, const SDL_FRect &dst, const SDL_FRect 
 	SDL_FRect dst_{dst};
 	ApplyTransform(dst_);
 
-	auto sdlTexture = texture ? texture->GetSDLTextureHandle() : nullptr;
+	SDL_Texture *sdlTexture = texture ? texture->GetSDLTextureHandle() : nullptr;
 	if (sdlTexture == nullptr)
 	{
 		sdlTexture = GetOrCreateImageTexture(0)->GetSDLTextureHandle();

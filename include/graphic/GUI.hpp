@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "util/Definitions.hpp"
 #include "util/Micros.hpp"
 
 #include <cmath>

@@ -86,7 +86,7 @@ local componentsPoolEntityTransient = {}
 local entityFilters = {}
 
 --- @type boolean
-local hasNewFilter = false
+local hasAnyFilter = false
 
 --- @type boolean
 local isIteratingEntities = false
@@ -181,10 +181,10 @@ end
 
 --- @param entityType dr2c.EntityType
 --- @return dr2c.EntityID
-function CECS.spawnEntity(entityType)
+function CECS.spawnEntity(entityType, components, ...)
 	local entityTypeID = CECSSchema_getEntityTypeID(entityType)
 	if entityTypeID then
-		return CECS.spawnEntityByID(entityTypeID)
+		return CECS.spawnEntityByID(entityTypeID, components, ...)
 	end
 
 	error("Invalid entity type " .. entityType, 2)
@@ -429,7 +429,7 @@ function CECS.filter(requiredComponents, excludedComponents)
 
 	if not entityFilter then
 		entityFilter = createEntityFilter(key, requires, excludes)
-		hasNewFilter = true
+		hasAnyFilter = true
 
 		entityFilters[#entityFilters + 1] = entityFilter
 		entityFilters[key] = entityFilter
@@ -483,7 +483,7 @@ local function toEntityTypeID(entityTypeOrID)
 		if typeID then
 			return typeID
 		else
-			error("Invalid entity type", 2)
+			error("Invalid entity type", 3)
 		end
 	else
 		error("Invalid parameter", 3)
@@ -640,7 +640,7 @@ end, "ResetArchetypeConstantComponents", "Components")
 
 --- @param e {}
 TE.events:add(N_("CEntitySchemaLoaded"), function(e)
-	if not hasNewFilter or not log.canWarn() then
+	if not hasAnyFilter or not log.canWarn() then
 		return
 	end
 

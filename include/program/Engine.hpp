@@ -18,8 +18,8 @@
 #include "program/EngineComponent.hpp"
 #include "system/Log.hpp"
 #include "util/ClassUtils.hpp"
+#include "util/Definitions.hpp"
 
-#include <cmath>
 #include <memory>
 #include <mutex>
 #include <optional>

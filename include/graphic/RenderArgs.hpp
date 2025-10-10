@@ -136,7 +136,7 @@ namespace tudov
 	{
 		friend LuaBindings;
 
-		FontID font = 0.0f;
+		FontID font = 0;
 		std::string_view text = "";
 		std::float_t x = 0.0f;
 		std::float_t y = 0.0f;
@@ -145,8 +145,9 @@ namespace tudov
 		std::float_t alignX = 0.0f;
 		std::float_t alignY = 0.0f;
 		std::float_t maxWidth = 0.0f;
+		std::float_t maxLines = 0.0f;
 		Color color = Color();
-		Color backgroundColor = Color(255, 0, 0, 0);
+		Color backgroundColor = Color(0, 0, 0, 0);
 		std::float_t shadow = 0.0f;
 		Color shadowColor = Color(0, 0, 0, 255);
 

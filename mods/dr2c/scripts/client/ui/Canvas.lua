@@ -196,6 +196,7 @@ local function canvasSelectWidgetAtMouse(canvas, mouseX, mouseY, widgets)
 	return false
 end
 
+--- @param canvases dr2c.UICanvas[]
 local function handleCanvasesSelection(canvases)
 	local mouseX, mouseY = CSystemInput.getMousePosition()
 

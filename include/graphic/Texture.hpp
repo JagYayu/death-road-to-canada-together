@@ -12,6 +12,7 @@
 #pragma once
 
 #include "SDL3/SDL_render.h"
+#include "util/Definitions.hpp"
 
 #include <cmath>
 #include <cstdint>
