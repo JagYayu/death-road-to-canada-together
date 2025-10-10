@@ -9,7 +9,7 @@
  *
  */
 
-// #include "resource/ShaderManager.hpp"
+// #include "Resource/ShaderManager.hpp"
 
 // using namespace tudov;
 

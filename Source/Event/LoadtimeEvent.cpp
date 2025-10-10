@@ -9,12 +9,12 @@
  *
  */
 
-#include "event/LoadtimeEvent.hpp"
+#include "Event/LoadtimeEvent.hpp"
 
-#include "event/AbstractEvent.hpp"
-#include "event/OverrideHandlerArgs.hpp"
-#include "event/RuntimeEvent.hpp"
-#include "util/Definitions.hpp"
+#include "Event/AbstractEvent.hpp"
+#include "Event/OverrideHandlerArgs.hpp"
+#include "Event/RuntimeEvent.hpp"
+#include "Util/Definitions.hpp"
 
 #include <variant>
 

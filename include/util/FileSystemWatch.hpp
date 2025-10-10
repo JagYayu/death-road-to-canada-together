@@ -12,8 +12,8 @@
 #pragma once
 
 #include "Micros.hpp"
-#include "data/AssetsManager.hpp"
-#include "event/DelegateEvent.hpp"
+#include "Data/AssetsManager.hpp"
+#include "Event/DelegateEvent.hpp"
 
 #include <filesystem>
 

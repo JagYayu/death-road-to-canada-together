@@ -11,8 +11,8 @@
 
 #include "exception/EventHandlerAddBadKeyException.hpp"
 
-#include "data/Constants.hpp"
-#include "event/EventManager.hpp"
+#include "Data/Constants.hpp"
+#include "Event/EventManager.hpp"
 #include "mod/ScriptProvider.hpp"
 
 #include <format>

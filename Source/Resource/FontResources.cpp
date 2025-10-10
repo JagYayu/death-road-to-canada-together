@@ -9,7 +9,7 @@
  *
  */
 
-#include "resource/FontResources.hpp"
+#include "Resource/FontResources.hpp"
 
 using namespace tudov;
 

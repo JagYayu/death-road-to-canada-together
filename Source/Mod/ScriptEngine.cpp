@@ -9,20 +9,20 @@
  *
  */
 
-#include "mod/ScriptEngine.hpp"
+#include "Mod/ScriptEngine.hpp"
 
-#include "event/CoreEvents.hpp"
-#include "event/CoreEventsData.hpp"
-#include "event/RuntimeEvent.hpp"
+#include "Event/CoreEvents.hpp"
+#include "Event/CoreEventsData.hpp"
+#include "Event/RuntimeEvent.hpp"
 #include "mod/LuaBindings.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptModule.hpp"
 #include "mod/ScriptProvider.hpp"
-#include "system/LogMicros.hpp"
-#include "util/Definitions.hpp"
-#include "util/LuaUtils.hpp"
-#include "util/Utils.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/LuaUtils.hpp"
+#include "Util/Utils.hpp"
 
 #include "sol/environment.hpp"
 #include "sol/forward.hpp"

@@ -12,9 +12,9 @@
 #pragma once
 
 #include "Program/EngineComponent.hpp"
-#include "program/Window.hpp"
+#include "Program/Window.hpp"
 #include "System/Log.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include "sol/forward.hpp"
 

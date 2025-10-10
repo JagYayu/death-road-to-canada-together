@@ -11,9 +11,9 @@
 
 #include "exception/EventHandlerException.hpp"
 
-#include "event/EventManager.hpp"
+#include "Event/EventManager.hpp"
 #include "mod/ScriptProvider.hpp"
-#include "data/Constants.hpp"
+#include "Data/Constants.hpp"
 
 using namespace tudov;
 

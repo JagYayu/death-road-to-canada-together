@@ -11,20 +11,20 @@
 
 #include "mod/UnpackagedMod.hpp"
 
-#include "data/PathType.hpp"
-#include "data/VirtualFileSystem.hpp"
+#include "Data/PathType.hpp"
+#include "Data/VirtualFileSystem.hpp"
 #include "mod/Mod.hpp"
 #include "mod/ModConfig.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
-#include "program/Engine.hpp"
-#include "resource/FontResources.hpp"
-#include "resource/GlobalResourcesCollection.hpp"
-#include "resource/TextResources.hpp"
-#include "system/LogMicros.hpp"
-#include "util/FileChangeType.hpp"
-#include "util/FileSystemWatch.hpp"
-#include "util/StringUtils.hpp"
+#include "Program/Engine.hpp"
+#include "Resource/FontResources.hpp"
+#include "Resource/GlobalResourcesCollection.hpp"
+#include "Resource/TextResources.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/FileChangeType.hpp"
+#include "Util/FileSystemWatch.hpp"
+#include "Util/StringUtils.hpp"
 
 #include <filesystem>
 #include <format>

@@ -11,11 +11,11 @@
 
 #pragma once
 
-#include "event/DelegateEvent.hpp"
+#include "Event/DelegateEvent.hpp"
 #include "Program/EngineComponent.hpp"
 
 #include "System/Log.hpp"
-#include "util/Version.hpp"
+#include "Util/Version.hpp"
 
 #include <string>
 #include <vector>

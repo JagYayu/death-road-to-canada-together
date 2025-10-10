@@ -13,7 +13,7 @@
 
 #include "mod/ScriptLoader.hpp"
 #include "sol/string_view.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include <algorithm>
 

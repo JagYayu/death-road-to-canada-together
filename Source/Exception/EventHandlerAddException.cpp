@@ -1,5 +1,5 @@
 /**
- * @file exception/EventHandlerAddException.hpp
+ * @file Exception/EventHandlerAddException.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -9,10 +9,10 @@
  *
  */
 
-#include "exception/EventHandlerAddException.hpp"
+#include "Exception/EventHandlerAddException.hpp"
 
-#include "data/Constants.hpp"
-#include "event/EventManager.hpp"
+#include "Data/Constants.hpp"
+#include "Event/EventManager.hpp"
 #include "mod/ScriptProvider.hpp"
 
 #include <format>

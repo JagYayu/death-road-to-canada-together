@@ -11,9 +11,9 @@
 
 #pragma once
 
-#include "math/Geometry.hpp"
-#include "util/Color.hpp"
-#include "util/Definitions.hpp"
+#include "Math/Geometry.hpp"
+#include "Util/Color.hpp"
+#include "Util/Definitions.hpp"
 
 #include "sol/string_view.hpp"
 #include "sol/table.hpp"

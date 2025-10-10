@@ -9,7 +9,7 @@
  *
  */
 
-#include "network/SocketType.hpp"
+#include "Network/SocketType.hpp"
 
 using namespace tudov;
 

@@ -9,12 +9,12 @@
  *
  */
 
-#include "program/Tudov.hpp"
+#include "Program/Tudov.hpp"
 
-#include "data/Config.hpp"
-#include "program/Application.hpp"
-#include "program/Engine.hpp"
-#include "program/MainArgs.hpp"
+#include "Data/Config.hpp"
+#include "Program/Application.hpp"
+#include "Program/Engine.hpp"
+#include "Program/MainArgs.hpp"
 #include "System/Log.hpp"
 
 #include "SDL3/SDL_messagebox.h"

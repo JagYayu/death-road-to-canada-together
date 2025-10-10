@@ -9,7 +9,7 @@
  *
  */
 
-#include "program/CrashReporter.hpp"
+#include "Program/CrashReporter.hpp"
 
 #if _WIN32
 

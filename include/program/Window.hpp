@@ -11,9 +11,9 @@
 
 #pragma once
 
-#include "program/Context.hpp"
 #include "System/Log.hpp"
-#include "util/Definitions.hpp"
+#include "Program/Context.hpp"
+#include "Util/Definitions.hpp"
 
 #include "sol/types.hpp"
 
@@ -68,9 +68,9 @@ namespace tudov
 
 		virtual void Render() noexcept = 0;
 
-		virtual IRenderer* GetIRenderer() noexcept = 0;
+		virtual IRenderer *GetIRenderer() noexcept = 0;
 
-		virtual IAudioPlayer* GetIAudioPlayer() noexcept = 0;
+		virtual IAudioPlayer *GetIAudioPlayer() noexcept = 0;
 	};
 
 	/**
@@ -88,7 +88,7 @@ namespace tudov
 		std::shared_ptr<Log> _log;
 		SDL_Window *_sdlWindow;
 		std::shared_ptr<Renderer> _renderer;
-		// std::shared_ptr<AudioPlayer> _audioPlayer;
+		std::shared_ptr<AudioPlayer> _audioPlayer;
 		bool _shouldClose;
 
 	  public:
@@ -114,8 +114,8 @@ namespace tudov
 		bool HandleEvent(AppEvent &appEvent) noexcept override;
 		void Update() noexcept override;
 		void Render() noexcept override;
-		IRenderer* GetIRenderer() noexcept override;
-		IAudioPlayer* GetIAudioPlayer() noexcept override;
+		IRenderer *GetIRenderer() noexcept override;
+		IAudioPlayer *GetIAudioPlayer() noexcept override;
 
 		SDL_Window *GetSDLWindowHandle() noexcept;
 

@@ -9,14 +9,14 @@
  *
  */
 
-#include "data/GlobalStorage.hpp"
+#include "Data/GlobalStorage.hpp"
 
-#include "data/Hierarchy.hpp"
-#include "data/HierarchyIterationResult.hpp"
+#include "Data/Hierarchy.hpp"
+#include "Data/HierarchyIterationResult.hpp"
 
 #include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_storage.h"
-#include "data/PathType.hpp"
+#include "Data/PathType.hpp"
 
 #include <filesystem>
 #include <stdexcept>

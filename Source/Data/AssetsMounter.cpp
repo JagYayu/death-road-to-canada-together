@@ -9,9 +9,9 @@
  *
  */
 
-#include "data/AssetsMounter.hpp"
+#include "Data/AssetsMounter.hpp"
 
-#include "program/Context.hpp"
+#include "Program/Context.hpp"
 
 using namespace tudov;
 

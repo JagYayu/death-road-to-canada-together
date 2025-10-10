@@ -9,15 +9,15 @@
  *
  */
 
-#include "debug/DebugManager.hpp"
+#include "Debug/DebugManager.hpp"
 
-#include "debug/DebugConsole.hpp"
+#include "Debug/DebugConsole.hpp"
 #include "debug/DebugFileSystem.hpp"
 #include "debug/DebugLog.hpp"
 #include "debug/DebugMods.hpp"
 #include "debug/DebugProfiler.hpp"
 #include "debug/DebugScripts.hpp"
-#include "program/Window.hpp"
+#include "Program/Window.hpp"
 
 #include "imgui.h"
 

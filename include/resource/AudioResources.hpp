@@ -12,7 +12,7 @@
 #pragma once
 
 #include "Resources.hpp"
-#include "audio/Audio.hpp"
+#include "Audio/Audio.hpp"
 
 namespace tudov
 {

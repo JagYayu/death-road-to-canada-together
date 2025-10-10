@@ -9,17 +9,17 @@
  *
  */
 
-#include "data/VirtualFileSystem.hpp"
+#include "Data/VirtualFileSystem.hpp"
 
-#include "data/PathType.hpp"
-#include "mod/ScriptEngine.hpp"
-#include "program/Tudov.hpp"
-#include "resource/ResourceType.hpp"
+#include "Data/PathType.hpp"
+#include "Mod/ScriptEngine.hpp"
+#include "Program/Tudov.hpp"
+#include "Resource/ResourceType.hpp"
 #include "sol/string_view.hpp"
-#include "system/LogMicros.hpp"
-#include "util/EnumFlag.hpp"
-#include "util/LuaUtils.hpp"
-#include "util/Utils.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/EnumFlag.hpp"
+#include "Util/LuaUtils.hpp"
+#include "Util/Utils.hpp"
 
 #include <chrono>
 #include <cstddef>

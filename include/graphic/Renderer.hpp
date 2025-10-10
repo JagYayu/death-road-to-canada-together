@@ -13,10 +13,10 @@
 
 #include "TextureManager.hpp"
 #include "VSyncMode.hpp"
-#include "program/Context.hpp"
+#include "Program/Context.hpp"
 #include "System/Log.hpp"
-#include "util/Color.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Color.hpp"
+#include "Util/Definitions.hpp"
 
 #include "SDL3/SDL_rect.h"
 #include "sol/forward.hpp"

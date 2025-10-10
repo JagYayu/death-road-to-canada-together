@@ -9,9 +9,9 @@
  *
  */
 
-#include "graphic/RenderBuffer.hpp"
-#include "graphic/Renderer.hpp"
-#include "mod/ScriptEngine.hpp"
+#include "Graphic/RenderBuffer.hpp"
+#include "Graphic/Renderer.hpp"
+#include "Mod/ScriptEngine.hpp"
 
 #include "sol/table.hpp"
 

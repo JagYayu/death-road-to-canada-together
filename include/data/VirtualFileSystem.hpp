@@ -12,9 +12,9 @@
 #pragma once
 
 #include "PathListOption.hpp"
-#include "event/DelegateEvent.hpp"
-#include "program/Context.hpp"
-#include "resource/ResourceType.hpp"
+#include "Event/DelegateEvent.hpp"
+#include "Program/Context.hpp"
+#include "Resource/ResourceType.hpp"
 #include "System/Log.hpp"
 
 #include "sol/table.hpp"

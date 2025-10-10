@@ -9,19 +9,19 @@
  *
  */
 
-#include "system/KeyboardManager.hpp"
+#include "System/KeyboardManager.hpp"
 
-#include "event/AppEvent.hpp"
-#include "event/CoreEvents.hpp"
-#include "event/CoreEventsData.hpp"
-#include "event/EventManager.hpp"
-#include "event/RuntimeEvent.hpp"
-#include "mod/ScriptEngine.hpp"
-#include "program/WindowManager.hpp"
-#include "system/Keyboard.hpp"
-#include "system/LogMicros.hpp"
-#include "util/Definitions.hpp"
-#include "util/Micros.hpp"
+#include "Event/AppEvent.hpp"
+#include "Event/CoreEvents.hpp"
+#include "Event/CoreEventsData.hpp"
+#include "Event/EventManager.hpp"
+#include "Event/RuntimeEvent.hpp"
+#include "Mod/ScriptEngine.hpp"
+#include "Program/WindowManager.hpp"
+#include "System/Keyboard.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/Micros.hpp"
 
 #include "SDL3/SDL_keyboard.h"
 

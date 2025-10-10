@@ -11,7 +11,7 @@
 
 #include "debug/DebugUtils.hpp"
 
-#include "program/Window.hpp"
+#include "Program/Window.hpp"
 
 using namespace tudov;
 

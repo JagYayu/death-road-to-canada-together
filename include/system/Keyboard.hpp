@@ -14,8 +14,8 @@
 #include "KeyCode.hpp"
 #include "Log.hpp"
 #include "ScanCode.hpp"
-#include "program/Context.hpp"
-#include "util/Definitions.hpp"
+#include "Program/Context.hpp"
+#include "Util/Definitions.hpp"
 
 #include "sol/forward.hpp"
 

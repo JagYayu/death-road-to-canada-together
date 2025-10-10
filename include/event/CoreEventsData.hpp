@@ -1,5 +1,5 @@
 /**
- * @file event/CoreEventsData.hpp
+ * @file Event/CoreEventsData.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include "sol/string_view.hpp"
 #include "sol/table.hpp"

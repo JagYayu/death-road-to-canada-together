@@ -9,7 +9,7 @@
  *
  */
 
-#include "resource/TextureResources.hpp"
+#include "Resource/TextureResources.hpp"
 
 using namespace tudov;
 

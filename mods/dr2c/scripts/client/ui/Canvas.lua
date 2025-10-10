@@ -11,7 +11,6 @@
 
 local Table = require("TE.Table")
 local Geometry = require("TE.Geometry")
-local Enum = require("TE.Enum")
 
 local CSystemInput = require("dr2c.Client.System.Input")
 

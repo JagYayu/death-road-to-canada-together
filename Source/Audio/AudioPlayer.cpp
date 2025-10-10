@@ -10,7 +10,7 @@
  */
 
 #include "audio/AudioPlayer.hpp"
-#include "system/LogMicros.hpp"
+#include "System/LogMicros.hpp"
 
 #include <AL/al.h>
 #include <AL/alc.h>

@@ -9,7 +9,7 @@
  *
  */
 
-#include "resource/AudioResources.hpp"
+#include "Resource/AudioResources.hpp"
 
 using namespace tudov;
 

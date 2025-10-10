@@ -12,9 +12,9 @@
 #pragma once
 
 #include "LogVerbosity.hpp"
-#include "program/Tudov.hpp"
+#include "Program/Tudov.hpp"
 #include "sol/table.hpp"
-#include "util/Micros.hpp"
+#include "Util/Micros.hpp"
 
 #include <atomic>
 #include <chrono>

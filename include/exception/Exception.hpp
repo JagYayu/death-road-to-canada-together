@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "program/Context.hpp"
+#include "Program/Context.hpp"
 
 #include <exception>
 #include <string>

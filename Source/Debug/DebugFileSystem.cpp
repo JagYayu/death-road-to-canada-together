@@ -11,11 +11,11 @@
 
 #include "debug/DebugFileSystem.hpp"
 
-#include "data/PathType.hpp"
-#include "data/VirtualFileSystem.hpp"
-#include "i18n/BuiltinTexts.hpp"
-#include "i18n/Localization.hpp"
-#include "util/EnumFlag.hpp"
+#include "Data/PathType.hpp"
+#include "Data/VirtualFileSystem.hpp"
+#include "I18n/BuiltinTexts.hpp"
+#include "I18n/Localization.hpp"
+#include "Util/EnumFlag.hpp"
 
 #include "imgui.h"
 

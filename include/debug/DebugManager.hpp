@@ -1,5 +1,5 @@
 /**
- * @file debug/DebugManager.hpp
+ * @file Debug/DebugManager.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "util/Scopes.hpp"
+#include "Util/Scopes.hpp"
 
 #include <memory>
 #include <set>

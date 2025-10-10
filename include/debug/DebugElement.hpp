@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "program/Window.hpp"
+#include "Program/Window.hpp"
 
 namespace tudov
 {

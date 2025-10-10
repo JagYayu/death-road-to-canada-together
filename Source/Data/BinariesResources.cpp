@@ -9,7 +9,7 @@
  *
  */
 
-#include "resource/BinariesResources.hpp"
+#include "Resource/BinariesResources.hpp"
 
 using namespace tudov;
 

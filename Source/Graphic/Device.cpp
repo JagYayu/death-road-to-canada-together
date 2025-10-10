@@ -9,7 +9,7 @@
  *
  */
 
-#include "graphic/Device.hpp"
+#include "Graphic/Device.hpp"
 
 // #include "System/Log.hpp"
 

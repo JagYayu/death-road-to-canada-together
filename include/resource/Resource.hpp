@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include <span>
 #include <string_view>

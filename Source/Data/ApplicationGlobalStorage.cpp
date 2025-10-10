@@ -9,11 +9,11 @@
  *
  */
 
-#include "data/ApplicationGlobalStorage.hpp"
+#include "Data/ApplicationGlobalStorage.hpp"
 
-#include "data/ApplicationGlobalStorage.hpp"
-#include "data/GlobalStorageLocation.hpp"
-#include "data/GlobalStorageManager.hpp"
+#include "Data/ApplicationGlobalStorage.hpp"
+#include "Data/GlobalStorageLocation.hpp"
+#include "Data/GlobalStorageManager.hpp"
 #include "System/Log.hpp"
 
 #include "SDL3/SDL_properties.h"

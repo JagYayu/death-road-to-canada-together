@@ -11,21 +11,21 @@
 
 #include "mod/ScriptLoader.hpp"
 
-#include "event/CoreEvents.hpp"
-#include "event/CoreEventsData.hpp"
-#include "event/EventHandleKey.hpp"
-#include "event/RuntimeEvent.hpp"
+#include "Event/CoreEvents.hpp"
+#include "Event/CoreEventsData.hpp"
+#include "Event/EventHandleKey.hpp"
+#include "Event/RuntimeEvent.hpp"
 #include "misc/Text.hpp"
 #include "mod/ModManager.hpp"
-#include "mod/ScriptEngine.hpp"
+#include "Mod/ScriptEngine.hpp"
 #include "mod/ScriptModule.hpp"
 #include "mod/ScriptProvider.hpp"
-#include "program/Engine.hpp"
-#include "program/Tudov.hpp"
-#include "resource/GlobalResourcesCollection.hpp"
-#include "system/LogMicros.hpp"
-#include "util/Definitions.hpp"
-#include "util/StringUtils.hpp"
+#include "Program/Engine.hpp"
+#include "Program/Tudov.hpp"
+#include "Resource/GlobalResourcesCollection.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/StringUtils.hpp"
 
 #include <sol/error.hpp>
 #include <sol/forward.hpp>

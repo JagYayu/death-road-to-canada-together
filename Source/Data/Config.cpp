@@ -9,13 +9,13 @@
  *
  */
 
-#include "data/Config.hpp"
+#include "Data/Config.hpp"
 
-#include "data/Constants.hpp"
-#include "data/PathType.hpp"
+#include "Data/Constants.hpp"
+#include "Data/PathType.hpp"
 #include "System/Log.hpp"
-#include "system/LogMicros.hpp"
-#include "util/FileSystemWatch.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/FileSystemWatch.hpp"
 
 #include "SDL3/SDL_properties.h"
 #include "json.hpp"

@@ -9,10 +9,10 @@
  *
  */
 
-#include "data/ZipStorage.hpp"
+#include "Data/ZipStorage.hpp"
 
-#include "data/HierarchyIterationResult.hpp"
-#include "data/PathType.hpp"
+#include "Data/HierarchyIterationResult.hpp"
+#include "Data/PathType.hpp"
 
 #include <filesystem>
 #include <functional>

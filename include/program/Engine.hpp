@@ -13,12 +13,12 @@
 
 #include "Application.hpp"
 #include "Context.hpp"
-#include "debug/Debug.hpp"
-#include "program/Context.hpp"
+#include "Debug/Debug.hpp"
+#include "Program/Context.hpp"
 #include "Program/EngineComponent.hpp"
 #include "System/Log.hpp"
-#include "util/ClassUtils.hpp"
-#include "util/Definitions.hpp"
+#include "Util/ClassUtils.hpp"
+#include "Util/Definitions.hpp"
 
 #include <memory>
 #include <mutex>

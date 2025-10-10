@@ -9,7 +9,7 @@
  *
  */
 
-#include "debug/DebugConsole.hpp"
+#include "Debug/DebugConsole.hpp"
 
 #include "imgui.h"
 

@@ -11,12 +11,12 @@
 
 #include "debug/DebugProfiler.hpp"
 #include "debug/EventProfiler.hpp"
-#include "event/EventManager.hpp"
-#include "event/RuntimeEvent.hpp"
-#include "mod/ScriptEngine.hpp"
-#include "program/Engine.hpp"
-#include "program/Window.hpp"
-#include "util/Utils.hpp"
+#include "Event/EventManager.hpp"
+#include "Event/RuntimeEvent.hpp"
+#include "Mod/ScriptEngine.hpp"
+#include "Program/Engine.hpp"
+#include "Program/Window.hpp"
+#include "Util/Utils.hpp"
 
 #include "imgui.h"
 

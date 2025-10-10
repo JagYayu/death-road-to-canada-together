@@ -9,15 +9,15 @@
  *
  */
 
-#include "program/Context.hpp"
+#include "Program/Context.hpp"
 
-#include "i18n/Localization.hpp"
-#include "program/Engine.hpp"
-#include "program/EngineData.hpp"
-#include "resource/GlobalResourcesCollection.hpp"
-#include "system/KeyboardManager.hpp"
-#include "system/MouseManager.hpp"
-#include "util/MicrosImpl.hpp"
+#include "I18n/Localization.hpp"
+#include "Program/Engine.hpp"
+#include "Program/EngineData.hpp"
+#include "Resource/GlobalResourcesCollection.hpp"
+#include "System/KeyboardManager.hpp"
+#include "System/MouseManager.hpp"
+#include "Util/MicrosImpl.hpp"
 
 #include <stdexcept>
 

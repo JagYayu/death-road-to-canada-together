@@ -12,7 +12,7 @@
 #pragma once
 
 #include "DebugElement.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include <atomic>
 #include <memory>

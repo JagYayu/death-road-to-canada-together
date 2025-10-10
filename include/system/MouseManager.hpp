@@ -13,7 +13,7 @@
 
 #include "Program/EngineComponent.hpp"
 #include "System/Log.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include <memory>
 #include <unordered_map>

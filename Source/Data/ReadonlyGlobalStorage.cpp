@@ -9,11 +9,11 @@
  *
  */
 
-#include "data/ReadonlyGlobalStorage.hpp"
+#include "Data/ReadonlyGlobalStorage.hpp"
 
-#include "data/GlobalStorage.hpp"
-#include "data/GlobalStorageLocation.hpp"
-#include "data/GlobalStorageManager.hpp"
+#include "Data/GlobalStorage.hpp"
+#include "Data/GlobalStorageLocation.hpp"
+#include "Data/GlobalStorageManager.hpp"
 
 using namespace tudov;
 

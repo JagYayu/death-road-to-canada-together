@@ -12,7 +12,7 @@
 #pragma once
 
 #include "Resources.hpp"
-#include "graphic/Texture.hpp"
+#include "Graphic/Texture.hpp"
 
 #include <string_view>
 

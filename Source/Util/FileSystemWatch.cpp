@@ -9,11 +9,11 @@
  *
  */
 
-#include "util/FileSystemWatch.hpp"
+#include "Util/FileSystemWatch.hpp"
 
 #include "FileWatch.hpp"
-#include "data/PathType.hpp"
-#include "system/LogMicros.hpp"
+#include "Data/PathType.hpp"
+#include "System/LogMicros.hpp"
 #include <filesystem>
 #include <stdexcept>
 

@@ -12,8 +12,8 @@
 #pragma once
 
 #include "EventHandleKey.hpp"
-#include "event/EventHandleFunction.hpp"
-#include "util/Definitions.hpp"
+#include "Event/EventHandleFunction.hpp"
+#include "Util/Definitions.hpp"
 
 namespace tudov
 {

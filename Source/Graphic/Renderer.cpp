@@ -9,20 +9,20 @@
  *
  */
 
-#include "graphic/Renderer.hpp"
+#include "Graphic/Renderer.hpp"
 
-#include "graphic/BlendMode.hpp"
-#include "graphic/RenderArgs.hpp"
-#include "graphic/RenderBuffer.hpp"
-#include "graphic/RenderTarget.hpp"
-#include "graphic/VSyncMode.hpp"
-#include "mod/ScriptEngine.hpp"
-#include "program/Engine.hpp"
-#include "program/Window.hpp"
-#include "resource/GlobalResourcesCollection.hpp"
-#include "resource/ImageResources.hpp"
-#include "system/LogMicros.hpp"
-#include "util/Utils.hpp"
+#include "Graphic/BlendMode.hpp"
+#include "Graphic/RenderArgs.hpp"
+#include "Graphic/RenderBuffer.hpp"
+#include "Graphic/RenderTarget.hpp"
+#include "Graphic/VSyncMode.hpp"
+#include "Mod/ScriptEngine.hpp"
+#include "Program/Engine.hpp"
+#include "Program/Window.hpp"
+#include "Resource/GlobalResourcesCollection.hpp"
+#include "Resource/ImageResources.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/Utils.hpp"
 
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_pixels.h"

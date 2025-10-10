@@ -13,7 +13,7 @@
 
 #include "HierarchyElement.hpp"
 #include "HierarchyIterationResult.hpp"
-#include "util/EnumFlag.hpp"
+#include "Util/EnumFlag.hpp"
 
 #include <cstddef>
 #include <cstdint>

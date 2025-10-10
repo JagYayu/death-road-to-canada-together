@@ -13,7 +13,7 @@
 
 #include "EventHandleFunction.hpp"
 #include "EventHandleKey.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include <sol/sol.hpp>
 

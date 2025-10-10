@@ -9,10 +9,10 @@
  *
  */
 
-#include "program/UtilityWindow.hpp"
+#include "Program/UtilityWindow.hpp"
 
-#include "event/EventHandleKey.hpp"
-#include "graphic/Renderer.hpp"
+#include "Event/EventHandleKey.hpp"
+#include "Graphic/Renderer.hpp"
 
 #include "SDL3/SDL_video.h"
 

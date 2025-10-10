@@ -9,13 +9,13 @@
  *
  */
 
-#include "graphic/RenderTarget.hpp"
+#include "Graphic/RenderTarget.hpp"
 
-#include "graphic/Renderer.hpp"
-#include "program/Engine.hpp"
-#include "program/Window.hpp"
-#include "util/Micros.hpp"
-#include "util/MicrosImpl.hpp"
+#include "Graphic/Renderer.hpp"
+#include "Program/Engine.hpp"
+#include "Program/Window.hpp"
+#include "Util/Micros.hpp"
+#include "Util/MicrosImpl.hpp"
 
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"

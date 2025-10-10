@@ -9,18 +9,18 @@
  *
  */
 
-#include "debug/DebugConsole.hpp"
+#include "Debug/DebugConsole.hpp"
 
-#include "debug/DebugConsole.hpp"
-#include "debug/DebugManager.hpp"
+#include "Debug/DebugConsole.hpp"
+#include "Debug/DebugManager.hpp"
 #include "exception/Exception.hpp"
-#include "network/LocalClientSession.hpp"
-#include "network/LocalServerSession.hpp"
-#include "network/NetworkSessionData.hpp"
-#include "network/ReliableUDPClientSession.hpp"
-#include "network/ReliableUDPServerSession.hpp"
-#include "network/SocketType.hpp"
-#include "util/Definitions.hpp"
+#include "Network/LocalClientSession.hpp"
+#include "Network/LocalServerSession.hpp"
+#include "Network/NetworkSessionData.hpp"
+#include "Network/ReliableUDPClientSession.hpp"
+#include "Network/ReliableUDPServerSession.hpp"
+#include "Network/SocketType.hpp"
+#include "Util/Definitions.hpp"
 
 #include <exception>
 #include <format>

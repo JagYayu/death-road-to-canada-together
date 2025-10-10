@@ -11,10 +11,10 @@
 
 #pragma once
 
-#include "event/EventHandleKey.hpp"
-#include "exception/EventHandlerAddException.hpp"
-#include "program/Context.hpp"
-#include "util/Definitions.hpp"
+#include "Event/EventHandleKey.hpp"
+#include "Exception/EventHandlerAddException.hpp"
+#include "Program/Context.hpp"
+#include "Util/Definitions.hpp"
 
 namespace tudov
 {

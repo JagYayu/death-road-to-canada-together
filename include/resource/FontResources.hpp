@@ -12,7 +12,7 @@
 #pragma once
 
 #include "Resources.hpp"
-#include "graphic/Font.hpp"
+#include "Graphic/Font.hpp"
 
 #include <string_view>
 

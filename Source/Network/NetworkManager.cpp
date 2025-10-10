@@ -9,17 +9,17 @@
  *
  */
 
-#include "network/NetworkManager.hpp"
+#include "Network/NetworkManager.hpp"
 
 #include "exception/BadEnumException.hpp"
-#include "mod/ScriptEngine.hpp"
-#include "network/LocalClientSession.hpp"
-#include "network/LocalServerSession.hpp"
-#include "network/ReliableUDPClientSession.hpp"
-#include "network/ReliableUDPServerSession.hpp"
-#include "network/SocketType.hpp"
-#include "util/Definitions.hpp"
-#include "util/Utils.hpp"
+#include "Mod/ScriptEngine.hpp"
+#include "Network/LocalClientSession.hpp"
+#include "Network/LocalServerSession.hpp"
+#include "Network/ReliableUDPClientSession.hpp"
+#include "Network/ReliableUDPServerSession.hpp"
+#include "Network/SocketType.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/Utils.hpp"
 
 #include "sol/types.hpp"
 

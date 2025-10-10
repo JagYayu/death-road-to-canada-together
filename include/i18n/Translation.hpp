@@ -12,7 +12,7 @@
 #pragma once
 
 #include "Language.hpp"
-#include "resource/Resource.hpp"
+#include "Resource/Resource.hpp"
 
 #include <unordered_map>
 #include <vector>

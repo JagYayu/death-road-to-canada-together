@@ -12,7 +12,7 @@
 #pragma once
 
 #include "Mod.hpp"
-#include "program/Context.hpp"
+#include "Program/Context.hpp"
 #include "System/Log.hpp"
 
 #include <memory>

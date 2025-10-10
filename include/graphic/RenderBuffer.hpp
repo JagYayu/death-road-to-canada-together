@@ -11,11 +11,11 @@
 
 #pragma once
 
-#include "graphic/Vertex.hpp"
-#include "math/Geometry.hpp"
-#include "program/Context.hpp"
+#include "Graphic/Vertex.hpp"
+#include "Math/Geometry.hpp"
+#include "Program/Context.hpp"
 #include "sol/forward.hpp"
-#include "util/Color.hpp"
+#include "Util/Color.hpp"
 
 #include <memory>
 #include <unordered_map>

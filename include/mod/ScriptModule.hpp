@@ -11,12 +11,12 @@
 
 #pragma once
 
-#include "program/Context.hpp"
+#include "Program/Context.hpp"
 #include "System/Log.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include "sol/table.hpp"
-#include "util/Micros.hpp"
+#include "Util/Micros.hpp"
 #include <memory>
 
 namespace tudov

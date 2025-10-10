@@ -9,6 +9,6 @@
  *
  */
 
-#include "system/ScanCode.hpp"
+#include "System/ScanCode.hpp"
 
 using namespace tudov;

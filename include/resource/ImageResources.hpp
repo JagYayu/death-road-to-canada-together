@@ -12,8 +12,8 @@
 #pragma once
 
 #include "Resources.hpp"
-#include "graphic/Image.hpp"
-#include "util/Definitions.hpp"
+#include "Graphic/Image.hpp"
+#include "Util/Definitions.hpp"
 
 #include <string_view>
 

@@ -9,9 +9,9 @@
  *
  */
 
-#include "event/AbstractEvent.hpp"
-#include "event/EventManager.hpp"
-#include "util/Definitions.hpp"
+#include "Event/AbstractEvent.hpp"
+#include "Event/EventManager.hpp"
+#include "Util/Definitions.hpp"
 
 using namespace tudov;
 

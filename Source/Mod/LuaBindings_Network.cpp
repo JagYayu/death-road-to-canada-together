@@ -11,14 +11,14 @@
 
 #include "mod/LuaBindings.hpp"
 
-#include "event/CoreEventsData.hpp"
-#include "network/ClientSession.hpp"
-#include "network/ClientSessionState.hpp"
-#include "network/DisconnectionCode.hpp"
-#include "network/NetworkManager.hpp"
-#include "network/ServerSession.hpp"
-#include "network/ServerSessionState.hpp"
-#include "util/MicrosImpl.hpp"
+#include "Event/CoreEventsData.hpp"
+#include "Network/ClientSession.hpp"
+#include "Network/ClientSessionState.hpp"
+#include "Network/DisconnectionCode.hpp"
+#include "Network/NetworkManager.hpp"
+#include "Network/ServerSession.hpp"
+#include "Network/ServerSessionState.hpp"
+#include "Util/MicrosImpl.hpp"
 
 using namespace tudov;
 

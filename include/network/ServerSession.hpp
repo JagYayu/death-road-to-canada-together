@@ -12,8 +12,8 @@
 #pragma once
 
 #include "NetworkSession.hpp"
-#include "data/Constants.hpp"
-#include "util/Definitions.hpp"
+#include "Data/Constants.hpp"
+#include "Util/Definitions.hpp"
 
 #include "sol/forward.hpp"
 

@@ -13,8 +13,8 @@
 
 #include "Program/EngineComponent.hpp"
 #include "sol/forward.hpp"
-#include "util/Definitions.hpp"
-#include "util/Micros.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/Micros.hpp"
 
 #include <chrono>
 #include <cstdint>

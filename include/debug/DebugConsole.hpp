@@ -1,5 +1,5 @@
 /**
- * @file debug/DebugConsole.hpp
+ * @file Debug/DebugConsole.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

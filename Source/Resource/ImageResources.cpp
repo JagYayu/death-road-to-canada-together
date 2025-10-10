@@ -9,7 +9,7 @@
  *
  */
 
-#include "resource/ImageResources.hpp"
+#include "Resource/ImageResources.hpp"
 
 using namespace tudov;
 

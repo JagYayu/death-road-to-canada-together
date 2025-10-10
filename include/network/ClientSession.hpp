@@ -12,7 +12,7 @@
 #pragma once
 
 #include "NetworkSession.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include "sol/forward.hpp"
 

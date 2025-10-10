@@ -9,13 +9,13 @@
  *
  */
 
-#include "graphic/Font.hpp"
+#include "Graphic/Font.hpp"
 
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_surface.h"
 #include "SDL3_ttf/SDL_ttf.h"
-#include "program/Tudov.hpp"
+#include "Program/Tudov.hpp"
 
 #include <span>
 #include <string_view>

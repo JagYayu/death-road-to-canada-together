@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "util/Definitions.hpp"
-#include "util/Micros.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/Micros.hpp"
 
 #include <cmath>
 #include <unordered_set>

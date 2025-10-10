@@ -11,11 +11,11 @@
 
 #pragma once
 
-#include "program/Context.hpp"
+#include "Program/Context.hpp"
 
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include <cmath>
 #include <memory>

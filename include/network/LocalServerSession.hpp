@@ -14,9 +14,9 @@
 #include "LocalSession.hpp"
 #include "ServerSession.hpp"
 #include "SocketType.hpp"
-#include "data/Constants.hpp"
+#include "Data/Constants.hpp"
 #include "System/Log.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include <memory>
 #include <queue>

@@ -11,19 +11,19 @@
 
 #pragma once
 
-#include "network/LocalSession.hpp"
+#include "Network/LocalSession.hpp"
 
-#include "event/CoreEvents.hpp"
-#include "event/CoreEventsData.hpp"
-#include "event/EventInvocation.hpp"
-#include "event/EventManager.hpp"
-#include "event/RuntimeEvent.hpp"
-#include "network/DisconnectionCode.hpp"
-#include "network/LocalClientSession.hpp"
-#include "network/LocalServerSession.hpp"
-#include "network/LocalSession.hpp"
-#include "network/NetworkManager.hpp"
-#include "network/SocketType.hpp"
+#include "Event/CoreEvents.hpp"
+#include "Event/CoreEventsData.hpp"
+#include "Event/EventInvocation.hpp"
+#include "Event/EventManager.hpp"
+#include "Event/RuntimeEvent.hpp"
+#include "Network/DisconnectionCode.hpp"
+#include "Network/LocalClientSession.hpp"
+#include "Network/LocalServerSession.hpp"
+#include "Network/LocalSession.hpp"
+#include "Network/NetworkManager.hpp"
+#include "Network/SocketType.hpp"
 
 using namespace tudov;
 

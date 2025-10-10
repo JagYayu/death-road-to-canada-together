@@ -9,13 +9,13 @@
  *
  */
 
-#include "program/WindowManager.hpp"
+#include "Program/WindowManager.hpp"
 
 #include "System/Log.hpp"
-#include "data/Config.hpp"
-#include "debug/DebugManager.hpp"
-#include "program/PrimaryWindow.hpp"
-#include "util/MicrosImpl.hpp"
+#include "Data/Config.hpp"
+#include "Debug/DebugManager.hpp"
+#include "Program/PrimaryWindow.hpp"
+#include "Util/MicrosImpl.hpp"
 
 
 #include <algorithm>

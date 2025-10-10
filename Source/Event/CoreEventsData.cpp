@@ -9,13 +9,13 @@
  *
  */
 
-#include "event/CoreEventsData.hpp"
+#include "Event/CoreEventsData.hpp"
 
-#include "debug/Debug.hpp"
-#include "debug/DebugConsole.hpp"
-#include "debug/DebugManager.hpp"
-#include "mod/ScriptEngine.hpp"
-#include "program/Context.hpp"
+#include "Debug/Debug.hpp"
+#include "Debug/DebugConsole.hpp"
+#include "Debug/DebugManager.hpp"
+#include "Mod/ScriptEngine.hpp"
+#include "Program/Context.hpp"
 
 #include "sol/forward.hpp"
 #include "sol/protected_function_result.hpp"

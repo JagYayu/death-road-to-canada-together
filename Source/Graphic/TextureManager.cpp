@@ -9,7 +9,7 @@
  *
  */
 
-#include "graphic/TextureManager.hpp"
+#include "Graphic/TextureManager.hpp"
 
 #include <memory>
 #include <tuple>

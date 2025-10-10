@@ -9,6 +9,6 @@
  *
  */
 
-#include "resource/TextResources.hpp"
+#include "Resource/TextResources.hpp"
 
 using namespace tudov;

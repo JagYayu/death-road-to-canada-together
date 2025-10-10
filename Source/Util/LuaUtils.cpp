@@ -9,10 +9,10 @@
  *
  */
 
-#include "util/LuaUtils.hpp"
+#include "Util/LuaUtils.hpp"
 
-#include "mod/ScriptEngine.hpp"
-#include "system/LogMicros.hpp"
+#include "Mod/ScriptEngine.hpp"
+#include "System/LogMicros.hpp"
 
 #include <cassert>
 #include <cmath>

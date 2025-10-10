@@ -9,11 +9,11 @@
  *
  */
 
-#include "event/CoreEvents.hpp"
+#include "Event/CoreEvents.hpp"
 
-#include "event/EventManager.hpp"
-#include "event/RuntimeEvent.hpp"
-#include "util/MicrosImpl.hpp"
+#include "Event/EventManager.hpp"
+#include "Event/RuntimeEvent.hpp"
+#include "Util/MicrosImpl.hpp"
 
 #include <memory>
 

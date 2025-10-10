@@ -9,12 +9,12 @@
  *
  */
 
-#include "system/MouseManager.hpp"
+#include "System/MouseManager.hpp"
 
-#include "system/Mouse.hpp"
+#include "System/Mouse.hpp"
 
 #include "SDL3/SDL_mouse.h"
-#include "util/Micros.hpp"
+#include "Util/Micros.hpp"
 
 #include <format>
 #include <memory>

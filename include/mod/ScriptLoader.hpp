@@ -12,11 +12,11 @@
 #pragma once
 
 #include "ScriptProvider.hpp"
-#include "event/DelegateEvent.hpp"
+#include "Event/DelegateEvent.hpp"
 #include "Program/EngineComponent.hpp"
 #include "System/Log.hpp"
-#include "util/Definitions.hpp"
-#include "util/Micros.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/Micros.hpp"
 
 #include <sol/table.hpp>
 

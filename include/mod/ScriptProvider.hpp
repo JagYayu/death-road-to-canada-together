@@ -13,8 +13,8 @@
 
 #include "Program/EngineComponent.hpp"
 #include "System/Log.hpp"
-#include "util/Definitions.hpp"
-#include "util/StringUtils.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/StringUtils.hpp"
 
 #include <optional>
 #include <string>

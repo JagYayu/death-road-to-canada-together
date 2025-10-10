@@ -12,7 +12,7 @@
 #pragma once
 
 #include "DelegateEvent.hpp"
-#include "util/Micros.hpp"
+#include "Util/Micros.hpp"
 
 #include <stdexcept>
 #include <type_traits>

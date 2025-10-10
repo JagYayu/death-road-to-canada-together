@@ -9,7 +9,7 @@
  *
  */
 
-#include "test/TestGPURendering.hpp"
+#include "Test/TestGPURendering.hpp"
 
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"

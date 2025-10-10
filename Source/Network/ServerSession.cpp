@@ -9,10 +9,10 @@
  *
  */
 
-#include "network/ServerSession.hpp"
+#include "Network/ServerSession.hpp"
 
-#include "mod/ScriptEngine.hpp"
-#include "network/NetworkSessionData.hpp"
+#include "Mod/ScriptEngine.hpp"
+#include "Network/NetworkSessionData.hpp"
 
 #include <span>
 

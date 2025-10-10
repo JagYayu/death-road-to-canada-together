@@ -11,14 +11,14 @@
 
 #include "mod/ScriptModule.hpp"
 
-#include "mod/ScriptEngine.hpp"
+#include "Mod/ScriptEngine.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptProvider.hpp"
-#include "program/Engine.hpp"
-#include "system/LogMicros.hpp"
-#include "util/LuaUtils.hpp"
-#include "util/Utils.hpp"
+#include "Program/Engine.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/LuaUtils.hpp"
+#include "Util/Utils.hpp"
 
 #include "sol/forward.hpp"
 #include "sol/protected_function_result.hpp"

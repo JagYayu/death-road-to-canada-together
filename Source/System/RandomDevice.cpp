@@ -9,7 +9,7 @@
  *
  */
 
-#include "system/RandomDevice.hpp"
+#include "System/RandomDevice.hpp"
 
 #include "sol/sol.hpp"
 

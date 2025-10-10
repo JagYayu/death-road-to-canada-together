@@ -9,12 +9,12 @@
  *
  */
 
-#include "i18n/Localization.hpp"
+#include "I18n/Localization.hpp"
 
-#include "i18n/BuiltinTexts.hpp"
-#include "i18n/Language.hpp"
-#include "i18n/TranslationPack.hpp"
-#include "util/Utils.hpp"
+#include "I18n/BuiltinTexts.hpp"
+#include "I18n/Language.hpp"
+#include "I18n/TranslationPack.hpp"
+#include "Util/Utils.hpp"
 #include <string_view>
 
 using namespace tudov;

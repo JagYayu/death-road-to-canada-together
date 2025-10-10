@@ -9,23 +9,23 @@
  *
  */
 
-#include "network/ReliableUDPServerSession.hpp"
+#include "Network/ReliableUDPServerSession.hpp"
 
-#include "event/CoreEvents.hpp"
-#include "event/CoreEventsData.hpp"
-#include "event/EventManager.hpp"
-#include "event/RuntimeEvent.hpp"
-#include "mod/ScriptEngine.hpp"
-#include "network/DisconnectionCode.hpp"
-#include "network/NetworkSessionData.hpp"
-#include "network/ReliableUDPSession.hpp"
-#include "network/ServerSessionState.hpp"
-#include "network/SocketType.hpp"
-#include "program/Tudov.hpp"
-#include "system/LogMicros.hpp"
+#include "Event/CoreEvents.hpp"
+#include "Event/CoreEventsData.hpp"
+#include "Event/EventManager.hpp"
+#include "Event/RuntimeEvent.hpp"
+#include "Mod/ScriptEngine.hpp"
+#include "Network/DisconnectionCode.hpp"
+#include "Network/NetworkSessionData.hpp"
+#include "Network/ReliableUDPSession.hpp"
+#include "Network/ServerSessionState.hpp"
+#include "Network/SocketType.hpp"
+#include "Program/Tudov.hpp"
+#include "System/LogMicros.hpp"
 
 #include "enet/enet.h"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include <span>
 #include <stdexcept>

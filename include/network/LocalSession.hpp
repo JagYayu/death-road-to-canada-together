@@ -12,8 +12,8 @@
 #pragma once
 
 #include "DisconnectionCode.hpp"
-#include "util/Definitions.hpp"
-#include "util/Micros.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/Micros.hpp"
 
 #include <cstddef>
 #include <memory>

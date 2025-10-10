@@ -10,8 +10,8 @@
  */
 
 #include "exception/Exception.hpp"
-#include "program/Context.hpp"
-#include "util/Definitions.hpp"
+#include "Program/Context.hpp"
+#include "Util/Definitions.hpp"
 
 namespace tudov
 {

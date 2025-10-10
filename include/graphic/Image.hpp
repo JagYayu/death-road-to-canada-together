@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "resource/Resource.hpp"
+#include "Resource/Resource.hpp"
 
 #include <cstddef>
 #include <string_view>

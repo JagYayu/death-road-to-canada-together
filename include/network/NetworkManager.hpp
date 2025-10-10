@@ -11,10 +11,10 @@
 
 #pragma once
 
-#include "debug/Debug.hpp"
+#include "Debug/Debug.hpp"
 #include "Program/EngineComponent.hpp"
 #include "System/Log.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include "sol/forward.hpp"
 

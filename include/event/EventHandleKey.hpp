@@ -1,5 +1,5 @@
 /**
- * @file event/EventHandleKey.hpp
+ * @file Event/EventHandleKey.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "util/Scopes.hpp"
+#include "Util/Scopes.hpp"
 
 #include <cmath>
 #include <format>

@@ -9,7 +9,7 @@
  *
  */
 
-#include "network/NetworkPeer.hpp"
+#include "Network/NetworkPeer.hpp"
 
 #include "enet/enet.h"
 

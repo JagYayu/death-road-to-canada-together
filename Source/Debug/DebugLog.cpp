@@ -10,7 +10,7 @@
  */
 
 #include "debug/DebugLog.hpp"
-#include "util/EnumFlag.hpp"
+#include "Util/EnumFlag.hpp"
 
 #include "imgui.h"
 

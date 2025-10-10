@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "util/Micros.hpp"
+#include "Util/Micros.hpp"
 
 union SDL_Event;
 

@@ -11,7 +11,7 @@
 
 #include "Program/EngineComponent.hpp"
 
-#include "event/AppEvent.hpp"
+#include "Event/AppEvent.hpp"
 
 using namespace tudov;
 

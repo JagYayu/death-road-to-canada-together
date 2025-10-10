@@ -16,9 +16,9 @@
 #include "ModRequirement.hpp"
 #include "ScriptEngine.hpp"
 #include "ScriptProvider.hpp"
-#include "data/GlobalStorageLocation.hpp"
-#include "debug/Debug.hpp"
-#include "event/EventManager.hpp"
+#include "Data/GlobalStorageLocation.hpp"
+#include "Debug/Debug.hpp"
+#include "Event/EventManager.hpp"
 #include "Program/EngineComponent.hpp"
 #include "System/Log.hpp"
 

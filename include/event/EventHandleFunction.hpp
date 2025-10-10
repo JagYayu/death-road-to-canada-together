@@ -16,7 +16,7 @@
 #include "sol/error.hpp"
 #include "sol/forward.hpp"
 #include "sol/function.hpp"
-#include "util/Micros.hpp"
+#include "Util/Micros.hpp"
 
 #include <functional>
 #include <stdexcept>

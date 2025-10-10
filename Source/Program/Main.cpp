@@ -9,16 +9,16 @@
  *
  */
 
-#include "data/Config.hpp"
-#include "data/Constants.hpp"
-#include "event/AppEvent.hpp"
-#include "graphic/GUI.hpp"
-#include "program/CrashReporter.hpp"
-#include "program/Engine.hpp"
-#include "program/Tudov.hpp"
+#include "Data/Config.hpp"
+#include "Data/Constants.hpp"
+#include "Event/AppEvent.hpp"
+#include "Graphic/GUI.hpp"
+#include "Program/CrashReporter.hpp"
+#include "Program/Engine.hpp"
+#include "Program/Tudov.hpp"
 #include "System/Log.hpp"
-#include "system/LogMicros.hpp"
-#include "test/TestGPURendering.hpp"
+#include "System/LogMicros.hpp"
+#include "Test/TestGPURendering.hpp"
 
 #include <memory>
 

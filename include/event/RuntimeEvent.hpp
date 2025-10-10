@@ -14,9 +14,9 @@
 #include "AbstractEvent.hpp"
 #include "EventHandler.hpp"
 #include "EventInvocation.hpp"
-#include "mod/ScriptEngine.hpp"
+#include "Mod/ScriptEngine.hpp"
 #include "System/Log.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 #include "sol/forward.hpp"
 #include "sol/types.hpp"

@@ -9,7 +9,7 @@
  *
  */
 
-#include "resource/Resource.hpp"
+#include "Resource/Resource.hpp"
 
 #include <stdexcept>
 

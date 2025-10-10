@@ -10,10 +10,10 @@
  */
 
 #include "System/Log.hpp"
-#include "system/LogVerbosity.hpp"
-#include "util/EnumFlag.hpp"
-#include "util/StringUtils.hpp"
-#include "util/Utils.hpp"
+#include "System/LogVerbosity.hpp"
+#include "Util/EnumFlag.hpp"
+#include "Util/StringUtils.hpp"
+#include "Util/Utils.hpp"
 
 #include <chrono>
 #include <format>

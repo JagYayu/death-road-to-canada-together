@@ -11,8 +11,8 @@
 
 #include "mod/LuaBindings.hpp"
 
-#include "system/ScanCode.hpp"
-#include "util/MicrosImpl.hpp"
+#include "System/ScanCode.hpp"
+#include "Util/MicrosImpl.hpp"
 
 using namespace tudov;
 

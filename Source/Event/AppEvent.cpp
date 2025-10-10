@@ -9,7 +9,7 @@
  *
  */
 
-#include "event/AppEvent.hpp"
+#include "Event/AppEvent.hpp"
 
 #include "SDL3/SDL_events.h"
 

@@ -9,7 +9,7 @@
  *
  */
 
-#include "data/GlobalStorageLocation.hpp"
+#include "Data/GlobalStorageLocation.hpp"
 
 #ifdef _WIN32
 

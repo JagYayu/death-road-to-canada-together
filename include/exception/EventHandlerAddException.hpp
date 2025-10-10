@@ -1,5 +1,5 @@
 /**
- * @file exception/EventHandlerAddException.hpp
+ * @file Exception/EventHandlerAddException.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -12,8 +12,8 @@
 #pragma once
 
 #include "exception/EventHandlerException.hpp"
-#include "program/Context.hpp"
-#include "util/Definitions.hpp"
+#include "Program/Context.hpp"
+#include "Util/Definitions.hpp"
 
 namespace tudov
 {

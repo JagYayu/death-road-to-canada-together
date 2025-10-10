@@ -9,12 +9,12 @@
  *
  */
 
-#include "resource/GlobalResourcesCollection.hpp"
+#include "Resource/GlobalResourcesCollection.hpp"
 
-#include "data/VirtualFileSystem.hpp"
-#include "resource/AudioResources.hpp"
-#include "resource/BinariesResources.hpp"
-#include "resource/ResourceType.hpp"
+#include "Data/VirtualFileSystem.hpp"
+#include "Resource/AudioResources.hpp"
+#include "Resource/BinariesResources.hpp"
+#include "Resource/ResourceType.hpp"
 
 #include <memory>
 

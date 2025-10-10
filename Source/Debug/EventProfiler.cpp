@@ -11,7 +11,7 @@
 
 #include "debug/EventProfiler.hpp"
 
-#include "mod/ScriptEngine.hpp"
+#include "Mod/ScriptEngine.hpp"
 
 #include <chrono>
 

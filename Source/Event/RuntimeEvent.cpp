@@ -9,23 +9,23 @@
  *
  */
 
-#include "event/RuntimeEvent.hpp"
+#include "Event/RuntimeEvent.hpp"
 
-#include "data/Constants.hpp"
+#include "Data/Constants.hpp"
 #include "debug/EventProfiler.hpp"
-#include "event/AbstractEvent.hpp"
-#include "event/EventHandler.hpp"
-#include "event/EventManager.hpp"
-#include "event/RuntimeEvent.hpp"
+#include "Event/AbstractEvent.hpp"
+#include "Event/EventHandler.hpp"
+#include "Event/EventManager.hpp"
+#include "Event/RuntimeEvent.hpp"
 #include "exception/EventHandlerAddBadKeyException.hpp"
 #include "exception/EventHandlerAddBadOrderException.hpp"
 #include "exception/EventHandlerAddDuplicateException.hpp"
-#include "mod/ScriptEngine.hpp"
+#include "Mod/ScriptEngine.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptProvider.hpp"
-#include "system/LogMicros.hpp"
-#include "util/Definitions.hpp"
-#include "util/EnumFlag.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/EnumFlag.hpp"
 
 #include <algorithm>
 #include <cstddef>

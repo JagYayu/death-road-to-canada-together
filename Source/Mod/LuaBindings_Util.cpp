@@ -11,10 +11,10 @@
 
 #include "mod/LuaBindings.hpp"
 
-#include "event/CoreEventsData.hpp"
+#include "Event/CoreEventsData.hpp"
 #include "sol/property.hpp"
-#include "util/MicrosImpl.hpp"
-#include "util/Version.hpp"
+#include "Util/MicrosImpl.hpp"
+#include "Util/Version.hpp"
 
 using namespace tudov;
 

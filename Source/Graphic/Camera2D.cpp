@@ -9,10 +9,10 @@
  *
  */
 
-// #include "graphic/Camera2D.hpp"
+// #include "Graphic/Camera2D.hpp"
 
-// #include "graphic/Renderer.hpp"
-// #include "program/Engine.hpp"
+// #include "Graphic/Renderer.hpp"
+// #include "Program/Engine.hpp"
 
 // #include "SDL3/SDL_render.h"
 // #include <cmath>

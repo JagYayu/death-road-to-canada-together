@@ -9,7 +9,7 @@
  *
  */
 
-#include "i18n/Translation.hpp"
+#include "I18n/Translation.hpp"
 
 #include "sol/string_view.hpp"
 

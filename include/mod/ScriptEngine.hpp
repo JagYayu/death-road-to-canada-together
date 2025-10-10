@@ -1,5 +1,5 @@
 /**
- * @file mod/ScriptEngine.hpp
+ * @file Mod/ScriptEngine.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -13,8 +13,8 @@
 
 #include "Program/EngineComponent.hpp"
 #include "System/Log.hpp"
-#include "util/Definitions.hpp"
-#include "util/Utils.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/Utils.hpp"
 
 #include "sol/load_result.hpp"
 #include "sol/state.hpp"

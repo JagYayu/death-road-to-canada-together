@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "util/Micros.hpp"
+#include "Util/Micros.hpp"
 
 #include "SDL3/SDL_scancode.h"
 

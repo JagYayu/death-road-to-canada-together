@@ -13,7 +13,7 @@
 
 #include "Exception.hpp"
 
-#include "util/Utils.hpp"
+#include "Util/Utils.hpp"
 
 #include <format>
 

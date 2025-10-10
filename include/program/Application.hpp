@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "util/Version.hpp"
+#include "Util/Version.hpp"
 
 union SDL_Event;
 

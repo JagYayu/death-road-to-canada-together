@@ -9,12 +9,12 @@
  *
  */
 
-#include "system/Mouse.hpp"
+#include "System/Mouse.hpp"
 
-#include "program/Window.hpp"
-#include "program/WindowManager.hpp"
-#include "system/MouseButton.hpp"
-#include "util/EnumFlag.hpp"
+#include "Program/Window.hpp"
+#include "Program/WindowManager.hpp"
+#include "System/MouseButton.hpp"
+#include "Util/EnumFlag.hpp"
 
 #include "SDL3/SDL_mouse.h"
 #include "SDL3/SDL_video.h"

@@ -9,22 +9,22 @@
  *
  */
 
-#include "network/LocalClientSession.hpp"
+#include "Network/LocalClientSession.hpp"
 
-#include "event/CoreEvents.hpp"
-#include "event/CoreEventsData.hpp"
-#include "event/EventInvocation.hpp"
-#include "event/EventManager.hpp"
-#include "event/RuntimeEvent.hpp"
-#include "network/ClientSessionState.hpp"
-#include "network/LocalClientSession.hpp"
-#include "network/LocalServerSession.hpp"
-#include "network/LocalSession.hpp"
-#include "network/NetworkManager.hpp"
-#include "network/NetworkSessionData.hpp"
-#include "network/SocketType.hpp"
-#include "system/LogMicros.hpp"
-#include "util/Micros.hpp"
+#include "Event/CoreEvents.hpp"
+#include "Event/CoreEventsData.hpp"
+#include "Event/EventInvocation.hpp"
+#include "Event/EventManager.hpp"
+#include "Event/RuntimeEvent.hpp"
+#include "Network/ClientSessionState.hpp"
+#include "Network/LocalClientSession.hpp"
+#include "Network/LocalServerSession.hpp"
+#include "Network/LocalSession.hpp"
+#include "Network/NetworkManager.hpp"
+#include "Network/NetworkSessionData.hpp"
+#include "Network/SocketType.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/Micros.hpp"
 
 #include <exception>
 #include <memory>

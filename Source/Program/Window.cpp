@@ -9,20 +9,20 @@
  *
  */
 
-#include "program/Window.hpp"
+#include "Program/Window.hpp"
 
 #include "audio/AudioPlayer.hpp"
-#include "event/AppEvent.hpp"
-#include "event/CoreEvents.hpp"
-#include "event/CoreEventsData.hpp"
-#include "event/EventHandleKey.hpp"
-#include "event/EventManager.hpp"
-#include "event/RuntimeEvent.hpp"
-#include "graphic/Renderer.hpp"
-#include "mod/ScriptEngine.hpp"
-#include "program/Engine.hpp"
-#include "program/WindowManager.hpp"
-#include "system/ScanCode.hpp"
+#include "Event/AppEvent.hpp"
+#include "Event/CoreEvents.hpp"
+#include "Event/CoreEventsData.hpp"
+#include "Event/EventHandleKey.hpp"
+#include "Event/EventManager.hpp"
+#include "Event/RuntimeEvent.hpp"
+#include "Graphic/Renderer.hpp"
+#include "Mod/ScriptEngine.hpp"
+#include "Program/Engine.hpp"
+#include "Program/WindowManager.hpp"
+#include "System/ScanCode.hpp"
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_video.h"

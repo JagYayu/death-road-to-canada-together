@@ -14,7 +14,7 @@
 #include "NetworkManager.hpp"
 #include "ServerSession.hpp"
 #include "System/Log.hpp"
-#include "util/UnorderedBimap.hpp"
+#include "Util/UnorderedBimap.hpp"
 
 #include <cstdint>
 

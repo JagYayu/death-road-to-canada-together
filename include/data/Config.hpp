@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "resource/ResourceType.hpp"
+#include "Resource/ResourceType.hpp"
 #include "System/Log.hpp"
 
 #include "json.hpp"

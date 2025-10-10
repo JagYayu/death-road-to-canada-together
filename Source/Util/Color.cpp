@@ -9,7 +9,7 @@
  *
  */
 
-#include "util/Color.hpp"
+#include "Util/Color.hpp"
 
 #include "SDL3/SDL_pixels.h"
 

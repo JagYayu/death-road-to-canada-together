@@ -9,11 +9,11 @@
  *
  */
 
-#include "data/GlobalStorageManager.hpp"
+#include "Data/GlobalStorageManager.hpp"
 
-#include "data/ApplicationGlobalStorage.hpp"
-#include "data/ReadonlyGlobalStorage.hpp"
-#include "data/UserGlobalStorage.hpp"
+#include "Data/ApplicationGlobalStorage.hpp"
+#include "Data/ReadonlyGlobalStorage.hpp"
+#include "Data/UserGlobalStorage.hpp"
 
 #include <memory>
 

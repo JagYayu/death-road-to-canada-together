@@ -12,7 +12,7 @@
 #pragma once
 
 #include "EventHandleKey.hpp"
-#include "util/Definitions.hpp"
+#include "Util/Definitions.hpp"
 
 namespace tudov
 {

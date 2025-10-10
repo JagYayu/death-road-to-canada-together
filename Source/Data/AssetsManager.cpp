@@ -9,23 +9,23 @@
  *
  */
 
-#include "data/AssetsManager.hpp"
+#include "Data/AssetsManager.hpp"
 
-#include "data/Config.hpp"
-#include "data/Constants.hpp"
-#include "data/GlobalStorage.hpp"
-#include "data/GlobalStorageLocation.hpp"
-#include "data/GlobalStorageManager.hpp"
-#include "data/HierarchyIterationResult.hpp"
-#include "data/PathType.hpp"
-#include "data/VirtualFileSystem.hpp"
-#include "data/ZipStorage.hpp"
-#include "program/Engine.hpp"
-#include "resource/GlobalResourcesCollection.hpp"
-#include "util/FileChangeType.hpp"
-#include "util/FileSystemWatch.hpp"
+#include "Data/Config.hpp"
+#include "Data/Constants.hpp"
+#include "Data/GlobalStorage.hpp"
+#include "Data/GlobalStorageLocation.hpp"
+#include "Data/GlobalStorageManager.hpp"
+#include "Data/HierarchyIterationResult.hpp"
+#include "Data/PathType.hpp"
+#include "Data/VirtualFileSystem.hpp"
+#include "Data/ZipStorage.hpp"
+#include "Program/Engine.hpp"
+#include "Resource/GlobalResourcesCollection.hpp"
+#include "Util/FileChangeType.hpp"
+#include "Util/FileSystemWatch.hpp"
 
-#include "system/LogMicros.hpp"
+#include "System/LogMicros.hpp"
 
 #include <filesystem>
 #include <memory>

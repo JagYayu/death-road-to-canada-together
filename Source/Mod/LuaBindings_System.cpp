@@ -11,16 +11,16 @@
 
 #include "mod/LuaBindings.hpp"
 
-#include "program/Window.hpp"
-#include "system/Keyboard.hpp"
-#include "system/KeyboardManager.hpp"
-#include "system/Mouse.hpp"
-#include "system/MouseButton.hpp"
-#include "system/MouseManager.hpp"
-#include "system/OperatingSystem.hpp"
-#include "system/RandomDevice.hpp"
-#include "system/Time.hpp"
-#include "util/MicrosImpl.hpp"
+#include "Program/Window.hpp"
+#include "System/Keyboard.hpp"
+#include "System/KeyboardManager.hpp"
+#include "System/Mouse.hpp"
+#include "System/MouseButton.hpp"
+#include "System/MouseManager.hpp"
+#include "System/OperatingSystem.hpp"
+#include "System/RandomDevice.hpp"
+#include "System/Time.hpp"
+#include "Util/MicrosImpl.hpp"
 
 using namespace tudov;
 

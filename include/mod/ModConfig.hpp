@@ -12,7 +12,7 @@
 #pragma once
 
 #include "ModDistribution.hpp"
-#include "util/Version.hpp"
+#include "Util/Version.hpp"
 
 #include <json.hpp>
 

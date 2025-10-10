@@ -9,18 +9,18 @@
  *
  */
 
-#include "program/PrimaryWindow.hpp"
+#include "Program/PrimaryWindow.hpp"
 
-#include "debug/DebugManager.hpp"
-#include "event/AppEvent.hpp"
-#include "event/EventHandleKey.hpp"
-#include "graphic/RenderTarget.hpp"
-#include "graphic/Renderer.hpp"
+#include "Debug/DebugManager.hpp"
+#include "Event/AppEvent.hpp"
+#include "Event/EventHandleKey.hpp"
+#include "Graphic/RenderTarget.hpp"
+#include "Graphic/Renderer.hpp"
 #include "mod/ScriptErrors.hpp"
-#include "program/Engine.hpp"
-#include "program/Window.hpp"
-#include "system/Time.hpp"
-#include "util/StringUtils.hpp"
+#include "Program/Engine.hpp"
+#include "Program/Window.hpp"
+#include "System/Time.hpp"
+#include "Util/StringUtils.hpp"
 
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_video.h"

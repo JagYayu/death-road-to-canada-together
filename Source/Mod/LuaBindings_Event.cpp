@@ -11,11 +11,11 @@
 
 #include "mod/LuaBindings.hpp"
 
-#include "event/CoreEventsData.hpp"
-#include "event/EventInvocation.hpp"
-#include "event/EventManager.hpp"
-#include "event/RuntimeEvent.hpp"
-#include "util/MicrosImpl.hpp"
+#include "Event/CoreEventsData.hpp"
+#include "Event/EventInvocation.hpp"
+#include "Event/EventManager.hpp"
+#include "Event/RuntimeEvent.hpp"
+#include "Util/MicrosImpl.hpp"
 #include <memory>
 
 using namespace tudov;

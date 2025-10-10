@@ -11,12 +11,12 @@
 
 #include "mod/ScriptProvider.hpp"
 
-#include "data/VirtualFileSystem.hpp"
-#include "resource/GlobalResourcesCollection.hpp"
-#include "system/LogMicros.hpp"
-#include "util/Definitions.hpp"
-#include "util/EnumFlag.hpp"
-#include "util/StringUtils.hpp"
+#include "Data/VirtualFileSystem.hpp"
+#include "Resource/GlobalResourcesCollection.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/EnumFlag.hpp"
+#include "Util/StringUtils.hpp"
 
 #include <stdexcept>
 #include <string_view>

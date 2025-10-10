@@ -11,13 +11,13 @@
 
 #pragma once
 
-#include "network/ClientSession.hpp"
+#include "Network/ClientSession.hpp"
 
-#include "mod/ScriptEngine.hpp"
-#include "network/NetworkSessionData.hpp"
-#include "util/Definitions.hpp"
-#include "util/Micros.hpp"
-#include "util/Utils.hpp"
+#include "Mod/ScriptEngine.hpp"
+#include "Network/NetworkSessionData.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/Micros.hpp"
+#include "Util/Utils.hpp"
 
 #include "sol/string_view.hpp"
 

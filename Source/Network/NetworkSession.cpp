@@ -9,9 +9,9 @@
  *
  */
 
-#include "network/NetworkSession.hpp"
+#include "Network/NetworkSession.hpp"
 
-#include "network/NetworkManager.hpp"
+#include "Network/NetworkManager.hpp"
 
 using namespace tudov;
 

@@ -9,9 +9,9 @@
  *
  */
 
-#include "util/SystemUtils.hpp"
+#include "Util/SystemUtils.hpp"
 
-#include "system/LogMicros.hpp"
+#include "System/LogMicros.hpp"
 
 using namespace tudov;
 

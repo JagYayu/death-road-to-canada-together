@@ -9,11 +9,11 @@
  *
  */
 
-#include "graphic/Texture.hpp"
+#include "Graphic/Texture.hpp"
 
-#include "graphic/Image.hpp"
-#include "graphic/Renderer.hpp"
-#include "util/Micros.hpp"
+#include "Graphic/Image.hpp"
+#include "Graphic/Renderer.hpp"
+#include "Util/Micros.hpp"
 
 #include "SDL3/SDL_blendmode.h"
 #include "SDL3/SDL_pixels.h"

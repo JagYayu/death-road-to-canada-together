@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include "util/Micros.hpp"
-#include "util/Utils.hpp"
+#include "Util/Micros.hpp"
+#include "Util/Utils.hpp"
 
 #include "SDL3/SDL_mouse.h"
 
