@@ -58,7 +58,7 @@ Log &ScriptProvider::GetLog() noexcept
 
 void ScriptProvider::Initialize() noexcept
 {
-	constexpr decltype(auto) directory = "App/TE";
+	constexpr decltype(auto) directory = "App/Lua";
 
 	auto entries = GetVirtualFileSystem().List(directory, EnumFlag::BitOr(
 	                                                          EPathListOption::File,

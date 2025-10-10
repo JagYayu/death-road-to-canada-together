@@ -28,7 +28,7 @@ local drawRectSrc = drawRectArgs.source
 
 local drawTextArgs = DrawTextArgs()
 
-local uiBorderTexture = TE.images:getID("mods/dr2c/gfx/UI.png")
+local uiBorderTexture = TE.images:getID("Mods/dr2c/GFX/UI.png")
 local uiBorderTextureX = 0
 local uiBorderTextureY = 0
 local uiBorderTextureWidth = 9
@@ -39,7 +39,7 @@ local uiSelectionBoxTextureX = 208
 local uiSelectionBoxTextureY = 128
 local uiSelectionBoxTextureWidth = 16
 local uiSelectionBoxTextureHeight = 16
-local uiFont = TE.fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
+local uiFont = TE.fonts:getID("Mods/dr2c/Fonts/Galmuri7.ttf")
 
 --- @class dr2c.UI.DrawBorder
 --- @field x number @Frame top left position

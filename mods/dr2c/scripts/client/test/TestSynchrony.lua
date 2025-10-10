@@ -3,7 +3,7 @@ local TestSynchrony = {}
 
 local drawTextArgs = DrawTextArgs()
 
-drawTextArgs.font = TE.fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
+drawTextArgs.font = TE.fonts:getID("Mods/dr2c/Fonts/Galmuri7.ttf")
 
 function TestSynchrony.enable()
 	local Function = require("TE.Function")
