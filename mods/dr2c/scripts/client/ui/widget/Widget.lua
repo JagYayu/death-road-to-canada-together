@@ -9,11 +9,11 @@
 --
 --]]
 
-local Enum = require("tudov.Enum")
-local Function = require("tudov.Function")
-local Table = require("tudov.Table")
+local Enum = require("TE.Enum")
+local Function = require("TE.Function")
+local Table = require("TE.Table")
 
-local CRenderUtils = require("dr2c.client.render.Utils")
+local CRenderUtils = require("dr2c.Client.Render.Utils")
 
 --- @class dr2c.CUIWidget
 local CUIWidget = {}

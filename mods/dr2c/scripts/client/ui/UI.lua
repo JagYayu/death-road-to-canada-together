@@ -9,9 +9,9 @@
 --
 --]]
 
-local Color = require("tudov.Color")
+local Color = require("TE.Color")
 
-local CClient = require("dr2c.client.Module")
+local CClient = require("dr2c.Client.Module")
 
 local CUI = {}
 

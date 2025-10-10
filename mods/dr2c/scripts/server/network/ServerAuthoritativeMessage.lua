@@ -9,11 +9,11 @@
 --
 --]]
 
-local Table = require("tudov.Table")
-local Enum = require("tudov.Enum")
+local Table = require("TE.Table")
+local Enum = require("TE.Enum")
 
-local SNetworkClients = require("dr2c.server.network.Clients")
-local SNetworkServer = require("dr2c.server.network.Server")
+local SNetworkClients = require("dr2c.Server.Network.Clients")
+local SNetworkServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.SNetworkServerAuthoritativeMessage
 local SNetworkServerAuthoritativeMessage = {}

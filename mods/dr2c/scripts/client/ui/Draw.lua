@@ -9,8 +9,8 @@
 --
 --]]
 
-local Color = require("tudov.Color")
-local Math = require("tudov.Math")
+local Color = require("TE.Color")
+local Math = require("TE.Math")
 
 local Math_lerp = Math.lerp
 

@@ -15,16 +15,16 @@ if(MSVC)
 endif()
 
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui-1.91.9b/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Lib/imgui-1.91.9b/*.cpp"
 )
 add_executable(tudov ${SRC_FILES})
 
 target_include_directories(tudov PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui-1.91.9b
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui-1.91.9b/backends
+    ${CMAKE_CURRENT_SOURCE_DIR}/Include
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lib/imgui-1.91.9b
+    ${CMAKE_CURRENT_SOURCE_DIR}/Lib/imgui-1.91.9b/backends
 )
 
 # LuaJIT - from vcpkg dir
@@ -51,6 +51,10 @@ target_link_libraries(tudov PRIVATE $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-
 # SDL3_ttf
 find_package(SDL3_ttf CONFIG REQUIRED)
 target_link_libraries(tudov PRIVATE SDL3_ttf::SDL3_ttf)
+
+# OpenAL
+find_package(OpenAL CONFIG REQUIRED)
+target_link_libraries(tudov PRIVATE OpenAL::OpenAL)
 
 # enet
 find_package(unofficial-enet CONFIG REQUIRED)

@@ -9,12 +9,12 @@
 --
 --]]
 
-local Math = require("tudov.Math")
+local Math = require("TE.Math")
 
-local CECS = require("dr2c.client.ecs.ECS")
-local CSystemInput = require("dr2c.client.system.Input")
-local CWorldTick = require("dr2c.client.world.Tick")
-local GWorldPlayerInput = require("dr2c.shared.world.PlayerInput")
+local CECS = require("dr2c.Client.ECS.ECS")
+local CSystemInput = require("dr2c.Client.System.Input")
+local CWorldTick = require("dr2c.Client.World.Tick")
+local GWorldPlayerInput = require("dr2c.Shared.World.PlayerInput")
 
 --- @class dr2c.CController
 local CController = {}

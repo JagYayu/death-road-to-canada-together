@@ -1,1 +1,1 @@
-require("dr2c.client.test.LagTest").test()
+require("dr2c.Client.Test.LagTest").test()

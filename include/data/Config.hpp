@@ -12,7 +12,7 @@
 #pragma once
 
 #include "resource/ResourceType.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 
 #include "json.hpp"
 

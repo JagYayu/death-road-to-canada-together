@@ -12,8 +12,8 @@
 #pragma once
 
 #include "debug/Debug.hpp"
-#include "program/EngineComponent.hpp"
-#include "system/Log.hpp"
+#include "Program/EngineComponent.hpp"
+#include "System/Log.hpp"
 #include "util/Definitions.hpp"
 
 #include "sol/forward.hpp"

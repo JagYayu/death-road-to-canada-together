@@ -9,9 +9,9 @@
 --
 --]]
 
-local Table = require("tudov.Table")
+local Table = require("TE.Table")
 
-local GPlayerInput = require("dr2c.shared.world.PlayerInput")
+local GPlayerInput = require("dr2c.Shared.World.PlayerInput")
 
 --- @class dr2c.PlayerTickInputsData
 --- @field archivedTick dr2c.WorldTick

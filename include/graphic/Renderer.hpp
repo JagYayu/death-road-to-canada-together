@@ -14,7 +14,7 @@
 #include "TextureManager.hpp"
 #include "VSyncMode.hpp"
 #include "program/Context.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 #include "util/Color.hpp"
 #include "util/Definitions.hpp"
 
@@ -69,7 +69,7 @@ namespace tudov
 		virtual void End() noexcept = 0;
 	};
 
-	class Renderer : public IRenderer, public IContextProvider, ILogProvider
+	class Renderer final : public IRenderer, public IContextProvider, ILogProvider
 	{
 		friend class LuaBindings;
 		friend RenderTarget;

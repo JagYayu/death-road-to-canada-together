@@ -9,7 +9,7 @@
 --
 --]]
 
-local Enum = require("tudov.Enum")
+local Enum = require("TE.Enum")
 
 local math_max = math.max
 local math_min = math.min

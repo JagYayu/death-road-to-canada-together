@@ -13,7 +13,7 @@
 
 #include "Micros.hpp"
 #include "Scopes.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 
 #include "json.hpp"
 #include "sol/table.hpp"

@@ -9,7 +9,7 @@
 --
 --]]
 
-local CEntities = require("dr2c.client.ecs.Entities")
+local CEntities = require("dr2c.Client.ECS.Entities")
 
 local entity = CEntities.registerEntity
 

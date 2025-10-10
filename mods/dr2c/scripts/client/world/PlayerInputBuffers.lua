@@ -9,15 +9,15 @@
 --
 --]]
 
-local Table = require("tudov.Table")
+local Table = require("TE.Table")
 
-local CClients = require("dr2c.client.network.Clients")
-local CPlayers = require("dr2c.client.network.Players")
-local CServer = require("dr2c.client.network.Server")
+local CClients = require("dr2c.Client.Network.Clients")
+local CPlayers = require("dr2c.Client.Network.Players")
+local CServer = require("dr2c.Client.Network.Server")
 
-local GMessage = require("dr2c.shared.network.Message")
-local GPlayerInput = require("dr2c.shared.world.PlayerInput")
-local GPlayerInputBuffers = require("dr2c.shared.world.PlayerInputBuffers")
+local GMessage = require("dr2c.Shared.Network.Message")
+local GPlayerInput = require("dr2c.Shared.World.PlayerInput")
+local GPlayerInputBuffers = require("dr2c.Shared.World.PlayerInputBuffers")
 
 --- @class dr2c.CPlayerInputBuffers : dr2c.PlayerInputBuffers
 local CPlayerInputBuffers = GPlayerInputBuffers.new()

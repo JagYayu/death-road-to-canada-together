@@ -15,7 +15,7 @@
 #include "TranslationPack.hpp"
 #include "sol/forward.hpp"
 #include "sol/string_view.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 
 #include <format>
 #include <memory>

@@ -13,7 +13,7 @@
 
 #include "Mod.hpp"
 #include "program/Context.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 
 #include <memory>
 #include <queue>

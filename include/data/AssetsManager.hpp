@@ -12,9 +12,9 @@
 #pragma once
 
 #include "event/DelegateEvent.hpp"
-#include "program/EngineComponent.hpp"
+#include "Program/EngineComponent.hpp"
 
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 #include "util/Version.hpp"
 
 #include <string>

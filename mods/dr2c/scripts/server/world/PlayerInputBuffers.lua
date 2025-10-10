@@ -9,11 +9,11 @@
 --
 --]]
 
-local String = require("tudov.String")
+local String = require("TE.String")
 
-local GMessage = require("dr2c.shared.network.Message")
-local GPlayerInputBuffers = require("dr2c.shared.world.PlayerInputBuffers")
-local SServer = require("dr2c.server.network.Server")
+local GMessage = require("dr2c.Shared.Network.Message")
+local GPlayerInputBuffers = require("dr2c.Shared.World.PlayerInputBuffers")
+local SServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.SPlayerInputBuffer : dr2c.PlayerInputBuffers
 local SPlayerInputBuffer = GPlayerInputBuffers.new()

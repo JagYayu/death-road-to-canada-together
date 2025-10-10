@@ -9,7 +9,7 @@
 --
 --]]
 
-local Geometry = require("tudov.Geometry")
+local Geometry = require("TE.Geometry")
 
 local tonumber = tonumber
 

@@ -19,8 +19,8 @@
 #include "data/GlobalStorageLocation.hpp"
 #include "debug/Debug.hpp"
 #include "event/EventManager.hpp"
-#include "program/EngineComponent.hpp"
-#include "system/Log.hpp"
+#include "Program/EngineComponent.hpp"
+#include "System/Log.hpp"
 
 #include <filesystem>
 #include <memory>

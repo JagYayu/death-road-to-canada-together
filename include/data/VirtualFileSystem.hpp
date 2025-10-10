@@ -15,7 +15,7 @@
 #include "event/DelegateEvent.hpp"
 #include "program/Context.hpp"
 #include "resource/ResourceType.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 
 #include "sol/table.hpp"
 

@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "program/EngineComponent.hpp"
+#include "Program/EngineComponent.hpp"
 #include "sol/forward.hpp"
 #include "util/Definitions.hpp"
 #include "util/Micros.hpp"

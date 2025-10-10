@@ -9,12 +9,12 @@
 --
 --]]
 
-local Table = require("tudov.Table")
-local Color = require("tudov.Color")
+local Table = require("TE.Table")
+local Color = require("TE.Color")
 
-local CRenderUtils = require("dr2c.client.render.Utils")
-local CUIDraw = require("dr2c.client.ui.Draw")
-local CUIWidget = require("dr2c.client.ui.widget.Widget")
+local CRenderUtils = require("dr2c.Client.Render.Utils")
+local CUIDraw = require("dr2c.Client.UI.Draw")
+local CUIWidget = require("dr2c.Client.UI.Widget.Widget")
 
 --- @class dr2c.CUIWidgetButton
 local CUIWidgetButton = {}

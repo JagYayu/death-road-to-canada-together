@@ -9,8 +9,8 @@
 --
 --]]
 
-local GClient = require("dr2c.shared.network.Client")
-local GPlatform = require("dr2c.shared.network.Platform")
+local GClient = require("dr2c.Shared.Network.Client")
+local GPlatform = require("dr2c.Shared.Network.Platform")
 
 local CPlatform = {}
 

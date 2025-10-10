@@ -9,10 +9,10 @@
 --
 --]]
 
-local Enum = require("tudov.Enum")
-local Table = require("tudov.Table")
+local Enum = require("TE.Enum")
+local Table = require("TE.Table")
 
-local GPlayers = require("dr2c.shared.network.Players")
+local GPlayers = require("dr2c.Shared.Network.Players")
 
 --- TODO
 --- not implement yet, currently assume every client has a playerID which equals to clientID

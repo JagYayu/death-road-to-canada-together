@@ -13,7 +13,7 @@
 
 #include "HierarchyElement.hpp"
 #include "Storage.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 
 #include <cstdint>
 

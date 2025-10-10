@@ -9,16 +9,16 @@
 --
 --]]
 
-local String = require("tudov.String")
-local Utility = require("tudov.Utility")
+local String = require("TE.String")
+local Utility = require("TE.Utility")
 
-local CClient = require("dr2c.client.network.Client")
-local CServer = require("dr2c.client.network.Server")
+local CClient = require("dr2c.Client.Network.Client")
+local CServer = require("dr2c.Client.Network.Server")
 
-local GMessage = require("dr2c.shared.network.Message")
-local GWorldSnapshot = require("dr2c.shared.world.Snapshot")
+local GMessage = require("dr2c.Shared.Network.Message")
+local GWorldSnapshot = require("dr2c.Shared.World.Snapshot")
 
-local hasServer = pcall(require, "dr2c.server.world.Snapshot")
+local hasServer = pcall(require, "dr2c.Server.World.Snapshot")
 
 local floor = math.floor
 

@@ -9,7 +9,7 @@
 --
 --]]
 
-local Enum = require("tudov.Enum")
+local Enum = require("TE.Enum")
 
 --- @alias dr2c.PlatformType dr2c.GNetworkPlatform.Type
 

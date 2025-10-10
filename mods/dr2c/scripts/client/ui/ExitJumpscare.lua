@@ -9,9 +9,9 @@
 --
 --]]
 
-local Color = require("tudov.Color")
+local Color = require("TE.Color")
 
-local CRenderSprites = require("dr2c.client.render.Sprites")
+local CRenderSprites = require("dr2c.Client.Render.Sprites")
 
 --- @class dr2c.CExitJumpscare
 local CExitJumpscare = {}
@@ -27,7 +27,7 @@ function CExitJumpscare.trigger()
 		return
 	end
 
-	CRenderSprites.registerSprites(sprites)
+	-- CRenderSprites.registerSprites(sprites)
 
 	state = {
 		time = Time.getSystemTime(),

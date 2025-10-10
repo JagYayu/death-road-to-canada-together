@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "program/EngineComponent.hpp"
+#include "Program/EngineComponent.hpp"
 
 namespace tudov
 {

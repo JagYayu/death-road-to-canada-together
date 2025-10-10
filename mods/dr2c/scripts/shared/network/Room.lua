@@ -9,7 +9,7 @@
 --
 --]]
 
-local Enum = require("tudov.Enum")
+local Enum = require("TE.Enum")
 
 --- @alias dr2c.NetworkRoomAttribute dr2c.GNetworkRoom.Attribute
 

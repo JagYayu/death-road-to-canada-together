@@ -8,15 +8,15 @@
 	"dependencies": {},
 	"client": false,
 	"scripts": {
-		"directory": "scripts",
+		"directory": "Scripts",
 		"files": [
 			".*\\.lua$"
 		],
 		"processor": 0,
-		"sandbox": true
+		"sandbox": false
 	},
 	"audios": {
-		"directory": "audios",
+		"directory": "Audios",
 		"files": [
 			".*\\.mp3$",
 			".*\\.ogg$"
@@ -24,13 +24,13 @@
 	},
 	"images": {},
 	"fonts": {
-		"directory": "fonts",
+		"directory": "Fonts",
 		"files": [
 			".*\\.ttf$"
 		]
 	},
 	"data": {
-		"directory": "data",
+		"directory": "Data",
 		"files": [
 			".*\\.json$",
 			".*\\.txt$",

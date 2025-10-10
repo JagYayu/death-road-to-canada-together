@@ -9,10 +9,10 @@
 --
 --]]
 
-local EnumFlag = require("tudov.EnumFlag")
+local EnumFlag = require("TE.EnumFlag")
 
-local CNetworkClient = require("dr2c.client.network.Client")
-local GNetworkClient = require("dr2c.shared.network.Client")
+local CNetworkClient = require("dr2c.Client.Network.Client")
+local GNetworkClient = require("dr2c.Shared.Network.Client")
 
 --- @class dr2c.CNetworkClientAuthoritativeMessage
 local CNetworkClientAuthoritativeMessage = {}

@@ -9,9 +9,9 @@
 --
 --]]
 
-local String = require("tudov.String")
-local Table = require("tudov.Table")
-local json = require("lib.json")
+local String = require("TE.String")
+local Table = require("TE.Table")
+local json = require("Lib.json")
 
 --- @class dr2c.Serializer
 --- @field serialize fun(obj: any): string

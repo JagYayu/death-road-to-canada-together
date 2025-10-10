@@ -9,7 +9,7 @@
 --
 --]]
 
-local Matrix3x3 = require("tudov.Matrix3x3")
+local Matrix3x3 = require("TE.Matrix3x3")
 
 --- @class dr2c.CUICamera
 local CUICamera = {}

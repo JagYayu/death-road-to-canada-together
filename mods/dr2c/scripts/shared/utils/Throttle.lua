@@ -9,7 +9,7 @@
 --
 --]]
 
-local GShared = require("dr2c.shared.Module")
+local GShared = require("dr2c.Shared.Module")
 
 local GShared_getTick = GShared.getTick
 local Time_getSystemTime = Time.getSystemTime

@@ -1,5 +1,5 @@
 /**
- * @file math/Vector.hpp
+ * @file Math/Vector.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

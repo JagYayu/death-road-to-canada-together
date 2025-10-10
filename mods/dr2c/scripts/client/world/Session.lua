@@ -9,12 +9,12 @@
 --
 --]]
 
-local Enum = require("tudov.Enum")
-local json = require("lib.json")
+local Enum = require("TE.Enum")
+local json = require("Lib.json")
 
-local CClient = require("dr2c.client.network.Client")
-local GMessage = require("dr2c.shared.network.Message")
-local GWorldSession = require("dr2c.shared.world.Session")
+local CClient = require("dr2c.Client.Network.Client")
+local GMessage = require("dr2c.Shared.Network.Message")
+local GWorldSession = require("dr2c.Shared.World.Session")
 
 --- @class dr2c.CWorldSession : dr2c.WorldSession
 local CWorldSession = GWorldSession.new()

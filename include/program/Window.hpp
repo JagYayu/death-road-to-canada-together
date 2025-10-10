@@ -12,9 +12,10 @@
 #pragma once
 
 #include "program/Context.hpp"
-#include "sol/types.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 #include "util/Definitions.hpp"
+
+#include "sol/types.hpp"
 
 #include <memory>
 #include <tuple>
@@ -29,8 +30,11 @@ namespace tudov
 	class Engine;
 	class ScriptEngine;
 	class Renderer;
+	class AudioPlayer;
 	struct AppEvent;
 	struct EventHandleKey;
+	struct IAudioPlayer;
+	struct IRenderer;
 
 	struct IWindow : public IContextProvider
 	{
@@ -60,7 +64,13 @@ namespace tudov
 
 		virtual bool HandleEvent(AppEvent &appEvent) noexcept = 0;
 
+		virtual void Update() noexcept = 0;
+
 		virtual void Render() noexcept = 0;
+
+		virtual IRenderer* GetIRenderer() noexcept = 0;
+
+		virtual IAudioPlayer* GetIAudioPlayer() noexcept = 0;
 	};
 
 	/**
@@ -77,10 +87,9 @@ namespace tudov
 		Context &_context;
 		std::shared_ptr<Log> _log;
 		SDL_Window *_sdlWindow;
+		std::shared_ptr<Renderer> _renderer;
+		// std::shared_ptr<AudioPlayer> _audioPlayer;
 		bool _shouldClose;
-
-	  public:
-		std::shared_ptr<Renderer> renderer;
 
 	  public:
 		explicit Window(Context &context, std::string_view logName = TE_NAMEOF(Window)) noexcept;
@@ -103,7 +112,10 @@ namespace tudov
 		bool ShouldClose() noexcept override;
 		void HandleEvents() noexcept override;
 		bool HandleEvent(AppEvent &appEvent) noexcept override;
+		void Update() noexcept override;
 		void Render() noexcept override;
+		IRenderer* GetIRenderer() noexcept override;
+		IAudioPlayer* GetIAudioPlayer() noexcept override;
 
 		SDL_Window *GetSDLWindowHandle() noexcept;
 

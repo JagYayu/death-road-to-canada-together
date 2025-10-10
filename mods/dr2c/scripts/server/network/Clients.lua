@@ -9,14 +9,14 @@
 --
 --]]
 
-local Enum = require("tudov.Enum")
-local EnumFlag = require("tudov.EnumFlag")
-local Table = require("tudov.Table")
+local Enum = require("TE.Enum")
+local EnumFlag = require("TE.EnumFlag")
+local Table = require("TE.Table")
 
-local GNetworkClient = require("dr2c.shared.network.Client")
-local GNetworkDisconnection = require("dr2c.shared.network.Disconnection")
-local GNetworkMessage = require("dr2c.shared.network.Message")
-local SNetworkServer = require("dr2c.server.network.Server")
+local GNetworkClient = require("dr2c.Shared.Network.Client")
+local GNetworkDisconnection = require("dr2c.Shared.Network.Disconnection")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local SNetworkServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.ServerUnverifiedClient
 --- @field clientID Network.ClientID

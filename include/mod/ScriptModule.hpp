@@ -12,7 +12,7 @@
 #pragma once
 
 #include "program/Context.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 #include "util/Definitions.hpp"
 
 #include "sol/table.hpp"

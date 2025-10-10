@@ -9,13 +9,13 @@
 --
 --]]
 
-local Table = require("tudov.Table")
+local Table = require("TE.Table")
 
-local CSnapshot = require("dr2c.client.world.Snapshot")
-local CClock = require("dr2c.client.network.Clock")
-local CPlayerInputBuffers = require("dr2c.client.world.PlayerInputBuffers")
-local CWorldSession = require("dr2c.client.world.Session")
-local GWorldSession = require("dr2c.shared.world.Session")
+local CSnapshot = require("dr2c.Client.World.Snapshot")
+local CClock = require("dr2c.Client.Network.Clock")
+local CPlayerInputBuffers = require("dr2c.Client.World.PlayerInputBuffers")
+local CWorldSession = require("dr2c.Client.World.Session")
+local GWorldSession = require("dr2c.Shared.World.Session")
 
 local CSnapshot_get = CSnapshot.getSnapshot
 local CClock_getTime = CClock.getTime

@@ -6,15 +6,15 @@ local drawTextArgs = DrawTextArgs()
 drawTextArgs.font = TE.fonts:getID("mods/dr2c/fonts/Galmuri7.ttf")
 
 function TestSynchrony.enable()
-	local Function = require("tudov.Function")
-	local Math = require("tudov.Math")
+	local Function = require("TE.Function")
+	local Math = require("TE.Math")
 
-	local CECS = require("dr2c.client.ecs.ECS")
-	local CNetworkClient = require("dr2c.client.network.Client")
-	local CNetworkClock = require("dr2c.client.network.Clock")
-	local CWorldSnapshot = require("dr2c.client.world.Snapshot")
+	local CECS = require("dr2c.Client.ECS.ECS")
+	local CNetworkClient = require("dr2c.Client.Network.Client")
+	local CNetworkClock = require("dr2c.Client.Network.Clock")
+	local CWorldSnapshot = require("dr2c.Client.World.Snapshot")
 
-	local SSnapshot = require("dr2c.server.world.Snapshot")
+	local SSnapshot = require("dr2c.Server.World.Snapshot")
 
 	TestSynchrony.enable = Function.empty
 

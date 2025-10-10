@@ -9,7 +9,7 @@
 --
 --]]
 
-local CECSSchema = require("dr2c.client.ecs.ECSSchema")
+local CECSSchema = require("dr2c.Client.ECS.ECSSchema")
 
 local CEntities = {}
 

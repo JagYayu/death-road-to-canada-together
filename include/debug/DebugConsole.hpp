@@ -13,7 +13,7 @@
 
 #include "Debug.hpp"
 #include "DebugElement.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 
 #include <functional>
 #include <map>

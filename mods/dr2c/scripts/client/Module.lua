@@ -61,6 +61,8 @@ TE.events:add("TickRender", function(e)
 	e.renderer = renderer
 
 	TE.events:invoke(CModule.eventCRender, e)
+
+	-- collectgarbage()
 end, N_("ClientRender"), "Client", "Primary")
 
 CModule.eventCLoad = TE.events:new(N_("CLoad"), {

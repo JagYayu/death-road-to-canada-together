@@ -22,7 +22,7 @@ namespace tudov
 	enum class EResourceType : std::uint8_t
 	{
 		Unknown = 0,
-		Binary,
+		Binaries,
 		Text,
 		Image,
 		Audio,
@@ -33,7 +33,7 @@ namespace tudov
 	{
 		All = static_cast<std::underlying_type_t<EResourceType>>(-1),
 		None = 0,
-		Binary = 1 << (static_cast<std::underlying_type_t<EResourceType>>(EResourceType::Binary) - 1),
+		Binaries = 1 << (static_cast<std::underlying_type_t<EResourceType>>(EResourceType::Binaries) - 1),
 		Text = 1 << (static_cast<std::underlying_type_t<EResourceType>>(EResourceType::Text) - 1),
 		Image = 1 << (static_cast<std::underlying_type_t<EResourceType>>(EResourceType::Image) - 1),
 		Audio = 1 << (static_cast<std::underlying_type_t<EResourceType>>(EResourceType::Audio) - 1),
@@ -48,7 +48,7 @@ namespace tudov
 		{
 			switch (resourceType)
 			{
-			case EResourceType::Binary:
+			case EResourceType::Binaries:
 				return "Binary";
 			case EResourceType::Text:
 				return "Text";
@@ -72,7 +72,7 @@ namespace tudov
 
 	NLOHMANN_JSON_SERIALIZE_ENUM(EResourceType, {
 	                                                {EResourceType::Unknown, "Unknown"},
-	                                                {EResourceType::Binary, "Binary"},
+	                                                {EResourceType::Binaries, "Binary"},
 	                                                {EResourceType::Text, "Text"},
 	                                                {EResourceType::Image, "Image"},
 	                                                {EResourceType::Audio, "Audio"},

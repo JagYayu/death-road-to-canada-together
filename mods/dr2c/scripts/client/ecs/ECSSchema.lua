@@ -54,9 +54,9 @@
 --- @field [dr2c.EntityType] dr2c.ECSSchema.Entity
 --- @field [dr2c.EntityTypeID] dr2c.ECSSchema.Entity
 
-local Enum = require("tudov.Enum")
-local String = require("tudov.String")
-local Table = require("tudov.Table")
+local Enum = require("TE.Enum")
+local String = require("TE.String")
+local Table = require("TE.Table")
 
 --- @class dr2c.ECSSchema
 local CECSSchema = {}

@@ -9,8 +9,8 @@
 --
 --]]
 
-local CSnapshot = require("dr2c.client.world.Snapshot")
-local GMessage = require("dr2c.shared.network.Message")
+local CSnapshot = require("dr2c.Client.World.Snapshot")
+local GMessage = require("dr2c.Shared.Network.Message")
 
 --- @class dr2c.CRollback
 local CRollback = {}

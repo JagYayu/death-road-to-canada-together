@@ -9,10 +9,10 @@
 --
 --]]
 
-local CECS = require("dr2c.client.ecs.ECS")
-local CRenderFocus = require("dr2c.client.render.Focus")
-local CRoom = require("dr2c.client.world.Room")
-local CRenderSprites = require("dr2c.client.render.Sprites")
+local CECS = require("dr2c.Client.ECS.ECS")
+local CRenderFocus = require("dr2c.Client.Render.Focus")
+local CRoom = require("dr2c.Client.World.Room")
+local CRenderSprites = require("dr2c.Client.Render.Sprites")
 
 -- TE.events:new("", {
 -- 	"",

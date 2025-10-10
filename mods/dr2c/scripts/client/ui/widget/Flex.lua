@@ -9,9 +9,9 @@
 --
 --]]
 
-local Table = require("tudov.Table")
+local Table = require("TE.Table")
 
-local CUIWidget = require("dr2c.client.ui.widget.Widget")
+local CUIWidget = require("dr2c.Client.UI.Widget.Widget")
 
 --- @class dr2c.CUIWidgetFlex
 local CUIWidgetFlex = {}

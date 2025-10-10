@@ -13,7 +13,7 @@
 
 #include "NetworkManager.hpp"
 #include "ServerSession.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 #include "util/UnorderedBimap.hpp"
 
 #include <cstdint>

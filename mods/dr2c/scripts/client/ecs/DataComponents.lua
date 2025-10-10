@@ -9,7 +9,7 @@
 --
 --]]
 
-local CComponents = require("dr2c.client.ecs.Components")
+local CComponents = require("dr2c.Client.ECS.Components")
 
 local archetypeConstant = CComponents.registerArchetypeConstant
 local archetypeSerializable = CComponents.registerArchetypeSerializable

@@ -9,11 +9,11 @@
 --
 --]]
 
-local Table = require("tudov.Table")
-local Geometry = require("tudov.Geometry")
-local Enum = require("tudov.Enum")
+local Table = require("TE.Table")
+local Geometry = require("TE.Geometry")
+local Enum = require("TE.Enum")
 
-local CSystemInput = require("dr2c.client.system.Input")
+local CSystemInput = require("dr2c.Client.System.Input")
 
 --- @class dr2c.CUICanvas
 local CUICanvas = {}
@@ -24,7 +24,7 @@ local canvasSelected
 --- @type integer
 local canvasLatestIndex = 0
 --- @type table<integer, dr2c.UICanvas>
-local canvasMap = setmetatable({}, { __mode = "k" })
+local canvasMap = setmetatable({}, { __mode = "v" })
 
 canvasLatestIndex = persist("canvasLatestIndex", function()
 	return canvasLatestIndex
@@ -209,16 +209,12 @@ local function handleCanvasesSelection(canvases)
 	end
 end
 
---- @type dr2c.UICanvas[]
-local canvasList = {}
-
 TE.events:add(N_("CUpdate"), function(e)
-	if not next(canvasMap) then
+	if next(canvasMap) == nil then
 		return
 	end
 
-	Table.clear(canvasList)
-	canvasList = Table.getValueList(canvasMap, canvasList)
+	local canvasList = Table.getValueList(canvasMap)
 
 	table.sort(canvasList, compareCanvas)
 
@@ -237,17 +233,17 @@ TE.events:add("ScriptUnload", function(e)
 	local seenSet = {}
 
 	--- @param widget dr2c.UIWidget
-	local function func(widget)
+	local function removeExpiredWidget(widget)
 		if seenSet[widget] or widget.type == widgetType then
 			return true
 		end
 
-		Table.listRemoveIf(widget.widgets, func)
+		Table.listRemoveIf(widget.widgets, removeExpiredWidget)
 		return false
 	end
 
 	for _, canvas in pairs(canvasMap) do
-		Table.listRemoveIf(canvas.widgets, func)
+		Table.listRemoveIf(canvas.widgets, removeExpiredWidget)
 	end
 end, "ClientUICanvasUnloadTypedWidget", "Client")
 

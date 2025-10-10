@@ -19,6 +19,7 @@ namespace tudov
 	struct IGlobalStorageManager;
 	struct ILuaBindings;
 	struct IModManager;
+	struct IAudioPlayer;
 	struct INetworkManager;
 	struct IScriptEngine;
 	struct IScriptErrors;

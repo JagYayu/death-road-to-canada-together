@@ -9,8 +9,8 @@
 --
 --]]
 
-local String = require("tudov.String")
-local Enum = require("tudov.Enum")
+local String = require("TE.String")
+local Enum = require("TE.Enum")
 
 --- @alias dr2c.NetworkMessageChannel dr2c.GNetworkMessage.Channel
 

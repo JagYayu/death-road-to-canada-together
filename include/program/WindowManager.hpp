@@ -12,7 +12,7 @@
 #pragma once
 
 #include "EngineComponent.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 #include "util/Definitions.hpp"
 
 #include <memory>
@@ -57,6 +57,8 @@ namespace tudov
 
 		virtual void HandleEvents() noexcept = 0;
 
+		virtual void Update() noexcept = 0;
+
 		virtual void Render() noexcept = 0;
 	};
 
@@ -98,6 +100,7 @@ namespace tudov
 		void InitializePrimaryWindow() noexcept override;
 		void CloseWindows() noexcept override;
 		void HandleEvents() noexcept override;
+		void Update() noexcept override;
 		void Render() noexcept override;
 
 		inline std::vector<std::shared_ptr<IWindow>>::iterator begin() noexcept

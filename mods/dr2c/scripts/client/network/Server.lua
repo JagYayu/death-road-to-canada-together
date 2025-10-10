@@ -9,8 +9,8 @@
 --
 --]]
 
-local GMessage = require("dr2c.shared.network.Message")
-local GServer = require("dr2c.shared.network.Server")
+local GMessage = require("dr2c.Shared.Network.Message")
+local GServer = require("dr2c.Shared.Network.Server")
 
 --- @class dr2c.CServer
 local CServer = {}

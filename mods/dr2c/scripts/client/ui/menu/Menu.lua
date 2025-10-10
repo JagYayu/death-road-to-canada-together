@@ -9,12 +9,12 @@
 --
 --]]
 
-local Enum = require("tudov.Enum")
-local Table = require("tudov.Table")
+local Enum = require("TE.Enum")
+local Table = require("TE.Table")
 
-local CUI = require("dr2c.client.ui.UI")
-local CUIDraw = require("dr2c.client.ui.Draw")
-local CUICanvas = require("dr2c.client.ui.Canvas")
+local CUI = require("dr2c.Client.UI.UI")
+local CUIDraw = require("dr2c.Client.UI.Draw")
+local CUICanvas = require("dr2c.Client.UI.Canvas")
 
 --- @class dr2c.MenuEntry
 
@@ -156,7 +156,7 @@ end
 
 function CUIMenu.update()
 	for i, menu in ipairs(menuStack) do
-		-- menuStack[i] = createMenu(menu.type, menu.args)
+		menuStack[i] = createMenu(menu.type, menu.args)
 	end
 end
 
@@ -178,10 +178,13 @@ TE.events:add(N_("CUpdate"), function(e)
 		CUIMenu.open(CUIMenu.Type.TitleScreen)
 
 		testOnce = false
-		print("test once")
-	end
 
-	CUIMenu.update()
+		_G.Times = (_G.Times or 0) + 1
+		print("test once", _G.Times)
+	end
 end, "Test")
+
+-- TE.events:add()
+-- CUIMenu.update()
 
 return CUIMenu

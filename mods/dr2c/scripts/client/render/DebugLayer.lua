@@ -9,7 +9,7 @@
 --
 --]]
 
-local Enum = require("tudov.Enum")
+local Enum = require("TE.Enum")
 
 local CDebugLayer = {}
 

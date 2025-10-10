@@ -13,8 +13,8 @@
 
 #include "ScriptProvider.hpp"
 #include "event/DelegateEvent.hpp"
-#include "program/EngineComponent.hpp"
-#include "system/Log.hpp"
+#include "Program/EngineComponent.hpp"
+#include "System/Log.hpp"
 #include "util/Definitions.hpp"
 #include "util/Micros.hpp"
 

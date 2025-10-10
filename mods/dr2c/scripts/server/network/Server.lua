@@ -9,11 +9,11 @@
 --
 --]]
 
-local GNetworkClient = require("dr2c.shared.network.Client")
-local GNetworkMessage = require("dr2c.shared.network.Message")
-local GNetworkServer = require("dr2c.shared.network.Server")
-local SNetworkClients = require("dr2c.server.network.Clients")
-local SNetworkRoom = require("dr2c.server.network.Room")
+local GNetworkClient = require("dr2c.Shared.Network.Client")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkServer = require("dr2c.Shared.Network.Server")
+local SNetworkClients = require("dr2c.Server.Network.Clients")
+local SNetworkRoom = require("dr2c.Server.Network.Room")
 
 --- @class dr2c.SServer
 local SNetworkServer = {}

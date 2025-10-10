@@ -1,5 +1,5 @@
 /**
- * @file system/Log.hpp
+ * @file System/Log.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

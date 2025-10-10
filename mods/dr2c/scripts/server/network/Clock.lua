@@ -9,9 +9,9 @@
 --
 --]]
 
-local GMessage = require("dr2c.shared.network.Message")
+local GMessage = require("dr2c.Shared.Network.Message")
 
-local SServer = require("dr2c.server.network.Server")
+local SServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.SClock
 local SClock = {}

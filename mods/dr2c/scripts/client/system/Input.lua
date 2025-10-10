@@ -9,10 +9,10 @@
 --
 --]]
 
-local Function = require("tudov.Function")
-local Table = require("tudov.Table")
+local Function = require("TE.Function")
+local Table = require("TE.Table")
 
-local CECS = require("dr2c.client.ecs.ECS")
+local CECS = require("dr2c.Client.ECS.ECS")
 
 --- @class dr2c.CInput
 local CInput = {}

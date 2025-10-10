@@ -1,4 +1,4 @@
-local Enum = require("tudov.Enum")
+local Enum = require("TE.Enum")
 
 --- @class dr2c.GNetworkReason
 local GNetworkReason = {}

@@ -9,10 +9,10 @@
 --
 --]]
 
-local Enum = require("tudov.Enum")
-local Function = require("tudov.Function")
+local Enum = require("TE.Enum")
+local Function = require("TE.Function")
 
-local GNetworkPlatform = require("dr2c.shared.network.Platform")
+local GNetworkPlatform = require("dr2c.Shared.Network.Platform")
 
 --- @alias dr2c.ClientAttributeTrait dr2c.GNetworkClient.AttributeTrait
 

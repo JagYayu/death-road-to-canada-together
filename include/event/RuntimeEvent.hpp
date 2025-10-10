@@ -15,7 +15,7 @@
 #include "EventHandler.hpp"
 #include "EventInvocation.hpp"
 #include "mod/ScriptEngine.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 #include "util/Definitions.hpp"
 
 #include "sol/forward.hpp"

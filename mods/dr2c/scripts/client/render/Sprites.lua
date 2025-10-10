@@ -9,9 +9,9 @@
 --
 --]]
 
-local String = require("tudov.String")
-local Table = require("tudov.Table")
-local json = require("lib.json")
+local String = require("TE.String")
+local Table = require("TE.Table")
+local json = require("Lib.json")
 
 local tonumber = tonumber
 
@@ -186,8 +186,8 @@ TE.events:add("DebugSnapshot", function(e)
 	e.spriteTablesMap = spriteTablesMap
 end, scriptName, nil, scriptName)
 
-CRenderSprites.registerSpritesFromJsonDirectory("mods/dr2c/data/sprites")
-CRenderSprites.registerSpritesFromLuaDirectory("mods/dr2c/data/sprites")
+CRenderSprites.registerSpritesFromJsonDirectory("Mods/dr2c/Data/Sprites")
+CRenderSprites.registerSpritesFromLuaDirectory("Mods/dr2c/Data/Sprites")
 
 CRenderSprites.reload()
 

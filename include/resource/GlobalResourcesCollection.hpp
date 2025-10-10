@@ -11,14 +11,15 @@
 
 #pragma once
 
+#include "AudioResources.hpp"
 #include "BinariesResources.hpp"
 #include "FontResources.hpp"
 #include "ImageResources.hpp"
 #include "Resource.hpp"
 #include "ResourceType.hpp"
 #include "TextResources.hpp"
-#include "program/EngineComponent.hpp"
-#include "system/Log.hpp"
+#include "Program/EngineComponent.hpp"
+#include "System/Log.hpp"
 
 #include <filesystem>
 #include <memory>
@@ -38,6 +39,7 @@ namespace tudov
 	  protected:
 		Context &_context;
 
+		std::shared_ptr<AudioResources> _audioResources;
 		std::shared_ptr<BinariesResources> _binariesResources;
 		std::shared_ptr<FontResources> _fontResources;
 		std::shared_ptr<ImageResources> _imageResources;

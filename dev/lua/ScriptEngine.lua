@@ -282,11 +282,11 @@ end
 --- @param scriptGlobals table
 --- @param luaGlobals _G
 local function postProcessScriptGlobals(scriptID, scriptName, modUID, sandboxed, func, scriptGlobals, luaGlobals)
-	assert(scriptGlobals.scriptID == nil, "`_G.scriptID` is not nil")
-	assert(scriptGlobals.scriptName == nil, "`_G.scriptName` is not nil")
+	assert(rawget(scriptGlobals, "scriptID") == nil, "`_G.scriptID` is not nil")
+	assert(rawget(scriptGlobals, "scriptName") == nil, "`_G.scriptName` is not nil")
 
-	scriptGlobals.scriptID = scriptID
-	scriptGlobals.scriptName = scriptName
+	rawset(scriptGlobals, "scriptID", scriptID)
+	rawset(scriptGlobals, "scriptName", scriptName)
 
 	wrapScriptGlobalsLog(scriptGlobals)
 end

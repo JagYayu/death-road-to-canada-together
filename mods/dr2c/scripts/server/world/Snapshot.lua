@@ -9,14 +9,14 @@
 --
 --]]
 
-local Table = require("tudov.Table")
+local Table = require("TE.Table")
 
-local GNetworkMessage = require("dr2c.shared.network.Message")
-local GNetworkReason = require("dr2c.shared.network.Reason")
-local GWorldSnapshot = require("dr2c.shared.world.Snapshot")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkReason = require("dr2c.Shared.Network.Reason")
+local GWorldSnapshot = require("dr2c.Shared.World.Snapshot")
 
-local SNetworkClients = require("dr2c.server.network.Clients")
-local SNetworkServer = require("dr2c.server.network.Server")
+local SNetworkClients = require("dr2c.Server.Network.Clients")
+local SNetworkServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.SWorldSnapshot : dr2c.WorldSnapshot
 local SWorldSnapshot = GWorldSnapshot.new()

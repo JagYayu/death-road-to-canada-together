@@ -1,1 +1,1 @@
-local CLagTest = require("dr2c.client.test.LagTest")
+require("dr2c.Client.Test.LagTest").test()

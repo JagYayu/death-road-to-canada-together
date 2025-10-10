@@ -9,10 +9,10 @@
 --
 --]]
 
-local Table = require("tudov.Table")
-local String = require("tudov.String")
+local Table = require("TE.Table")
+local String = require("TE.String")
 
-local CECSSchema = require("dr2c.client.ecs.ECSSchema")
+local CECSSchema = require("dr2c.Client.ECS.ECSSchema")
 
 local CECSSchema_ComponentTrait_ArchetypeConstant = CECSSchema.ComponentTrait.ArchetypeConstant
 local CECSSchema_ComponentTrait_ArchetypeSerializable = CECSSchema.ComponentTrait.ArchetypeSerializable

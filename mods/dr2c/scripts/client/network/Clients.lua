@@ -9,14 +9,14 @@
 --
 --]]
 
-local String = require("tudov.String")
-local Enum = require("tudov.Enum")
-local Utility = require("tudov.Utility")
+local String = require("TE.String")
+local Enum = require("TE.Enum")
+local Utility = require("TE.Utility")
 
-local CClient = require("dr2c.client.network.Client")
-local GThrottle = require("dr2c.shared.utils.Throttle")
-local GClient = require("dr2c.shared.network.Client")
-local GMessage = require("dr2c.shared.network.Message")
+local CClient = require("dr2c.Client.Network.Client")
+local GThrottle = require("dr2c.Shared.Utils.Throttle")
+local GClient = require("dr2c.Shared.Network.Client")
+local GMessage = require("dr2c.Shared.Network.Message")
 
 --- @class dr2c.ClientPrivateRequestEntry
 --- @field attribute dr2c.NetworkClientPrivateAttribute

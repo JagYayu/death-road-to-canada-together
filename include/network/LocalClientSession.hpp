@@ -13,7 +13,7 @@
 
 #include "ClientSession.hpp"
 #include "LocalSession.hpp"
-#include "system/Log.hpp"
+#include "System/Log.hpp"
 #include "util/Definitions.hpp"
 
 #include <memory>

@@ -9,8 +9,8 @@
 --
 --]]
 
-local Enum = require("tudov.Enum")
-local Function = require("tudov.Function")
+local Enum = require("TE.Enum")
+local Function = require("TE.Function")
 
 --- @alias dr2c.ServerAttribute dr2c.GServer.Attribute
 

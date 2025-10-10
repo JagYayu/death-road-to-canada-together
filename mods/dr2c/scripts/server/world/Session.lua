@@ -9,11 +9,11 @@
 --
 --]]
 
-local Table = require("tudov.Table")
+local Table = require("TE.Table")
 
-local GWorldSession = require("dr2c.shared.world.Session")
-local GMessage = require("dr2c.shared.network.Message")
-local SServer = require("dr2c.server.network.Server")
+local GWorldSession = require("dr2c.Shared.World.Session")
+local GMessage = require("dr2c.Shared.Network.Message")
+local SServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.SWorldSession : dr2c.WorldSession
 local SWorldSession = GWorldSession.new()

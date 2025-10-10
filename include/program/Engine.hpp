@@ -15,8 +15,8 @@
 #include "Context.hpp"
 #include "debug/Debug.hpp"
 #include "program/Context.hpp"
-#include "program/EngineComponent.hpp"
-#include "system/Log.hpp"
+#include "Program/EngineComponent.hpp"
+#include "System/Log.hpp"
 #include "util/ClassUtils.hpp"
 #include "util/Definitions.hpp"
 

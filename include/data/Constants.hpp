@@ -22,10 +22,10 @@ namespace tudov
 		TE_CONSTANT AppOrganization = "Tudov";
 		TE_CONSTANT DataConfigFile = "Config.json";
 		TE_CONSTANT DataUserDirectoryPrefix = "user_";
-		TE_CONSTANT DataDeveloperAssetsDirectory = "dev";
-		TE_CONSTANT DataVirtualStorageRootApp = "app";
-		TE_CONSTANT DataVirtualStorageRootMods = "mods";
-		TE_CONSTANT DataVirtualStorageRootUser = "user";
+		TE_CONSTANT DataDeveloperAssetsDirectory = "Dev";
+		TE_CONSTANT DataVirtualStorageRootApp = "App";
+		TE_CONSTANT DataVirtualStorageRootMods = "Mods";
+		TE_CONSTANT DataVirtualStorageRootUser = "User";
 		TE_CONSTANT NetworkChannelsLimit = 8ui8;
 		TE_CONSTANT NetworkServerMaximumClients = 4ui32;
 		TE_CONSTANT NetworkServerPassword = "";

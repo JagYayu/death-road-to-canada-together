@@ -9,18 +9,18 @@
 --
 --]]
 
-local Math = require("tudov.Math")
+local Math = require("TE.Math")
 
-local CNetworkClock = require("dr2c.client.network.Clock")
-local CWorldTick = require("dr2c.client.world.Tick")
-local CSystemInput = require("dr2c.client.system.Input")
-local CWorldPlayerInputBuffers = require("dr2c.client.world.PlayerInputBuffers")
-local CNetworkPlayers = require("dr2c.client.network.Players")
-local CNetworkClient = require("dr2c.client.network.Client")
-local CWorldSession = require("dr2c.client.world.Session")
-local GNetworkMessage = require("dr2c.shared.network.Message")
-local GWorldPlayerInput = require("dr2c.shared.world.PlayerInput")
-local GWorldSession = require("dr2c.shared.world.Session")
+local CNetworkClock = require("dr2c.Client.Network.Clock")
+local CWorldTick = require("dr2c.Client.World.Tick")
+local CSystemInput = require("dr2c.Client.System.Input")
+local CWorldPlayerInputBuffers = require("dr2c.Client.World.PlayerInputBuffers")
+local CNetworkPlayers = require("dr2c.Client.Network.Players")
+local CNetworkClient = require("dr2c.Client.Network.Client")
+local CWorldSession = require("dr2c.Client.World.Session")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GWorldPlayerInput = require("dr2c.Shared.World.PlayerInput")
+local GWorldSession = require("dr2c.Shared.World.Session")
 
 --- @class dr2c.CPlayerInput
 local CPlayerInput = {}
