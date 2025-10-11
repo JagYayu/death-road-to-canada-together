@@ -11,7 +11,7 @@
 
 #include "Program/Window.hpp"
 
-#include "audio/AudioPlayer.hpp"
+#include "Audio/AudioPlayer.hpp"
 #include "Event/AppEvent.hpp"
 #include "Event/CoreEvents.hpp"
 #include "Event/CoreEventsData.hpp"
@@ -22,6 +22,7 @@
 #include "Mod/ScriptEngine.hpp"
 #include "Program/Engine.hpp"
 #include "Program/WindowManager.hpp"
+#include "System/LogMicros.hpp"
 #include "System/ScanCode.hpp"
 
 #include "SDL3/SDL_events.h"
@@ -31,6 +32,7 @@
 
 #include <cmath>
 #include <memory>
+#include <string>
 #include <string_view>
 #include <variant>
 
@@ -52,6 +54,11 @@ Window::~Window() noexcept
 Context &Window::GetContext() noexcept
 {
 	return _context;
+}
+
+Log &Window::GetLog() noexcept
+{
+	return *Log::Get(TE_NAMEOF(Window));
 }
 
 IRenderer *Window::GetIRenderer() noexcept
@@ -118,66 +125,12 @@ bool Window::HandleEvent(AppEvent &appEvent) noexcept
 			runtimeEvent.Invoke(&data, EventHandleKey(windowID), EEventInvocation::None);
 		}
 	}
-	else if (sdlEvent.type == SDL_EVENT_KEY_DOWN || sdlEvent.type == SDL_EVENT_KEY_UP)
-	{
-		// SDL_KeyboardEvent &key = sdlEvent.key;
-		// SDL_WindowID windowID = SDL_GetWindowID(_sdlWindow);
-		// if (windowID != key.windowID)
-		// {
-		// 	return false;
-		// }
-
-		// RuntimeEvent *runtimeEvent;
-		// if (!key.down)
-		// {
-		// 	runtimeEvent = &GetEventManager().GetCoreEvents().KeyUp();
-		// }
-		// else if (key.repeat)
-		// {
-		// 	runtimeEvent = &GetEventManager().GetCoreEvents().KeyRepeat();
-		// }
-		// else
-		// {
-		// 	runtimeEvent = &GetEventManager().GetCoreEvents().KeyboardPress();
-		// }
-
-		// EventKeyData data{
-		//     .window = this,
-		//     .windowID = windowID,
-		//     .keyboard = sol::nil,
-		//     .keyboardID = 0,
-		//     .scanCode = static_cast<EScanCode>(key.scancode),
-		//     .keyCode = static_cast<EKeyCode>(key.key),
-		//     .modifier = static_cast<EKeyModifier>(key.mod),
-		// };
-
-		// runtimeEvent->Invoke(&data, windowID, EEventInvocation::None);
-	}
-	else if (sdlEvent.type == SDL_EVENT_MOUSE_MOTION)
-	{
-		SDL_MouseMotionEvent &motion = sdlEvent.motion;
-		SDL_WindowID windowID = SDL_GetWindowID(_sdlWindow);
-		if (windowID != motion.windowID)
-		{
-			return false;
-		}
-
-		RuntimeEvent &runtimeEvent = GetEventManager().GetCoreEvents().MouseMotion();
-
-		EventMouseMotionData data{
-		    .mouseID = static_cast<std::int32_t>(motion.which),
-		    .x = motion.x,
-		    .y = motion.y,
-		    .relativeX = motion.xrel,
-		    .relativeY = motion.yrel,
-		};
-
-		runtimeEvent.Invoke(&data, EventHandleKey(windowID), EEventInvocation::None);
-	}
 	else
 	{
 		return false;
 	}
+
+	TE_TRACE("Event handled by window {}", reinterpret_cast<std::uint64_t>(_sdlWindow));
 
 	return true;
 }

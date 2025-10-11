@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.ExitJumpscare
+-- @module dr2c.Client.ui.ExitJumpscare
 -- @author JagYayu
 -- @brief
 -- @version 1.0

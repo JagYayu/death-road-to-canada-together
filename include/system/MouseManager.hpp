@@ -69,6 +69,8 @@ namespace tudov
 		Context &GetContext() noexcept override;
 		Log &GetLog() noexcept override;
 
+		bool HandleEvent(AppEvent &appEvent) noexcept override;
+
 		bool IsMouseAvailable(MouseID id) const noexcept override;
 		std::shared_ptr<IMouse> GetMouseAt(std::int32_t index) noexcept override;
 		std::shared_ptr<IMouse> GetMouseByID(MouseID id) noexcept override;

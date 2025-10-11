@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.world.ZoneTime
+-- @module dr2c.Client.world.ZoneTime
 -- @author JagYayu
 -- @brief
 -- @version 1.0

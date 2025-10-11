@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.Menu
+-- @module dr2c.Client.ui.Menu
 -- @author JagYayu
 -- @brief
 -- @version 1.0

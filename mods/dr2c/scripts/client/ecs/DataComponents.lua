@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ecs.DataComponents
+-- @module dr2c.Client.ECS.DataComponents
 -- @author JagYayu
 -- @brief
 -- @version 1.0

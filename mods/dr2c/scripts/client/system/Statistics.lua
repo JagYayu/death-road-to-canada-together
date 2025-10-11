@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.system.Statistics
+-- @module dr2c.Client.System.Statistics
 -- @author JagYayu
 -- @brief
 -- @version 1.0

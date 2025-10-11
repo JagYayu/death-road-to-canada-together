@@ -20,9 +20,6 @@
 #include "Event/CoreEventsData.hpp"
 #include "Event/EventManager.hpp"
 #include "Event/RuntimeEvent.hpp"
-#include "mod/LuaBindings.hpp"
-#include "mod/ModManager.hpp"
-#include "mod/ScriptErrors.hpp"
 #include "Program/Application.hpp"
 #include "Program/Context.hpp"
 #include "Program/EngineComponent.hpp"
@@ -33,6 +30,8 @@
 #include "System/Log.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/MicrosImpl.hpp"
+#include "mod/ModManager.hpp"
+#include "mod/ScriptErrors.hpp"
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_timer.h"
@@ -172,7 +171,7 @@ void Engine::Initialize() noexcept
 
 void Engine::PostInitialization() noexcept
 {
-	ProvideDebug(*_data->_windowManager->GetDebugManager());
+	ProvideDebug(*_data->_windowManager->GetIDebugManager());
 
 	_data->_modManager->LoadModsDeferred();
 	_previousTick = SDL_GetTicksNS();
@@ -241,7 +240,7 @@ void Engine::ProcessLoad() noexcept
 {
 	_data->_modManager->Update();
 	_data->_eventManager->GetCoreEvents().TickLoad().Invoke();
-	ProvideDebug(*_data->_windowManager->GetDebugManager());
+	ProvideDebug(*_data->_windowManager->GetIDebugManager());
 }
 
 void Engine::ProcessTick() noexcept
@@ -358,9 +357,15 @@ Log &Engine::GetLog() noexcept
 
 void Engine::ProvideDebug(IDebugManager &debugManager) noexcept
 {
+	try
 	{
-		EventDebugProvideData data{_context, debugManager};
+		EventDebugProvideData data{_context, dynamic_cast<DebugManager &>(debugManager)};
+
 		_data->_eventManager->GetCoreEvents().DebugProvide().Invoke(&data, {}, EEventInvocation::None);
+	}
+	catch (std::exception &e)
+	{
+		TE_WARN("Failed to invoke event 'DebugProvide': ", e.what());
 	}
 
 	if (auto &&debugConsole = debugManager.GetElement<DebugConsole>(); debugConsole != nullptr)

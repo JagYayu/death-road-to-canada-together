@@ -13,6 +13,7 @@ local Function = require("TE.Function")
 local String = require("TE.String")
 local Table = require("TE.Table")
 local inspect = require("inspect")
+local List = require("TE.List")
 
 --- @class TE.Enum.Defaults
 --- @field [integer] string
@@ -99,7 +100,7 @@ local function makeIntegers(defaults, extend, valueCanBeString)
 			end
 		end
 
-		Table.listSortAndRemoveDuplications(metadata.values)
+		List.sortAndRemoveDuplications(metadata.values)
 		table.sort(metadata.keys)
 
 		local value = initialValue

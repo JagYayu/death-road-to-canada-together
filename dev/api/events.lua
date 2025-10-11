@@ -10,9 +10,14 @@ error("this is a lua library module")
 --- @class Events.E.DebugCommand
 --- @field data Events.E.DebugCommand.Data
 
+--- @class Events.E.DebugCommand.Data
+
 --- @class Events.E.DebugSnapshot
 
 --- @class Events.E.KeyboardPress
+--- @field data Events.E.KeyboardPress.Data
+
+--- @class Events.E.KeyboardPress.Data
 --- @field window TE.Window?
 --- @field windowID TE.WindowID
 --- @field keyboard TE.Keyboard?
@@ -20,6 +25,8 @@ error("this is a lua library module")
 --- @field scanCode TE.EScanCode
 --- @field keyCode integer
 --- @field mod integer
+
+--- @class Events.E.KeyboardRelease : Events.E.KeyboardPress
 
 --- @alias Events.E.KeyRepeat Events.E.KeyboardPress
 
@@ -29,7 +36,25 @@ error("this is a lua library module")
 
 --- @class Events.E.MouseButtonUp
 
---- @class Events.E.MouseMove
+--- @class Events.E.MouseMotion
+--- @field data Events.E.MouseMotion.Data
+
+--- @class Events.E.MouseMotion.Data
+--- @field window TE.Window
+--- @field windowID TE.WindowID
+--- @field mouse TE.Mouse
+--- @field mouseID TE.MouseID
+--- @field x number
+--- @field y number
+--- @field relativeX number
+--- @field relativeY number
+
+--- @class Events.E.MousePress
+--- @field data Events.E.MousePress.Data
+
+--- @class Events.E.MousePress.Data
+
+--- @class Events.E.MouseRelease : Events.E.MousePress
 
 --- @class Events.E.MouseWheel
 
@@ -176,11 +201,14 @@ error("this is a lua library module")
 --- @alias Events.Event "ClientMessage"
 --- @alias Events.Event "DebugCommand"
 --- @alias Events.Event "DebugSnapshot"
+--- @alias Events.Event "KeyboardAdded"
 --- @alias Events.Event "KeyboardPress"
---- @alias Events.Event "KeyUp"
+--- @alias Events.Event "KeyboardRelease"
+--- @alias Events.Event "KeyboardRemoved"
+--- @alias Events.Event "KeyboardRepeat"
 --- @alias Events.Event "MouseButtonDown"
 --- @alias Events.Event "MouseButtonUp"
---- @alias Events.Event "MouseMove"
+--- @alias Events.Event "MouseMotion"
 --- @alias Events.Event "MouseWheel"
 --- @alias Events.Event "ScriptGlobalIndex"
 --- @alias Events.Event "ScriptUnload"

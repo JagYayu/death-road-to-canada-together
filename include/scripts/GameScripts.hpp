@@ -11,15 +11,20 @@
 
 #pragma once
 
+#include "Mod/LuaBindings.hpp"
 #include "Program/EngineComponent.hpp"
+#include "System/Log.hpp"
 
 namespace tudov
 {
-	struct IGameScripts : public IEngineComponent
+	struct IGameScripts : public IEngineComponent, public ILuaBindings
 	{
+		virtual void RegisterEvents(IEventManager &eventManager) noexcept = 0;
+
+		void Initialize() noexcept override;
 	};
 
-	class GameScripts : public IGameScripts
+	class GameScripts final : public IGameScripts, public ILogProvider
 	{
 	  private:
 		Context &_context;
@@ -33,7 +38,11 @@ namespace tudov
 		~GameScripts() noexcept = default;
 
 		Context &GetContext() noexcept override;
+		Log &GetLog() noexcept override;
 		void Initialize() noexcept override;
 		void Deinitialize() noexcept override;
+
+		virtual void RegisterEvents(IEventManager &eventManager) noexcept override;
+		virtual void ProvideLuaBindings(sol::state &lua, Context &context) override;
 	};
 } // namespace tudov

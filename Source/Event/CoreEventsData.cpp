@@ -38,7 +38,7 @@ std::shared_ptr<CoreEventData> CoreEventData::Extract(sol::object e) noexcept
 	return nullptr;
 }
 
-EventDebugProvideData::EventDebugProvideData(Context &context, IDebugManager &debugManager) noexcept
+EventDebugProvideData::EventDebugProvideData(Context &context, DebugManager &debugManager) noexcept
     : context(context),
       debugManager(debugManager)
 {
@@ -51,7 +51,7 @@ void EventDebugProvideData::LuaAddElement(sol::table args) noexcept
 
 void EventDebugProvideData::LuaSetDebugCommand(sol::table args) noexcept
 {
-	DebugConsole *debugConsole = debugManager.GetElement<DebugConsole>();
+	DebugConsole *debugConsole = debugManager.::IDebugManager::GetElement<DebugConsole>();
 	if (debugConsole == nullptr)
 	{
 		return;

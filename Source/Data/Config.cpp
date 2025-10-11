@@ -129,6 +129,8 @@ void Config::Save() noexcept
 		std::ofstream out{f};
 		if (out.is_open())
 		{
+			Log::SaveVerbosities(&::GetLog(_config));
+
 			out << _config.dump(1, '\t');
 			out.close();
 			TE_TRACE("Config file saved: \"{}\"", f);
@@ -161,11 +163,14 @@ void Config::Load() noexcept
 			out << _config.dump(4);
 			out.close();
 		}
-		Log::UpdateVerbosities(&::GetLog(_config));
+
+		Log::LoadVerbosities(&::GetLog(_config));
 	}
 	catch (const std::exception &e)
 	{
 		TE_ERROR("Exception occurred while loading config file: {}", e.what());
+
+		_config = {};
 	}
 }
 

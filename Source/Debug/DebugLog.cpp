@@ -32,12 +32,12 @@ void DebugLog::UpdateAndRender(IWindow &window) noexcept
 {
 	static auto TableLogFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg;
 	static auto VerbosityLevels = std::vector<std::tuple<ELogVerbosity, std::string_view>>{
-	    {ELogVerbosity::Trace, "Trace"},
-	    {ELogVerbosity::Debug, "Debug"},
-	    {ELogVerbosity::Info, "Info"},
-	    {ELogVerbosity::Warn, "Warn"},
 	    {ELogVerbosity::Error, "Error"},
-	    {ELogVerbosity::All, "Toggle All"},
+	    {ELogVerbosity::Warn, "Warn"},
+	    {ELogVerbosity::Info, "Info"},
+	    {ELogVerbosity::Debug, "Debug"},
+	    {ELogVerbosity::Trace, "Trace"},
+	    {ELogVerbosity::All, "All"},
 	};
 
 	if (ImGui::BeginTable("Log", VerbosityLevels.size() + 1, TableLogFlags))
@@ -53,31 +53,43 @@ void DebugLog::UpdateAndRender(IWindow &window) noexcept
 		for (auto it = Log::BeginLogs(); it != Log::EndLogs(); ++it)
 		{
 			++id;
-
-			const std::string &module = it->first;
-			ELogVerbosity verbosities = it->second->GetVerbosities();
+			std::string_view module = (*it)->GetModule();
+			ELogVerbosity verbosities = (*it)->GetVerbosities();
 
 			ImGui::TableNextRow();
 
 			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("%s", it->first.c_str());
+			ImGui::Text("%s", module.data());
 
 			for (size_t i = 1; i <= VerbosityLevels.size(); i++)
 			{
 				ImGui::PushID(id);
 				ImGui::TableSetColumnIndex(i);
 
-				auto &&[verb, str] = VerbosityLevels[i - 1];
+				auto &&[verb, _] = VerbosityLevels[i - 1];
 				if (i == VerbosityLevels.size())
 				{
 					if (ImGui::Button("On"))
 					{
-						Log::SetVerbositiesOverride(module, ELogVerbosity::All);
+						Log::SetVerbosities(module, ELogVerbosity::All);
 					}
 					ImGui::SameLine();
 					if (ImGui::Button("Off"))
 					{
-						Log::SetVerbositiesOverride(module, ELogVerbosity::None);
+						Log::SetVerbosities(module, ELogVerbosity::None);
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Flip"))
+					{
+						ELogVerbosity flipped = ELogVerbosity::None;
+						for (auto &&[v, _] : VerbosityLevels)
+						{
+							if (v != ELogVerbosity::All && v != ELogVerbosity::None && !EnumFlag::HasAny(verbosities, v))
+							{
+								EnumFlag::Mask(flipped, v);
+							}
+						}
+						Log::SetVerbosities(module, flipped);
 					}
 				}
 				else
@@ -85,7 +97,7 @@ void DebugLog::UpdateAndRender(IWindow &window) noexcept
 					bool enabled = EnumFlag::HasAny(verbosities, verb);
 					if (ImGui::Checkbox("", &enabled))
 					{
-						Log::SetVerbositiesOverride(module, EnumFlag::BitNot(verb));
+						Log::SetVerbosities(module, EnumFlag::BitXOr(verbosities, verb));
 					}
 				}
 

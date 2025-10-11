@@ -11,16 +11,15 @@
 
 #include "mod/LuaBindings.hpp"
 
+#include "Util/MicrosImpl.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
-#include "Util/MicrosImpl.hpp"
 
 using namespace tudov;
 
 void LuaBindings::InstallMod(sol::state &lua, Context &context) noexcept
 {
-
 	TE_LB_USERTYPE(
 	    ModConfig,
 	    "author", &ModConfig::author,

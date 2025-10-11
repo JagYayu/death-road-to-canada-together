@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ecs.ECS
+-- @module dr2c.Client.ECS.ECS
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -11,6 +11,7 @@
 
 local Table = require("TE.Table")
 local String = require("TE.String")
+local List = require("TE.List")
 
 local CECSSchema = require("dr2c.Client.ECS.ECSSchema")
 
@@ -282,7 +283,7 @@ local function despawnEntityImpl(entry)
 	local entityID = entity[1]
 	local entityTypeID = entity[2]
 
-	local index = Table.listFindLastIf(entities, isEntityIDMatched, entityID)
+	local index = List.findLastIf(entities, isEntityIDMatched, entityID)
 	if not index then
 		return
 	end

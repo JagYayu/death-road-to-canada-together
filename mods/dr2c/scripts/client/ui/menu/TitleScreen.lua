@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.MenuGeneric
+-- @module dr2c.Client.ui.MenuGeneric
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -47,6 +47,7 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 	}
 
 	root:addChild(CUIWidget.newButton({
+		id = 1,
 		label = "START",
 		margin = commonMargin,
 		scale = uiScale,
@@ -66,7 +67,7 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 		scale = uiScale,
 		border = commonBorder,
 		callback = function()
-			local ExitJumpscare = require("dr2c.client.ui.ExitJumpscare")
+			local ExitJumpscare = require("dr2c.Client.ui.ExitJumpscare")
 
 			ExitJumpscare.trigger()
 		end,

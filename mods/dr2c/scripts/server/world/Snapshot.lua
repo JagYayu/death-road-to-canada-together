@@ -10,6 +10,7 @@
 --]]
 
 local Table = require("TE.Table")
+local List = require("TE.List")
 
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GNetworkReason = require("dr2c.Shared.Network.Reason")
@@ -51,7 +52,7 @@ TE.events:add(N_("SUpdate"), function(e)
 		return
 	end
 
-	Table.listRemoveIf(serverSnapshotRequests, function(entry, index)
+	List.removeIfV(serverSnapshotRequests, function(entry, index)
 		-- 查找服务器本地缓存的快照
 		local snapshot = serverSnapshots[entry.snapshotID]
 		if snapshot then

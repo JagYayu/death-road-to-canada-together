@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.network.Server
+-- @module dr2c.Client.network.Server
 -- @author JagYayu
 -- @brief
 -- @version 1.0

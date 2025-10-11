@@ -37,6 +37,13 @@
 using namespace tudov;
 using namespace tudov::impl;
 
+static std::vector<std::string_view> emptyModGlobalsMigration = {};
+
+const std::vector<std::string_view> &ILuaBindings::GetModGlobalsMigration() const noexcept
+{
+	return emptyModGlobalsMigration;
+}
+
 bool LuaBindings::TypeID::LuaEqualTo(const TypeID &typeID) const noexcept
 {
 	if (this->typeinfo == nullptr || typeID.typeinfo == nullptr)
@@ -46,19 +53,19 @@ bool LuaBindings::TypeID::LuaEqualTo(const TypeID &typeID) const noexcept
 	return *this->typeinfo == *typeID.typeinfo;
 }
 
-bool LuaBindings::RegisterInstallation(std::string_view name, const TInstallation &installation)
-{
-	for (auto &&installation : _installations)
-	{
-		if (std::get<0>(installation) == name) [[unlikely]]
-		{
-			return false;
-		}
-	}
+// bool LuaBindings::RegisterInstallation(std::string_view name, const TInstallation &installation)
+// {
+// 	for (auto &&installation : _installations)
+// 	{
+// 		if (std::get<0>(installation) == name) [[unlikely]]
+// 		{
+// 			return false;
+// 		}
+// 	}
 
-	_installations.emplace_back(name, installation);
-	return true;
-}
+// 	_installations.emplace_back(name, installation);
+// 	return true;
+// }
 
 decltype(auto) GetPrimaryWindowFromContext(Context &context) noexcept
 {
@@ -84,7 +91,7 @@ decltype(auto) GetPrimaryWindowFromContext(Context &context) noexcept
 	"getCount", &LuaArray##Type::GetCount,          \
 	"set", &LuaArray##Type::Set);
 
-void LuaBindings::Install(sol::state &lua, Context &context)
+void LuaBindings::ProvideLuaBindings(sol::state &lua, Context &context)
 {
 	TE_LB_ENUM(
 	    EDebugConsoleCode,
@@ -251,6 +258,7 @@ void LuaBindings::Install(sol::state &lua, Context &context)
 	    "vfs", &dynamic_cast<VirtualFileSystem &>(context.GetVirtualFileSystem()));
 
 	InstallEvent(lua, context);
+	InstallKeyModifier(lua, context);
 	InstallMod(lua, context);
 	InstallNetwork(lua, context);
 	InstallScanCode(lua, context);
@@ -320,7 +328,7 @@ const std::vector<std::string_view> &LuaBindings::GetModGlobalsMigration() const
 		    "fonts",
 		    "images",
 		    "keyboards",
-		    "mouses",
+		    "mice",
 		    "mods",
 		    "network",
 		    "scriptEngine",

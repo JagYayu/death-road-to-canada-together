@@ -36,8 +36,8 @@ namespace tudov
 		// Mouse events.
 
 		[[nodiscard]] virtual RuntimeEvent &MouseMotion() noexcept = 0;
-		[[nodiscard]] virtual RuntimeEvent &MouseButtonDown() noexcept = 0;
-		[[nodiscard]] virtual RuntimeEvent &MouseButtonUp() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &MousePress() noexcept = 0;
+		[[nodiscard]] virtual RuntimeEvent &MouseRelease() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &MouseWheel() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &MouseAdded() noexcept = 0;
 		[[nodiscard]] virtual RuntimeEvent &MouseRemoved() noexcept = 0;
@@ -119,8 +119,8 @@ namespace tudov
 		TRuntimeEvent _keyboardAdded;
 		TRuntimeEvent _keyboardRemoved;
 		TRuntimeEvent _mouseMotion;
-		TRuntimeEvent _mouseButtonDown;
-		TRuntimeEvent _mouseButtonUp;
+		TRuntimeEvent _mousePress;
+		TRuntimeEvent _mouseRelease;
 		TRuntimeEvent _mouseWheel;
 		TRuntimeEvent _mouseAdded;
 		TRuntimeEvent _mouseRemoved;
@@ -157,8 +157,8 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &KeyboardAdded() noexcept override;
 		[[nodiscard]] RuntimeEvent &KeyboardRemoved() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseMotion() noexcept override;
-		[[nodiscard]] RuntimeEvent &MouseButtonDown() noexcept override;
-		[[nodiscard]] RuntimeEvent &MouseButtonUp() noexcept override;
+		[[nodiscard]] RuntimeEvent &MousePress() noexcept override;
+		[[nodiscard]] RuntimeEvent &MouseRelease() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseWheel() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseAdded() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseRemoved() noexcept override;

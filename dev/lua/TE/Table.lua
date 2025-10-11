@@ -15,9 +15,9 @@ local stringBuffer = require("string.buffer")
 local table_clear = require("table.clear")
 local table_new = require("table.new")
 
-local floor = math.floor
 local getmetatable = getmetatable
 local ipairs = ipairs
+local math_floor = math.floor
 local math_min = math.min
 local newproxy = newproxy
 local pairs = pairs
@@ -109,40 +109,6 @@ function Table.fastCopy(tbl)
 	return tbl
 end
 
---- @generic T
---- @param list T[]
---- @param depth integer
---- @return T[]
-local function copyArrayImpl(list, depth)
-	local result = table_new(#list, 0)
-
-	if depth > 0 then
-		for i, v in ipairs(list) do
-			if type(v) == "table" then
-				result[i] = copyArrayImpl(v, depth - 1)
-			end
-		end
-	else
-		for i, v in ipairs(list) do
-			result[i] = v
-		end
-	end
-
-	return result
-end
-
---- Copy array part of a table.
---- This is faster than `Table.fastCopy`, but only support copy array part of tables inside.
---- @generic T
---- @param list T[]
---- @param depth integer? @default: 0
---- @return T[]
-function Table.copyArray(list, depth)
-	depth = tonumber(depth) or 0
-
-	return copyArrayImpl(list, depth)
-end
-
 local flattenImpl
 do
 	local function flattenImplInsert(t, v, d, pf)
@@ -193,7 +159,7 @@ function Table.flattenPairs(flattened)
 end
 
 --- @param tbl any[]
---- @return integer[]
+--- @return integer[] list
 function Table.getIndexList(tbl)
 	local keyList = {}
 
@@ -206,8 +172,8 @@ end
 
 --- @generic T
 --- @param tbl table<T, any>
---- @param keys (table | integer)? @An alias of return table, to avoid GC in specific situations.
---- @return T[]
+--- @param keys? (table | integer) @An alias of return table, to avoid GC in specific situations.
+--- @return T[] list
 function Table.getKeyList(tbl, keys)
 	local keysType = type(keys)
 	local keyList = keysType == "number" and table_new(keys, 0) --
@@ -263,175 +229,6 @@ function Table.getKeyValueLists(tbl, keys, values)
 	return keyList, valueList
 end
 
---- @generic T
---- @param list T[]
---- @param value T
---- @return integer? pos
-function Table.listFastRemoveFirst(list, value)
-	for pos, val in ipairs(list) do
-		if val == value then
-			list[pos] = remove(list, #list)
-			return pos
-		end
-	end
-end
-
---- @generic T
---- @param list T[]
---- @param func fun(value: T, index: integer): boolean
---- @return integer? pos
-function Table.listFastRemoveFirstIf(list, func)
-	for pos, val in ipairs(list) do
-		if func(val, pos) then
-			list[pos] = remove(list, #list)
-			return pos
-		end
-	end
-end
-
---- @generic T
---- @param list T[]
---- @param value T
-function Table.listRemoveFirst(list, value)
-	for pos, val in ipairs(list) do
-		if val == value then
-			return remove(list, pos)
-		end
-	end
-end
-
---- @generic T
---- @generic TArgs
---- @param list T[]
---- @param func fun(value: T, index: integer, ...: TArgs): boolean
---- @param ... TArgs
-function Table.listRemoveFirstIf(list, func, ...)
-	for pos, val in ipairs(list) do
-		if func(val, pos, ...) then
-			return remove(list, pos)
-		end
-	end
-end
-
---- @generic T
---- @param list T[]
---- @return T[]
-function Table.listRemoveDuplications(list)
-	local size = #list
-
-	if size ~= 0 then
-		local seen = {}
-		local target = 1
-
-		for i = 1, size do
-			if not seen[list[i]] then
-				seen[list[i]] = true
-				list[target] = list[i]
-				target = target + 1
-			end
-		end
-
-		for i = target, size do
-			list[i] = nil
-		end
-	end
-
-	return list
-end
-
---- @generic T
---- @param list T[]
---- @return T[]
-function Table.listSortedRemoveDuplications(list)
-	local ti = 1
-	local tv = list[1]
-
-	for read = 2, #list do
-		local v = list[read]
-		if v ~= tv then
-			ti = ti + 1
-			list[ti] = v
-			tv = v
-		end
-	end
-
-	for i = #list, ti + 1, -1 do
-		list[i] = nil
-	end
-
-	return list
-end
-
---- @generic T
---- @param list T[]
---- @param comp (fun(a: integer, b: T): boolean)?
---- @return T[]
-function Table.listSortAndRemoveDuplications(list, comp)
-	table.sort(list, comp)
-	return Table.listSortedRemoveDuplications(list)
-end
-
---- @generic T
---- @generic TArgs
---- @param list T[]
---- @param func fun(value: T, index: integer, ...: TArgs): boolean
---- @param ... TArgs
---- @return T[] list
-function Table.listRemoveIf(list, func, ...)
-	local l, r = 1, 1
-
-	while #list >= r do
-		if func(list[r], r, ...) then
-			list[r] = nil
-		else
-			if l ~= r then
-				list[l] = list[r]
-				list[r] = nil
-			end
-
-			l = l + 1
-		end
-
-		r = r + 1
-	end
-
-	return list
-end
-
-function Table.reverse(list)
-	local len = #list
-
-	for i = 1, floor(len / 2) do
-		list[len - i + 1] = list[i]
-		list[i] = list[len - i + 1]
-	end
-
-	return list
-end
-
---- @generic T
---- @param list T[]
---- @param index integer
---- @return integer? index
---- @return T? index
---- @nodiscard
-local function reversedPairsIterator(list, index)
-	index = index - 1
-
-	if list[index] then
-		return index, list[index]
-	end
-end
-
---- @generic T
---- @param list T[]
---- @return fun(list: T[], index: integer): (index: integer?, index: T?)
---- @return T[]
---- @return integer?
-function Table.reversedPairs(list)
-	return reversedPairsIterator, list, #list + 1
-end
-
 --- @generic TK, TV
 --- @param tbl table<TK, TV>
 --- @param state { [1]: TK[], [2]: integer }
@@ -451,6 +248,8 @@ local function sortedPairsIterator(tbl, state)
 	end
 end
 
+local sortedPairsEmptyState = { {}, 0 }
+
 --- @generic TK, TV
 --- @param tbl table<TK, TV>
 --- @param sort fun(comp: (fun(a: TK, b: TK): boolean)?)?
@@ -460,29 +259,18 @@ end
 --- @return { [1]: TK[], [2]: integer } state @readonly
 function Table.sortedPairs(tbl, sort, comp)
 	local keyList = Table.getKeyList(tbl)
+	if keyList[1] then
+		do
+			(sort or table.sort)(keyList, comp)
+		end
 
-	do
-		(sort or table.sort)(keyList, comp)
+		return sortedPairsIterator, tbl, {
+			keyList,
+			0,
+		}
+	else
+		return sortedPairsIterator, tbl, sortedPairsEmptyState
 	end
-
-	return sortedPairsIterator, tbl, {
-		keyList,
-		0,
-	}
-end
-
---- @generic T
---- @param list T[]
---- @return table<T, number>
---- @nodiscard
-function Table.invertIndexValues(list)
-	local tbl = table_new(0, #list)
-
-	for index, value in ipairs(list) do
-		tbl[value] = index
-	end
-
-	return tbl
 end
 
 local function mergeImpl(dest, src, depth)
@@ -530,20 +318,6 @@ function Table.mergeExists(dest, src)
 	return dest
 end
 
---- @generic T
---- @param list T[]
---- @param items T[]
---- @return T[] list
-function Table.append(list, items)
-	local len = #list
-
-	for idx, val in ipairs(items) do
-		list[len + idx] = val
-	end
-
-	return list
-end
-
 --- @generic TK, TV
 --- @param tbl table<TK, TV>
 --- @param val TV
@@ -568,14 +342,28 @@ function Table.find(tbl, value, pairsFunc)
 	return findImpl(tbl, value, pairsFunc or pairs)
 end
 
---- @generic T
---- @param list T[]
---- @param value T
---- @return integer? index
---- @return T? value
+--- @generic K, V, TArgs...
+--- @param tbl table<K, V>
+--- @param func fun(value: V, key: K, ...: TArgs...): boolean
+--- @return K? key
+--- @return V? value
 --- @nodiscard
-function Table.listFindFirst(list, value)
-	return findImpl(list, value, ipairs)
+local function findFirstIfImpl(tbl, func, funcPairs)
+	for k, v in funcPairs(tbl) do
+		if func(v, k) then
+			return k, v
+		end
+	end
+end
+
+--- @generic TK, TV
+--- @param tbl table<TK, TV>
+--- @param func fun(value: TV, key: TK): boolean
+--- @return TK? key
+--- @return TV? value
+--- @nodiscard
+function Table.findFirstIf(tbl, func, pairsFunc)
+	return findFirstIfImpl(tbl, func, pairsFunc or pairs)
 end
 
 --- @generic K, V, TArgs...
@@ -584,7 +372,7 @@ end
 --- @return K? key
 --- @return V? value
 --- @nodiscard
-local function findFirstIfImpl(tbl, func, funcPairs, ...)
+local function findFirstIfVImpl(tbl, func, funcPairs, ...)
 	for k, v in funcPairs(tbl) do
 		if func(v, k, ...) then
 			return k, v
@@ -599,93 +387,8 @@ end
 --- @return TK? key
 --- @return TV? value
 --- @nodiscard
-function Table.findFirstIf(tbl, func, pairsFunc, ...)
-	return findFirstIfImpl(tbl, func, pairsFunc or pairs, ...)
-end
-
---- @generic T
---- @param l T[]
---- @param r T[]
---- @return T[]
---- @nodiscard
-function Table.listConcat(l, r)
-	local ll = #l
-	for i = 1, #r do
-		l[ll + i] = r[i]
-	end
-	return l
-end
-
---- @generic T, TArgs...
---- @param list table<integer, T>
---- @param func fun(value: T, index: integer, ...: TArgs...): boolean
---- @param ... TArgs...
---- @return integer? index
---- @return T? value
---- @nodiscard
-function Table.listFindFirstIf(list, func, ...)
-	return findFirstIfImpl(list, func, ipairs, ...)
-end
-
---- Same as `Table.listFindFirstIf`, but only return a value instead of a pair.
---- @generic TValue, TArgs...
---- @param list table<integer, TValue>
---- @param func fun(value: TValue, index: integer, ...: TArgs...): boolean
---- @param ... TArgs...
---- @return TValue? value
---- @nodiscard
-function Table.listFindFirstValueIf(list, func, ...)
-	local _, value = findFirstIfImpl(list, func, ipairs, ...)
-	return value
-end
-
---- @generic TValue, TArgs...
---- @param list table<integer, TValue>
---- @param func fun(value: TValue, index: integer, ...: TArgs...): boolean
---- @param ... TArgs...
---- @return integer? index
---- @return TValue? value
---- @nodiscard
-function Table.listFindLastIf(list, func, ...)
-	return findFirstIfImpl(list, func, Table.reversedPairs, ...)
-end
-
---- @generic TValue, TArgs...
---- @param list table<integer, TValue>
---- @param func fun(value: TValue, index: integer, ...: TArgs...): boolean
---- @param ... TArgs...
---- @return TValue? value
---- @nodiscard
-function Table.listFindLastValueIf(list, func, ...)
-	local _, value = findFirstIfImpl(list, func, Table.reversedPairs, ...)
-	return value
-end
-
---- @generic T
---- @param list T[]
---- @param length integer?
---- @return T[]
-function Table.listShrink(list, length)
-	local result = table_new(#list, 0)
-
-	for i = 1, length and math_min(#list, length) or #list do
-		result[i] = list[i]
-	end
-
-	return result
-end
-
---- @generic T
---- @param list T[]
---- @return { [T]: integer }
-function Table.listToSet(list)
-	local set = {}
-
-	for i = 1, #list do
-		set[list[i]] = i
-	end
-
-	return set
+function Table.findFirstIfV(tbl, func, pairsFunc, ...)
+	return findFirstIfVImpl(tbl, func, pairsFunc or pairs, ...)
 end
 
 --- @generic T : table
@@ -792,29 +495,6 @@ end
 --- @return boolean
 function Table.deepEquals(l, r)
 	return deepEqualsImpl(l, r, {})
-end
-
---- @generic T
---- @param list T[]
---- @param value T
---- @return integer
-function Table.lowerBound(list, value)
-	local first, count = 1, #list
-	local step, index
-
-	while count > 0 do
-		step = floor(count / 2)
-		index = first + step
-
-		if value > list[index] then
-			first = index + 1
-			count = count - step - 1
-		else
-			count = step
-		end
-	end
-
-	return first
 end
 
 Table.lockMetatable(Table.empty)

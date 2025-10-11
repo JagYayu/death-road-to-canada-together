@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ecs.ECSSchema
+-- @module dr2c.Client.ECS.ECSSchema
 -- @author JagYayu
 -- @brief
 -- @version 1.0

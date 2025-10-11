@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.world.Scene
+-- @module dr2c.Client.world.Scene
 -- @author JagYayu
 -- @brief
 -- @version 1.0

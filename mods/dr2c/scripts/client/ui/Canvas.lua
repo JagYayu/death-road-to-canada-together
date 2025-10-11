@@ -11,6 +11,7 @@
 
 local Table = require("TE.Table")
 local Geometry = require("TE.Geometry")
+local List = require("TE.List")
 
 local CSystemInput = require("dr2c.Client.System.Input")
 
@@ -24,6 +25,10 @@ local canvasSelected
 local canvasLatestIndex = 0
 --- @type table<integer, dr2c.UICanvas>
 local canvasMap = setmetatable({}, { __mode = "v" })
+--- @type boolean
+local isMouseControlEnabled = false
+--- @type boolean
+local isKeyboardControlEnabled = false
 
 canvasLatestIndex = persist("canvasLatestIndex", function()
 	return canvasLatestIndex
@@ -61,7 +66,7 @@ end
 --- @param widget dr2c.UIWidget
 local function metatableAddWidget(self, widget)
 	local widgets = self.widgets
-	if Table.listFindFirst(widgets, widget) then
+	if List.findFirst(widgets, widget) then
 		return false
 	end
 
@@ -83,7 +88,7 @@ local function metatableSelectWidget(self, widgetOrID)
 	--- @type dr2c.UIWidget?
 	local widget
 	if type(widgetOrID) == "string" or type(widgetOrID) == "number" then
-		widget = Table.listFindFirstValueIf(self.widgets, widgetHasSameID, widgetOrID)
+		widget = List.findFirstValueIf(self.widgets, widgetHasSameID, widgetOrID)
 	elseif type(widgetOrID) == "table" then
 		widget = widgetOrID
 	end
@@ -162,6 +167,24 @@ function CUICanvas.new(args)
 	return canvas
 end
 
+function CUICanvas.getMouseControlEnabled()
+	return isMouseControlEnabled
+end
+
+function CUICanvas.getKeyboardControlEnabled()
+	return isKeyboardControlEnabled
+end
+
+--- @param value boolean
+function CUICanvas.setMouseControlEnabled(value)
+	isMouseControlEnabled = not not value
+end
+
+--- @param value boolean
+function CUICanvas.setKeyboardControlEnabled(value)
+	isKeyboardControlEnabled = not not value
+end
+
 --- @param l dr2c.UICanvas
 --- @param r dr2c.UICanvas
 local function compareCanvas(l, r)
@@ -170,6 +193,17 @@ local function compareCanvas(l, r)
 	else
 		return l.index > r.index
 	end
+end
+
+--- @return dr2c.UICanvas[]
+local function collectCanvasList()
+	if next(canvasMap) == nil then
+		return Table.empty
+	end
+
+	local canvasList = Table.getValueList(canvasMap)
+	table.sort(canvasList, compareCanvas)
+	return canvasList
 end
 
 --- @param canvas dr2c.UICanvas
@@ -195,10 +229,13 @@ local function canvasSelectWidgetAtMouse(canvas, mouseX, mouseY, widgets)
 	return false
 end
 
---- @param canvases dr2c.UICanvas[]
-local function handleCanvasesSelection(canvases)
-	local mouseX, mouseY = CSystemInput.getMousePosition()
+TE.events:add(N_("CMouseMotion"), function()
+	local canvases = collectCanvasList()
+	if not canvases[1] then
+		return
+	end
 
+	local mouseX, mouseY = CSystemInput.getMousePosition()
 	for _, canvas in ipairs(canvases) do
 		if canvas.visible and canvas:contains(mouseX, mouseY) then
 			if canvasSelectWidgetAtMouse(canvas, mouseX, mouseY, canvas.widgets) then
@@ -206,19 +243,26 @@ local function handleCanvasesSelection(canvases)
 			end
 		end
 	end
+end, "UICanvasHandleMouseControl", "UI")
+
+local function canvasControl(key)
+	for _, canvas in ipairs(collectCanvasList()) do
+		-- canvas.selectWidget
+	end
 end
 
-TE.events:add(N_("CUpdate"), function(e)
-	if next(canvasMap) == nil then
-		return
+--- @param e Events.E.KeyboardPress
+TE.events:add(N_("CKeyboardPress"), function(e)
+	if e.data.scanCode == EScanCode.Up then
+		canvasControl("selectUp")
+	elseif e.data.scanCode == EScanCode.Down then
+		canvasControl("selectDown")
+	elseif e.data.scanCode == EScanCode.Left then
+		canvasControl("selectLeft")
+	elseif e.data.scanCode == EScanCode.Right then
+		canvasControl("selectRight")
 	end
-
-	local canvasList = Table.getValueList(canvasMap)
-
-	table.sort(canvasList, compareCanvas)
-
-	handleCanvasesSelection(canvasList)
-end, "UICanvasHandleInput", "Inputs", nil, 1)
+end, "UICanvasHandleKeyboardControl", "UI") -- we don't use key filter, we'd let ui controller key bindings editable in future!
 
 TE.events:add("ScriptUnload", function(e)
 	--- If a module representing a certain widget type is unloaded,
@@ -237,12 +281,12 @@ TE.events:add("ScriptUnload", function(e)
 			return true
 		end
 
-		Table.listRemoveIf(widget.widgets, removeExpiredWidget)
+		List.removeIfV(widget.widgets, removeExpiredWidget)
 		return false
 	end
 
 	for _, canvas in pairs(canvasMap) do
-		Table.listRemoveIf(canvas.widgets, removeExpiredWidget)
+		List.removeIfV(canvas.widgets, removeExpiredWidget)
 	end
 end, "ClientUICanvasUnloadTypedWidget", "Client")
 

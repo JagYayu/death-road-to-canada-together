@@ -31,12 +31,12 @@ namespace tudov
 		Audio *audio;
 		Vector3F *position;
 
-		bool loop = false;                      // 是否循环播放
-		std::float_t pitch = 1.0f;              // 音调（1.0 = 原速）
-		std::float_t gain = 1.0f;               // 音量（1.0 = 原音量）
-		std::float_t rolloffFactor = -1.0f;     // 衰减系数（距离影响音量）
-		std::float_t referenceDistance = -1.0f; // 声音开始衰减的参考距离
-		std::float_t maxDistance = -1.0f;       // 最大距离（之后不再衰减）
+		bool loop = false;
+		std::float_t pitch = 1.0f;
+		std::float_t gain = 1.0f;
+		std::float_t rolloffFactor = -1.0f;
+		std::float_t referenceDistance = -1.0f;
+		std::float_t maxDistance = -1.0f;
 	};
 
 	struct IAudioPlayer

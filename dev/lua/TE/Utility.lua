@@ -9,6 +9,8 @@
 --
 --]]
 
+local type = type
+
 --- @class TE.Utility
 local Utility = {}
 
@@ -36,6 +38,34 @@ end
 --- @return boolean
 function Utility.canBeIndex(value)
 	return value ~= nil and value ~= Utility.nan
+end
+
+--- @generic T
+--- @param value? T | fun(): T
+--- @param default? T
+--- @return T
+function Utility.evaluate(value, default)
+	if default == nil then
+		if type(value) == "function" then
+			return value()
+		else
+			return value
+		end
+	else
+		local result
+
+		if type(value) == "function" then
+			result = value()
+		else
+			result = value
+		end
+
+		if type(result) ~= type(default) then
+			return default
+		else
+			return result
+		end
+	end
 end
 
 return Utility

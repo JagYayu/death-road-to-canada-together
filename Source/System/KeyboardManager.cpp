@@ -30,16 +30,18 @@
 using namespace tudov;
 
 KeyboardManager::KeyboardManager(Context &context) noexcept
-    : _context(context)
+    : _context(context),
+      _primaryKeyboard(std::make_shared<PrimaryKeyboard>(context))
 {
 	std::int32_t count;
 	SDL_KeyboardID *keyboardIDs = SDL_GetKeyboards(&count);
-	++count;
 
 	_keyboardList.reserve(count);
 	_keyboardMap.reserve(count);
 
-	for (std::int32_t index = count; index < count; ++index)
+	AddKeyboard(_primaryKeyboard);
+
+	for (std::int32_t index = 0; index < count; ++index)
 	{
 		auto id = keyboardIDs[index];
 		AddKeyboard(std::make_shared<Keyboard>(_context, id));
@@ -51,7 +53,21 @@ void KeyboardManager::AddKeyboard(const std::shared_ptr<Keyboard> &keyboard) noe
 	_keyboardList.emplace_back(keyboard);
 	_keyboardMap[keyboard->GetKeyboardID()] = keyboard;
 	_keyboards.emplace_back(keyboard);
+
+	TE_DEBUG("Added keyboard {}", keyboard->GetKeyboardID());
 }
+
+// void KeyboardManager::RemoveKeyboard(const std::shared_ptr<Keyboard> &keyboard) noexcept
+// {
+// 	std::remove_if(_keyboardList, keyboard, []()
+// 	{
+// 		return 1;
+// 	});
+// }
+
+// void KeyboardManager::RemoveKeyboardByID(KeyboardID &keyboard) noexcept
+// {
+// }
 
 Context &KeyboardManager::GetContext() noexcept
 {
@@ -65,14 +81,22 @@ Log &KeyboardManager::GetLog() noexcept
 
 void KeyboardManager::PreInitialize() noexcept
 {
-	EventHandleFunction func{[this](sol::object e, const EventHandleKey &key)
+	EventHandleFunction added{[this](sol::object e, const EventHandleKey &key)
 	{
 		OnKeyboardDeviceAdded(e, key);
 	}};
 
+	// EventHandleFunction removed{[this](sol::object e, const EventHandleKey &key)
+	// {
+	// 	OnKeyboardDeviceRemoved(e, key);
+	// }};
+
 	try
 	{
-		GetEventManager().GetCoreEvents().KeyboardAdded().Add(func, TE_NAMEOF(KeyboardManager::OnKeyboardDeviceAdded), RuntimeEvent::DefaultOrders[0]);
+		ICoreEvents &coreEvents = GetEventManager().GetCoreEvents();
+
+		coreEvents.KeyboardAdded().Add(added, TE_NAMEOF(KeyboardManager::OnKeyboardDeviceAdded), RuntimeEvent::DefaultOrders[0]);
+		// coreEvents.KeyboardRemoved().Add(removed, TE_NAMEOF(KeyboardManager::OnKeyboardDeviceAdded), RuntimeEvent::DefaultOrders[0]);
 	}
 	catch (const std::exception &e)
 	{
@@ -105,6 +129,17 @@ void KeyboardManager::OnKeyboardDeviceAdded(sol::object e, const EventHandleKey 
 	AddKeyboard(std::make_shared<Keyboard>(_context, data->keyboardID));
 }
 
+// void KeyboardManager::OnKeyboardDeviceRemoved(sol::object e, const EventHandleKey &key) noexcept
+// {
+// 	auto data = CoreEventData::Extract<EventKeyboardDeviceData>(e);
+// 	if (data == nullptr) [[unlikely]]
+// 	{
+// 		TE_WARN("Failed to add keyboard device!");
+
+// 		return;
+// 	}
+// }
+
 bool KeyboardManager::HandleEvent(AppEvent &appEvent) noexcept
 {
 	for (std::shared_ptr<Keyboard> &keyboard : _keyboardList)
@@ -117,7 +152,7 @@ bool KeyboardManager::HandleEvent(AppEvent &appEvent) noexcept
 	return false;
 }
 
-std::shared_ptr<IKeyboard> KeyboardManager::GetKeyboardAt(std::int32_t index) noexcept
+std::shared_ptr<IKeyboard> KeyboardManager::GetIKeyboardAt(std::int32_t index) noexcept
 {
 	if (index >= 0 && index < _keyboardList.size())
 	{
@@ -126,7 +161,7 @@ std::shared_ptr<IKeyboard> KeyboardManager::GetKeyboardAt(std::int32_t index) no
 	return nullptr;
 }
 
-std::shared_ptr<IKeyboard> KeyboardManager::GetKeyboardByID(KeyboardID id) noexcept
+std::shared_ptr<IKeyboard> KeyboardManager::GetIKeyboardByID(KeyboardID id) noexcept
 {
 	auto it = _keyboardMap.find(id);
 	if (it != _keyboardMap.end())
@@ -136,19 +171,29 @@ std::shared_ptr<IKeyboard> KeyboardManager::GetKeyboardByID(KeyboardID id) noexc
 	return nullptr;
 }
 
-std::vector<std::shared_ptr<IKeyboard>> *KeyboardManager::GetKeyboards() noexcept
+std::shared_ptr<IKeyboard> KeyboardManager::GetPrimaryIKeyboard() noexcept
+{
+	return _primaryKeyboard;
+}
+
+std::vector<std::shared_ptr<IKeyboard>> *KeyboardManager::GetIKeyboards() noexcept
 {
 	return &_keyboards;
 }
 
 std::shared_ptr<Keyboard> KeyboardManager::LuaGetKeyboardAt(sol::object index) noexcept
 {
-	return std::dynamic_pointer_cast<Keyboard>(GetKeyboardAt(index.is<std::int32_t>() ? index.as<std::int32_t>() : 0));
+	return std::dynamic_pointer_cast<Keyboard>(GetIKeyboardAt(index.is<std::int32_t>() ? index.as<std::int32_t>() : 0));
 }
 
 std::shared_ptr<Keyboard> KeyboardManager::LuaGetKeyboardByID(sol::object id) noexcept
 {
-	return std::dynamic_pointer_cast<Keyboard>(GetKeyboardByID(id.is<KeyboardID>() ? id.as<KeyboardID>() : 0));
+	return std::dynamic_pointer_cast<Keyboard>(GetIKeyboardByID(id.is<KeyboardID>() ? id.as<KeyboardID>() : 0));
+}
+
+std::shared_ptr<Keyboard> KeyboardManager::LuaGetPrimaryKeyboard() noexcept
+{
+	return _primaryKeyboard;
 }
 
 sol::table KeyboardManager::LuaListKeyboards() noexcept

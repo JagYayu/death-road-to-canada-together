@@ -125,6 +125,7 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	    "getStartupTime", &Time::GetStartupTime,
 	    "getSystemTime", &Time::GetSystemTime);
 
-	lua["mouses"] = &dynamic_cast<MouseManager &>(context.GetMouseManager());
-	lua["keyboards"] = &dynamic_cast<KeyboardManager &>(context.GetKeyboardManager());
+	auto TE = lua["TE"];
+	TE["mice"] = &dynamic_cast<MouseManager &>(context.GetMouseManager());
+	TE["keyboards"] = &dynamic_cast<KeyboardManager &>(context.GetKeyboardManager());
 }

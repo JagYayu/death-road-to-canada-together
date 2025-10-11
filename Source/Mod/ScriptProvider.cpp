@@ -60,10 +60,11 @@ void ScriptProvider::Initialize() noexcept
 {
 	constexpr decltype(auto) directory = "App/Lua";
 
-	auto entries = GetVirtualFileSystem().List(directory, EnumFlag::BitOr(
-	                                                          EPathListOption::File,
-	                                                          EPathListOption::Recursed,
-	                                                          EPathListOption::Sorted));
+	auto entries = GetVirtualFileSystem().List(directory,
+	                                           EnumFlag::BitOr(
+	                                               EPathListOption::File,
+	                                               EPathListOption::Recursed,
+	                                               EPathListOption::Sorted));
 	TextResources &textResources = GetGlobalResourcesCollection().GetTextResources();
 
 	std::unordered_set<std::string_view> excludedScripts = {

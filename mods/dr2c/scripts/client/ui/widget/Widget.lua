@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.widget.Widget
+-- @module dr2c.Client.ui.widget.Widget
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -57,6 +57,11 @@ function CUIWidget.new(widgetType, args)
 	--- @field padding? Rectangle
 	--- @field rectangle? Rectangle
 	--- @field selectable? boolean @default true
+	--- @field selectDirectional? fun(direction: number): dr2c.UIWidgetID?
+	--- @field selectUp? dr2c.UIWidgetID | fun(): dr2c.UIWidgetID?
+	--- @field selectDown? dr2c.UIWidgetID | fun(): dr2c.UIWidgetID?
+	--- @field selectLeft? dr2c.UIWidgetID | fun(): dr2c.UIWidgetID?
+	--- @field selectRight? dr2c.UIWidgetID | fun(): dr2c.UIWidgetID?
 	args = args or Table.empty
 
 	--- @class dr2c.UIWidget

@@ -9,7 +9,7 @@
  *
  */
 
-#include "audio/AudioPlayer.hpp"
+#include "Audio/AudioPlayer.hpp"
 #include "System/LogMicros.hpp"
 
 #include <AL/al.h>
@@ -32,7 +32,6 @@ AudioPlayer::AudioPlayer(Context &context) noexcept
 		TE_WARN("Failed to set OpenAL context");
 	}
 
-	// 默认监听者在原点朝-Z方向
 	alListener3f(AL_POSITION, 0.0f, 0.0f, 0.0f);
 	alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 	ALfloat ori[] = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};

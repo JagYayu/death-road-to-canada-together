@@ -31,23 +31,23 @@ namespace tudov
 	{
 		virtual ~IWindowManager() noexcept = default;
 
-		virtual std::shared_ptr<IWindow> GetWindowByID(WindowID windowID) noexcept = 0;
+		virtual std::shared_ptr<IWindow> GetIWindowByID(WindowID windowID) noexcept = 0;
 
 		virtual std::shared_ptr<IWindow> GetPrimaryWindow() noexcept = 0;
 
-		virtual std::shared_ptr<const IWindow> GetPrimaryWindow() const noexcept = 0;
+		virtual std::shared_ptr<const IWindow> GetPrimaryIWindow() const noexcept = 0;
 
-		virtual std::vector<std::shared_ptr<IWindow>> &GetSubWindows() noexcept = 0;
+		virtual std::vector<std::shared_ptr<IWindow>> &GetSubIWindows() noexcept = 0;
 
-		virtual const std::vector<std::shared_ptr<IWindow>> &GetSubWindows() const noexcept = 0;
+		virtual const std::vector<std::shared_ptr<IWindow>> &GetSubIWindows() const noexcept = 0;
 
-		virtual std::shared_ptr<IDebugManager> GetDebugManager() noexcept = 0;
+		virtual std::shared_ptr<IDebugManager> GetIDebugManager() noexcept = 0;
 
-		virtual std::shared_ptr<const IDebugManager> GetDebugManager() const noexcept = 0;
+		virtual std::shared_ptr<const IDebugManager> GetIDebugManager() const noexcept = 0;
 
-		virtual void AddSubWindow(const std::shared_ptr<IWindow> &window) = 0;
+		virtual void AddSubIWindow(const std::shared_ptr<IWindow> &window) = 0;
 
-		virtual void RemoveSubWindow(const std::shared_ptr<IWindow> &window) = 0;
+		virtual void RemoveSubIWindow(const std::shared_ptr<IWindow> &window) = 0;
 
 		virtual bool IsEmpty() noexcept = 0;
 
@@ -84,17 +84,17 @@ namespace tudov
 
 		bool HandleEvent(AppEvent &appEvent) noexcept override;
 
-		std::shared_ptr<IWindow> GetWindowByID(WindowID windowID) noexcept override;
+		std::shared_ptr<IWindow> GetIWindowByID(WindowID windowID) noexcept override;
 		std::shared_ptr<IWindow> GetPrimaryWindow() noexcept override;
-		std::shared_ptr<const IWindow> GetPrimaryWindow() const noexcept override;
-		std::vector<std::shared_ptr<IWindow>> &GetSubWindows() noexcept override;
-		const std::vector<std::shared_ptr<IWindow>> &GetSubWindows() const noexcept override;
+		std::shared_ptr<const IWindow> GetPrimaryIWindow() const noexcept override;
+		std::vector<std::shared_ptr<IWindow>> &GetSubIWindows() noexcept override;
+		const std::vector<std::shared_ptr<IWindow>> &GetSubIWindows() const noexcept override;
 
-		std::shared_ptr<IDebugManager> GetDebugManager() noexcept override;
-		std::shared_ptr<const IDebugManager> GetDebugManager() const noexcept override;
+		std::shared_ptr<IDebugManager> GetIDebugManager() noexcept override;
+		std::shared_ptr<const IDebugManager> GetIDebugManager() const noexcept override;
 
-		void AddSubWindow(const std::shared_ptr<IWindow> &window) override;
-		void RemoveSubWindow(const std::shared_ptr<IWindow> &window) override;
+		void AddSubIWindow(const std::shared_ptr<IWindow> &window) override;
+		void RemoveSubIWindow(const std::shared_ptr<IWindow> &window) override;
 
 		bool IsEmpty() noexcept override;
 		void InitializePrimaryWindow() noexcept override;

@@ -44,6 +44,11 @@ IEventManager &Context::GetEventManager()
 	return *GetEngine()._data->_eventManager;
 }
 
+IGameScripts &Context::GetGameScripts()
+{
+	return *GetEngine()._data->_gameScripts;
+}
+
 IKeyboardManager &Context::GetKeyboardManager()
 {
 	return *GetEngine()._data->_keyboardManager;

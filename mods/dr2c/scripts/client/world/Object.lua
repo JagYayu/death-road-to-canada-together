@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.world.Object
+-- @module dr2c.Client.world.Object
 -- @author JagYayu
 -- @brief
 -- @version 1.0

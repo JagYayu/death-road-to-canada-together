@@ -24,6 +24,7 @@
 #include <thread>
 #include <tuple>
 #include <type_traits>
+#include <vector>
 
 using namespace tudov;
 
@@ -36,8 +37,8 @@ static std::ofstream fileStream;
 
 ELogVerbosity Log::_globalVerbosities = ELogVerbosity::All;
 std::unordered_map<std::string, ELogVerbosity> Log::_verbosities{};
-std::unordered_map<std::string, ELogVerbosity> Log::_verbositiesOverrides{};
-std::unordered_map<std::string, std::shared_ptr<Log>> Log::_logInstances{};
+std::unordered_map<std::string, std::shared_ptr<Log>> Log::_logInstanceMap{};
+std::unique_ptr<std::vector<Log *>> Log::_logInstanceList{};
 std::queue<Log::Entry> Log::_queue;
 std::mutex Log::_mutex;
 std::condition_variable Log::_cv;
@@ -49,14 +50,16 @@ std::shared_ptr<Log> Log::Get(std::string_view module) noexcept
 	// ! Are you attempt to call `Log::Get` in static initialization?
 
 	auto &&str = std::string(module);
-	auto it = _logInstances.find(str);
-	if (it != _logInstances.end()) [[likely]]
+	auto it = _logInstanceMap.find(str);
+	if (it != _logInstanceMap.end()) [[likely]]
 	{
 		return it->second;
 	}
 
 	auto &&log = std::make_shared<Log>(str);
-	_logInstances.try_emplace(str, log);
+	_logInstanceMap.try_emplace(str, log);
+	_verbosities.emplace(str, _globalVerbosities);
+	_logInstanceList = nullptr;
 	return log;
 }
 
@@ -67,18 +70,19 @@ Log &Log::GetInstance() noexcept
 
 void Log::CleanupExpired() noexcept
 {
-	for (auto it = _logInstances.begin(); it != _logInstances.end();)
+	for (auto it = _logInstanceMap.begin(); it != _logInstanceMap.end();)
 	{
 		if (it->first.empty() || it->second.use_count() <= 1)
 		{
-			it = _logInstances.erase(it);
+			it = _logInstanceMap.erase(it);
+			_logInstanceList = nullptr;
 		}
 		else
 		{
 			++it;
 		}
 	}
-	ShrinkUnorderedMap(_logInstances);
+	ShrinkUnorderedMap(_logInstanceMap);
 }
 
 void Log::Quit() noexcept
@@ -87,10 +91,10 @@ void Log::Quit() noexcept
 
 	CleanupExpired();
 
-	if (!_logInstances.empty())
+	if (!_logInstanceMap.empty())
 	{
 		OutputImpl(defaultModule, VerbWarn, "Unreleased log pointers detected on application quit. Maybe memory leaked?");
-		for (auto &&[name, log] : _logInstances)
+		for (auto &&[name, log] : _logInstanceMap)
 		{
 			OutputImpl(defaultModule, VerbWarn, std::format("Log name \"{}\", ref count {}", name.data(), log.use_count()));
 		}
@@ -117,31 +121,29 @@ void Log::Exit() noexcept
 		logWorker->join();
 		logWorker = nullptr;
 	}
+
+	_logInstanceMap = {};
+	_verbosities = {};
+	_logInstanceList = nullptr;
+}
+
+std::string_view Log::GetModule() const noexcept
+{
+	return _module;
 }
 
 ELogVerbosity Log::GetVerbosities(std::string_view module) noexcept
 {
+	if (auto it = _verbosities.find(module.data()); it != _verbosities.end())
 	{
-		auto verbs = GetVerbositiesOverride(module.data());
-		if (verbs.has_value())
-		{
-			return verbs.value();
-		}
+		return it->second;
 	}
-
-	{
-		if (auto it = _verbositiesOverrides.find(module.data()); it != _verbositiesOverrides.end())
-		{
-			return it->second;
-		}
-	}
-
 	return _globalVerbosities;
 }
 
 bool Log::SetVerbosities(std::string_view module, ELogVerbosity flags) noexcept
 {
-	if (auto it = _verbositiesOverrides.find(module.data()); it != _verbositiesOverrides.end())
+	if (auto it = _verbosities.find(module.data()); it != _verbosities.end())
 	{
 		it->second = flags;
 		return true;
@@ -150,18 +152,44 @@ bool Log::SetVerbosities(std::string_view module, ELogVerbosity flags) noexcept
 	return false;
 }
 
-void Log::UpdateVerbosities(const void *jsonConfig)
+void Log::SaveVerbosities(void *jsonConfig)
 {
-	auto config = *static_cast<const nlohmann::json *>(jsonConfig);
-	if (!config.is_object())
+	auto &&config = *static_cast<nlohmann::json *>(jsonConfig);
+	if (!config.is_object()) [[unlikely]]
 	{
 		GetInstance().Warn("Cannot update verbosities by receiving a variable that not a json object");
+		return;
+	}
+
+	config["global"] = _globalVerbosities;
+
+	config["module"] = {};
+	auto &&modules = config["module"];
+	for (auto &&[module, verb] : _verbosities)
+	{
+		if (verb != _globalVerbosities)
+		{
+			modules[module] = verb;
+		}
+	}
+}
+
+void Log::LoadVerbosities(const void *jsonConfig)
+{
+	auto &&config = *static_cast<const nlohmann::json *>(jsonConfig);
+	if (!config.is_object()) [[unlikely]]
+	{
+		GetInstance().Warn("Cannot load verbosities by receiving a variable that not a json object");
 		return;
 	}
 
 	if (auto &&global = config["global"]; global.is_number_integer())
 	{
 		_globalVerbosities = ELogVerbosity(global.get<std::underlying_type<ELogVerbosity>::type>());
+	}
+	else
+	{
+		_globalVerbosities = EnumFlag::BitOr(ELogVerbosity::Fatal, ELogVerbosity::Error, ELogVerbosity::Warn, ELogVerbosity::Info);
 	}
 
 	if (auto &&module = config["module"]; module.is_object())
@@ -170,45 +198,50 @@ void Log::UpdateVerbosities(const void *jsonConfig)
 		{
 			if (value.is_number_integer())
 			{
-				_verbosities[key] = ELogVerbosity(value.get<std::underlying_type<ELogVerbosity>::type>());
+				_verbosities[key] = static_cast<ELogVerbosity>(value.get<std::underlying_type<ELogVerbosity>::type>());
+			}
+			else
+			{
+				_verbosities[key] = _globalVerbosities;
 			}
 		}
 	}
 }
 
-std::optional<ELogVerbosity> Log::GetVerbositiesOverride(const std::string &module) noexcept
-{
-	auto it = _verbositiesOverrides.find("key");
-	if (it != _verbositiesOverrides.end())
-	{
-		return it->second;
-	}
-	return std::nullopt;
-}
-
-void Log::SetVerbositiesOverride(std::string_view module, ELogVerbosity flags) noexcept
-{
-	_verbositiesOverrides[module.data()] = flags;
-}
-
-bool Log::RemoveVerbositiesOverride(std::string_view module) noexcept
-{
-	return _verbositiesOverrides.erase(module.data());
-}
-
 std::size_t Log::CountLogs() noexcept
 {
-	return _logInstances.size();
+	return _logInstanceMap.size();
 }
 
-std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator Log::BeginLogs() noexcept
+std::vector<Log *>::const_iterator Log::BeginLogs() noexcept
 {
-	return _logInstances.cbegin();
+	return GetOrNewLogInstanceList().cbegin();
 }
 
-std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator Log::EndLogs() noexcept
+std::vector<Log *>::const_iterator Log::EndLogs() noexcept
 {
-	return _logInstances.cend();
+	return GetOrNewLogInstanceList().cend();
+}
+
+std::vector<Log *> &Log::GetOrNewLogInstanceList() noexcept
+{
+	if (_logInstanceList == nullptr) [[unlikely]]
+	{
+		_logInstanceList = std::make_unique<std::vector<Log *>>();
+
+		for (auto [_, logInstance] : _logInstanceMap)
+		{
+			_logInstanceList->emplace_back(logInstance.get());
+		}
+
+		std::sort(_logInstanceList->begin(), _logInstanceList->end(), [](Log *l, Log *r) -> bool
+		{
+			TE_ASSERT(l->_module != r->_module);
+			return l->_module < r->_module;
+		});
+	}
+
+	return *_logInstanceList;
 }
 
 std::size_t Log::CountVerbosities() noexcept
@@ -224,21 +257,6 @@ std::unordered_map<std::string, ELogVerbosity>::const_iterator Log::BeginVerbosi
 std::unordered_map<std::string, ELogVerbosity>::const_iterator Log::EndVerbosities() noexcept
 {
 	return _verbosities.cend();
-}
-
-std::size_t Log::CountVerbositiesOverrides() noexcept
-{
-	return _verbositiesOverrides.size();
-}
-
-std::unordered_map<std::string, ELogVerbosity>::const_iterator Log::BeginVerbositiesOverrides() noexcept
-{
-	return _verbositiesOverrides.cbegin();
-}
-
-std::unordered_map<std::string, ELogVerbosity>::const_iterator Log::EndVerbositiesOverrides() noexcept
-{
-	return _verbositiesOverrides.cbegin();
 }
 
 Log::Log(std::string_view module) noexcept

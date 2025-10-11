@@ -36,10 +36,6 @@ void IEngineComponent::PostDeinitialize() noexcept
 {
 }
 
-void IEngineComponent::ProvideLuaBindings(ILuaBindings &luaBindings) noexcept
-{
-}
-
 bool IEngineComponent::HandleEvent(AppEvent &appEvent) noexcept
 {
 	return false;

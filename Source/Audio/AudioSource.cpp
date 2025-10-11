@@ -9,8 +9,8 @@
  *
  */
 
-#include "audio/AudioSource.hpp"
-#include "audio/AudioPlayer.hpp"
+#include "Audio/AudioSource.hpp"
+#include "Audio/AudioPlayer.hpp"
 
 using namespace tudov;
 

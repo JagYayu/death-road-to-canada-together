@@ -28,15 +28,18 @@ MouseManager::MouseManager(Context &context) noexcept
       _mouseList(),
       _mouseMap()
 {
-	try
-	{
-		AddMouse(_primaryMouse);
-	}
-	catch (const std::runtime_error &e)
-	{
-		Warn("Error adding primary mouse: {}", e.what());
+	std::int32_t count;
+	SDL_MouseID *mouseIDs = SDL_GetMice(&count);
 
-		_primaryMouse = nullptr;
+	_mouseList.reserve(count);
+	_mouseMap.reserve(count);
+
+	AddMouse(_primaryMouse);
+
+	for (std::int32_t index = 0; index < count; ++index)
+	{
+		auto id = mouseIDs[index];
+		AddMouse(std::make_shared<Mouse>(_context, id));
 	}
 }
 
@@ -77,6 +80,18 @@ std::shared_ptr<IMouse> MouseManager::GetMouseByID(MouseID id) noexcept
 std::shared_ptr<IMouse> MouseManager::GetPrimaryMouse() noexcept
 {
 	return _primaryMouse;
+}
+
+bool MouseManager::HandleEvent(AppEvent &appEvent) noexcept
+{
+	for (std::shared_ptr<Mouse> &mouse : _mouseList)
+	{
+		if (mouse->HandleEvent(appEvent))
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 void MouseManager::AddMouse(std::shared_ptr<Mouse> mouse)

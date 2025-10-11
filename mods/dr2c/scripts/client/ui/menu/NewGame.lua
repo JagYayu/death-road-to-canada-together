@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.MenuNewGame
+-- @module dr2c.Client.ui.MenuNewGame
 -- @author JagYayu
 -- @brief
 -- @version 1.0

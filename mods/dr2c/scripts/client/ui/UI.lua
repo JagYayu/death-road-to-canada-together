@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.UI
+-- @module dr2c.Client.ui.UI
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -13,6 +13,7 @@ local Color = require("TE.Color")
 
 local CClient = require("dr2c.Client.Module")
 
+--- @class dr2c.CUI
 local CUI = {}
 
 local scale = 1

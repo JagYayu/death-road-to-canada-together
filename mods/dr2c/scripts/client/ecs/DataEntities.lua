@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ecs.DataEntities
+-- @module dr2c.Client.ECS.DataEntities
 -- @author JagYayu
 -- @brief
 -- @version 1.0

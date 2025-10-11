@@ -78,7 +78,7 @@ namespace tudov
 
 	/**
 	 * Interface Class
-	 * Provide lua bindings to engine.
+	 * Provide lua bindings to script engine.
 	 */
 	struct ILuaBindings
 	{
@@ -86,11 +86,11 @@ namespace tudov
 
 		virtual ~ILuaBindings() noexcept = default;
 
-		virtual bool RegisterInstallation(std::string_view key, const TInstallation &installation) = 0;
+		// virtual bool RegisterInstallation(std::string_view key, const TInstallation &installation) = 0;
 
-		virtual void Install(sol::state &lua, Context &context) = 0;
+		virtual void ProvideLuaBindings(sol::state &lua, Context &context) = 0;
 
-		virtual const std::vector<std::string_view> &GetModGlobalsMigration() const noexcept = 0;
+		virtual const std::vector<std::string_view> &GetModGlobalsMigration() const noexcept;
 	};
 
 	class LuaBindings : public ILuaBindings
@@ -126,12 +126,13 @@ namespace tudov
 		LuaBindings &operator=(LuaBindings &&) noexcept = default;
 		~LuaBindings() noexcept = default;
 
-		bool RegisterInstallation(std::string_view key, const TInstallation &installation) override;
-		void Install(sol::state &lua, Context &context) override;
+		// bool RegisterInstallation(std::string_view key, const TInstallation &installation) override;
+		void ProvideLuaBindings(sol::state &lua, Context &context) override;
 		const std::vector<std::string_view> &GetModGlobalsMigration() const noexcept override;
 
 	  private:
 		void InstallEvent(sol::state &lua, Context &context) noexcept;
+		void InstallKeyModifier(sol::state &lua, Context &context) noexcept;
 		void InstallMod(sol::state &lua, Context &context) noexcept;
 		void InstallNetwork(sol::state &lua, Context &context) noexcept;
 		void InstallScanCode(sol::state &lua, Context &context) noexcept;

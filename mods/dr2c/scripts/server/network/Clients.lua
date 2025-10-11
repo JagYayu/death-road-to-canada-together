@@ -12,6 +12,7 @@
 local Enum = require("TE.Enum")
 local EnumFlag = require("TE.EnumFlag")
 local Table = require("TE.Table")
+local List  = require("TE.List")
 
 local GNetworkClient = require("dr2c.Shared.Network.Client")
 local GNetworkDisconnection = require("dr2c.Shared.Network.Disconnection")
@@ -117,7 +118,7 @@ end
 --- Send server clients attributes to lately verified client.
 --- @param clientID Network.ClientID
 local function onVerifiedClient(clientID)
-	Table.listRemoveFirstIf(unverifiedClients, unverifiedClientEquals, clientID)
+	List.removeFirstIfV(unverifiedClients, unverifiedClientEquals, clientID)
 
 	local hasHostClient
 	local clients
@@ -209,7 +210,7 @@ local function updateUnverifiedClientsFunc(entry)
 end
 
 TE.events:add(N_("SUpdate"), function(e)
-	Table.listRemoveIf(unverifiedClients, updateUnverifiedClientsFunc)
+	List.removeIfV(unverifiedClients, updateUnverifiedClientsFunc)
 end, N_("UpdateUnverifiedClients"), "Network", nil, -1)
 
 return SNetworkClients

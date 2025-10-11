@@ -16,10 +16,6 @@
 #include "Data/VirtualFileSystem.hpp"
 #include "Event/EventManager.hpp"
 #include "I18n/Localization.hpp"
-#include "mod/LuaBindings.hpp"
-#include "mod/ModManager.hpp"
-#include "mod/ScriptErrors.hpp"
-#include "mod/ScriptLoader.hpp"
 #include "Network/NetworkManager.hpp"
 #include "Program/Context.hpp"
 #include "Program/EngineComponent.hpp"
@@ -29,10 +25,15 @@
 #include "Resource/GlobalResourcesCollection.hpp"
 #include "Resource/ImageResources.hpp"
 #include "Resource/TextResources.hpp"
-#include "scripts/GameScripts.hpp"
 #include "System/KeyboardManager.hpp"
 #include "System/Log.hpp"
 #include "System/MouseManager.hpp"
+#include "mod/LuaBindings.hpp"
+#include "mod/ModManager.hpp"
+#include "mod/ScriptErrors.hpp"
+#include "mod/ScriptLoader.hpp"
+#include "scripts/GameScripts.hpp"
+
 
 #include <memory>
 #include <unordered_map>

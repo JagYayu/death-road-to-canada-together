@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.ui.Draw
+-- @module dr2c.Client.ui.Draw
 -- @author JagYayu
 -- @brief
 -- @version 1.0

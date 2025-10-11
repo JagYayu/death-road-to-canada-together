@@ -55,7 +55,5 @@ namespace tudov
 		virtual void ProcessTick() noexcept;
 		virtual void ProcessRender() noexcept;
 		virtual void ProcessLoad() noexcept;
-
-		[[deprecated]] virtual void ProvideLuaBindings(ILuaBindings &luaBindings) noexcept;
 	};
 } // namespace tudov

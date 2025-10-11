@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.render.Utils
+-- @module dr2c.Client.render.Utils
 -- @author JagYayu
 -- @brief
 -- @version 1.0

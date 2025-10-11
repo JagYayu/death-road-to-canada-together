@@ -76,7 +76,7 @@ namespace tudov
 	/**
 	 * Abstract Class
 	 */
-	class Window : public IWindow
+	class Window : public IWindow, ILogProvider
 	{
 		friend LuaBindings;
 
@@ -101,6 +101,7 @@ namespace tudov
 
 	  public:
 		Context &GetContext() noexcept override;
+		Log & GetLog() noexcept override;
 		WindowID GetWindowID() const noexcept override;
 		std::int32_t GetWidth() const noexcept override;
 		std::int32_t GetHeight() const noexcept override;

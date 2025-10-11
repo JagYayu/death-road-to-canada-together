@@ -15,11 +15,12 @@
 
 namespace tudov
 {
+	struct IAudioPlayer;
 	struct IEventManager;
+	struct IGameScripts;
 	struct IGlobalStorageManager;
 	struct ILuaBindings;
 	struct IModManager;
-	struct IAudioPlayer;
 	struct INetworkManager;
 	struct IScriptEngine;
 	struct IScriptErrors;
@@ -56,6 +57,7 @@ namespace tudov
 	  public:
 		[[nodiscard]] Engine &GetEngine();
 		[[nodiscard]] IEventManager &GetEventManager();
+		[[nodiscard]] IGameScripts &GetGameScripts();
 		[[nodiscard]] ILuaBindings &GetLuaBindings();
 		[[nodiscard]] IModManager &GetModManager();
 		[[nodiscard]] IScriptEngine &GetScriptEngine();
@@ -79,6 +81,11 @@ namespace tudov
 		[[nodiscard]] TE_FORCEINLINE const IEventManager &GetEventManager() const
 		{
 			return This()->GetEventManager();
+		}
+
+		[[nodiscard]] TE_FORCEINLINE const IGameScripts &GetGameScripts() const noexcept
+		{
+			return This()->GetGameScripts();
 		}
 
 		[[nodiscard]] TE_FORCEINLINE ILuaBindings &GetLuaBindings() const
@@ -190,6 +197,16 @@ namespace tudov
 		[[nodiscard]] TE_FORCEINLINE const IEventManager &GetEventManager() const noexcept
 		{
 			return GetContext().GetEventManager();
+		}
+
+		[[nodiscard]] TE_FORCEINLINE IGameScripts &GetGameScripts() noexcept
+		{
+			return GetContext().GetGameScripts();
+		}
+
+		[[nodiscard]] TE_FORCEINLINE const IGameScripts &GetGameScripts() const noexcept
+		{
+			return GetContext().GetGameScripts();
 		}
 
 		[[nodiscard]] TE_FORCEINLINE ILuaBindings &GetLuaBindings() noexcept

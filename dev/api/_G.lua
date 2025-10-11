@@ -110,6 +110,6 @@ scriptID = nil
 --- *Script Scope*
 --- Import from lua
 --- Current script's name.
---- e.g. "dr2c.client.test.Test"
+--- e.g. "dr2c.Client.test.Test"
 --- @type string
 scriptName = nil

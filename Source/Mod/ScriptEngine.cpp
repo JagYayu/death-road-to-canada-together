@@ -14,15 +14,16 @@
 #include "Event/CoreEvents.hpp"
 #include "Event/CoreEventsData.hpp"
 #include "Event/RuntimeEvent.hpp"
+#include "Scripts/GameScripts.hpp"
+#include "System/LogMicros.hpp"
+#include "Util/Definitions.hpp"
+#include "Util/LuaUtils.hpp"
+#include "Util/Utils.hpp"
 #include "mod/LuaBindings.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptModule.hpp"
 #include "mod/ScriptProvider.hpp"
-#include "System/LogMicros.hpp"
-#include "Util/Definitions.hpp"
-#include "Util/LuaUtils.hpp"
-#include "Util/Utils.hpp"
 
 #include "sol/environment.hpp"
 #include "sol/forward.hpp"
@@ -126,7 +127,10 @@ void ScriptEngine::Initialize() noexcept
 	_lua.open_libraries(sol::lib::table);
 	_lua.open_libraries(sol::lib::utf8);
 
-	GetLuaBindings().Install(_lua, _context);
+	for (ILuaBindings *luaBindings : GetLuaBindingsComponents())
+	{
+		luaBindings->ProvideLuaBindings(_lua, _context);
+	}
 
 	IScriptLoader &scriptLoader = GetScriptLoader();
 
@@ -196,6 +200,14 @@ void ScriptEngine::Initialize() noexcept
 	// }
 
 	MakeReadonlyGlobal(_lua.globals());
+}
+
+std::array<ILuaBindings *, 2> ScriptEngine::GetLuaBindingsComponents() noexcept
+{
+	return {
+	    &GetLuaBindings(),
+	    &GetGameScripts(),
+	};
 }
 
 void ScriptEngine::AssertLuaValue(sol::object value, std::string_view name) noexcept
@@ -447,10 +459,13 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 	auto &luaGlobals = _lua.globals();
 	auto modGlobals = CreateTable();
 
-	for (std::string_view key : GetLuaBindings().GetModGlobalsMigration())
+	for (ILuaBindings *luaBindings : GetLuaBindingsComponents())
 	{
-		TE_ASSERT(!modGlobals[key.data()].valid(), "global field duplicated!");
-		modGlobals[key.data()] = luaGlobals[key.data()];
+		for (std::string_view key : luaBindings->GetModGlobalsMigration())
+		{
+			TE_ASSERT(!modGlobals[key.data()].valid(), "global field duplicated!");
+			modGlobals[key.data()] = luaGlobals[key.data()];
+		}
 	}
 
 	sol::table metatable = _lua.create_table();
@@ -607,10 +622,10 @@ void ScriptEngine::SavePersistVariables() noexcept
 
 sol::object ScriptEngine::RegisterPersistVariable(std::string_view scriptName, std::string_view key, sol::object defaultValue, const sol::protected_function &getter)
 {
-	if (defaultValue == sol::nil) [[unlikely]]
-	{
-		Warn("\"{}\" attempt to provide nil value to default persist variable '{}'", scriptName, key);
-	}
+	// if (defaultValue == sol::nil) [[unlikely]]
+	// {
+	// 	Warn("\"{}\" attempt to provide nil value to default persist variable '{}'", scriptName, key);
+	// }
 
 	if (!_persistVariables.contains(scriptName.data()))
 	{

@@ -15,7 +15,9 @@
 #include "Event/EventInvocation.hpp"
 #include "Event/EventManager.hpp"
 #include "Event/RuntimeEvent.hpp"
+#include "System/Keyboard.hpp"
 #include "Util/MicrosImpl.hpp"
+
 #include <memory>
 
 using namespace tudov;
@@ -43,13 +45,23 @@ void LuaBindings::InstallEvent(sol::state &lua, Context &context) noexcept
 	    "setDebugCommand", &EventDebugProvideData::LuaSetDebugCommand);
 
 	TE_LB_USERTYPE(
+	    EventKeyboardData,
+	    "keyCode", &EventKeyboardData::keyCode,
+	    "keyboard", &EventKeyboardData::keyboard,
+	    "keyboardID", &EventKeyboardData::keyboardID,
+	    "modifier", &EventKeyboardData::modifier,
+	    "scanCode", &EventKeyboardData::scanCode,
+	    "window", &EventKeyboardData::window,
+	    "windowID", &EventKeyboardData::windowID);
+
+	TE_LB_USERTYPE(
 	    EventManager,
 	    "add", &EventManager::LuaAdd,
 	    "getInvokingEvent", &EventManager::GetInvokingEvent,
 	    "new", &EventManager::LuaNew,
 	    "invoke", &EventManager::LuaInvoke);
 
-		std::weak_ptr<int> a;
+	std::weak_ptr<int> a;
 
 	TE_LB_USERTYPE(
 	    EventMouseMotionData,

@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.system.Input
+-- @module dr2c.Client.System.Input
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -18,8 +18,8 @@ local CECS = require("dr2c.Client.ECS.ECS")
 local CInput = {}
 
 local primaryWindowID = TE.engine.primaryWindow:getWindowID()
-local primaryKeyboard = keyboards:getKeyboardAt(1)
-local primaryMouse = mouses:getPrimaryMouse()
+local primaryKeyboard = TE.keyboards:getKeyboardAt(0)
+local primaryMouse = TE.mice:getPrimaryMouse()
 
 --- @type TE.EKeyCode[]
 local heldKeyCodesCache = {}
@@ -30,6 +30,8 @@ local heldScanCodesCache = {}
 local eventHandlerCacheHeldInputCodes
 
 if primaryKeyboard then
+	CInput.isKeyboardAvailable = true
+
 	--- @param keyCode TE.EKeyCode
 	--- @return boolean
 	function CInput.isKeyCodeHeld(keyCode)
@@ -57,6 +59,8 @@ if primaryKeyboard then
 		heldScanCodesCache = primaryKeyboard:listHeldScanCodes()
 	end
 else
+	CInput.isKeyboardAvailable = false
+
 	--- @param keyCode TE.EKeyCode
 	--- @return boolean
 	function CInput.isKeyCodeHeld(keyCode)
@@ -85,10 +89,22 @@ end
 
 TE.events:add(N_("CUpdate"), eventHandlerCacheHeldInputCodes, "CacheHeldInputCodes", "Inputs")
 
---- @return number mouseX
---- @return number mouseY
-function CInput.getMousePosition()
-	return primaryMouse:getPosition()
+if primaryMouse then
+	CInput.isMouseAvailable = true
+
+	--- @return number mouseX
+	--- @return number mouseY
+	function CInput.getMousePosition()
+		return primaryMouse:getPosition()
+	end
+else
+	CInput.isMouseAvailable = false
+
+	--- @return number mouseX
+	--- @return number mouseY
+	function CInput.getMousePosition()
+		return 0, 0
+	end
 end
 
 return CInput

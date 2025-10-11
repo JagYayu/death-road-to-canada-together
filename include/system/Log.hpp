@@ -13,14 +13,16 @@
 
 #include "LogVerbosity.hpp"
 #include "Program/Tudov.hpp"
-#include "sol/table.hpp"
 #include "Util/Micros.hpp"
+#include "sol/table.hpp"
 
 #include <atomic>
 #include <chrono>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <unordered_map>
+#include <vector>
 
 namespace tudov
 {
@@ -54,8 +56,8 @@ namespace tudov
 	  private:
 		static ELogVerbosity _globalVerbosities;
 		static std::unordered_map<std::string, ELogVerbosity> _verbosities;
-		static std::unordered_map<std::string, ELogVerbosity> _verbositiesOverrides;
-		static std::unordered_map<std::string, std::shared_ptr<Log>> _logInstances;
+		static std::unordered_map<std::string, std::shared_ptr<Log>> _logInstanceMap;
+		static std::unique_ptr<std::vector<Log *>> _logInstanceList;
 		static std::queue<Entry> _queue;
 		static std::mutex _mutex;
 		static std::condition_variable _cv;
@@ -91,19 +93,15 @@ namespace tudov
 
 		static bool SetVerbosities(std::string_view module, ELogVerbosity flags) noexcept;
 
-		static void UpdateVerbosities(const void *jsonConfig);
+		static void SaveVerbosities(void *jsonConfig);
 
-		static std::optional<ELogVerbosity> GetVerbositiesOverride(const std::string &module) noexcept;
-
-		static void SetVerbositiesOverride(std::string_view module, ELogVerbosity flags) noexcept;
-
-		static bool RemoveVerbositiesOverride(std::string_view module) noexcept;
+		static void LoadVerbosities(const void *jsonConfig);
 
 		static std::size_t CountLogs() noexcept;
 
-		static std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator BeginLogs() noexcept;
+		static std::vector<Log *>::const_iterator BeginLogs() noexcept;
 
-		static std::unordered_map<std::string, std::shared_ptr<Log>>::const_iterator EndLogs() noexcept;
+		static std::vector<Log *>::const_iterator EndLogs() noexcept;
 
 		static std::size_t CountVerbosities() noexcept;
 
@@ -111,17 +109,11 @@ namespace tudov
 
 		static std::unordered_map<std::string, ELogVerbosity>::const_iterator EndVerbosities() noexcept;
 
-		static std::size_t CountVerbositiesOverrides() noexcept;
-
-		static std::unordered_map<std::string, ELogVerbosity>::const_iterator BeginVerbositiesOverrides() noexcept;
-
-		static std::unordered_map<std::string, ELogVerbosity>::const_iterator EndVerbositiesOverrides() noexcept;
+	  private:
+		static std::vector<Log *> &GetOrNewLogInstanceList() noexcept;
 
 	  private:
 		std::string _module;
-
-		[[nodiscard]] bool CanOutput(ELogVerbosity flag) const noexcept;
-		void Output(std::string_view verb, std::string_view str) const noexcept;
 
 	  public:
 		explicit Log(std::string_view module) noexcept;
@@ -131,7 +123,7 @@ namespace tudov
 		Log &operator=(Log &&) noexcept = delete;
 		~Log() noexcept;
 
-		std::string_view GetModule() const;
+		std::string_view GetModule() const noexcept;
 
 		[[nodiscard]] TE_FORCEINLINE ELogVerbosity GetVerbosities() const noexcept
 		{
@@ -200,6 +192,9 @@ namespace tudov
 		}
 
 	  private:
+		[[nodiscard]] bool CanOutput(ELogVerbosity flag) const noexcept;
+		void Output(std::string_view verb, std::string_view str) const noexcept;
+
 		void LuaOutput(sol::object verb, sol::table args) const noexcept;
 	};
 

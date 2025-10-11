@@ -19,6 +19,8 @@ EMouseButtonFlag = {
 	Extra2 = 16,
 }
 
+--- @class TE.MouseID : integer
+
 --- @class TE.Mouse : userdata
 local mouse = {}
 

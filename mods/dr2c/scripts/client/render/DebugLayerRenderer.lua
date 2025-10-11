@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.render.DebugLayerRenderer
+-- @module dr2c.Client.render.DebugLayerRenderer
 -- @author JagYayu
 -- @brief
 -- @version 1.0

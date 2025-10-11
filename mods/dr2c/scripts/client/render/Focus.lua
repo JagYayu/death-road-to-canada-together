@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.render.Focus
+-- @module dr2c.Client.render.Focus
 -- @author JagYayu
 -- @brief
 -- @version 1.0

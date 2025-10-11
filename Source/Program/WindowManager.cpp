@@ -39,7 +39,7 @@ Log &WindowManager::GetLog() noexcept
 	return *Log::Get(TE_NAMEOF(WindowManager));
 }
 
-std::shared_ptr<IWindow> WindowManager::GetWindowByID(WindowID windowID) noexcept
+std::shared_ptr<IWindow> WindowManager::GetIWindowByID(WindowID windowID) noexcept
 {
 	for (std::shared_ptr<IWindow> &window : _windows)
 	{
@@ -55,32 +55,32 @@ std::shared_ptr<IWindow> WindowManager::GetPrimaryWindow() noexcept
 {
 	return _primaryWindow;
 }
-std::shared_ptr<const IWindow> WindowManager::GetPrimaryWindow() const noexcept
+std::shared_ptr<const IWindow> WindowManager::GetPrimaryIWindow() const noexcept
 {
 	return _primaryWindow;
 }
 
-std::vector<std::shared_ptr<IWindow>> &WindowManager::GetSubWindows() noexcept
+std::vector<std::shared_ptr<IWindow>> &WindowManager::GetSubIWindows() noexcept
 {
 	return _subWindows;
 }
 
-const std::vector<std::shared_ptr<IWindow>> &WindowManager::GetSubWindows() const noexcept
+const std::vector<std::shared_ptr<IWindow>> &WindowManager::GetSubIWindows() const noexcept
 {
 	return _subWindows;
 }
 
-std::shared_ptr<IDebugManager> WindowManager::GetDebugManager() noexcept
+std::shared_ptr<IDebugManager> WindowManager::GetIDebugManager() noexcept
 {
 	return _debugManager;
 }
 
-std::shared_ptr<const IDebugManager> WindowManager::GetDebugManager() const noexcept
+std::shared_ptr<const IDebugManager> WindowManager::GetIDebugManager() const noexcept
 {
 	return _debugManager;
 }
 
-void WindowManager::AddSubWindow(const std::shared_ptr<IWindow> &window)
+void WindowManager::AddSubIWindow(const std::shared_ptr<IWindow> &window)
 {
 	for (auto &window : _subWindows)
 	{
@@ -94,7 +94,7 @@ void WindowManager::AddSubWindow(const std::shared_ptr<IWindow> &window)
 	_windows.emplace_back(window);
 }
 
-void WindowManager::RemoveSubWindow(const std::shared_ptr<IWindow> &window)
+void WindowManager::RemoveSubIWindow(const std::shared_ptr<IWindow> &window)
 {
 	auto it = std::find(_subWindows.begin(), _subWindows.end(), window);
 	if (it == _subWindows.end())

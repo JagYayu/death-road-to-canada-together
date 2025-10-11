@@ -263,7 +263,9 @@ EventHandleKey PrimaryWindow::GetKey() const noexcept
 
 bool PrimaryWindow::HandleEvent(AppEvent &appEvent) noexcept
 {
-	return Window::HandleEvent(appEvent) | ImGui_ImplSDL3_ProcessEvent(appEvent.sdlEvent.get());
+	ImGui_ImplSDL3_ProcessEvent(appEvent.sdlEvent.get());
+
+	return Window::HandleEvent(appEvent);
 }
 
 void PrimaryWindow::Render() noexcept

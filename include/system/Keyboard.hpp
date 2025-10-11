@@ -13,8 +13,8 @@
 
 #include "KeyCode.hpp"
 #include "Log.hpp"
-#include "ScanCode.hpp"
 #include "Program/Context.hpp"
+#include "ScanCode.hpp"
 #include "Util/Definitions.hpp"
 
 #include "sol/forward.hpp"
@@ -59,7 +59,7 @@ namespace tudov
 		}
 	};
 
-	class Keyboard final : public IKeyboard, public IContextProvider, public std::enable_shared_from_this<Keyboard>, private ILogProvider
+	class Keyboard : public IKeyboard, public IContextProvider, private ILogProvider, protected std::enable_shared_from_this<Keyboard>
 	{
 		friend LuaBindings;
 
@@ -89,9 +89,23 @@ namespace tudov
 		const std::vector<EScanCode> *GetHeldScanCodes(WindowID windowID) const noexcept;
 
 	  private:
+		void OnKeyUp(WindowID windowID, EKeyCode keyCode) noexcept;
+		void OnKeyDown(WindowID windowID, EKeyCode keyCode) noexcept;
+
 		bool LuaIsKeyCodeHeld(sol::object keyCode, sol::object windowID) noexcept;
 		bool LuaIsScanCodeHeld(sol::object scanCode, sol::object windowID) noexcept;
 		sol::table LuaListHeldKeyCodes(sol::object windowID) noexcept;
 		sol::table LuaListHeldScanCodes(sol::object windowID) noexcept;
+	};
+
+	class PrimaryKeyboard final : public Keyboard
+	{
+	  public:
+		PrimaryKeyboard(Context &context) noexcept;
+
+		Log &GetLog() noexcept override;
+
+		bool IsKeyCodeHeld(EKeyCode keyCode, WindowID windowID) noexcept override;
+		bool IsScanCodeHeld(EScanCode scanCode, WindowID windowID) noexcept override;
 	};
 } // namespace tudov

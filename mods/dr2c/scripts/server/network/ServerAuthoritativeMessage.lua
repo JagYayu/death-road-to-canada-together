@@ -11,6 +11,7 @@
 
 local Table = require("TE.Table")
 local Enum = require("TE.Enum")
+local List = require("TE.List")
 
 local SNetworkClients = require("dr2c.Server.Network.Clients")
 local SNetworkServer = require("dr2c.Server.Network.Server")
@@ -129,7 +130,7 @@ end
 TE.events:add(N_("SUpdate"), function(e)
 	for _, requests in pairs(serverRegisteredAuthoritativeRequestsMap) do
 		if requests[1] then
-			Table.listRemoveIf(requests, serverAuthoritativeRequestHandle, Time.getSystemTime())
+			List.removeIfV(requests, serverAuthoritativeRequestHandle, Time.getSystemTime())
 		end
 	end
 end, "UpdateServerAuthoritativeRequests", "Network", nil, 1)

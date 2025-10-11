@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.client.tile.Tilemap
+-- @module dr2c.Client.tile.Tilemap
 -- @author JagYayu
 -- @brief
 -- @version 1.0

@@ -18,6 +18,8 @@
 #include "Event/RuntimeEvent.hpp"
 #include "Mod/ScriptEngine.hpp"
 #include "Program/WindowManager.hpp"
+#include "SDL3/SDL_keyboard.h"
+#include "SDL3/SDL_keycode.h"
 #include "System/Keyboard.hpp"
 #include "System/LogMicros.hpp"
 #include "System/ScanCode.hpp"
@@ -26,7 +28,7 @@
 
 #include "SDL3/SDL_events.h"
 
-#include <algorithm>
+#include <memory>
 
 using namespace tudov;
 
@@ -61,65 +63,48 @@ bool Keyboard::HandleEvent(AppEvent &appEvent) noexcept
 	case SDL_EVENT_KEY_UP:
 	{
 		SDL_KeyboardEvent &key = sdlEvent.key;
+		KeyboardID keyboardID = key.which;
+		if (keyboardID != _keyboardID)
+		{
+			return false;
+		}
 
-		auto scanCode = static_cast<EScanCode>(key.scancode);
-		auto keyCode = static_cast<EKeyCode>(key.key);
-		std::shared_ptr<IWindow> window = GetWindowManager().GetWindowByID(key.windowID);
+		EScanCode scanCode = static_cast<EScanCode>(key.scancode);
+		EKeyCode keyCode = static_cast<EKeyCode>(key.key);
+		std::shared_ptr<IWindow> window = GetWindowManager().GetIWindowByID(key.windowID);
 		WindowID windowID = window != nullptr ? window->GetWindowID() : 0;
 
 		RuntimeEvent *runtimeEvent;
-		if (!key.down)
-		{
-			runtimeEvent = &GetEventManager().GetCoreEvents().KeyboardRelease();
-
-			if (auto &entry = _windowHoldingKeyCodes[windowID]; !entry.set.contains(keyCode)) [[likely]]
-			{
-				entry.list.emplace_back(keyCode);
-				entry.set.emplace(keyCode);
-			}
-			else [[unlikely]]
-			{
-				TE_WARN("Key code '{}' was already down", Utils::ToUnderlying(keyCode));
-			}
-		}
-		else if (key.repeat)
-		{
-			runtimeEvent = &GetEventManager().GetCoreEvents().KeyboardRepeat();
-		}
-		else
+		if (key.down)
 		{
 			runtimeEvent = &GetEventManager().GetCoreEvents().KeyboardPress();
 
-			if (auto it = _windowHoldingKeyCodes.find(windowID); it != _windowHoldingKeyCodes.end()) [[likely]]
-			{
-				auto &entry = it->second;
-				entry.list.erase(std::find(entry.list.begin(), entry.list.end(), keyCode));
-				entry.set.erase(keyCode);
+			OnKeyDown(windowID, keyCode);
+		}
+		else if (!key.repeat)
+		{
+			runtimeEvent = &GetEventManager().GetCoreEvents().KeyboardRelease();
 
-				if (entry.list.empty() && entry.set.empty())
-				{
-					_windowHoldingKeyCodes.erase(windowID);
-				}
-			}
-			else [[unlikely]]
-			{
-				TE_WARN("Key code '{}' was already up", Utils::ToUnderlying(keyCode));
-			}
+			OnKeyUp(windowID, keyCode);
+		}
+		else
+		{
+			runtimeEvent = &GetEventManager().GetCoreEvents().KeyboardRepeat();
 		}
 
 		EventKeyboardData data{
-		    .window = window,
+		    .window = std::dynamic_pointer_cast<Window>(window),
 		    .windowID = windowID,
-		    .keyboard = shared_from_this(),
-		    .keyboardID = _keyboardID,
+		    .keyboard = keyboardID != 0 ? shared_from_this() : nullptr,
+		    .keyboardID = keyboardID,
 		    .scanCode = scanCode,
 		    .keyCode = keyCode,
 		    .modifier = static_cast<EKeyModifier>(key.mod),
 		};
 
-		runtimeEvent->Invoke(&data, EventHandleKey(_keyboardID), EEventInvocation::None);
+		runtimeEvent->Invoke(&data, EventHandleKey(_keyboardID));
 
-		return true;
+		break;
 	}
 	case SDL_EVENT_TEXT_EDITING:
 	{
@@ -150,10 +135,50 @@ bool Keyboard::HandleEvent(AppEvent &appEvent) noexcept
 		break;
 	}
 	default:
-		break;
+		return false;
 	}
 
-	return false;
+	TE_TRACE("Event handled by keyboard {}", _keyboardID);
+
+	return true;
+}
+
+void Keyboard::OnKeyUp(WindowID windowID, EKeyCode keyCode) noexcept
+{
+	if (auto it = _windowHoldingKeyCodes.find(windowID); it != _windowHoldingKeyCodes.end()) [[likely]]
+	{
+		auto &entry = it->second;
+		if (!entry.set.contains(keyCode)) [[unlikely]]
+		{
+			TE_WARN("Key code '{}' was already up", Utils::ToUnderlying(keyCode));
+		}
+		else
+		{
+			std::erase(entry.list, keyCode);
+			entry.set.erase(keyCode);
+
+			if (entry.list.empty() && entry.set.empty())
+			{
+				_windowHoldingKeyCodes.erase(windowID);
+			}
+		}
+	}
+}
+
+void Keyboard::OnKeyDown(WindowID windowID, EKeyCode keyCode) noexcept
+{
+	if (auto &entry = _windowHoldingKeyCodes[windowID]; !entry.set.contains(keyCode)) [[likely]]
+	{
+		if (entry.set.contains(keyCode)) [[unlikely]]
+		{
+			TE_WARN("Key code '{}' was already down", Utils::ToUnderlying(keyCode));
+		}
+		else
+		{
+			entry.list.emplace_back(keyCode);
+			entry.set.emplace(keyCode);
+		}
+	}
 }
 
 bool Keyboard::IsKeyCodeHeld(EKeyCode keyCode, WindowID windowID) noexcept
@@ -248,4 +273,35 @@ sol::table Keyboard::LuaListHeldKeyCodes(sol::object windowID) noexcept
 sol::table Keyboard::LuaListHeldScanCodes(sol::object windowID) noexcept
 {
 	return LuaListHeldCodesImpl(this, windowID, _windowHoldingScanCodes);
+}
+
+PrimaryKeyboard::PrimaryKeyboard(Context &context) noexcept
+    : Keyboard(context, 0)
+{
+}
+
+Log &PrimaryKeyboard::GetLog() noexcept
+{
+	return *Log::Get(TE_NAMEOF(PrimaryKeyboard));
+}
+
+bool PrimaryKeyboard::IsKeyCodeHeld(EKeyCode keyCode, WindowID windowID) noexcept
+{
+	return IsScanCodeHeld(static_cast<EScanCode>(SDL_GetScancodeFromKey(static_cast<SDL_Keycode>(keyCode), nullptr)), windowID);
+}
+
+bool PrimaryKeyboard::IsScanCodeHeld(EScanCode scanCode, WindowID windowID) noexcept
+{
+	std::int32_t count;
+	const bool *state = SDL_GetKeyboardState(&count);
+	auto index = static_cast<std::size_t>(scanCode);
+
+	if (index >= count || index < 0)
+	{
+		return state[index];
+	}
+	else
+	{
+		return false;
+	}
 }

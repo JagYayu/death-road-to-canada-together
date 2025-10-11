@@ -31,9 +31,10 @@ namespace tudov
 	enum class ESocketType : std::uint8_t;
 	class Context;
 	class ScriptModule;
-	struct IDebugManager;
-	struct IWindow;
-	struct IKeyboard;
+	class DebugManager;
+	class Window;
+	class Keyboard;
+	class Mouse;
 
 	struct CoreEventData
 	{
@@ -50,9 +51,9 @@ namespace tudov
 	struct EventDebugProvideData : public CoreEventData
 	{
 		Context &context;
-		IDebugManager &debugManager;
+		DebugManager &debugManager;
 
-		explicit EventDebugProvideData(Context &context, IDebugManager &debugManager) noexcept;
+		explicit EventDebugProvideData(Context &context, DebugManager &debugManager) noexcept;
 
 		void LuaAddElement(sol::table args) noexcept;
 
@@ -198,7 +199,10 @@ namespace tudov
 
 	struct EventMouseMotionData : public CoreEventData
 	{
-		std::int32_t mouseID;
+		std::shared_ptr<Window> window;
+		WindowID windowID;
+		std::shared_ptr<Mouse> mouse;
+		MouseID mouseID;
 		std::float_t x;
 		std::float_t y;
 		std::float_t relativeX;
@@ -207,9 +211,9 @@ namespace tudov
 
 	struct EventKeyboardData : public CoreEventData
 	{
-		std::shared_ptr<IWindow> window;
+		std::shared_ptr<Window> window;
 		WindowID windowID;
-		std::shared_ptr<IKeyboard> keyboard;
+		std::shared_ptr<Keyboard> keyboard;
 		KeyboardID keyboardID;
 		EScanCode scanCode;
 		EKeyCode keyCode;
