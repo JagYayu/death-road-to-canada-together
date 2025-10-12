@@ -24,6 +24,7 @@ struct _ENetPeer;
 
 namespace tudov
 {
+	enum class EMouseButton : std::int8_t;
 	enum class EDisconnectionCode : std::uint32_t;
 	enum class EScanCode : std::int32_t;
 	enum class EKeyCode : std::uint32_t;
@@ -197,6 +198,18 @@ namespace tudov
 
 #pragma endregion
 
+	struct EventMouseButtonData : public CoreEventData
+	{
+		std::shared_ptr<Window> window;
+		WindowID windowID;
+		std::shared_ptr<Mouse> mouse;
+		MouseID mouseID;
+		std::float_t x;
+		std::float_t y;
+		EMouseButton button;
+		std::uint8_t clicks;
+	};
+
 	struct EventMouseMotionData : public CoreEventData
 	{
 		std::shared_ptr<Window> window;
@@ -227,6 +240,17 @@ namespace tudov
 
 	struct EventWindowResizeData : public CoreEventData
 	{
+		std::shared_ptr<Window> window;
+		WindowID windowID;
+		std::int32_t width;
+		std::int32_t height;
+	};
+
+	struct EventScriptLoadData : public CoreEventData
+	{
+		ScriptID scriptID;
+		std::string_view scriptName;
+		sol::table module;
 	};
 
 	struct EventScriptUnloadData : public CoreEventData

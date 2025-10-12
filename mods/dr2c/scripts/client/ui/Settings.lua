@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ui.Settings
+-- @module dr2c.Client.UI.Settings
 -- @author JagYayu
 -- @brief
 -- @version 1.0

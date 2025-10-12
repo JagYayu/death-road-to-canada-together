@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ui.Menu
+-- @module dr2c.Client.UI.Menu
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -15,6 +15,8 @@ local Table = require("TE.Table")
 local CUI = require("dr2c.Client.UI.UI")
 local CUIDraw = require("dr2c.Client.UI.Draw")
 local CUICanvas = require("dr2c.Client.UI.Canvas")
+local CWorldSession = require("dr2c.Client.World.Session")
+local GWorldSession = require("dr2c.Shared.World.Session")
 
 --- @class dr2c.MenuEntry
 
@@ -37,6 +39,10 @@ local selectedWidget
 menuStack = persist("menuStack", function()
 	return menuStack
 end)
+
+function CUIMenu.isOpened()
+	return not not menuStack[1]
+end
 
 function CUIMenu.getAll()
 	return menuStack
@@ -154,10 +160,18 @@ function CUIMenu.open(menuType, menuArgs)
 	return menu
 end
 
+local updatePending = true
+
 function CUIMenu.update()
+	updatePending = true
+end
+
+function CUIMenu.updateImmediately()
 	for i, menu in ipairs(menuStack) do
 		menuStack[i] = createMenu(menu.type, menu.args)
 	end
+
+	updatePending = false
 end
 
 function CUIMenu.close()
@@ -170,19 +184,25 @@ end
 
 TE.events:add(N_("CRenderUI"), CUIMenu.draw, "RenderMenu", "Menu")
 
-local testOnce = true
-
 TE.events:add(N_("CUpdate"), function(e)
-	if testOnce then
-		CUIMenu.closeAll()
+	if
+		not CUIMenu.isOpened() --
+		and CWorldSession.getState() == GWorldSession.State.Inactive
+	then
 		CUIMenu.open(CUIMenu.Type.TitleScreen)
-
-		testOnce = false
-
-		_G.Times = (_G.Times or 0) + 1
-		print("test once", _G.Times)
 	end
-end, "Test")
+
+	if updatePending then
+		CUIMenu.updateImmediately()
+	end
+end, "UpdateMenu")
+
+--- @param e Events.E.ScriptUnload
+TE.events:add("ScriptUnload", function(e)
+	if e.data.module.UIWidgetType then
+		CUIMenu.update()
+	end
+end, "ClientUIMenuUpdateIfRemoveTypedWidget", "Client")
 
 -- TE.events:add()
 -- CUIMenu.update()

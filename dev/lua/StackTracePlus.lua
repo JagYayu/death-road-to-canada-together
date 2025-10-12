@@ -2,6 +2,7 @@
 https://github.com/ignacio/StackTracePlus
 MIT LICENSE
 ]]
+--- @diagnostic disable
 
 -- tables
 local _G = _G

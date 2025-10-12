@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ui.ExitJumpscare
+-- @module dr2c.Client.UI.ExitJumpscare
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -53,7 +53,7 @@ TE.events:add(N_("CRenderUI"), function(e)
 	e.renderer:drawRect(drawRectArgs)
 
 	if time > 1.75 then
-		-- TE.engine:quit()
+		TE.engine:quit()
 	elseif time > 1 then
 		if state.sound then
 			-- TODO play scary sound :)

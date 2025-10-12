@@ -37,7 +37,7 @@ ESocketType = {
 }
 
 --- @class Network
-network = {}
+local network = {}
 
 --- @class Network.ClientConnectRUDPArgs
 --- @field host string
@@ -167,3 +167,5 @@ function server:broadcastReliable(data, channel) end
 --- @param data string
 --- @param channel integer
 function server:broadcastUnreliable(data, channel) end
+
+TE.network = network

@@ -75,7 +75,7 @@ function CPlayerInput.getPlayerMoveArg(playerID)
 			return 0
 		end
 	end
-	-- return (dx ~= 0 or dy ~= 0) and Math.atan2(dy, dx) or nil
+	-- return (dx ~= 0 or dy ~= 0) and math.atan2(dy, dx) or nil
 end
 
 --- @param e dr2c.E.ClientUpdate

@@ -49,7 +49,7 @@ namespace tudov
 		virtual std::tuple<std::float_t, std::float_t, EMouseButtonFlag> GetMouseState() const noexcept = 0;
 	};
 
-	class Mouse : public IMouse, public IContextProvider, protected std::enable_shared_from_this<Mouse>, private ILogProvider
+	class Mouse : public IMouse, public IContextProvider, public std::enable_shared_from_this<Mouse>, private ILogProvider
 	{
 		friend LuaBindings;
 

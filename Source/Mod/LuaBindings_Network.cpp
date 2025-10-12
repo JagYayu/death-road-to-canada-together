@@ -189,5 +189,6 @@ void LuaBindings::InstallNetwork(sol::state &lua, Context &context) noexcept
 	    "serverShutdown", &NetworkManager::LuaServerShutdown,
 	    "update", &NetworkManager::Update);
 
-	lua["network"] = &dynamic_cast<NetworkManager &>(context.GetNetworkManager());
+	auto TE = lua["TE"];
+	TE["network"] = &dynamic_cast<NetworkManager &>(context.GetNetworkManager());
 }

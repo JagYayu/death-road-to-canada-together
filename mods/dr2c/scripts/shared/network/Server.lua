@@ -42,7 +42,7 @@ GServer.Attribute = Enum.sequence({
 	HasServerOnlyMods = 10,
 })
 
---- @type table<dr2c.GClient.PrivateAttribute, fun(value: any): boolean?>
+--- @type table<dr2c.GNetworkClient.PrivateAttribute, fun(value: any): boolean?>
 local attributeValidators = {
 	[GServer.Attribute.DisplayName] = Function.isTypeString,
 	[GServer.Attribute.Clients] = Function.isTypeInteger,

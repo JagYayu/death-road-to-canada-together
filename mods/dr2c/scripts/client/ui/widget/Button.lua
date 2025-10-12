@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ui.widget.Button
+-- @module dr2c.Client.UI.widget.Button
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -22,7 +22,7 @@ local CUIWidgetButton = {}
 CUIWidgetButton.UIWidgetType = CUIWidget.Type.Button
 
 --- @param self dr2c.UIWidgetButton
-local function draw(self)
+local function metatableCanvasDraw(self)
 	local args = self.drawButtonArgs
 	local margin = self.margin
 	local rect = self.rectangle
@@ -37,16 +37,34 @@ local function draw(self)
 end
 
 --- @param self dr2c.UIWidgetButton
-local function update(self)
-	-- args
+local function metatableCanvasPress(self)
+	self.pressed = true
+end
+
+--- @param self dr2c.UIWidgetButton
+--- @param active boolean
+local function metatableCanvasRelease(self, active)
+	active = not not (active and self.pressed and self.callback)
+	self.pressed = false
+
+	if active then
+		self:callback()
+	end
+
+	return active
 end
 
 CUIWidgetButton.metatable = {
 	__index = {
-		draw = draw,
-		update = update,
+		draw = metatableCanvasDraw,
+		press = metatableCanvasPress,
+		release = metatableCanvasRelease,
 	},
 }
+
+--- @class dr2c.UIWidgetButton.ActionArgs
+--- @field menu string
+--- @field [integer] any
 
 --- @param e dr2c.E.CWidget
 TE.events:add(CUIWidget.eventCWidget, function(e)
@@ -55,6 +73,7 @@ TE.events:add(CUIWidget.eventCWidget, function(e)
 	--- @field alignY? number
 	--- @field label? string
 	--- @field scale? number
+	--- @field callback? fun(self: dr2c.UIWidgetButton)
 	local args = e.args
 
 	--- @class dr2c.UIWidgetButton : dr2c.UIWidget
@@ -62,6 +81,11 @@ TE.events:add(CUIWidget.eventCWidget, function(e)
 
 	local label = args.label and tostring(args.label) or nil
 	local scale = tonumber(args.scale) or 1
+
+	--- @type boolean
+	widget.pressed = false
+
+	widget.callback = args.callback
 
 	--- @type dr2c.UI.DrawButton
 	widget.drawButtonArgs = {

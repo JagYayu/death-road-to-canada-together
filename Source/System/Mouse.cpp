@@ -120,9 +120,41 @@ bool Mouse::HandleEvent(AppEvent &appEvent) noexcept
 		break;
 	}
 	case SDL_EVENT_MOUSE_BUTTON_DOWN:
-		break;
 	case SDL_EVENT_MOUSE_BUTTON_UP:
+	{
+		SDL_MouseButtonEvent &button = sdlEvent.button;
+		if (button.which != _mouseID)
+		{
+			return false;
+		}
+
+		SDL_WindowID windowID = button.windowID;
+
+		RuntimeEvent *runtimeEvent;
+		if (button.down)
+		{
+			runtimeEvent = &GetEventManager().GetCoreEvents().MousePress();
+		}
+		else
+		{
+			runtimeEvent = &GetEventManager().GetCoreEvents().MouseRelease();
+		}
+
+		EventMouseButtonData data{
+		    .window = std::dynamic_pointer_cast<Window>(GetWindowManager().GetIWindowByID(windowID)),
+		    .windowID = windowID,
+		    .mouse = _mouseID != 0 ? shared_from_this() : nullptr,
+		    .mouseID = _mouseID,
+		    .x = button.x,
+		    .y = button.y,
+		    .button = static_cast<EMouseButton>(button.button),
+		    .clicks = button.clicks,
+		};
+
+		runtimeEvent->Invoke(&data, EventHandleKey(windowID));
+
 		break;
+	}
 	case SDL_EVENT_MOUSE_WHEEL:
 		break;
 	case SDL_EVENT_MOUSE_ADDED:

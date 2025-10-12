@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ui.MenuGeneric
+-- @module dr2c.Client.UI.MenuGeneric
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -33,3 +33,5 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 
 	e.initialized = true
 end, "InitializeGeneric", "Initialize", CUIMenu.Type.Generic)
+
+CUIMenu.update()

@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ui.widget.Widget
+-- @module dr2c.Client.UI.widget.Widget
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -57,7 +57,6 @@ function CUIWidget.new(widgetType, args)
 	--- @field padding? Rectangle
 	--- @field rectangle? Rectangle
 	--- @field selectable? boolean @default true
-	--- @field selectDirectional? fun(direction: number): dr2c.UIWidgetID?
 	--- @field selectUp? dr2c.UIWidgetID | fun(): dr2c.UIWidgetID?
 	--- @field selectDown? dr2c.UIWidgetID | fun(): dr2c.UIWidgetID?
 	--- @field selectLeft? dr2c.UIWidgetID | fun(): dr2c.UIWidgetID?
@@ -66,20 +65,27 @@ function CUIWidget.new(widgetType, args)
 
 	--- @class dr2c.UIWidget
 	--- @field draw? fun(self: self)
-	--- @field update? fun(self: self)
+	--- @field press? fun(self: self): boolean?
+	--- @field release? fun(self: self, active: boolean)
 	--- @field id dr2c.UIWidgetID?
+	--- @field parent (dr2c.UIWidget | dr2c.UICanvas)?
 	--- @field margin Rectangle
 	--- @field padding Rectangle
 	--- @field rectangle Rectangle
-	--- @field widgets? dr2c.UIWidget[]
+	--- @field children? dr2c.UIWidget[]
 	local widget = {
 		type = widgetType,
 		id = args.id,
+		parent = nil,
 		border = CRenderUtils.copyDrawBorder(args.border or Table.empty),
 		margin = CRenderUtils.copyRectangle(args.margin or Table.empty),
 		padding = CRenderUtils.copyRectangle(args.padding or Table.empty),
 		rectangle = CRenderUtils.copyRectangle(args.rectangle or Table.empty),
 		selectable = args.selectable ~= false,
+		selectUp = args.selectUp,
+		selectDown = args.selectDown,
+		selectLeft = args.selectLeft,
+		selectRight = args.selectRight,
 	}
 
 	--- @class dr2c.E.CWidget

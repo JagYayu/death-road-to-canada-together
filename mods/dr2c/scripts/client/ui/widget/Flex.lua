@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ui.widget.Flex
+-- @module dr2c.Client.UI.widget.Flex
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -18,9 +18,11 @@ local CUIWidgetFlex = {}
 
 CUIWidgetFlex.UIWidgetType = CUIWidget.Type.Flex
 
+--- @param self dr2c.UIWidgetFlex
 --- @param widget dr2c.UIWidget
 local function addChild(self, widget)
-	self.widgets[#self.widgets + 1] = widget
+	widget.parent = self
+	self.children[#self.children + 1] = widget
 
 	-- self.cache = nil
 end
@@ -41,9 +43,9 @@ local function draw(self)
 	local h = self.rectangle[4]
 
 	if self.vertical then
-		local hh = h / #self.widgets
+		local hh = h / #self.children
 
-		for i, widget in ipairs(self.widgets) do
+		for i, widget in ipairs(self.children) do
 			if widget.draw then
 				local cy = y + (i - 1) * hh
 
@@ -58,9 +60,9 @@ local function draw(self)
 			end
 		end
 	else
-		local ww = w / #self.widgets
+		local ww = w / #self.children
 
-		for i, widget in ipairs(self.widgets) do
+		for i, widget in ipairs(self.children) do
 			if widget.draw then
 				local cx = x + (i - 1) * ww
 				local cw = ww
@@ -111,7 +113,7 @@ TE.events:add(CUIWidget.eventCWidget, function(e)
 	widget.vertical = not not args.vertical
 
 	--- @type dr2c.UIWidget[]
-	widget.widgets = {}
+	widget.children = {}
 
 	if type(args.weights) == "table" then
 		local weights = Table.copyArray(args.weights)

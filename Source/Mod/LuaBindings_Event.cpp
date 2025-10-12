@@ -15,7 +15,9 @@
 #include "Event/EventInvocation.hpp"
 #include "Event/EventManager.hpp"
 #include "Event/RuntimeEvent.hpp"
+#include "Program/Window.hpp"
 #include "System/Keyboard.hpp"
+#include "System/Mouse.hpp"
 #include "Util/MicrosImpl.hpp"
 
 #include <memory>
@@ -61,10 +63,22 @@ void LuaBindings::InstallEvent(sol::state &lua, Context &context) noexcept
 	    "new", &EventManager::LuaNew,
 	    "invoke", &EventManager::LuaInvoke);
 
-	std::weak_ptr<int> a;
+	TE_LB_USERTYPE(
+	    EventMouseButtonData,
+	    "button", &EventMouseButtonData::button,
+	    "clicks", &EventMouseButtonData::clicks,
+	    "window", &EventMouseButtonData::window,
+	    "windowID", &EventMouseButtonData::windowID,
+	    "mouse", &EventMouseButtonData::mouse,
+	    "mouseID", &EventMouseButtonData::mouseID,
+	    "x", &EventMouseButtonData::x,
+	    "y", &EventMouseButtonData::y);
 
 	TE_LB_USERTYPE(
 	    EventMouseMotionData,
+	    "window", &EventMouseMotionData::window,
+	    "windowID", &EventMouseMotionData::windowID,
+	    "mouse", &EventMouseMotionData::mouse,
 	    "mouseID", &EventMouseMotionData::mouseID,
 	    "relativeX", &EventMouseMotionData::relativeX,
 	    "relativeY", &EventMouseMotionData::relativeY,
@@ -76,6 +90,13 @@ void LuaBindings::InstallEvent(sol::state &lua, Context &context) noexcept
 	    "module", &EventScriptUnloadData::module,
 	    "scriptID", &EventScriptUnloadData::scriptID,
 	    "scriptName", &EventScriptUnloadData::scriptName);
+
+	TE_LB_USERTYPE(
+	    EventWindowResizeData,
+	    "height", &EventWindowResizeData::height,
+	    "width", &EventWindowResizeData::width,
+	    "window", &EventWindowResizeData::window,
+	    "windowID", &EventWindowResizeData::windowID);
 
 	lua["TE"]["events"] = &dynamic_cast<EventManager &>(context.GetEventManager());
 }

@@ -85,6 +85,11 @@ namespace tudov
 		[[nodiscard]] virtual RuntimeEvent &ScriptsLoaded() noexcept = 0;
 
 		/**
+		 * Invoke when a script was loaded.
+		 */
+		[[nodiscard]] virtual RuntimeEvent &ScriptLoad() noexcept = 0;
+
+		/**
 		 * Invoke when a script was unloaded.
 		 */
 		[[nodiscard]] virtual RuntimeEvent &ScriptUnload() noexcept = 0;
@@ -125,6 +130,7 @@ namespace tudov
 		TRuntimeEvent _mouseAdded;
 		TRuntimeEvent _mouseRemoved;
 		TRuntimeEvent _scriptGlobalIndex;
+		TRuntimeEvent _scriptLoad;
 		TRuntimeEvent _scriptUnload;
 		TRuntimeEvent _scriptsLoaded;
 		TRuntimeEvent _serverAuthenticate;
@@ -163,6 +169,7 @@ namespace tudov
 		[[nodiscard]] RuntimeEvent &MouseAdded() noexcept override;
 		[[nodiscard]] RuntimeEvent &MouseRemoved() noexcept override;
 		[[nodiscard]] RuntimeEvent &ScriptGlobalIndex() noexcept override;
+		[[nodiscard]] RuntimeEvent &ScriptLoad() noexcept override;
 		[[nodiscard]] RuntimeEvent &ScriptUnload() noexcept override;
 		[[nodiscard]] RuntimeEvent &ScriptsLoaded() noexcept override;
 		[[nodiscard]] RuntimeEvent &ServerAuthenticate() noexcept override;

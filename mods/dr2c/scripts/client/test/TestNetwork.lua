@@ -11,19 +11,19 @@ local function errorHandler(message)
 end
 
 TE.events:add(N_("CUpdate"), function()
-	if connectionState == 0 then
-		xpcall(network.serverHostRUDP, errorHandler, network, {
-			host = "localhost",
-			port = 8878,
-		})
+	-- if connectionState == 0 then
+	-- 	xpcall(network.serverHostRUDP, errorHandler, network, {
+	-- 		host = "localhost",
+	-- 		port = 8878,
+	-- 	})
 
-		connectionState = 1
-	elseif connectionState == 1 then
-		xpcall(network.clientConnectRUDP, errorHandler, network, {
-			host = "localhost",
-			port = 8878,
-		})
+	-- 	connectionState = 1
+	-- elseif connectionState == 1 then
+	-- 	xpcall(network.clientConnectRUDP, errorHandler, network, {
+	-- 		host = "localhost",
+	-- 		port = 8878,
+	-- 	})
 
-		connectionState = 2
-	end
+	-- 	connectionState = 2
+	-- end
 end, "TestNetwork", "Network", nil, -1)

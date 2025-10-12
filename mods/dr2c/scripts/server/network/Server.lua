@@ -15,6 +15,8 @@ local GNetworkServer = require("dr2c.Shared.Network.Server")
 local SNetworkClients = require("dr2c.Server.Network.Clients")
 local SNetworkRoom = require("dr2c.Server.Network.Room")
 
+local network = TE.network
+
 --- @class dr2c.SServer
 local SNetworkServer = {}
 

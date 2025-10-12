@@ -76,7 +76,7 @@ namespace tudov
 	/**
 	 * Abstract Class
 	 */
-	class Window : public IWindow, ILogProvider
+	class Window : public IWindow, ILogProvider, public std::enable_shared_from_this<Window>
 	{
 		friend LuaBindings;
 

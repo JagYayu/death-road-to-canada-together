@@ -16,7 +16,7 @@ SRoom.defaultRoomID = 1
 
 --- @type dr2c.NetworkRoomID
 local serverRoomLatestID = SRoom.defaultRoomID
---- @type table<dr2c.NetworkRoomID, dr2c.RoomAttribute>
+--- @type table<dr2c.NetworkRoomID, dr2c.NetworkRoomAttribute>
 local serverRooms = {}
 
 serverRoomLatestID = persist("serverRoomLatestID", function()

@@ -116,13 +116,17 @@ bool Window::HandleEvent(AppEvent &appEvent) noexcept
 				return false;
 			}
 
-			RuntimeEvent &runtimeEvent = GetEventManager().GetCoreEvents().MouseMotion();
+			RuntimeEvent &runtimeEvent = GetEventManager().GetCoreEvents().WindowResize();
 
+			auto [width, height] = GetSize();
 			EventWindowResizeData data{
-			    // window.
+			    .window = shared_from_this(),
+			    .windowID = window.windowID,
+			    .width = width,
+			    .height = height,
 			};
 
-			runtimeEvent.Invoke(&data, EventHandleKey(windowID), EEventInvocation::None);
+			runtimeEvent.Invoke(&data, EventHandleKey(windowID));
 		}
 	}
 	else

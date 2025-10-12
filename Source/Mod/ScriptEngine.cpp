@@ -482,6 +482,10 @@ sol::table &ScriptEngine::GetModGlobals(std::string_view modUID, bool sandboxed)
 		{
 			eventKey = EventHandleKey(key.as<std::double_t>());
 		}
+		else
+		{
+			eventKey = nullptr;
+		}
 
 		EventModGlobalsIndexData eventData{
 		    .scriptName = scriptName,

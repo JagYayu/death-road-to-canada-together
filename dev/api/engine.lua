@@ -19,6 +19,7 @@ function engine:getLoadingBeginTick() end
 --- @return string
 function engine:getVersion() end
 
+--- Quit the whole application.
 function engine:quit() end
 
 --- @warn It is not recommended to call this function every frame. It will cause the screen to flicker at current version of engine.

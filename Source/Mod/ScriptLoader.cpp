@@ -11,21 +11,22 @@
 
 #include "mod/ScriptLoader.hpp"
 
+#include "Data/Constants.hpp"
 #include "Event/CoreEvents.hpp"
 #include "Event/CoreEventsData.hpp"
 #include "Event/EventHandleKey.hpp"
 #include "Event/RuntimeEvent.hpp"
-#include "misc/Text.hpp"
-#include "mod/ModManager.hpp"
 #include "Mod/ScriptEngine.hpp"
-#include "mod/ScriptModule.hpp"
-#include "mod/ScriptProvider.hpp"
 #include "Program/Engine.hpp"
 #include "Program/Tudov.hpp"
 #include "Resource/GlobalResourcesCollection.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/Definitions.hpp"
 #include "Util/StringUtils.hpp"
+#include "misc/Text.hpp"
+#include "mod/ModManager.hpp"
+#include "mod/ScriptModule.hpp"
+#include "mod/ScriptProvider.hpp"
 
 #include <sol/error.hpp>
 #include <sol/forward.hpp>
@@ -565,26 +566,36 @@ void ScriptLoader::HotReloadScripts(const std::vector<ScriptID> &scriptIDs)
 
 void ScriptLoader::ProcessFullLoads()
 {
-	TE_DEBUG("{}", "Processing full loads ...");
+	TE_DEBUG("Processing full loads ...");
 
 	for (auto &&[scriptID, scriptModule] : _scriptModules)
 	{
 		if (!scriptModule->IsFullyLoaded())
 		{
+			std::string_view scriptName = GetScriptProvider().GetScriptNameByID(scriptID).value_or(Constants::ImplStrUnknown);
+			TE_TRACE("Fully loading script <{}>{}", scriptID, scriptName);
+
 			try
 			{
-				TE_TRACE("Fully loading script <{}>{}", scriptID, GetScriptProvider().GetScriptNameByID(scriptID).value());
 				scriptModule->FullLoad();
-				TE_TRACE("Fully loaded script <{}>{}", scriptID, GetScriptProvider().GetScriptNameByID(scriptID).value());
 			}
 			catch (std::exception &e)
 			{
-				TE_TRACE("Error full load script <{}>{}: {}", scriptID, GetScriptProvider().GetScriptNameByID(scriptID).value(), e.what());
+				TE_TRACE("Error full load script <{}>{}: {}", scriptID, scriptName, e.what());
 			}
+
+			EventScriptLoadData data{
+			    .scriptID = scriptID,
+			    .scriptName = scriptName,
+			    .module = _scriptModules.at(scriptID)->GetTable(),
+			};
+			GetEventManager().GetCoreEvents().ScriptLoad().Invoke(&data, EventHandleKey(scriptName));
+
+			TE_TRACE("Fully loaded script <{}>{}", scriptID, GetScriptProvider().GetScriptNameByID(scriptID).value());
 		}
 	}
 
-	TE_DEBUG("{}", "Processed full loads");
+	TE_DEBUG("Processed full loads");
 }
 
 void ScriptLoader::PostLoadScripts()

@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ui.HUDLayout
+-- @module dr2c.Client.UI.HUDLayout
 -- @author JagYayu
 -- @brief
 -- @version 1.0

@@ -24,7 +24,7 @@ end
 TE.events:add("TickUpdate", function(e)
 	tick = tick + 1
 
-	network:update()
+	TE.network:update()
 
 	-- TE.events:invoke(GModule.eventGUpdate, e, nil, EEventInvocation.None)
 end, N_("SharedUpdate"), "Shared")

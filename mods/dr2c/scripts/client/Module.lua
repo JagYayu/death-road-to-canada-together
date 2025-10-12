@@ -54,6 +54,7 @@ local keyboardEventCommonOrders = {
 
 CModule.eventCKeyboardPress = TE.events:new(N_("CKeyboardPress"), keyboardEventCommonOrders)
 CModule.eventCKeyboardRelease = TE.events:new(N_("CKeyboardRelease"), keyboardEventCommonOrders)
+CModule.eventCKeyboardRepeat = TE.events:new(N_("CKeyboardRepeat"), keyboardEventCommonOrders)
 
 local mouseEventCommonOrders = {
 	"UI",
@@ -85,7 +86,7 @@ TE.events:add("TickRender", function(e)
 
 	TE.events:invoke(CModule.eventCRender, e)
 
-	-- collectgarbage()
+	collectgarbage()
 end, N_("ClientRender"), "Client", "Primary")
 
 --- @param e Events.E.TickLoad

@@ -42,6 +42,7 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 	TE_CORE_EVENTS_GEN_INIT(_mouseAdded, "MouseAdded");
 	TE_CORE_EVENTS_GEN_INIT(_mouseRemoved, "MouseRemoved");
 	TE_CORE_EVENTS_GEN_INIT(_scriptGlobalIndex, "ScriptGlobalIndex");
+	TE_CORE_EVENTS_GEN_INIT(_scriptLoad, "ScriptLoad");
 	TE_CORE_EVENTS_GEN_INIT(_scriptUnload, "ScriptUnload");
 	TE_CORE_EVENTS_GEN_INIT(_scriptsLoaded, "ScriptsLoaded");
 	TE_CORE_EVENTS_GEN_INIT(_serverAuthenticate, "ServerAuthenticate");
@@ -53,6 +54,7 @@ CoreEvents::CoreEvents(EventManager &eventManager) noexcept
 	TE_CORE_EVENTS_GEN_INIT(_tickLoad, "TickLoad");
 	TE_CORE_EVENTS_GEN_INIT(_tickRender, "TickRender");
 	TE_CORE_EVENTS_GEN_INIT(_tickUpdate, "TickUpdate");
+	TE_CORE_EVENTS_GEN_INIT(_windowResize, "WindowResize");
 }
 
 #define TE_CORE_EVENTS_GEN_GETTER(Func, Field) \
@@ -79,6 +81,7 @@ TE_CORE_EVENTS_GEN_GETTER(MouseWheel, _mouseWheel);
 TE_CORE_EVENTS_GEN_GETTER(MouseAdded, _mouseAdded);
 TE_CORE_EVENTS_GEN_GETTER(MouseRemoved, _mouseRemoved);
 TE_CORE_EVENTS_GEN_GETTER(ScriptGlobalIndex, _scriptGlobalIndex);
+TE_CORE_EVENTS_GEN_GETTER(ScriptLoad, _scriptLoad);
 TE_CORE_EVENTS_GEN_GETTER(ScriptUnload, _scriptUnload);
 TE_CORE_EVENTS_GEN_GETTER(ScriptsLoaded, _scriptsLoaded);
 TE_CORE_EVENTS_GEN_GETTER(ServerAuthenticate, _serverAuthenticate);

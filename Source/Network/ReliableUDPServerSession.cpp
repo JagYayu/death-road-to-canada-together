@@ -24,8 +24,9 @@
 #include "Program/Tudov.hpp"
 #include "System/LogMicros.hpp"
 
-#include "enet/enet.h"
 #include "Util/Definitions.hpp"
+#include "enet/enet.h"
+
 
 #include <span>
 #include <stdexcept>
@@ -95,7 +96,7 @@ void ReliableUDPServerSession::Host(const IServerSession::HostArgs &baseArgs)
 {
 	if (GetSessionState() != EServerSessionState::Shutdown)
 	{
-		throw std::runtime_error("Client is already connected or connecting");
+		throw std::runtime_error("Server is already hosted or hosting");
 	}
 
 	const auto &args = dynamic_cast<const HostArgs &>(baseArgs);

@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ui.MenuGeneric
+-- @module dr2c.Client.UI.MenuGeneric
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -9,8 +9,8 @@
 --
 --]]
 
-local CUI = require("dr2c.Client.UI.UI")
 local CModule = require("dr2c.Client.Module")
+local CUI = require("dr2c.Client.UI.UI")
 local CUIMenu = require("dr2c.Client.UI.Menu.Menu")
 local CUIWidget = require("dr2c.Client.UI.Widget.Widget")
 
@@ -48,26 +48,40 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 
 	root:addChild(CUIWidget.newButton({
 		id = 1,
-		label = "START",
+		label = "CONNECT",
 		margin = commonMargin,
 		scale = uiScale,
 		border = commonBorder,
+		callback = function()
+			TE.network:clientConnectRUDP({
+				host = "localhost",
+				port = 8878,
+			})
+		end,
 	}))
 
 	root:addChild(CUIWidget.newButton({
-		label = "OPTIONS",
+		id = 2,
+		label = "HOST",
 		margin = commonMargin,
 		scale = uiScale,
 		border = commonBorder,
+		callback = function()
+			TE.network:serverHostRUDP({
+				host = "localhost",
+				port = 8878,
+			})
+		end,
 	}))
 
 	root:addChild(CUIWidget.newButton({
+		id = 3,
 		label = "EXIT",
 		margin = commonMargin,
 		scale = uiScale,
 		border = commonBorder,
 		callback = function()
-			local ExitJumpscare = require("dr2c.Client.ui.ExitJumpscare")
+			local ExitJumpscare = require("dr2c.Client.UI.ExitJumpscare")
 
 			ExitJumpscare.trigger()
 		end,
@@ -85,3 +99,5 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 
 	e.initialized = true
 end, "InitializeTitleScreen", "Initialize", CUIMenu.Type.TitleScreen)
+
+CUIMenu.update()

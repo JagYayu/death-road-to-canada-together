@@ -2,16 +2,18 @@
 error("this is a lua library module")
 
 --- @class TE.Keyboards : userdata
-TE.keyboards = {}
+local keyboards = {}
 
 --- @param index integer
 --- @return TE.Keyboard?
-function TE.keyboards:getKeyboardAt(index) end
+function keyboards:getKeyboardAt(index) end
 
 --- @param id TE.KeyboardID
 --- @return TE.Keyboard?
-function TE.keyboards:getKeyboardByID(id) end
+function keyboards:getKeyboardByID(id) end
 
 --- @return TE.Keyboard[]
 --- @return TE.Keyboard[]
-function TE.keyboards:listKeyboards() end
+function keyboards:listKeyboards() end
+
+TE.keyboards = keyboards

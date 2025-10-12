@@ -64,8 +64,16 @@ error("this is a lua library module")
 --- @field window TE.Window
 
 --- @class Events.E.TickUpdate
+--- @field data table
+
+--- @class Events.E.ScriptLoad
+--- @field data table
+
+--- @class Events.E.ScriptUnload
+--- @field data table
 
 --- @class Events.E.ScriptsLoaded
+--- @field data table
 
 --- @class Events.E.ClientConnect
 --- @field data Events.E.ClientConnect.Data
@@ -211,6 +219,7 @@ error("this is a lua library module")
 --- @alias Events.Event "MouseMotion"
 --- @alias Events.Event "MouseWheel"
 --- @alias Events.Event "ScriptGlobalIndex"
+--- @alias Events.Event "ScriptLoad"
 --- @alias Events.Event "ScriptUnload"
 --- @alias Events.Event "ScriptsLoaded"
 --- @alias Events.Event "ServerConnect"

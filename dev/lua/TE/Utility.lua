@@ -9,14 +9,14 @@
 --
 --]]
 
+local Math = require("TE.Math")
+
 local type = type
 
 --- @class TE.Utility
 local Utility = {}
 
-Utility.inf = 1 / 0
-
-Utility.nan = 0 / 0
+local nan = Math.nan
 
 --- @param levelOverride integer? @default: 3
 function Utility.assertLoadtime(levelOverride)
@@ -37,7 +37,7 @@ end
 --- @param value any?
 --- @return boolean
 function Utility.canBeIndex(value)
-	return value ~= nil and value ~= Utility.nan
+	return value ~= nil and value ~= nan
 end
 
 --- @generic T

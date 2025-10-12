@@ -18,7 +18,7 @@ local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GNetworkPlatform = require("dr2c.Client.Network.Platform")
 local GUtilsThrottle = require("dr2c.Shared.Utils.Throttle")
 
-local network = network
+local network = TE.network
 
 --- @class dr2c.CClient
 local CClient = {}
