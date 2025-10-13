@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.server.network.Clock
+-- @module dr2c.Server.Network.Clock
 -- @author JagYayu
 -- @brief
 -- @version 1.0

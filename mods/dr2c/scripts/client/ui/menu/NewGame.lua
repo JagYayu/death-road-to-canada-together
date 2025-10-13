@@ -9,6 +9,6 @@
 --
 --]]
 
-local CUIMenu = require("dr2c.Client.UI.Menu.Menu")
+local CUIMenu = require("dr2c.Client.UI.Menu")
 
 CUIMenu.update()

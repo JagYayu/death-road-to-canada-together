@@ -14,7 +14,7 @@ local Color = require("TE.Color")
 
 local CRenderUtils = require("dr2c.Client.Render.Utils")
 local CUIDraw = require("dr2c.Client.UI.Draw")
-local CUIWidget = require("dr2c.Client.UI.Widget.Widget")
+local CUIWidget = require("dr2c.Client.UI.Widget")
 
 --- @class dr2c.CUIWidgetButton
 local CUIWidgetButton = {}

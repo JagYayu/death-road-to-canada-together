@@ -9,10 +9,13 @@
 --
 --]]
 
+local CForthGameMode = require("dr2c.Shared.Forth.GameMode")
+local CForthSession = require("dr2c.Client.Forth.Session")
 local CModule = require("dr2c.Client.Module")
 local CUI = require("dr2c.Client.UI.UI")
-local CUIMenu = require("dr2c.Client.UI.Menu.Menu")
-local CUIWidget = require("dr2c.Client.UI.Widget.Widget")
+local CUIMenu = require("dr2c.Client.UI.Menu")
+local CUIWidget = require("dr2c.Client.UI.Widget")
+local CWorldSession = require("dr2c.Client.World.Session")
 
 --- @param e dr2c.E.CMenu
 TE.events:add(CUIMenu.eventCMenu, function(e)
@@ -47,7 +50,6 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 	}
 
 	root:addChild(CUIWidget.newButton({
-		id = 1,
 		label = "CONNECT",
 		margin = commonMargin,
 		scale = uiScale,
@@ -61,7 +63,6 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 	}))
 
 	root:addChild(CUIWidget.newButton({
-		id = 2,
 		label = "HOST",
 		margin = commonMargin,
 		scale = uiScale,
@@ -75,7 +76,30 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 	}))
 
 	root:addChild(CUIWidget.newButton({
-		id = 3,
+		label = "START FORTH SESSION",
+		margin = commonMargin,
+		scale = uiScale,
+		border = commonBorder,
+		callback = function()
+			CForthSession.startNew({
+				gameMode = CForthGameMode.Type.Normal,
+			})
+
+			-- CUIMenu.
+		end,
+	}))
+
+	root:addChild(CUIWidget.newButton({
+		label = "START WORLD SESSION",
+		margin = commonMargin,
+		scale = uiScale,
+		border = commonBorder,
+		callback = function()
+			CWorldSession.start({})
+		end,
+	}))
+
+	root:addChild(CUIWidget.newButton({
 		label = "EXIT",
 		margin = commonMargin,
 		scale = uiScale,

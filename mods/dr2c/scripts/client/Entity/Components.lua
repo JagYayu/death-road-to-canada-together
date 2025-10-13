@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ECS.Components
+-- @module dr2c.Client.Entity.Components
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -9,7 +9,7 @@
 --
 --]]
 
-local CECSSchema = require("dr2c.Client.ECS.ECSSchema")
+local CECSSchema = require("dr2c.Client.Entity.ECSSchema")
 
 --- @class dr2c.CComponents
 local CComponents = {}
@@ -23,7 +23,7 @@ local function registerImpl(trait, name, fields, dependencies, ...)
 	local extras = { ... }
 
 	TE.events:add(CECSSchema.eventEntitySchemaLoadComponents, function(e)
-		local CEntitySchema = require("dr2c.Client.ECS.ECSSchema")
+		local CEntitySchema = require("dr2c.Client.Entity.ECSSchema")
 
 		e.new[name] = {
 			fields = fields,

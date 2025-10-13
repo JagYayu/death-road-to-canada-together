@@ -9,7 +9,7 @@
 --
 --]]
 
-local CECS = require("dr2c.Client.ECS.ECS")
+local CECS = require("dr2c.Client.Entity.ECS")
 local CRenderFocus = require("dr2c.Client.Render.Focus")
 local CRoom = require("dr2c.Client.World.Room")
 local CRenderSprites = require("dr2c.Client.Render.Sprites")

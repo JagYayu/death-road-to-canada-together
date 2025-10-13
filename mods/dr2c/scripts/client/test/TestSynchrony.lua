@@ -9,7 +9,7 @@ function TestSynchrony.enable()
 	local Function = require("TE.Function")
 	local Math = require("TE.Math")
 
-	local CECS = require("dr2c.Client.ECS.ECS")
+	local CECS = require("dr2c.Client.Entity.ECS")
 	local CNetworkClient = require("dr2c.Client.Network.Client")
 	local CNetworkClock = require("dr2c.Client.Network.Clock")
 	local CWorldSnapshot = require("dr2c.Client.World.Snapshot")

@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Server.Network.ServerSettings
+-- @module dr2c.Shared.Forth.Event
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -9,8 +9,7 @@
 --
 --]]
 
-local SServerSettings = {}
+--- @class dr2c.CForthEvent
+local CForthEvent = {}
 
-local GSettings = {}
-
-return SServerSettings
+return CForthEvent

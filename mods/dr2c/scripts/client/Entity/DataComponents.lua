@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ECS.DataComponents
+-- @module dr2c.Client.Entity.DataComponents
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -9,7 +9,7 @@
 --
 --]]
 
-local CComponents = require("dr2c.Client.ECS.Components")
+local CComponents = require("dr2c.Client.Entity.Components")
 
 local archetypeConstant = CComponents.registerArchetypeConstant
 local archetypeSerializable = CComponents.registerArchetypeSerializable

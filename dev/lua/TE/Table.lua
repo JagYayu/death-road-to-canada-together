@@ -189,7 +189,7 @@ end
 
 --- @generic T
 --- @param tbl table<any, T>
---- @param values (T[] | integer)? @table: fill result values to this table; integer: preallocate this size for result table.
+--- @param values? integer | T[] @table: fill result values to this table; integer: preallocate this size for result table.
 --- @return T[]
 function Table.getValueList(tbl, values)
 	local valuesType = type(values)
@@ -204,11 +204,11 @@ function Table.getValueList(tbl, values)
 	return valueList
 end
 
---- @generic K, V
---- @param tbl table<K, V>
+--- @generic TK, TV
+--- @param tbl table<TK, TV>
 --- @param keys (table | integer)?
 --- @param values (table | integer)?
---- @return K[], V[]
+--- @return TK[], TV[]
 function Table.getKeyValueLists(tbl, keys, values)
 	local keysType = type(keys)
 	local keyList = keysType == "number" and table_new(keys, 0) --
@@ -294,6 +294,9 @@ function Table.merge(dest, src, depth)
 	return mergeImpl(dest, src, depth or 1)
 end
 
+--- @param dest table
+--- @param src table
+--- @return table dest
 function Table.mergeDefaults(dest, src)
 	for k, v in pairs(src) do
 		if dest[k] == nil then

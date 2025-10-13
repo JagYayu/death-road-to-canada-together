@@ -9,8 +9,8 @@
 --
 --]]
 
-local CECS = require("dr2c.Client.ECS.ECS")
-local CECSSchema = require("dr2c.Client.ECS.ECSSchema")
+local CECS = require("dr2c.Client.Entity.ECS")
+local CECSSchema = require("dr2c.Client.Entity.ECSSchema")
 
 local CDebugLayerRenderer = {}
 

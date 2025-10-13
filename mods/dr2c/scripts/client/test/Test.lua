@@ -1,4 +1,4 @@
-local CECS = require("dr2c.Client.ECS.ECS")
+local CECS = require("dr2c.Client.Entity.ECS")
 
 -- print(scriptID, scriptName)
 -- TE.events:add(N_"CEntitySchemaLoadComponents", function(e)

@@ -11,7 +11,7 @@
 
 local Math = require("TE.Math")
 
-local CECS = require("dr2c.Client.ECS.ECS")
+local CECS = require("dr2c.Client.Entity.ECS")
 local CSystemInput = require("dr2c.Client.System.Input")
 local CWorldTick = require("dr2c.Client.World.Tick")
 local GWorldPlayerInput = require("dr2c.Shared.World.PlayerInput")

@@ -187,7 +187,7 @@ TE.events:add(N_("CRenderUI"), CUIMenu.draw, "RenderMenu", "Menu")
 TE.events:add(N_("CUpdate"), function(e)
 	if
 		not CUIMenu.isOpened() --
-		and CWorldSession.getState() == GWorldSession.State.Inactive
+		and CWorldSession.getAttribute(GWorldSession.Attribute.State) == GWorldSession.State.Inactive
 	then
 		CUIMenu.open(CUIMenu.Type.TitleScreen)
 	end

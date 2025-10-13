@@ -85,7 +85,7 @@ TE.events:add(N_("CUpdate"), function(e)
 		return
 	end
 
-	if CWorldSession.getState() == GWorldSession.State.Inactive then
+	if CWorldSession.getAttribute(GWorldSession.Attribute.State) == GWorldSession.State.Inactive then
 		return
 	end
 

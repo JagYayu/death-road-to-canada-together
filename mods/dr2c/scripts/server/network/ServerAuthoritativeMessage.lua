@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.server.network.ServerAuthoritativeMessage
+-- @module dr2c.Server.Network.ServerAuthoritativeMessage
 -- @author JagYayu
 -- @brief
 -- @version 1.0

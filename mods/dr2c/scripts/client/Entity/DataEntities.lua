@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ECS.DataEntities
+-- @module dr2c.Client.Entity.DataEntities
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -9,7 +9,7 @@
 --
 --]]
 
-local CEntities = require("dr2c.Client.ECS.Entities")
+local CEntities = require("dr2c.Client.Entity.Entities")
 
 local entity = CEntities.registerEntity
 

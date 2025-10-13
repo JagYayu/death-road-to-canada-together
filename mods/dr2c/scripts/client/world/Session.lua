@@ -134,12 +134,4 @@ TE.events:add("DebugProvide", function(e)
 	})
 end, "ProvideClientWorldSessionCommands")
 
--- TE.events:add(N_("CScanCodeDown"), function(e)
--- 	if CWorldSession.getState() == GWorldSession.State.Paused then
--- 		CWorldSession.unpause()
--- 	elseif CWorldSession.getState() == GWorldSession.State.Paused then
--- 		CWorldSession.pause()
--- 	end
--- end, "WorldSessionPauseState", "Pause", EScanCode.P)
-
 return CWorldSession

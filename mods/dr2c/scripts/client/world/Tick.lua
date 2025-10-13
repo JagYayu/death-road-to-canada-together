@@ -104,7 +104,7 @@ function CWorldTick.process(targetTick)
 end
 
 TE.events:add(N_("CUpdate"), function(e)
-	if CWorldSession.getState() == GWorldSession.State.Playing then
+	if CWorldSession.getAttribute(GWorldSession.Attribute.State) == GWorldSession.State.Playing then
 		CWorldTick.process()
 	end
 end, "ProcessWorldTicks", "World")

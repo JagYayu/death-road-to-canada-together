@@ -1,4 +1,4 @@
-local CECS = require("dr2c.Client.ECS.ECS")
+local CECS = require("dr2c.Client.Entity.ECS")
 
 local CWorldRoom = {}
 

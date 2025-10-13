@@ -28,11 +28,18 @@ local Function = require("TE.Function")
 local GWorldSession = {}
 
 GWorldSession.Attribute = Enum.sequence({
-	Internal = 0,
-	Mode = 1,
+	State = 1,
+	TimeStart = 2,
+	TimePaused = 3,
+	ElapsedPaused = 4,
+	Mode = 5,
+	Zombies = 6,
 })
 
-local GWorldSession_Attribute_Internal = GWorldSession.Attribute.Internal
+local GWorldSession_Attribute_State = GWorldSession.Attribute.State
+local GWorldSession_Attribute_TimeStart = GWorldSession.Attribute.TimeStart
+local GWorldSession_Attribute_TimePaused = GWorldSession.Attribute.TimePaused
+local GWorldSession_Attribute_ElapsedPaused = GWorldSession.Attribute.ElapsedPaused
 
 GWorldSession.Mode = Enum.sequence({
 	None = 0,
@@ -55,12 +62,12 @@ local worldSessionModules = setmetatable({}, { __mode = "v" })
 
 --- @type table<dr2c.WorldSessionAttribute, dr2c.ValueValidator>
 local attributeValidators = {
-	[GWorldSession.Attribute.Internal] = Function.generateTableValidator({
-		{ "state", "number" },
-		{ "timeStart", "number" },
-		{ "timePaused", "number" },
-		{ "elapsedPaused", "number" },
-	}),
+	-- [GWorldSession.Attribute.State] = Function.generateTableValidator({
+	-- 	{ "state", "number" },
+	-- 	{ "timeStart", "number" },
+	-- 	{ "timePaused", "number" },
+	-- 	{ "elapsedPaused", "number" },
+	-- }),
 }
 
 worldSessionModules = persist("worldSessionModules", function()
@@ -88,23 +95,46 @@ function GWorldSession.setAttributeValidator(attribute, validate)
 	attributeValidators[attribute] = validate
 end
 
---- @return dr2c.WorldSession worldSessionModule
+--- @return dr2c.WorldSession WorldSession
 function GWorldSession.new()
-	local scriptName = TE.scriptLoader:getLoadingScriptName()
-	if scriptName ~= "" and worldSessionModules[scriptName] then
-		return worldSessionModules[scriptName]
-	end
-
 	--- @class dr2c.WorldSession
-	local WorldSession = {}
+	local WorldSession
+
+	local scriptName = TE.scriptLoader:getLoadingScriptName()
+	if scriptName ~= "" then
+		if worldSessionModules[scriptName] then
+			return worldSessionModules[scriptName]
+		else
+			WorldSession = {}
+			worldSessionModules[scriptName] = WorldSession
+		end
+	else
+		WorldSession = {}
+	end
 
 	worldSessionModules[scriptName] = WorldSession
 
 	--- @class dr2c.WorldSessionAttributes
 	local worldSessionAttributes
 
+	function WorldSession.resetAttributes()
+		worldSessionAttributes = {
+			[GWorldSession_Attribute_State] = GWorldSession.State.Inactive,
+			[GWorldSession_Attribute_TimeStart] = Time.getSystemTime(),
+			[GWorldSession_Attribute_TimePaused] = Time.getSystemTime(),
+			[GWorldSession_Attribute_ElapsedPaused] = 0,
+			[GWorldSession_Attribute_Mode] = GWorldSession.Mode.None,
+		}
+	end
+
+	--- @return dr2c.WorldSessionAttributes
 	function WorldSession.getAttributes()
 		return worldSessionAttributes
+	end
+
+	--- @param attributes dr2c.WorldSessionAttributes
+	function WorldSession.setAttributes(attributes)
+		worldSessionAttributes = attributes
 	end
 
 	--- @param attribute dr2c.WorldSessionAttribute
@@ -121,34 +151,6 @@ function GWorldSession.new()
 		end
 
 		worldSessionAttributes[attribute] = value
-	end
-
-	function WorldSession.setAttributes(attributes)
-		worldSessionAttributes = attributes
-	end
-
-	function WorldSession.resetAttributes()
-		worldSessionAttributes = {
-			[GWorldSession_Attribute_Internal] = {
-				state = GWorldSession.State.Inactive,
-				timeStart = Time.getSystemTime(),
-				timePaused = Time.getSystemTime(),
-				elapsedPaused = 0,
-			},
-			[GWorldSession_Attribute_Mode] = GWorldSession.Mode.None,
-		}
-	end
-
-	--- Equivalent to `WorldSession.getAttribute(GWorldSession.Attribute.Mode)`
-	--- @return dr2c.WorldSessionMode
-	function WorldSession.getMode()
-		return worldSessionAttributes[GWorldSession_Attribute_Mode].mode
-	end
-
-	--- Equivalent to `WorldSession.getAttribute(GWorldSession.Attribute.Internal).state`
-	--- @return dr2c.WorldSessionState
-	function WorldSession.getState()
-		return worldSessionAttributes[GWorldSession_Attribute_Internal].state
 	end
 
 	WorldSession.resetAttributes()

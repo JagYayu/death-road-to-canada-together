@@ -50,12 +50,10 @@ function SWorldSession.start(clientID, args)
 
 	local time = Time.getSystemTime()
 
-	worldSessionAttributes[GWorldSession.Attribute.Internal] = {
-		state = GWorldSession.State.Playing,
-		timeStart = time,
-		timePaused = time,
-		elapsedPaused = 0,
-	}
+	worldSessionAttributes[GWorldSession.Attribute.State] = GWorldSession.State.Playing
+	worldSessionAttributes[GWorldSession.Attribute.TimeStart] = time
+	worldSessionAttributes[GWorldSession.Attribute.TimePaused] = time
+	worldSessionAttributes[GWorldSession.Attribute.ElapsedPaused] = 0
 
 	local e = {
 		attributes = worldSessionAttributes,
@@ -98,14 +96,14 @@ function SWorldSession.finish()
 	end
 end
 
+--- @param e {}
 TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.finish()
 end, "ReceiveWorldSessionFinish", "Receive", GMessage.Type.WorldSessionFinish)
 
 --- @return boolean
 function SWorldSession.pause()
-	local internal = SWorldSession.getAttribute(GWorldSession.Attribute.Internal)
-	if internal.state ~= GWorldSession.State.Playing then
+	if SWorldSession.getAttribute(GWorldSession.Attribute.State) ~= GWorldSession.State.Playing then
 		return false
 	end
 
@@ -115,8 +113,8 @@ function SWorldSession.pause()
 	if not e.suppressed then
 		local time = Time.getSystemTime()
 
-		internal.state = GWorldSession.State.Paused
-		internal.pausedTime = time
+		SWorldSession.setAttribute(GWorldSession.Attribute.State, GWorldSession.State.Paused)
+		SWorldSession.setAttribute(GWorldSession.Attribute.TimePaused, time)
 
 		SServer.broadcastReliable(GMessage.Type.WorldSessionPause, time)
 
@@ -132,8 +130,7 @@ end, "ReceiveWorldSessionPause", "Receive", GMessage.Type.WorldSessionPause)
 
 --- @return boolean
 function SWorldSession.unpause()
-	local internal = SWorldSession.getAttribute(GWorldSession.Attribute.Internal)
-	if internal.state ~= GWorldSession.State.Paused then
+	if SWorldSession.getAttribute(GWorldSession.Attribute.State) ~= GWorldSession.State.Paused then
 		return false
 	end
 
@@ -143,8 +140,11 @@ function SWorldSession.unpause()
 	if not e.suppressed then
 		local time = Time.getSystemTime()
 
-		internal.state = GWorldSession.State.Paused
-		internal.elapsedPaused = internal.elapsedPaused + time - internal.timePaused
+		local elapsedPaused = SWorldSession.getAttribute(GWorldSession.Attribute.ElapsedPaused)
+		local timePaused = SWorldSession.getAttribute(GWorldSession.Attribute.TimePaused)
+
+		SWorldSession.setAttribute(GWorldSession.Attribute.State, GWorldSession.State.Paused)
+		SWorldSession.setAttribute(GWorldSession.Attribute.ElapsedPaused, elapsedPaused + time - timePaused)
 
 		SServer.broadcastReliable(GMessage.Type.WorldSessionUnpause, time)
 

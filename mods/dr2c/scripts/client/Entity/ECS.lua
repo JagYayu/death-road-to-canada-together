@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ECS.ECS
+-- @module dr2c.Client.Entity.ECS
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -13,7 +13,7 @@ local List = require("TE.List")
 local Table = require("TE.Table")
 local String = require("TE.String")
 
-local CECSSchema = require("dr2c.Client.ECS.ECSSchema")
+local CECSSchema = require("dr2c.Client.Entity.ECSSchema")
 
 local CECSSchema_ComponentTrait_ArchetypeConstant = CECSSchema.ComponentTrait.ArchetypeConstant
 local CECSSchema_ComponentTrait_ArchetypeSerializable = CECSSchema.ComponentTrait.ArchetypeSerializable
@@ -350,7 +350,7 @@ function CECS.getComponentByID(entityID, componentID)
 	elseif trait == CECSSchema_ComponentTrait_EntitySerializable then
 		return componentsPoolEntitySerializable[entityID]
 	else
-		error("Invalid component", 2)
+		error("Invalid component ID ", 2)
 	end
 end
 

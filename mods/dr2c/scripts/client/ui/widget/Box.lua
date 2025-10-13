@@ -10,7 +10,7 @@
 --]]
 
 local CUIDraw = require("dr2c.Client.UI.Draw")
-local CUIWidget = require("dr2c.Client.UI.Widget.Widget")
+local CUIWidget = require("dr2c.Client.UI.Widget")
 
 --- @class dr2c.CUIWidgetBox
 local CUIWidgetBox = {}

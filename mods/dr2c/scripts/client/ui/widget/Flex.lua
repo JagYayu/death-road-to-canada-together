@@ -11,7 +11,7 @@
 
 local Table = require("TE.Table")
 
-local CUIWidget = require("dr2c.Client.UI.Widget.Widget")
+local CUIWidget = require("dr2c.Client.UI.Widget")
 
 --- @class dr2c.CUIWidgetFlex
 local CUIWidgetFlex = {}

@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.ECS.Entities
+-- @module dr2c.Client.Entity.Entities
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -9,7 +9,7 @@
 --
 --]]
 
-local CECSSchema = require("dr2c.Client.ECS.ECSSchema")
+local CECSSchema = require("dr2c.Client.Entity.ECSSchema")
 
 local CEntities = {}
 
