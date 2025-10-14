@@ -1,5 +1,5 @@
 --[[
--- @module tudov.Matrix3x3
+-- @module TE.Matrix3x3
 -- @author JagYayu
 -- @brief
 -- @version 1.0

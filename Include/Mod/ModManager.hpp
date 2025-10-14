@@ -1,5 +1,5 @@
 /**
- * @file mod/ModManager.hpp
+ * @file Mod/ModManager.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -11,15 +11,15 @@
 
 #pragma once
 
-#include "Mod.hpp"
-#include "ModListedEntry.hpp"
-#include "ModRequirement.hpp"
-#include "ScriptEngine.hpp"
-#include "ScriptProvider.hpp"
 #include "Data/GlobalStorageLocation.hpp"
 #include "Debug/Debug.hpp"
 #include "Event/EventManager.hpp"
+#include "Mod.hpp"
+#include "ModListedEntry.hpp"
+#include "ModRequirement.hpp"
 #include "Program/EngineComponent.hpp"
+#include "ScriptEngine.hpp"
+#include "ScriptProvider.hpp"
 #include "System/Log.hpp"
 
 #include <filesystem>
@@ -50,13 +50,21 @@ namespace tudov
 
 		[[nodiscard]] virtual std::shared_ptr<Mod> FindLoadedMod(std::string_view modUID) noexcept = 0;
 
-		[[nodiscard]] virtual std::vector<ModRequirement> &GetRequiredMods() noexcept = 0;
-		[[nodiscard]] virtual const std::vector<ModRequirement> &GetRequiredMods() const noexcept = 0;
+		[[nodiscard]] virtual std::vector<ModRequirement> GetRequiredMods() const noexcept = 0;
+		virtual void SetRequiredMods(const std::vector<ModRequirement> &requiredMods) noexcept = 0;
+
+		[[nodiscard]] virtual std::vector<std::shared_ptr<Mod>> &GetLoadedMods() noexcept = 0;
+		[[nodiscard]] virtual std::size_t GetLoadedModsHash() const noexcept = 0;
 
 		[[nodiscard]] virtual bool HasUpdateScriptPending() noexcept = 0;
 		virtual void UpdateScriptPending(std::string_view scriptName, TextID scriptTextID, std::string_view scriptModUID) = 0;
 
 		virtual void Update() = 0;
+
+		[[nodiscard]] const std::vector<std::shared_ptr<Mod>> &GetLoadedMods() const noexcept
+		{
+			return const_cast<IModManager *>(this)->GetLoadedMods();
+		}
 	};
 
 	class LuaBindings;
@@ -128,8 +136,11 @@ namespace tudov
 
 		[[nodiscard]] std::shared_ptr<Mod> FindLoadedMod(std::string_view namespace_) noexcept override;
 
-		[[nodiscard]] std::vector<ModRequirement> &GetRequiredMods() noexcept override;
-		[[nodiscard]] const std::vector<ModRequirement> &GetRequiredMods() const noexcept override;
+		[[nodiscard]] std::vector<ModRequirement> GetRequiredMods() const noexcept override;
+		virtual void SetRequiredMods(const std::vector<ModRequirement> &requiredMods) noexcept override;
+
+		[[nodiscard]] std::vector<std::shared_ptr<Mod>> &GetLoadedMods() noexcept override;
+		[[nodiscard]] std::size_t GetLoadedModsHash() const noexcept override;
 
 		[[nodiscard]] virtual bool HasUpdateScriptPending() noexcept override;
 		void UpdateScriptPending(std::string_view scriptName, TextID scriptTextID, std::string_view scriptModUID) override;

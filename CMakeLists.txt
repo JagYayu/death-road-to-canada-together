@@ -14,6 +14,8 @@ if(MSVC)
     add_compile_options(/bigobj /FS /Zc:preprocessor)
 endif()
 
+add_compile_definitions(_WIN32_WINNT=0x0A00)
+
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Lib/imgui-1.91.9b/*.cpp"
@@ -61,6 +63,10 @@ find_package(unofficial-enet CONFIG REQUIRED)
 target_link_libraries(tudov PRIVATE unofficial::enet::enet)
 target_link_libraries(tudov PRIVATE ws2_32)
 target_link_libraries(tudov PRIVATE winmm)
+
+# mimalloc
+find_package(mimalloc CONFIG REQUIRED)
+target_link_libraries(tudov PRIVATE $<IF:$<TARGET_EXISTS:mimalloc-static>,mimalloc-static,mimalloc>)
 
 # minizip - from vcpkg
 find_package(unofficial-minizip CONFIG REQUIRED)

@@ -9,7 +9,8 @@
 --
 --]]
 
-local Enum = require "TE.Enum"
+local Enum = require("TE.Enum")
+local String = require("TE.String")
 
 --- @class dr2c.GForthCharacter
 local GForthCharacter = {}
@@ -24,7 +25,40 @@ GForthCharacter.Data = Enum.protocol({
 	Traits = 5,
 })
 
-function GForthCharacter.random()
+--- @type string[]?
+local maleNames
+--- @type string[]?
+local femaleNames
+
+--- @param names string[]?
+--- @param file string
+--- @return string[]
+local function tryLoadCharacterNames(names, file)
+	if not names then
+		if TE.vfs:exists(file) then
+			names = String.split(TE.vfs:readFile(file), "\r\n")
+			table.sort(names)
+		else
+			names = {}
+		end
+	end
+
+	return names
+end
+
+--- @return string
+function GForthCharacter.randomMaleName()
+	maleNames = tryLoadCharacterNames(maleNames, "data/mnames.txt")
+	return maleNames[1] or ""
+end
+
+--- @return string
+function GForthCharacter.randomFemaleName()
+	maleNames = tryLoadCharacterNames(maleNames, "data/mnames.txt")
+	return maleNames[1] or ""
+end
+
+function GForthCharacter.randomCharacter()
 	--- @class dr2c.ForthCharacter
 	--- @field [dr2c.GForthCharacterData] any
 	local forthCharacter = {}
@@ -32,6 +66,10 @@ function GForthCharacter.random()
 	-- GForthCharacter.Data.Perks
 
 	return forthCharacter
+end
+
+function GForthCharacter.randomFamilyCharacter()
+	error("not implement yet")
 end
 
 return GForthCharacter

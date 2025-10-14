@@ -1,5 +1,5 @@
 /**
- * @file mod/ModConfig.hpp
+ * @file Mod/ModConfig.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -18,8 +18,12 @@
 
 namespace tudov
 {
+	class LuaBindings;
+
 	struct ModConfig
 	{
+		friend LuaBindings;
+
 		struct Data
 		{
 			bool autoload = true;
@@ -45,11 +49,14 @@ namespace tudov
 		std::string author = "";
 		std::string description = "";
 		std::unordered_map<std::string, Version> dependencies = {};
-		EModDistribution distribution;
+		EModDistribution distribution = EModDistribution::Universal;
 
 		Data audios = Data{.directory = "audios"};
 		Scripts scripts = Scripts{Data{.directory = "scripts"}};
 		Data fonts = Data{.directory = "fonts"};
+
+	  private:
+		Version LuaGetVersion() const noexcept;
 	};
 
 	inline void from_json(const nlohmann::json &j, ModConfig::Data &d) noexcept

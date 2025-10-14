@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaBindings.hpp
+ * @file Mod/LuaBindings.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

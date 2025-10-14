@@ -207,7 +207,7 @@ bool ReliableUDPClientSession::Update()
 			    .port = event.peer->address.port,
 			};
 
-			TE_TRACE("Connected to server! event, host: {}, port: {}", data.host, data.port);
+			TE_DEBUG("Connected to server! event, host: {}, port: {}", data.host, data.port);
 
 			coreEvents.ClientConnect().Invoke(&data, EventHandleKey(_clientSessionSlot), EEventInvocation::None);
 
@@ -226,7 +226,7 @@ bool ReliableUDPClientSession::Update()
 			    .port = event.peer->address.port,
 			};
 
-			TE_TRACE("Disconnected from server! event, host: {}, port: {}", eventData.host, eventData.port);
+			TE_DEBUG("Disconnected from server! event, host: {}, port: {}", eventData.host, eventData.port);
 
 			coreEvents.ClientMessage().Invoke(&eventData, EventHandleKey(_clientSessionSlot), EEventInvocation::None);
 

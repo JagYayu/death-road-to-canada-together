@@ -15,10 +15,14 @@
 #include "Graphic/GUI.hpp"
 #include "Program/CrashReporter.hpp"
 #include "Program/Engine.hpp"
+#include "Program/Memory.hpp"
 #include "Program/Tudov.hpp"
+#include "SDL3/SDL_stdinc.h"
 #include "System/Log.hpp"
 #include "System/LogMicros.hpp"
 #include "Test/TestGPURendering.hpp"
+
+#include "mimalloc.h"
 
 #include <memory>
 
@@ -118,6 +122,7 @@ bool CommonInit(int argc, char **argv) noexcept
 	Tudov::InitMainArgs(argc, argv);
 
 	// Initialize SDL3.
+	SDL_SetMemoryFunctions(Memory::Malloc, Memory::Calloc, Memory::Realloc, Memory::Free);
 	SDL_SetLogOutputFunction(SDLLogOutputCallback, nullptr);
 	if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS | SDL_INIT_SENSOR | SDL_INIT_CAMERA)) [[unlikely]]
 	{

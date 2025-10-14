@@ -1,5 +1,5 @@
 --[[
--- @module tudov.Enum
+-- @module TE.Enum
 -- @author JagYayu
 -- @brief
 -- @version 1.0

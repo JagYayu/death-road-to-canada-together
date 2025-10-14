@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaBindings_Mod.cpp
+ * @file Mod/LuaBindings_Mod.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -12,14 +12,29 @@
 #include "mod/LuaBindings.hpp"
 
 #include "Util/MicrosImpl.hpp"
+#include "Util/Version.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptErrors.hpp"
 #include "mod/ScriptLoader.hpp"
+#include "sol/property.hpp"
 
 using namespace tudov;
 
 void LuaBindings::InstallMod(sol::state &lua, Context &context) noexcept
 {
+	TE_LB_ENUM(
+	    EModDistribution,
+	    {
+	        {"ClientOnly", EModDistribution::ClientOnly},
+	        {"ServerOnly", EModDistribution::ServerOnly},
+	        {"Universal", EModDistribution::Universal},
+	    });
+
+	TE_LB_USERTYPE(
+	    Mod,
+	    "getConfig", &Mod::GetConfig,
+	    "shouldScriptLoad", &Mod::ShouldScriptLoad);
+
 	TE_LB_USERTYPE(
 	    ModConfig,
 	    "author", &ModConfig::author,
@@ -27,10 +42,13 @@ void LuaBindings::InstallMod(sol::state &lua, Context &context) noexcept
 	    "distribution", &ModConfig::distribution,
 	    "name", &ModConfig::name,
 	    "namespace", &ModConfig::namespace_,
-	    "uid", &ModConfig::uid);
+	    "uid", &ModConfig::uid,
+	    "version", sol::readonly_property(&ModConfig::LuaGetVersion));
 
 	TE_LB_USERTYPE(
 	    ModManager,
+	    "getLoadedMods", &ModManager::GetLoadedMods,
+	    "getLoadedModsHash", &ModManager::GetLoadedModsHash,
 	    "loadMods", &ModManager::LoadModsDeferred,
 	    "unloadMods", &ModManager::UnloadModsDeferred);
 

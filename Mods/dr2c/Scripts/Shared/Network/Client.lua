@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.shared.network.Client
+-- @module dr2c.Shared.network.Client
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -63,11 +63,11 @@ GNetworkClient.PublicAttribute = Enum.sequence({
 	DisplayName = 7,
 	-- 所在服务器房间
 	Room = 8,
-	-- app版本
+	-- App版本
 	Version = 9,
 	-- 游戏文件哈希值，用于判断游戏的核心文件是否和服务器一致
 	ContentHash = 10,
-	-- 游戏模组哈希值，用于判断模组是否和服务器一致
+	-- 游戏Mods哈希值，用于判断模组是否和服务器一致
 	ModsHash = 11,
 	-- 套接口类型
 	SocketType = 12,

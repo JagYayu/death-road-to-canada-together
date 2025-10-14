@@ -1,5 +1,5 @@
 /**
- * @file mod/Mod.hpp
+ * @file Mod/Mod.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -14,6 +14,7 @@
 #include "ModConfig.hpp"
 #include "Util/Definitions.hpp"
 
+#include <functional>
 #include <string>
 
 namespace tudov
@@ -55,6 +56,14 @@ namespace tudov
 		inline std::string_view GetScriptsDirectory() const noexcept
 		{
 			return GetConfig().scripts.directory;
+		}
+
+		[[nodiscard]] inline std::size_t GetHash() const noexcept
+		{
+			const ModConfig &config = GetConfig();
+			std::size_t uidHash = std::hash<decltype(config.uid)>{}(config.uid);
+			std::size_t versionHash = std::hash<decltype(config.version)>{}(config.version);
+			return uidHash ^ (versionHash + 0x9e3779b9 + (uidHash << 6) + (uidHash >> 2));
 		}
 	};
 

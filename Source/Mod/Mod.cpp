@@ -1,5 +1,5 @@
 /**
- * @file mod/Mod.cpp
+ * @file Mod/Mod.cpp
  * @author JagYayu
  * @brief
  * @version 1.0

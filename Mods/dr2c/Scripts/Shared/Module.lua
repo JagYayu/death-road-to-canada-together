@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.shared.Module
+-- @module dr2c.Shared.Module
 -- @author JagYayu
 -- @brief
 -- @version 1.0

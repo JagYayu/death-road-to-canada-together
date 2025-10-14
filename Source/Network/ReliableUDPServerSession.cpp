@@ -27,7 +27,6 @@
 #include "Util/Definitions.hpp"
 #include "enet/enet.h"
 
-
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -198,7 +197,7 @@ bool ReliableUDPServerSession::Update() noexcept
 			    .port = event.peer->address.port,
 			};
 
-			TE_TRACE("Connect event, host: {}, port: {}", eventData.host, eventData.port);
+			TE_DEBUG("Connect event, host: {}, port: {}", eventData.host, eventData.port);
 
 			{ // Send connected client's session id
 				std::string data{
@@ -226,7 +225,7 @@ bool ReliableUDPServerSession::Update() noexcept
 			    .port = event.peer->address.port,
 			};
 
-			TE_TRACE("Disconnect event, host: {}, port: {}", eventData.host, eventData.port);
+			TE_DEBUG("Disconnect event, host: {}, port: {}", eventData.host, eventData.port);
 
 			coreEvents.ServerDisconnect().Invoke(&eventData, EventHandleKey(_serverSessionSlot), EEventInvocation::None);
 

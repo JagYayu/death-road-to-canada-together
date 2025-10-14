@@ -1,5 +1,5 @@
 --[[
--- @module tudov.Table
+-- @module TE.Table
 -- @author JagYayu
 -- @brief
 -- @version 1.0

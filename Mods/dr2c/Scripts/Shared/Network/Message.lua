@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.shared.network.Message
+-- @module dr2c.Shared.network.Message
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -148,16 +148,20 @@ local function unpackImpl(message)
 	end
 end
 
---- @param message string
+--- @param message string?
 --- @return dr2c.NetworkMessageType
 --- @return any?
 function GNetworkMessage.unpack(message)
-	local success, messageType, messageContent = pcall(unpackImpl, message)
-	if not success then
-		error("Message unpack failed: " .. messageType)
-	end
+	if message then
+		local success, messageType, messageContent = pcall(unpackImpl, message)
+		if not success then
+			error("Message unpack failed: " .. messageType)
+		end
 
-	return messageType, messageContent
+		return messageType, messageContent
+	else
+		return GNetworkMessage_Type_Heartbeat, nil
+	end
 end
 
 return GNetworkMessage

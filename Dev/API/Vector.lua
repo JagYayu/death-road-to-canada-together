@@ -2,5 +2,10 @@
 error("this is a lua library module")
 
 --- @class TE.Vector : userdata
---- @field x number
---- @field y number
+local vector = {}
+
+--- @type number
+vector.x = nil
+
+--- @type number
+vector.y = nil

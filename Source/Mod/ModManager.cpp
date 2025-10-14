@@ -1,5 +1,5 @@
 /**
- * @file mod/ModManager.cpp
+ * @file Mod/ModManager.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -11,24 +11,26 @@
 
 #include "mod/ModManager.hpp"
 
-#include "Debug/DebugManager.hpp"
 #include "Data/Constants.hpp"
 #include "Debug/DebugConsole.hpp"
-#include "debug/DebugUtils.hpp"
-#include "mod/ModRequirement.hpp"
+#include "Debug/DebugManager.hpp"
 #include "Mod/ScriptEngine.hpp"
-#include "mod/ScriptLoader.hpp"
-#include "mod/ScriptProvider.hpp"
-#include "mod/UnpackagedMod.hpp"
 #include "Program/Context.hpp"
 #include "Program/Engine.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/Definitions.hpp"
 #include "Util/EnumFlag.hpp"
 #include "Util/Version.hpp"
+#include "debug/DebugUtils.hpp"
+#include "mod/ModRequirement.hpp"
+#include "mod/ScriptLoader.hpp"
+#include "mod/ScriptProvider.hpp"
+#include "mod/UnpackagedMod.hpp"
 
+#include <functional>
 #include <memory>
 #include <optional>
+#include <set>
 #include <tuple>
 #include <vector>
 
@@ -121,6 +123,8 @@ void ModManager::LoadMods()
 	std::error_code errorCode;
 	std::filesystem::recursive_directory_iterator it{"Mods", std::filesystem::directory_options::skip_permission_denied, errorCode}, end;
 
+	std::set<std::string_view> loadedModSet{};
+
 	while (it != end)
 	{
 		const std::filesystem::directory_entry &entry = *it;
@@ -136,8 +140,10 @@ void ModManager::LoadMods()
 			if (_virtualUnpackagedMod->IsValidDirectory(dir))
 			{
 				const auto &mod = std::make_shared<UnpackagedMod>(*this, dir);
-				if (IsModMatched(*mod))
+				auto &&modUID = mod->GetConfig().uid;
+				if (!loadedModSet.contains(modUID) && IsModMatched(*mod))
 				{
+					loadedModSet.emplace(modUID);
 					_loadedMods.emplace_back(mod);
 				}
 				it.disable_recursion_pending();
@@ -146,6 +152,13 @@ void ModManager::LoadMods()
 
 		++it;
 	}
+
+	std::sort(_loadedMods.begin(), _loadedMods.end(), [](const std::shared_ptr<Mod> &l, const std::shared_ptr<Mod> &r) -> bool
+	{
+		auto &&lc = l->GetConfig();
+		auto &&rc = r->GetConfig();
+		return lc.uid < rc.uid;
+	});
 
 	for (const std::shared_ptr<Mod> &mod : _loadedMods)
 	{
@@ -232,14 +245,32 @@ std::shared_ptr<Mod> ModManager::FindLoadedMod(std::string_view modUID) noexcept
 	return nullptr;
 }
 
-std::vector<ModRequirement> &ModManager::GetRequiredMods() noexcept
+std::vector<ModRequirement> ModManager::GetRequiredMods() const noexcept
 {
 	return _requiredMods;
 }
 
-const std::vector<ModRequirement> &ModManager::GetRequiredMods() const noexcept
+void ModManager::SetRequiredMods(const std::vector<ModRequirement> &requiredMods) noexcept
 {
-	return _requiredMods;
+	_requiredMods = requiredMods;
+}
+
+std::vector<std::shared_ptr<Mod>> &ModManager::GetLoadedMods() noexcept
+{
+	return _loadedMods;
+}
+
+std::size_t ModManager::GetLoadedModsHash() const noexcept
+{
+	std::size_t hash = _loadedMods.size();
+
+	for (const std::shared_ptr<Mod> &mod : _loadedMods)
+	{
+		std::size_t modHash = mod->GetHash();
+		hash ^= std::hash<std::size_t>{}(modHash) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+	}
+
+	return hash;
 }
 
 bool ModManager::HasUpdateScriptPending() noexcept

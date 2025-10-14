@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.shared.network.Players
+-- @module dr2c.Shared.network.Players
 -- @author JagYayu
 -- @brief
 -- @version 1.0

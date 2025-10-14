@@ -1,5 +1,5 @@
 /**
- * @file mod/ScriptErrors.hpp
+ * @file Mod/ScriptErrors.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

@@ -16,6 +16,7 @@ function engine:getTick() end
 --- @return number
 function engine:getLoadingBeginTick() end
 
+--- Get app version
 --- @return string
 function engine:getVersion() end
 

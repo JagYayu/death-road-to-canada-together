@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaBindings.cpp
+ * @file Mod/LuaBindings.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -320,7 +320,9 @@ const std::vector<std::string_view> &LuaBindings::GetModGlobalsMigration() const
 		    // C++ static classes
 		    "OperatingSystem",
 		    "RandomDevice",
+		    "PerlinNoiseRandom",
 		    "Time",
+		    "Version",
 		    // C++ exports
 		    "binaries",
 		    "engine",

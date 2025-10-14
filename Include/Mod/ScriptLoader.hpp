@@ -1,5 +1,5 @@
 /**
- * @file mod/ScriptLoader.hpp
+ * @file Mod/ScriptLoader.hpp
  * @author JagYayu
  * @brief Lua Script Loader
  * @version 1.0

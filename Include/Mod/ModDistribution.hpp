@@ -1,5 +1,5 @@
 /**
- * @file mod/ModDistribution.hpp
+ * @file Mod/ModDistribution.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

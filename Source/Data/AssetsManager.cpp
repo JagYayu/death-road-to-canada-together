@@ -225,7 +225,7 @@ void AssetsManager::LoadAssetsFromExternalDirectories() noexcept
 		mountBitmapPatterns.emplace_back(std::regex(std::string(pattern), std::regex_constants::icase));
 	}
 
-	auto &&mountDirectories = config.GetMountFiles();
+	// auto &&mountDirectories = config.GetMountFiles();
 	for (auto &&mountDirectory : externalDirectories)
 	{
 		if (!std::filesystem::exists(mountDirectory.data()) || !std::filesystem::is_directory(mountDirectory.data()))
@@ -237,19 +237,10 @@ void AssetsManager::LoadAssetsFromExternalDirectories() noexcept
 
 		for (auto &entry : std::filesystem::recursive_directory_iterator(mountDirectory))
 		{
-			if (!entry.is_regular_file())
+			if (entry.is_regular_file())
 			{
-				continue;
+				GetVirtualFileSystem().MountFile(entry.path());
 			}
-
-			auto &&path = entry.path();
-			auto it = mountDirectories.find(path.extension().generic_string());
-			if (it == mountDirectories.end())
-			{
-				continue;
-			}
-
-			GetVirtualFileSystem().MountFile(path);
 		}
 	}
 

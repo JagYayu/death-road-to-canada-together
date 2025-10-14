@@ -1,5 +1,5 @@
 /**
- * @file mod/ModListedEntry.hpp
+ * @file Mod/ModListedEntry.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

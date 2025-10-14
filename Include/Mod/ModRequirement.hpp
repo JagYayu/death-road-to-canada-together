@@ -1,5 +1,5 @@
 /**
- * @file mod/ModRequirement.hpp
+ * @file Mod/ModRequirement.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

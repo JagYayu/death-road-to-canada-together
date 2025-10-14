@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.shared.System.Settings
+-- @module dr2c.Shared.System.Settings
 -- @author JagYayu
 -- @brief
 -- @version 1.0

@@ -1,5 +1,5 @@
 /**
- * @file mod/ModPortal.hpp
+ * @file Mod/ModPortal.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

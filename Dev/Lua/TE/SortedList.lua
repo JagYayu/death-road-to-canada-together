@@ -1,5 +1,5 @@
 --[[
--- @module tudov.SortedList
+-- @module TE.SortedList
 -- @author JagYayu
 -- @brief
 -- @version 1.0

@@ -380,7 +380,7 @@ void DebugScripts::UpdateAndRenderProvidedScripts(IWindow &window) noexcept
 
 				{
 					sol::table snapshot = scriptEngine.CreateTable();
-					eventDebugSnapshot.Invoke(snapshot, EventHandleKey(scriptName), EEventInvocation::None);
+					eventDebugSnapshot.Invoke(snapshot, EventHandleKey(scriptName), EEventInvocation::CacheHandlers);
 					std::string text = scriptEngine.Inspect(snapshot);
 
 					TE_INFO("{}", text);

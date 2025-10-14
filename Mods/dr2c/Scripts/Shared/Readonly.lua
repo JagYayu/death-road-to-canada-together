@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.shared.Readonly
+-- @module dr2c.Shared.Readonly
 -- @author JagYayu
 -- @brief
 -- @version 1.0

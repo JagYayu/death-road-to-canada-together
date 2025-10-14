@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.shared.world.PlayerInput
+-- @module dr2c.Shared.world.PlayerInput
 -- @author JagYayu
 -- @brief
 -- @version 1.0

@@ -12,6 +12,7 @@
 #pragma once
 
 #include "Program/EngineComponent.hpp"
+#include "Program/Memory.hpp"
 #include "System/Log.hpp"
 #include "Util/Definitions.hpp"
 #include "Util/Utils.hpp"
@@ -29,6 +30,7 @@
 namespace tudov
 {
 	class Context;
+	class Memory;
 
 	/**
 	 * Script Engine.
@@ -136,6 +138,7 @@ namespace tudov
 
 	  private:
 		Context &_context;
+		std::unique_ptr<Memory> _memory;
 		std::shared_ptr<Log> _log;
 		sol::state _lua;
 		bool _luaInit;

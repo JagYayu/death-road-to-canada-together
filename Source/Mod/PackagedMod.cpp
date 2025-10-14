@@ -1,5 +1,5 @@
 /**
- * @file mod/PackagedMod.cpp
+ * @file Mod/PackagedMod.cpp
  * @author JagYayu
  * @brief
  * @version 1.0

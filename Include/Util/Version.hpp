@@ -1,5 +1,5 @@
 /**
- * @file util/Version.hpp
+ * @file Util/Version.hpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -35,13 +35,12 @@ namespace tudov
 
 	  public:
 		Version() noexcept;
-		Version(Type major, Type minor = 0, Type patch = 0) noexcept;
-		Version(std::string_view str) noexcept;
-		explicit Version(const Version &) noexcept = default;
+		explicit Version(Type major, Type minor = 0, Type patch = 0) noexcept;
+		explicit Version(std::string_view str) noexcept;
+		Version(const Version &) noexcept = default;
 		Version(Version &&) noexcept = default;
 		Version &operator=(const Version &) noexcept = default;
 		Version &operator=(Version &&) noexcept = default;
-
 		~Version() noexcept = default;
 
 	  public:
@@ -71,6 +70,7 @@ namespace tudov
 		void LuaSetMajor(Type value) noexcept;
 		void LuaSetMinor(Type value) noexcept;
 		void LuaSetPatch(Type value) noexcept;
+		std::string LuaToString() noexcept;
 	};
 
 	void from_json(const nlohmann::json &j, Version &v);

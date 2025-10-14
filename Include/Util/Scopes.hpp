@@ -1,5 +1,5 @@
 /**
- * @file util/Scopes.hpp
+ * @file Util/Scopes.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaBindings_System.cpp
+ * @file Mod/LuaBindings_System.cpp
  * @author JagYayu
  * @brief
  * @version 1.0

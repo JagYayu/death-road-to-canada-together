@@ -1,5 +1,5 @@
 --[[
--- @module tudov.EnumFlag
+-- @module TE.EnumFlag
 -- @author JagYayu
 -- @brief
 -- @version 1.0

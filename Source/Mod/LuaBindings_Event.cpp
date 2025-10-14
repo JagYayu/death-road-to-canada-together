@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaBindings_Event.cpp
+ * @file Mod/LuaBindings_Event.cpp
  * @author JagYayu
  * @brief
  * @version 1.0

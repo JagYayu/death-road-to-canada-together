@@ -1,5 +1,5 @@
 /**
- * @file mod/ScriptLoader.cpp
+ * @file Mod/ScriptLoader.cpp
  * @author JagYayu
  * @brief
  * @version 1.0

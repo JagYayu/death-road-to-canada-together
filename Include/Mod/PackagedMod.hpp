@@ -1,5 +1,5 @@
 /**
- * @file mod/PackagedMod.hpp
+ * @file Mod/PackagedMod.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

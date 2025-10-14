@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaBindings_KeyModifier.cpp
+ * @file Mod/LuaBindings_KeyModifier.cpp
  * @author JagYayu
  * @brief
  * @version 1.0

@@ -1,5 +1,5 @@
 --[[
--- @module tudov.Format
+-- @module TE.Format
 -- @author JagYayu
 -- @brief
 -- @version 1.0

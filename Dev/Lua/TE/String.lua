@@ -1,5 +1,5 @@
 --[[
--- @module tudov.String
+-- @module TE.String
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -146,9 +146,11 @@ end
 --- @return string[] list
 function String.split(str, div, list)
 	list = list or {}
+
 	for s in str:gmatch(("[^%s]+"):format(div)) do
 		list[#list + 1] = s
 	end
+
 	return list
 end
 

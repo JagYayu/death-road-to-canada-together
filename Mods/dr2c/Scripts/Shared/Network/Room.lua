@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.shared.network.Room
+-- @module dr2c.Shared.network.Room
 -- @author JagYayu
 -- @brief
 -- @version 1.0

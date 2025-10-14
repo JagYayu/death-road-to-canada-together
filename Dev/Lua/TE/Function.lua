@@ -1,5 +1,5 @@
 --[[
--- @module tudov.Function
+-- @module TE.Function
 -- @author JagYayu
 -- @brief
 -- @version 1.0

@@ -1,5 +1,5 @@
 /**
- * @file util/Version.cpp
+ * @file Util/Version.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -150,6 +150,22 @@ void Version::LuaSetMinor(Type value) noexcept
 void Version::LuaSetPatch(Type value) noexcept
 {
 	Patch() = value;
+}
+
+std::string Version::LuaToString() noexcept
+{
+	std::ostringstream oss{};
+
+	for (std::size_t i = 0; i < _parts.size(); ++i)
+	{
+		if (i > 0) [[likely]]
+		{
+			oss << '.';
+		}
+		oss << _parts[i];
+	}
+
+	return oss.str();
 }
 
 void tudov::from_json(const nlohmann::json &j, Version &v)

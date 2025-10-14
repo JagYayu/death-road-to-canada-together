@@ -1,5 +1,5 @@
 --[[
--- @module tudov.FMath
+-- @module TE.FMath
 -- @author JagYayu
 -- @brief
 -- @version 1.0

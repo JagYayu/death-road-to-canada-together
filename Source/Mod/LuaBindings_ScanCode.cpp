@@ -1,5 +1,5 @@
 /**
- * @file mod/LuaBindings_ScanCode.cpp
+ * @file Mod/LuaBindings_ScanCode.cpp
  * @author JagYayu
  * @brief
  * @version 1.0

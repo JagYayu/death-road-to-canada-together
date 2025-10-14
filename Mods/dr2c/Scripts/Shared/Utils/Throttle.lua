@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.shared.utils.Throttle
+-- @module dr2c.Shared.utils.Throttle
 -- @author JagYayu
 -- @brief
 -- @version 1.0

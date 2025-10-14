@@ -1,5 +1,5 @@
 /**
- * @file mod/ScriptEngine.cpp
+ * @file Mod/ScriptEngine.cpp
  * @author JagYayu
  * @brief
  * @version 1.0
@@ -14,6 +14,7 @@
 #include "Event/CoreEvents.hpp"
 #include "Event/CoreEventsData.hpp"
 #include "Event/RuntimeEvent.hpp"
+#include "Program/Memory.hpp"
 #include "Scripts/GameScripts.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/Definitions.hpp"
@@ -24,6 +25,7 @@
 #include "mod/ScriptLoader.hpp"
 #include "mod/ScriptModule.hpp"
 #include "mod/ScriptProvider.hpp"
+#include "program/Memory.hpp"
 
 #include "sol/environment.hpp"
 #include "sol/forward.hpp"
@@ -75,8 +77,9 @@ void ScriptEngine::PersistVariable::Save() noexcept
 
 ScriptEngine::ScriptEngine(Context &context) noexcept
     : _context(context),
+      _memory(std::make_unique<Memory>()),
       _log(Log::Get("ScriptEngine")),
-      _lua({}),
+      _lua(),//sol::state(nullptr, Memory::LuaAlloc, _memory.get())),
       _luaInit()
 {
 }

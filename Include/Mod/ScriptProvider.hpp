@@ -1,5 +1,5 @@
 /**
- * @file mod/ScriptProvider.hpp
+ * @file Mod/ScriptProvider.hpp
  * @author JagYayu
  * @brief
  * @version 1.0

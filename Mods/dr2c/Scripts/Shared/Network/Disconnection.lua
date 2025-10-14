@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.shared.network.Disconnection
+-- @module dr2c.Shared.network.Disconnection
 -- @author JagYayu
 -- @brief
 -- @version 1.0
