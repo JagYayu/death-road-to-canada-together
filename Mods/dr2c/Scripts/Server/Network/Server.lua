@@ -38,7 +38,7 @@ function SNetworkServer.getAttribute(attribute)
 	return serverAttributes[attribute]
 end
 
---- @return Network.Server?
+--- @return TE.Network.Server?
 function SNetworkServer.getNetworkSession()
 	return network:getServer(SNetworkServer.sessionSlot)
 end
@@ -66,7 +66,7 @@ TE.events:add(N_("SUpdate"), function()
 	}
 end, "InitializeServer", "Network")
 
---- @param clientID Network.ClientID
+--- @param clientID TE.Network.ClientID
 --- @param disconnectionCode dr2c.DisconnectionCode
 --- @return boolean
 function SNetworkServer.disconnect(clientID, disconnectionCode)
@@ -80,7 +80,7 @@ function SNetworkServer.disconnect(clientID, disconnectionCode)
 	end
 end
 
---- @param clientID Network.ClientID
+--- @param clientID TE.Network.ClientID
 --- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
 --- @param channel dr2c.NetworkMessageChannel?
@@ -104,7 +104,7 @@ function SNetworkServer.sendReliable(clientID, messageType, messageContent, chan
 	end
 end
 
---- @param clientID Network.ClientID
+--- @param clientID TE.Network.ClientID
 --- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
 --- @param channel dr2c.NetworkMessageChannel?
@@ -209,10 +209,10 @@ TE.events:add("ServerShutdown", function(e)
 	TE.events:invoke(SNetworkServer.eventSShutdown, {})
 end)
 
---- @param clientID Network.ClientID
+--- @param clientID TE.Network.ClientID
 local function invokeEventServerConnect(clientID)
 	--- @class dr2c.E.SConnect
-	--- @field clientID Network.ClientID
+	--- @field clientID TE.Network.ClientID
 	local e = {
 		clientID = clientID,
 	}
@@ -225,7 +225,7 @@ TE.events:add("ServerConnect", function(e)
 	invokeEventServerConnect(e.data.clientID)
 end)
 
---- @param clientID Network.ClientID
+--- @param clientID TE.Network.ClientID
 local function invokeEventServerDisconnect(clientID)
 	--- @class dr2c.E.SDisconnect
 	local e = {
@@ -244,7 +244,7 @@ end)
 --- @param messageType dr2c.NetworkMessageType
 local function invokeEventServerMessage(clientID, messageContent, messageType)
 	--- @class dr2c.E.SMessage
-	--- @field clientID Network.ClientID
+	--- @field clientID TE.Network.ClientID
 	--- @field content any
 	--- @field type dr2c.NetworkMessageType
 	--- @field broadcast table?

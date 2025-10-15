@@ -46,6 +46,7 @@ static const auto valueMountBitmaps = std::vector<std::string>{
 };
 static const auto valueMountDirectories = std::vector<std::string>{
     "data",
+	"deathforth",
     "gfx",
 };
 static const auto valueMountFiles = std::unordered_map<std::string, EResourceType>{

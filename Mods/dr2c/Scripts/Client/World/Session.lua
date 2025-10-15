@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.world.Session
+-- @module dr2c.Client.World.Session
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -12,47 +12,54 @@
 local Enum = require("TE.Enum")
 local json = require("Lib.json")
 
-local CClient = require("dr2c.Client.Network.Client")
-local GMessage = require("dr2c.Shared.Network.Message")
+local CNetworkClient = require("dr2c.Client.Network.Client")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GWorldSession = require("dr2c.Shared.World.Session")
 
 --- @class dr2c.CWorldSession : dr2c.WorldSession
 local CWorldSession = GWorldSession.new()
 
---- @param args table<dr2c.WorldSessionAttribute, any>
+--- 开始世界会话，将发送申请给服务器，回调事件"CMessage"
+--- @param attributes dr2c.WorldSessionAttributes
 --- @return boolean
-function CWorldSession.start(args)
-	return CClient.sendReliable(GMessage.Type.WorldSessionStart, args)
+function CWorldSession.start(attributes)
+	return CNetworkClient.sendReliable(GNetworkMessage.Type.WorldSessionStart, attributes)
 end
 
+--- 重启世界会话，将发送申请给服务器，回调事件"CMessage"
 --- @return boolean
 function CWorldSession.restart()
-	return CClient.sendReliable(GMessage.Type.WorldSessionRestart)
+	return CNetworkClient.sendReliable(GNetworkMessage.Type.WorldSessionRestart)
 end
 
+--- 结束世界会话，将发送申请给服务器，回调事件"CMessage"
 --- @return boolean
 function CWorldSession.finish()
-	return CClient.sendReliable(GMessage.Type.WorldSessionFinish)
+	return CNetworkClient.sendReliable(GNetworkMessage.Type.WorldSessionFinish)
 end
 
+--- 暂停世界会话，将发送申请给服务器，回调事件"CMessage"
 --- @return boolean
 function CWorldSession.pause()
-	return CClient.sendReliable(GMessage.Type.WorldSessionPause)
+	return CNetworkClient.sendReliable(GNetworkMessage.Type.WorldSessionPause)
 end
 
+--- 继续世界会话，将发送申请给服务器，回调事件"CMessage"
 --- @return boolean
 function CWorldSession.unpause()
-	return CClient.sendReliable(GMessage.Type.WorldSessionUnpause)
+	return CNetworkClient.sendReliable(GNetworkMessage.Type.WorldSessionUnpause)
 end
 
 CWorldSession.eventCWorldSessionStart = TE.events:new(N_("CWorldSessionStart"), {
 	"Reset",
 	"Level",
-	"Rooms",
+	"Scene",
+	"Map",
 })
 
 CWorldSession.eventCWorldSessionFinish = TE.events:new(N_("CWorldSessionFinish"), {
-	"Rooms",
+	"Map",
+	"Scene",
 	"Level",
 	"Reset",
 })
@@ -69,47 +76,105 @@ CWorldSession.eventCWorldSessionUnpause = TE.events:new(N_("CWorldSessionUnpause
 	"Time",
 })
 
+--- 开始世界会话，将在本地客户端立即开始
+--- @param sponsorClientID TE.Network.ClientID
+--- @param attributes table
+function CWorldSession.startLocally(sponsorClientID, attributes)
+	CWorldSession.setAttributes(attributes)
+
+	local e = {
+		attributes = CWorldSession.getAttributes(),
+	}
+
+	TE.events:invoke(
+		CWorldSession.eventCWorldSessionStart,
+		e,
+		tonumber(attributes[GWorldSession.Attribute.Mode]) or GWorldSession.Mode.None
+	)
+end
+
+--- 重启世界会话，将在本地客户端立即开始
+function CWorldSession.restartLocally()
+	-- TODO
+end
+
+--- 结束世界会话，将在本地客户端立即开始
+function CWorldSession.finishLocally()
+	CWorldSession.resetAttributes()
+
+	TE.events:invoke(CWorldSession.eventCWorldSessionFinish, {})
+end
+
+--- 暂停世界会话，将在本地客户端立即开始
+--- @param timePaused number
+function CWorldSession.pauseLocally(timePaused)
+	CWorldSession.setAttribute(GWorldSession.Attribute.State, GWorldSession.State.Paused)
+	CWorldSession.setAttribute(GWorldSession.Attribute.TimePaused, timePaused)
+
+	TE.events:invoke(CWorldSession.eventCWorldSessionPause, {})
+end
+
+--- 继续世界会话，将在本地客户端立即开始
+--- @param timePaused number
+function CWorldSession.unpauseLocally(timePaused)
+	CWorldSession.setAttribute(GWorldSession.Attribute.State, GWorldSession.State.Playing)
+	CWorldSession.setAttribute(GWorldSession.Attribute.State, GWorldSession.State.Playing)
+
+	local elapsedPaused = CWorldSession.getAttribute(GWorldSession.Attribute.ElapsedPaused)
+	elapsedPaused = elapsedPaused + timePaused - CWorldSession.getAttribute(GWorldSession.Attribute.TimePaused)
+	CWorldSession.setAttribute(GWorldSession.Attribute.ElapsedPaused, elapsedPaused)
+
+	TE.events:invoke(CWorldSession.eventCWorldSessionUnpause, {})
+end
+
+--- @param e table
 TE.events:add(N_("CMessage"), function(e)
-	if not e.suppressed then
-		CWorldSession.setAttributes(e.content.attributes)
+	if type(e.content) == "table" then
+		if not e.content.suppressed then
+			log.info(("Client %s started world session"):format(e.content.sponsorClientID))
 
-		TE.events:invoke(CWorldSession.eventCWorldSessionStart, {})
-	elseif log.canWarn() then
-		log.warn(("Cannot start world session: "):format(e.suppressed))
+			CWorldSession.startLocally(e.content.attributes)
+		elseif e.content.sponsorClientID == CNetworkClient.getClientID() and log.canWarn() then
+			log.warn(("Cannot start world session: %s"):format(e.suppressed))
+		end
 	end
-end, "StartWorldSession", "Receive", GMessage.Type.WorldSessionStart)
+end, "StartWorldSessionLocally", "Receive", GNetworkMessage.Type.WorldSessionStart)
 
 TE.events:add(N_("CMessage"), function(e)
-	if not e.suppressed then
-		CWorldSession.resetAttributes()
+	if type(e.content) == "table" then
+		if not e.content.suppressed then
+			log.info(("Client %s finished world session"):format(e.content.sponsorClientID))
 
-		TE.events:invoke(CWorldSession.eventCWorldSessionFinish, {})
-	elseif log.canWarn() then
-		log.warn(("Cannot finish world session: "):format(e.suppressed))
+			CWorldSession.finishLocally()
+		elseif e.content.sponsorClientID == CNetworkClient.getClientID() and log.canWarn() then
+			log.warn(("Cannot finish world session: %s"):format(e.suppressed))
+		end
 	end
-end, "FinishWorldSession", "Receive", GMessage.Type.WorldSessionFinish)
+end, "FinishWorldSessionLocally", "Receive", GNetworkMessage.Type.WorldSessionFinish)
 
 TE.events:add(N_("CMessage"), function(e)
-	local internal = CWorldSession.getAttribute(GWorldSession.Attribute.Internal)
-	if internal.state == GWorldSession.State.Playing then
-		internal.state = GWorldSession.State.Paused
-		internal.pausedTime = e.content
+	if type(e.content) == "table" then
+		if not e.content.suppressed then
+			log.info(("Client %s paused world session"):format(e.content.sponsorClientID))
 
-		TE.events:invoke(CWorldSession.eventCWorldSessionPause)
+			CWorldSession.pauseLocally(e.content.timePaused)
+		elseif e.content.sponsorClientID == CNetworkClient.getClientID() and log.canWarn() then
+			log.warn(("Cannot finish world session: %s"):format(e.suppressed))
+		end
 	end
-end, "PauseWorldSession", "Receive", GMessage.Type.WorldSessionPause)
+end, "PauseWorldSessionLocally", "Receive", GNetworkMessage.Type.WorldSessionPause)
 
 TE.events:add(N_("CMessage"), function(e)
-	local internal = CWorldSession.getAttribute(GWorldSession.Attribute.Internal)
-	if internal.state == GWorldSession.State.Paused then
-		print("Unpause")
+	if type(e.content) == "table" then
+		if not e.content.suppressed then
+			log.info(("Client %s unpaused world session"):format(e.content.sponsorClientID))
 
-		internal.state = GWorldSession.State.Paused
-		internal.elapsedPaused = internal.elapsedPaused + e.content - internal.timePaused
-
-		TE.events:invoke(CWorldSession.eventCWorldSessionUnpause)
+			CWorldSession.unpauseLocally(e.content.timePaused)
+		elseif e.content.sponsorClientID == CNetworkClient.getClientID() and log.canWarn() then
+			log.warn(("Cannot finish world session: %s"):format(e.suppressed))
+		end
 	end
-end, "UnpauseWorldSession", "Receive", GMessage.Type.WorldSessionUnpause)
+end, "UnpauseWorldSessionLocally", "Receive", GNetworkMessage.Type.WorldSessionUnpause)
 
 --- @param e Events.E.DebugCommand
 TE.events:add("DebugProvide", function(e)

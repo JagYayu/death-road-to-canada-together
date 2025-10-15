@@ -44,6 +44,7 @@ CModule.eventCRender = TE.events:new(N_("CRender"), {
 CModule.eventCLoad = TE.events:new(N_("CLoad"), {
 	"Sprites",
 	"ECS",
+	"Tile",
 	"Validate",
 	"FastForward",
 })

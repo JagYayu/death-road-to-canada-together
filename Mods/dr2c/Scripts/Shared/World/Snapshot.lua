@@ -12,7 +12,7 @@
 local String = require("TE.String")
 local Utility = require("TE.Utility")
 
-local GMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
 
 local hasServer = pcall(require, "dr2c.Server.World.Snapshot")
 
@@ -25,7 +25,6 @@ local GWorldSnapshot = {}
 
 --- @type table<string, dr2c.WorldSnapshot>
 local worldSnapshotModules = setmetatable({}, { __mode = "v" })
-
 worldSnapshotModules = persist("worldSnapshotModules", function()
 	return worldSnapshotModules
 end)

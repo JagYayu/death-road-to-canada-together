@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.world.Snapshot
+-- @module dr2c.Client.World.Snapshot
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -12,10 +12,10 @@
 local String = require("TE.String")
 local Utility = require("TE.Utility")
 
-local CClient = require("dr2c.Client.Network.Client")
-local CServer = require("dr2c.Client.Network.Server")
+local CNetworkClient = require("dr2c.Client.Network.Client")
+local CNetworkServer = require("dr2c.Client.Network.Server")
 
-local GMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GWorldSnapshot = require("dr2c.Shared.World.Snapshot")
 
 local hasServer = pcall(require, "dr2c.Server.World.Snapshot")
@@ -36,14 +36,14 @@ CWorldSnapshot.set = nil
 
 local ticksPerSnapshot = 1
 
-local snapshotRegistrationLatestID = 0
-local snapshotRegistrationTable = {}
+local snapshotRegistryLatestID = 0
+local snapshotRegistryTable = {}
 
-snapshotRegistrationLatestID = persist("snapshotRegistrationLatestID", function()
-	return snapshotRegistrationLatestID
+snapshotRegistryLatestID = persist("snapshotRegistryLatestID", function()
+	return snapshotRegistryLatestID
 end)
-snapshotRegistrationTable = persist("snapshotRegistrationTable", function()
-	return snapshotRegistrationTable
+snapshotRegistryTable = persist("snapshotRegistryTable", function()
+	return snapshotRegistryTable
 end)
 
 --- @class dr2c.ClientSnapshots
@@ -114,24 +114,24 @@ function CWorldSnapshot.registerVariable(name, default)
 	local buffer = String.bufferEncode(default)
 	local id
 
-	if snapshotRegistrationTable[name] then
+	if snapshotRegistryTable[name] then
 		-- Override already existed snapshot registration.
 
-		local entry = snapshotRegistrationTable[name]
+		local entry = snapshotRegistryTable[name]
 		id = entry[1]
 		entry[3] = buffer
 		entry[4] = String.bufferDecode(buffer)
 	else
-		snapshotRegistrationLatestID = snapshotRegistrationLatestID + 1
-		id = snapshotRegistrationLatestID
+		snapshotRegistryLatestID = snapshotRegistryLatestID + 1
+		id = snapshotRegistryLatestID
 		local entry = {
 			id,
 			name,
 			buffer,
 			String.bufferDecode(buffer),
 		}
-		snapshotRegistrationTable[name] = entry
-		snapshotRegistrationTable[#snapshotRegistrationTable + 1] = entry
+		snapshotRegistryTable[name] = entry
+		snapshotRegistryTable[#snapshotRegistryTable + 1] = entry
 	end
 
 	return id
@@ -149,7 +149,7 @@ function CWorldSnapshot.serialize()
 		snapshot = collection,
 	})
 
-	for _, entry in ipairs(snapshotRegistrationTable) do
+	for _, entry in ipairs(snapshotRegistryTable) do
 		collection[entry[1]] = entry[4]
 	end
 
@@ -166,7 +166,7 @@ function CWorldSnapshot.deserialize(data)
 	end
 
 	--- @cast collection table
-	for _, entry in ipairs(snapshotRegistrationTable) do
+	for _, entry in ipairs(snapshotRegistryTable) do
 		entry[4] = collection[entry[1]]
 	end
 
@@ -178,7 +178,7 @@ end
 --- Request a snapshot from server.
 --- @param snapshotID dr2c.SnapshotID
 function CWorldSnapshot.request(snapshotID)
-	CClient.sendReliable(GMessage.Type.SnapshotRequest, {
+	CNetworkClient.sendReliable(GNetworkMessage.Type.SnapshotRequest, {
 		snapshotID = snapshotID,
 	})
 end
@@ -196,7 +196,7 @@ TE.events:add(N_("CMessage"), function(e)
 
 		e.content.snapshotID = e.content.snapshot
 	end
-end, "ReceiveSnapshotResponse", "Receive", GMessage.Type.SnapshotResponse)
+end, "ReceiveSnapshotResponse", "Receive", GNetworkMessage.Type.SnapshotResponse)
 
 --- @param snapshotID integer
 function CWorldSnapshot.save(snapshotID)
@@ -207,7 +207,7 @@ function CWorldSnapshot.save(snapshotID)
 	end
 
 	if hasServer then
-		CClient.sendReliable(GMessage.Type.Snapshot, {
+		CNetworkClient.sendReliable(GNetworkMessage.Type.Snapshot, {
 			snapshotID = snapshotID,
 			snapshot = clientSnapshots[snapshotID],
 		})

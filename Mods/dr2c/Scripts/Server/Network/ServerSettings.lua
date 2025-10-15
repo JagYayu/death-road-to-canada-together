@@ -9,8 +9,8 @@
 --
 --]]
 
-local SServerSettings = {}
+local SNetworkServerSettings = {}
 
 local GSettings = {}
 
-return SServerSettings
+return SNetworkServerSettings

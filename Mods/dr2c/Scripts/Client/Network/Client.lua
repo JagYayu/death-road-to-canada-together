@@ -28,12 +28,12 @@ local clientPrivateAttributes = {}
 --- @type integer
 CClient.sessionSlot = 0
 
---- @return Network.Client?
+--- @return TE.Network.Client?
 function CClient.getNetworkSession()
 	return network:getClient(CClient.sessionSlot)
 end
 
---- @return Network.ClientID?
+--- @return TE.Network.ClientID?
 function CClient.getClientID()
 	local session = CClient.getNetworkSession()
 	return session and session:getSessionID()

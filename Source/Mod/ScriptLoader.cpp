@@ -22,7 +22,9 @@
 #include "Resource/GlobalResourcesCollection.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/Definitions.hpp"
+#include "Util/LuaUtils.hpp"
 #include "Util/StringUtils.hpp"
+#include "Util/Utils.hpp"
 #include "misc/Text.hpp"
 #include "mod/ModManager.hpp"
 #include "mod/ScriptModule.hpp"
@@ -233,9 +235,9 @@ std::vector<ScriptID> ScriptLoader::GetScriptDependencies(ScriptID scriptID) con
 
 void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 {
-	if (source == target)
+	if (source == target) [[unlikely]]
 	{
-		return;
+		throw std::runtime_error("Source script could not be the same as target script");
 	}
 
 	auto &&scriptProvider = GetScriptProvider();
@@ -243,26 +245,23 @@ void ScriptLoader::AddReverseDependency(ScriptID source, ScriptID target)
 	{
 		auto &&sourceName = scriptProvider.GetScriptNameByID(source);
 		auto &&targetName = scriptProvider.GetScriptNameByID(target);
-		TE_WARN("Attempt to link invalid scripts to reverse dependency map: <{}>{} <- <{}>{}",
-		        source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
-		        target, targetName.has_value() ? targetName->data() : "#INVALID#");
-
-		return;
+		throw std::runtime_error(std::format(
+		    "Attempt to link invalid scripts to reverse dependency map: <{}>{} <- <{}>{}",
+		    source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
+		    target, targetName.has_value() ? targetName->data() : "#INVALID#"));
 	}
 	if (scriptProvider.IsStaticScript(source) || scriptProvider.IsStaticScript(target)) [[unlikely]]
 	{
 		auto &&sourceName = scriptProvider.GetScriptNameByID(source);
 		auto &&targetName = scriptProvider.GetScriptNameByID(target);
-		TE_WARN("Attempt to link static scripts to reverse dependency map: <{}>{} <- <{}>{}",
-		        source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
-		        target, targetName.has_value() ? targetName->data() : "#INVALID#");
-
-		return;
+		throw std::runtime_error(std::format(
+		    "Attempt to link static scripts to reverse dependency map: <{}>{} <- <{}>{}",
+		    source, sourceName.has_value() ? sourceName->data() : "#INVALID#",
+		    target, targetName.has_value() ? targetName->data() : "#INVALID#"));
 	}
 
 	auto &&dependencies = _scriptReversedDependencies[target];
 	dependencies.insert(source);
-	// _scriptDependencyGraph.AddLink(from, to);
 
 	TE_TRACE("Link scripts to reverse dependency map: <{}>{} <- <{}>{}",
 	         source, scriptProvider.GetScriptNameByID(source)->data(),
@@ -607,8 +606,47 @@ void ScriptLoader::PostLoadScripts()
 
 void ScriptLoader::LuaAddReverseDependency(sol::object source, sol::object target) noexcept
 {
-	auto source_ = static_cast<ScriptID>(source.as<double_t>());
-	auto target_ = static_cast<ScriptID>(target.as<double_t>());
+	ScriptID sourceID;
+	ScriptID targetID;
 
-	AddReverseDependency(source_, target_);
+	if (source.is<std::double_t>())
+	{
+		sourceID = source.as<std::double_t>();
+	}
+	else if (source.is<sol::string_view>())
+	{
+		sourceID = GetScriptProvider().GetScriptIDByName(source.as<sol::string_view>());
+	}
+	else if (source.is<sol::nil_t>())
+	{
+		sourceID = GetScriptLoader().GetLoadingScriptID();
+	}
+	else [[unlikely]]
+	{
+		GetScriptEngine().ThrowError("Bad argument to #1 'source': number or string or nil expected, got {}", GetLuaTypeStringView(source.get_type()));
+	}
+
+	if (target.is<std::double_t>())
+	{
+		targetID = target.as<std::double_t>();
+	}
+	else if (target.is<sol::string_view>())
+	{
+		targetID = GetScriptProvider().GetScriptIDByName(target.as<sol::string_view>());
+	}
+	else [[unlikely]]
+	{
+
+		GetScriptEngine().ThrowError("Bad argument to #2 'target': number or string expected, got {}", GetLuaTypeStringView(target.get_type()));
+	}
+
+	try
+	{
+		AddReverseDependency(sourceID, targetID);
+	}
+	catch (const std::exception &e)
+	{
+		std::string msg = e.what();
+		GetScriptEngine().ThrowError(msg);
+	}
 }

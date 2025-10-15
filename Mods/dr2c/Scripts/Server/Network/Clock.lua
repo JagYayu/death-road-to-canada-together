@@ -9,9 +9,9 @@
 --
 --]]
 
-local GMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
 
-local SServer = require("dr2c.Server.Network.Server")
+local SNetworkServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.SClock
 local SClock = {}
@@ -27,9 +27,9 @@ function SClock.getTime()
 end
 
 TE.events:add(N_("SMessage"), function(e)
-	SServer.broadcastReliable(GMessage.Type.Clock, {
+	SNetworkServer.broadcastReliable(GNetworkMessage.Type.Clock, {
 		timeOffset = serverClockTimeOffset,
 	})
-end, "ResponseClockTime", "Receive", GMessage.Type.Clock)
+end, "ResponseClockTime", "Receive", GNetworkMessage.Type.Clock)
 
 return SClock

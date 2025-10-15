@@ -9,12 +9,12 @@
 --
 --]]
 
-local CECS = require("dr2c.Client.Entity.ECS")
-local CECSSchema = require("dr2c.Client.Entity.ECSSchema")
+local CEntityECS = require("dr2c.Client.Entity.ECS")
+local CEntityECSSchema = require("dr2c.Client.Entity.ECSSchema")
 
 local CDebugLayerRenderer = {}
 
-local filterTest = CECS.filter({
+local filterTest = CEntityECS.filter({
 	"DebugVisual",
 	"DebugVisualRectangle",
 	"GameObject",
@@ -24,14 +24,14 @@ local filterTest = CECS.filter({
 TE.events:add(N_("CRenderCamera"), function(e)
 	local renderer = e.renderer
 
-	local CECS_getComponent = CECS.getComponent
+	local CECS_getComponent = CEntityECS.getComponent
 
 	local drawArgs = {
 		destination = { 0, 0, 100, 100 },
 	}
 	local destination = drawArgs.destination
 
-	for index, id, typeID in CECS.iterateEntities(filterTest) do
+	for index, id, typeID in CEntityECS.iterateEntities(filterTest) do
 		local gameObject = CECS_getComponent(id, "GameObject") --- @cast gameObject dr2c.Component.GameObject
 		local debugVisualRectangle = CECS_getComponent(id, "DebugVisualRectangle") --- @cast debugVisualRectangle dr2c.Component.DebugVisualRectangle
 

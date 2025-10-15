@@ -9,7 +9,7 @@
 --
 --]]
 
-local GMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GServer = require("dr2c.Shared.Network.Server")
 
 --- @class dr2c.CServer
@@ -40,6 +40,6 @@ TE.events:add(N_("CMessage"), function(e)
 	end
 
 	serverAttributes[attribute] = value
-end, "ClientReceiveServerAttribute", "Receive", GMessage.Type.ServerAttribute)
+end, "ClientReceiveServerAttribute", "Receive", GNetworkMessage.Type.ServerAttribute)
 
 return CServer

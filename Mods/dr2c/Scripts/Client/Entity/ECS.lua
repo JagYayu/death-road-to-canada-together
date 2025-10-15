@@ -13,24 +13,24 @@ local List = require("TE.List")
 local Table = require("TE.Table")
 local String = require("TE.String")
 
-local CECSSchema = require("dr2c.Client.Entity.ECSSchema")
+local CEntityECSSchema = require("dr2c.Client.Entity.ECSSchema")
 
-local CECSSchema_ComponentTrait_ArchetypeConstant = CECSSchema.ComponentTrait.ArchetypeConstant
-local CECSSchema_ComponentTrait_ArchetypeSerializable = CECSSchema.ComponentTrait.ArchetypeSerializable
-local CECSSchema_ComponentTrait_ArchetypeTransient = CECSSchema.ComponentTrait.ArchetypeTransient
-local CECSSchema_ComponentTrait_EntityTransient = CECSSchema.ComponentTrait.EntityTransient
-local CECSSchema_ComponentTrait_EntitySerializable = CECSSchema.ComponentTrait.EntitySerializable
-local CECSSchema_entityHasAllComponents = CECSSchema.entityHasAllComponents
-local CECSSchema_entityHasNonComponents = CECSSchema.entityHasNonComponents
-local CECSSchema_getComponentTypeID = CECSSchema.getComponentTypeID
-local CECSSchema_getComponentTrait = CECSSchema.getComponentTrait
-local CECSSchema_getEntityTypeID = CECSSchema.getEntityTypeID
+local CEntityECSSchema_ComponentTrait_ArchetypeConstant = CEntityECSSchema.ComponentTrait.ArchetypeConstant
+local CEntityECSSchema_ComponentTrait_ArchetypeSerializable = CEntityECSSchema.ComponentTrait.ArchetypeSerializable
+local CEntityECSSchema_ComponentTrait_ArchetypeTransient = CEntityECSSchema.ComponentTrait.ArchetypeTransient
+local CEntityECSSchema_ComponentTrait_EntityTransient = CEntityECSSchema.ComponentTrait.EntityTransient
+local CEntityECSSchema_ComponentTrait_EntitySerializable = CEntityECSSchema.ComponentTrait.EntitySerializable
+local CEntityECSSchema_entityHasAllComponents = CEntityECSSchema.entityHasAllComponents
+local CEntityECSSchema_entityHasNonComponents = CEntityECSSchema.entityHasNonComponents
+local CEntityECSSchema_getComponentTypeID = CEntityECSSchema.getComponentTypeID
+local CEntityECSSchema_getComponentTrait = CEntityECSSchema.getComponentTrait
+local CEntityECSSchema_getEntityTypeID = CEntityECSSchema.getEntityTypeID
 local assert = assert
 local setmetatable = setmetatable
 local type = type
 
---- @class dr2c.ECS
-local CECS = {}
+--- @class dr2c.EntityECS
+local CEntityECS = {}
 
 --- @class dr2c.EntityID : integer
 
@@ -157,13 +157,13 @@ end
 --- @param entityID dr2c.EntityID
 --- @return boolean
 --- @nodiscard
-function CECS.entityExists(entityID)
+function CEntityECS.entityExists(entityID)
 	return not not entitiesID2EntityMap[entityID]
 end
 
 --- @param entityTypeID dr2c.EntityTypeID
 --- @return dr2c.EntityID
-function CECS.spawnEntityByID(entityTypeID, components, ...)
+function CEntityECS.spawnEntityByID(entityTypeID, components, ...)
 	local entityID = entitiesLatestID + 1
 	entitiesLatestID = entityID
 
@@ -182,10 +182,10 @@ end
 
 --- @param entityType dr2c.EntityType
 --- @return dr2c.EntityID
-function CECS.spawnEntity(entityType, components, ...)
-	local entityTypeID = CECSSchema_getEntityTypeID(entityType)
+function CEntityECS.spawnEntity(entityType, components, ...)
+	local entityTypeID = CEntityECSSchema_getEntityTypeID(entityType)
 	if entityTypeID then
-		return CECS.spawnEntityByID(entityTypeID, components, ...)
+		return CEntityECS.spawnEntityByID(entityTypeID, components, ...)
 	end
 
 	error("Invalid entity type " .. entityType, 2)
@@ -193,7 +193,7 @@ end
 
 --- @param entityID dr2c.EntityID
 --- @return boolean
-function CECS.despawnEntity(entityID, ...)
+function CEntityECS.despawnEntity(entityID, ...)
 	if not entitiesID2EntityMap[entityID] then
 		return false
 	end
@@ -211,7 +211,7 @@ end
 --- @param entityTypeID any
 --- @param ... unknown
 --- @return boolean
-function CECS.convertEntityByID(entityID, entityTypeID, ...)
+function CEntityECS.convertEntityByID(entityID, entityTypeID, ...)
 	if entitiesID2EntityMap[entityID] == entityTypeID then
 		return false
 	end
@@ -229,9 +229,9 @@ end
 --- @param entityID dr2c.EntityID
 --- @param entityType dr2c.EntityType
 --- @return boolean
-function CECS.convertEntity(entityID, entityType, ...)
-	local entityTypeID = CECSSchema.getEntityTypeID(entityType)
-	return entityTypeID and CECS.convertEntityByID(entityID, entityType, ...) or false
+function CEntityECS.convertEntity(entityID, entityType, ...)
+	local entityTypeID = CEntityECSSchema.getEntityTypeID(entityType)
+	return entityTypeID and CEntityECS.convertEntityByID(entityID, entityType, ...) or false
 end
 
 local function spawnEntityImpl(entry)
@@ -247,11 +247,11 @@ local function spawnEntityImpl(entry)
 
 	local bufferDecode = String.bufferDecode
 
-	for _, component in ipairs(assert(CECSSchema.getEntityComponentsEntityTransient(entity[2]))) do
+	for _, component in ipairs(assert(CEntityECSSchema.getEntityComponentsEntityTransient(entity[2]))) do
 		componentsPoolEntityTransient[entityID] = bufferDecode(component.mergedFieldsBuffer)
 	end
 
-	for _, component in ipairs(assert(CECSSchema.getEntityComponentsEntitySerializable(entity[2]))) do
+	for _, component in ipairs(assert(CEntityECSSchema.getEntityComponentsEntitySerializable(entity[2]))) do
 		componentsPoolEntitySerializable[entityID] = bufferDecode(component.mergedFieldsBuffer)
 	end
 
@@ -306,7 +306,7 @@ local function convertEntityImpl(entry)
 	-- operation, entityID, entityTypeID, ...
 end
 
-function CECS.update()
+function CEntityECS.update()
 	if isIteratingEntities then
 		error("Attempt to update ECS while iterating entities", 2)
 	end
@@ -337,24 +337,24 @@ end
 --- @param entityID dr2c.EntityID
 --- @param componentID dr2c.ComponentTypeID
 --- @return table
-function CECS.getComponentByID(entityID, componentID)
-	local trait = CECSSchema_getComponentTrait(componentID)
-	if trait == CECSSchema_ComponentTrait_ArchetypeConstant then
+function CEntityECS.getComponentByID(entityID, componentID)
+	local trait = CEntityECSSchema_getComponentTrait(componentID)
+	if trait == CEntityECSSchema_ComponentTrait_ArchetypeConstant then
 		return componentsPoolArchetypeConstant[entitiesID2EntityMap[entityID][2]]
-	elseif trait == CECSSchema_ComponentTrait_ArchetypeSerializable then
+	elseif trait == CEntityECSSchema_ComponentTrait_ArchetypeSerializable then
 		return componentsPoolArchetypeSerializable[entitiesID2EntityMap[entityID][2]]
-	elseif trait == CECSSchema_ComponentTrait_ArchetypeTransient then
+	elseif trait == CEntityECSSchema_ComponentTrait_ArchetypeTransient then
 		return componentsPoolArchetypeTransient[entitiesID2EntityMap[entityID][2]]
-	elseif trait == CECSSchema_ComponentTrait_EntityTransient then
+	elseif trait == CEntityECSSchema_ComponentTrait_EntityTransient then
 		return componentsPoolEntityTransient[entityID]
-	elseif trait == CECSSchema_ComponentTrait_EntitySerializable then
+	elseif trait == CEntityECSSchema_ComponentTrait_EntitySerializable then
 		return componentsPoolEntitySerializable[entityID]
 	else
 		error("Invalid component ID ", 2)
 	end
 end
 
-local CECS_getComponentByID = CECS.getComponentByID
+local CECS_getComponentByID = CEntityECS.getComponentByID
 
 --- Get an entity's component by component type.
 --- Prefer using `Entities.getComponentByID`, which has a *slightly* better performance, especially in large iterations.
@@ -362,8 +362,8 @@ local CECS_getComponentByID = CECS.getComponentByID
 --- @param entityID dr2c.EntityID
 --- @param componentType dr2c.ComponentType
 --- @return T?
-function CECS.getComponent(entityID, componentType)
-	return CECS_getComponentByID(entityID, CECSSchema_getComponentTypeID(componentType) or 0)
+function CEntityECS.getComponent(entityID, componentType)
+	return CECS_getComponentByID(entityID, CEntityECSSchema_getComponentTypeID(componentType) or 0)
 end
 
 --- @param key string
@@ -387,7 +387,7 @@ local function createEntityFilter(key, requires, excludes)
 	end
 
 	--- @type boolean[]
-	local filterEntityTypeIDCache = Table.new(CECSSchema.getComponentsCount(), 0)
+	local filterEntityTypeIDCache = Table.new(CEntityECSSchema.getComponentsCount(), 0)
 
 	--- @param entityTypeID dr2c.EntityTypeID
 	--- @return boolean
@@ -396,8 +396,8 @@ local function createEntityFilter(key, requires, excludes)
 
 		if result == nil then
 			result = not not (
-				CECSSchema_entityHasAllComponents(entityTypeID, requires)
-				and CECSSchema_entityHasNonComponents(entityTypeID, excludes)
+				CEntityECSSchema_entityHasAllComponents(entityTypeID, requires)
+				and CEntityECSSchema_entityHasNonComponents(entityTypeID, excludes)
 			)
 			filterEntityTypeIDCache[entityTypeID] = result
 		end --- @cast result boolean
@@ -411,7 +411,7 @@ end
 --- @param requiredComponents (dr2c.ComponentType | dr2c.ComponentTypeID)[]?
 --- @param excludedComponents (dr2c.ComponentType | dr2c.ComponentTypeID)[]?
 --- @return dr2c.EntityFilter
-function CECS.filter(requiredComponents, excludedComponents)
+function CEntityECS.filter(requiredComponents, excludedComponents)
 	requiredComponents = requiredComponents or {}
 	excludedComponents = excludedComponents or {}
 
@@ -468,7 +468,7 @@ end
 --- @return dr2c.EntityFilter entityFilter
 --- @return integer index
 --- @nodiscard
-function CECS.iterateEntities(entityFilter)
+function CEntityECS.iterateEntities(entityFilter)
 	getSortedEntities()
 	isIteratingEntities = true
 	return entitiesIterator, entityFilter, 1
@@ -480,7 +480,7 @@ local function toEntityTypeID(entityTypeOrID)
 	if type(entityTypeOrID) == "number" then
 		return entityTypeOrID
 	elseif type(entityTypeOrID) == "string" then
-		local typeID = CECSSchema_getEntityTypeID(entityTypeOrID)
+		local typeID = CEntityECSSchema_getEntityTypeID(entityTypeOrID)
 		if typeID then
 			return typeID
 		else
@@ -515,21 +515,21 @@ end
 --- @return integer
 --- @return dr2c.EntityTypeID
 --- @nodiscard
-function CECS.iterateEntitiesByType(entityTypeOrID)
+function CEntityECS.iterateEntitiesByType(entityTypeOrID)
 	getSortedEntities()
 	isIteratingEntities = true
 	return entitiesTypedIterator, toEntityTypeID(entityTypeOrID), 1
 end
 
 --- @return integer count
-function CECS.countTotal()
+function CEntityECS.countTotal()
 	return #entities
 end
 
 --- Iterate over entities and return the entity counts.
 --- @param entityFilter dr2c.EntityFilter
 --- @nodiscard
-function CECS.countEntities(entityFilter)
+function CEntityECS.countEntities(entityFilter)
 	local counter = 0
 	local check = entityFilter.check
 
@@ -545,7 +545,7 @@ end
 --- @param entityTypeOrID dr2c.EntityType
 --- @return integer
 --- @nodiscard
-function CECS.countEntitiesByType(entityTypeOrID)
+function CEntityECS.countEntitiesByType(entityTypeOrID)
 	local counter = 0
 	local entityTypeID = toEntityTypeID(entityTypeOrID)
 
@@ -561,7 +561,7 @@ end
 --- @param entitySchemaField string
 --- @return table
 local function allocateArchetypeComponentsPool(entitySchemaField)
-	local entitiesSchema = CECSSchema.getEntitiesSchema()
+	local entitiesSchema = CEntityECSSchema.getEntitiesSchema()
 	local componentsPool = Table.new(#entitiesSchema, 0)
 
 	for entityTypeID, entitySchema in ipairs(entitiesSchema) do
@@ -575,7 +575,7 @@ local function allocateArchetypeComponentsPool(entitySchemaField)
 	return componentsPool
 end
 
-function CECS.clearEntities()
+function CEntityECS.clearEntities()
 	entities = {}
 	entitiesID2EntityMap = {}
 	entitiesLatestID = 0
@@ -589,8 +589,8 @@ end
 
 --- @return table
 --- @nodiscard
-function CECS.getSerialTable()
-	CECS.update()
+function CEntityECS.getSerialTable()
+	CEntityECS.update()
 
 	return {
 		getSortedEntities(),
@@ -601,7 +601,7 @@ function CECS.getSerialTable()
 end
 
 --- @param data table
-function CECS.setSerialTable(data)
+function CEntityECS.setSerialTable(data)
 	entities = data[1]
 	entitiesLatestID = data[2]
 	componentsPoolEntitySerializable = data[3]
@@ -619,19 +619,19 @@ Did an error occurred while iterating entities? Or not calling iterators inside 
 		end
 	end
 
-	e.entitiesChanged = CECS.update()
+	e.entitiesChanged = CEntityECS.update()
 end, "UpdateECS", "ECS")
 
-TE.events:add(N_("CConnect"), CECS.clearEntities, "InitializeECS", "Initialize")
+TE.events:add(N_("CConnect"), CEntityECS.clearEntities, "InitializeECS", "Initialize")
 
-TE.events:add(N_("CDisconnect"), CECS.clearEntities, "ResetECS", "Reset")
+TE.events:add(N_("CDisconnect"), CEntityECS.clearEntities, "ResetECS", "Reset")
 
 TE.events:add(N_("CSnapshotCollect"), function(e)
-	e.snapshot.ecs = CECS.getSerialTable()
+	e.snapshot.ecs = CEntityECS.getSerialTable()
 end, "CollectECSSerialTable", "ECS")
 
 TE.events:add(N_("CSnapshotDispense"), function(e)
-	CECS.setSerialTable(e.snapshot.ecs)
+	CEntityECS.setSerialTable(e.snapshot.ecs)
 end, "DispenseECSSerialTable", "ECS")
 
 --- @param e {}
@@ -645,7 +645,7 @@ TE.events:add(N_("CEntitySchemaLoaded"), function(e)
 		return
 	end
 
-	local componentsSchema = CECSSchema.getComponentsSchema()
+	local componentsSchema = CEntityECSSchema.getComponentsSchema()
 
 	local function validate(validation, list)
 		for _, componentTypeOrID in ipairs(list) do
@@ -666,4 +666,4 @@ TE.events:add(N_("CEntitySchemaLoaded"), function(e)
 	end
 end, "ValidateEntityFilters", "Filters")
 
-return CECS
+return CEntityECS

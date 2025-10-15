@@ -58,10 +58,10 @@ local Enum = require("TE.Enum")
 local String = require("TE.String")
 local Table = require("TE.Table")
 
---- @class dr2c.ECSSchema
-local CECSSchema = {}
+--- @class dr2c.EntityECSSchema
+local CEntityECSSchema = {}
 
-CECSSchema.ComponentTrait = Enum.immutable({
+CEntityECSSchema.ComponentTrait = Enum.immutable({
 	ArchetypeConstant = 0,
 	ArchetypeSerializable = 1,
 	ArchetypeTransient = 2,
@@ -94,41 +94,41 @@ end)
 
 --- @warn Do not modify returned table unless you know what it means
 --- @return dr2c.ECSSchema.Components @Readonly
-function CECSSchema.getComponentsSchema()
+function CEntityECSSchema.getComponentsSchema()
 	return componentsSchema
 end
 
 --- @return integer
-function CECSSchema.getComponentsCount()
+function CEntityECSSchema.getComponentsCount()
 	return #componentsSchema
 end
 
 --- @warn No not modify returned table unless you know what it means
 --- @return dr2c.ECSSchema.Entities @Readonly
-function CECSSchema.getEntitiesSchema()
+function CEntityECSSchema.getEntitiesSchema()
 	return entitiesSchema
 end
 
 --- @return integer
-function CECSSchema.getEntitiesCount()
+function CEntityECSSchema.getEntitiesCount()
 	return #entitiesSchema
 end
 
 --- @param componentTypeOrID dr2c.ComponentType | dr2c.ComponentTypeID
 --- @return boolean
-function CECSSchema.hasComponent(componentTypeOrID)
+function CEntityECSSchema.hasComponent(componentTypeOrID)
 	return not not componentsSchema[componentTypeOrID]
 end
 
 --- @param entityTypeOrID dr2c.EntityTypeOrID
 --- @return boolean
-function CECSSchema.hasEntity(entityTypeOrID)
+function CEntityECSSchema.hasEntity(entityTypeOrID)
 	return not not entitiesSchema[entityTypeOrID]
 end
 
 --- @param componentTypeID dr2c.ComponentTypeID
 --- @return dr2c.ComponentType?
-function CECSSchema.getComponentType(componentTypeID)
+function CEntityECSSchema.getComponentType(componentTypeID)
 	local component = componentsSchema[componentTypeID]
 	if component then
 		return component.type
@@ -137,7 +137,7 @@ end
 
 --- @param componentType dr2c.ComponentType
 --- @return dr2c.ComponentTypeID?
-function CECSSchema.getComponentTypeID(componentType)
+function CEntityECSSchema.getComponentTypeID(componentType)
 	local component = componentsSchema[componentType]
 	if component then
 		return component.typeID
@@ -146,7 +146,7 @@ end
 
 --- @param componentTypeOrID dr2c.EntityTypeID
 --- @return dr2c.ECSSchema.Fields? fields @Readonly
-function CECSSchema.getComponentFields(componentTypeOrID)
+function CEntityECSSchema.getComponentFields(componentTypeOrID)
 	local component = componentsSchema[componentTypeOrID]
 	if component then
 		return component.fields
@@ -155,56 +155,56 @@ end
 
 --- @param componentTypeOrID dr2c.ComponentType | dr2c.EntityTypeID
 --- @return dr2c.CECSSchema.ComponentTrait?
-function CECSSchema.getComponentTrait(componentTypeOrID)
+function CEntityECSSchema.getComponentTrait(componentTypeOrID)
 	local componentSchema = componentsSchema[componentTypeOrID]
 	return componentSchema and componentSchema.trait or nil
 end
 
 --- @param entityTypeID dr2c.EntityTypeID
 --- @return dr2c.EntityType?
-function CECSSchema.getEntityType(entityTypeID)
+function CEntityECSSchema.getEntityType(entityTypeID)
 	local entitySchema = entitiesSchema[entityTypeID]
 	return entitySchema and entitySchema.type or nil
 end
 
 --- @param entityType dr2c.EntityType
 --- @return dr2c.EntityTypeID?
-function CECSSchema.getEntityTypeID(entityType)
+function CEntityECSSchema.getEntityTypeID(entityType)
 	local entitySchema = entitiesSchema[entityType]
 	return entitySchema and entitySchema.typeID or nil
 end
 
 --- @param entityTypeOrID dr2c.EntityTypeOrID
 --- @return dr2c.ECSSchema.EntityComponents?
-function CECSSchema.getEntityComponents(entityTypeOrID)
+function CEntityECSSchema.getEntityComponents(entityTypeOrID)
 	local entitySchema = entitiesSchema[entityTypeOrID]
 	return entitySchema and entitySchema.components or nil
 end
 
 --- @param entityTypeOrID dr2c.EntityTypeOrID
 --- @return dr2c.ECSSchema.EntityComponents?
-function CECSSchema.getEntityComponentsArchetypeConstant(entityTypeOrID)
+function CEntityECSSchema.getEntityComponentsArchetypeConstant(entityTypeOrID)
 	local entitySchema = entitiesSchema[entityTypeOrID]
 	return entitySchema and entitySchema.componentsArchetypeConstant or nil
 end
 
 --- @param entityTypeOrID dr2c.EntityTypeOrID
 --- @return dr2c.ECSSchema.EntityComponents?
-function CECSSchema.getEntityComponentsEntityTransient(entityTypeOrID)
+function CEntityECSSchema.getEntityComponentsEntityTransient(entityTypeOrID)
 	local entitySchema = entitiesSchema[entityTypeOrID]
 	return entitySchema and entitySchema.componentsEntityTransient or nil
 end
 
 --- @param entityTypeOrID dr2c.EntityTypeOrID
 --- @return dr2c.ECSSchema.EntityComponents?
-function CECSSchema.getEntityComponentsEntitySerializable(entityTypeOrID)
+function CEntityECSSchema.getEntityComponentsEntitySerializable(entityTypeOrID)
 	local entitySchema = entitiesSchema[entityTypeOrID]
 	return entitySchema and entitySchema.componentsEntitySerializable or nil
 end
 
 --- @param entityTypeOrID dr2c.EntityTypeOrID
 --- @return dr2c.ECSSchema.EntityComponents?
-function CECSSchema.getEntityComponentsArchetypeSerializable(entityTypeOrID)
+function CEntityECSSchema.getEntityComponentsArchetypeSerializable(entityTypeOrID)
 	local entitySchema = entitiesSchema[entityTypeOrID]
 	return entitySchema and entitySchema.componentsArchetypeSerializable or nil
 end
@@ -212,7 +212,7 @@ end
 --- @param entityTypeOrID dr2c.EntityTypeOrID
 --- @param componentTypeOrIDs (dr2c.ComponentType | dr2c.ComponentTypeID)[]
 --- @return boolean?
-function CECSSchema.entityHasAllComponents(entityTypeOrID, componentTypeOrIDs)
+function CEntityECSSchema.entityHasAllComponents(entityTypeOrID, componentTypeOrIDs)
 	local entitySchema = entitiesSchema[entityTypeOrID]
 	if not entitySchema then
 		return
@@ -231,7 +231,7 @@ end
 --- @param entityTypeOrID dr2c.EntityTypeOrID
 --- @param componentTypeOrIDs (dr2c.ComponentType | dr2c.ComponentTypeID)[]
 --- @return boolean?
-function CECSSchema.entityHasAnyComponents(entityTypeOrID, componentTypeOrIDs)
+function CEntityECSSchema.entityHasAnyComponents(entityTypeOrID, componentTypeOrIDs)
 	local entitySchema = entitiesSchema[entityTypeOrID]
 	if not entitySchema then
 		return
@@ -250,7 +250,7 @@ end
 --- @param entityTypeOrID dr2c.EntityTypeOrID
 --- @param componentTypeOrIDs (dr2c.ComponentType | dr2c.ComponentTypeID)[]
 --- @return boolean?
-function CECSSchema.entityHasNonComponents(entityTypeOrID, componentTypeOrIDs)
+function CEntityECSSchema.entityHasNonComponents(entityTypeOrID, componentTypeOrIDs)
 	local entitySchema = entitiesSchema[entityTypeOrID]
 	if not entitySchema then
 		return
@@ -266,7 +266,7 @@ function CECSSchema.entityHasNonComponents(entityTypeOrID, componentTypeOrIDs)
 	return true
 end
 
-CECSSchema.eventEntitySchemaLoadComponents = TE.events:new(N_("CEntitySchemaLoadComponents"), {
+CEntityECSSchema.eventEntitySchemaLoadComponents = TE.events:new(N_("CEntitySchemaLoadComponents"), {
 	"Register",
 	"Dependency",
 	"Override",
@@ -274,7 +274,7 @@ CECSSchema.eventEntitySchemaLoadComponents = TE.events:new(N_("CEntitySchemaLoad
 	"Finalize",
 })
 
-CECSSchema.eventEntitySchemaLoadEntities = TE.events:new(N_("CEntitySchemaLoadEntities"), {
+CEntityECSSchema.eventEntitySchemaLoadEntities = TE.events:new(N_("CEntitySchemaLoadEntities"), {
 	"Register",
 	"Override",
 	"Validate",
@@ -293,7 +293,7 @@ local function reloadComponentsSchema(oldComponentsSchema)
 	}
 	local newComponentsSchema = e.new
 
-	TE.events:invoke(CECSSchema.eventEntitySchemaLoadComponents, e, nil, EEventInvocation.None)
+	TE.events:invoke(CEntityECSSchema.eventEntitySchemaLoadComponents, e, nil, EEventInvocation.None)
 
 	for state, componentType, entry in Table.sortedPairs(newComponentsSchema) do
 		local componentTypeID = state[2]
@@ -305,7 +305,7 @@ local function reloadComponentsSchema(oldComponentsSchema)
 			fields = {}
 		end
 
-		local componentTrait = tonumber(entry.trait) or CECSSchema.ComponentTrait.EntitySerializable
+		local componentTrait = tonumber(entry.trait) or CEntityECSSchema.ComponentTrait.EntitySerializable
 		--- @diagnostic disable-next-line: cast-type-mismatch
 		--- @cast componentTrait dr2c.CECSSchema.ComponentTrait
 
@@ -331,11 +331,11 @@ local function processEntityComponents(entityComponents, tempComponentsSchema)
 	local archetypeSerializable = {}
 	local archetypeTransient = {}
 
-	local traitEntitySerializable = CECSSchema.ComponentTrait.EntitySerializable
-	local traitEntityTransient = CECSSchema.ComponentTrait.EntityTransient
-	local traitArchetypeConstant = CECSSchema.ComponentTrait.ArchetypeConstant
-	local traitArchetypeSerializable = CECSSchema.ComponentTrait.ArchetypeSerializable
-	local traitArchetypeTransient = CECSSchema.ComponentTrait.ArchetypeTransient
+	local traitEntitySerializable = CEntityECSSchema.ComponentTrait.EntitySerializable
+	local traitEntityTransient = CEntityECSSchema.ComponentTrait.EntityTransient
+	local traitArchetypeConstant = CEntityECSSchema.ComponentTrait.ArchetypeConstant
+	local traitArchetypeSerializable = CEntityECSSchema.ComponentTrait.ArchetypeSerializable
+	local traitArchetypeTransient = CEntityECSSchema.ComponentTrait.ArchetypeTransient
 
 	local mergeDepth = entityComponents.mergeDepth
 
@@ -400,7 +400,7 @@ local function reloadEntitiesSchema(oldEntitiesSchema, tempComponentsSchema)
 	}
 	local newEntitiesSchema = e.new
 
-	TE.events:invoke(CECSSchema.eventEntitySchemaLoadEntities, e, nil, EEventInvocation.None)
+	TE.events:invoke(CEntityECSSchema.eventEntitySchemaLoadEntities, e, nil, EEventInvocation.None)
 
 	for state, entityType, entityComponents in Table.sortedPairs(newEntitiesSchema) do
 		local entityTypeID = state[2]
@@ -427,37 +427,37 @@ local function reloadEntitiesSchema(oldEntitiesSchema, tempComponentsSchema)
 	return tempEntitiesSchema
 end
 
-CECSSchema.eventCECSLoaded = TE.events:new(N_("CEntitySchemaLoaded"), {
+CEntityECSSchema.eventCEntitySchemaLoaded = TE.events:new(N_("CEntitySchemaLoaded"), {
 	"Components",
 	"Filters",
 })
 
-function CECSSchema.reloadImmediately()
+function CEntityECSSchema.reloadImmediately()
 	local tempComponentsSchema = reloadComponentsSchema(componentsSchema)
 	local tempEntitiesSchema = reloadEntitiesSchema(entitiesSchema, tempComponentsSchema)
 
 	componentsSchema = tempComponentsSchema
 	entitiesSchema = tempEntitiesSchema
 
-	TE.events:invoke(CECSSchema.eventCECSLoaded, {})
+	TE.events:invoke(CEntityECSSchema.eventCEntitySchemaLoaded, {})
 
 	reloadPending = false
 end
 
-function CECSSchema.reload()
+function CEntityECSSchema.reload()
 	reloadPending = true
 	TE.engine:triggerLoadPending()
 end
 
-CECSSchema.reload()
+CEntityECSSchema.reload()
 
 --- @param e dr2c.E.CLoad
 TE.events:add(N_("CLoad"), function(e)
 	if reloadPending then
-		CECSSchema.reloadImmediately()
+		CEntityECSSchema.reloadImmediately()
 
 		--- @class dr2c.E.CLoad
-		--- @field ecsSchema { components: dr2c.ECSSchema.Components, entities: dr2c.ECSSchema.Entities }?
+		--- @field ecsSchema? { components: dr2c.ECSSchema.Components, entities: dr2c.ECSSchema.Entities }
 		e.ecsSchema = {
 			components = componentsSchema,
 			entities = entitiesSchema,
@@ -465,4 +465,4 @@ TE.events:add(N_("CLoad"), function(e)
 	end
 end, "loadECSSchema", "ECS")
 
-return CECSSchema
+return CEntityECSSchema

@@ -18,6 +18,10 @@ local tonumber = tonumber
 --- @class dr2c.CSprites
 local CRenderSprites = {}
 
+--- @class dr2c.SpriteName : string
+
+--- @class dr2c.SpriteIndex : integer
+
 --- @class dr2c.SpriteTable : TE.RectangleF
 --- @field [0] TE.ImageID
 
@@ -171,8 +175,8 @@ TE.events:add(N_("CLoad"), function(e)
 	end
 end, "loadSprites", "Sprites")
 
---- @param spriteName string
---- @param spriteIndex integer?
+--- @param spriteName dr2c.SpriteName
+--- @param spriteIndex dr2c.SpriteIndex?
 --- @return dr2c.SpriteTable?
 function CRenderSprites.getSpriteTable(spriteName, spriteIndex)
 	local spriteTables = spriteTablesMap[spriteName]

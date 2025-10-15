@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.world.Rollback
+-- @module dr2c.Client.World.Rollback
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -10,7 +10,7 @@
 --]]
 
 local CSnapshot = require("dr2c.Client.World.Snapshot")
-local GMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
 
 --- @class dr2c.CRollback
 local CRollback = {}
@@ -47,7 +47,7 @@ TE.events:add(N_("CMessage"), function(e)
 	else
 		rollbackPending = worldTick
 	end
-end, "RollbackPending", "Rollback", GMessage.Type.PlayerInputs)
+end, "RollbackPending", "Rollback", GNetworkMessage.Type.PlayerInputs)
 
 TE.events:add(N_("CUpdate"), function(e)
 	if rollbackPending then

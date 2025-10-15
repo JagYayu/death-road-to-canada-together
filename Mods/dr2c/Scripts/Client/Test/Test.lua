@@ -1,10 +1,10 @@
-local CECS = require("dr2c.Client.Entity.ECS")
+local CEntityECS = require("dr2c.Client.Entity.ECS")
 
 -- print(scriptID, scriptName)
 -- TE.events:add(N_"CEntitySchemaLoadComponents", function(e)
 -- end, "test", "testa")
 
-local filterTest = CECS.filter({
+local filterTest = CEntityECS.filter({
 	"GameObject",
 })
 

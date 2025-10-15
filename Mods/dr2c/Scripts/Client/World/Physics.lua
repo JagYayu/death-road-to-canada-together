@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.world.Physics
+-- @module dr2c.Client.World.Physics
 -- @author JagYayu
 -- @brief
 -- @version 1.0

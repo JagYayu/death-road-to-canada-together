@@ -9,10 +9,11 @@
 --
 --]]
 
-local CECS = require("dr2c.Client.Entity.ECS")
+local CEntityECS = require("dr2c.Client.Entity.ECS")
 local CRenderFocus = require("dr2c.Client.Render.Focus")
-local CRoom = require("dr2c.Client.World.Room")
+local CWorldScene = require("dr2c.Client.World.Scene")
 local CRenderSprites = require("dr2c.Client.Render.Sprites")
+local CTileMap        = require("dr2c.Client.Tile.Map")
 
 -- TE.events:new("", {
 -- 	"",
@@ -61,10 +62,11 @@ local testTilemap = {
 
 --- @param e dr2c.E.CRender
 TE.events:add(N_("CRenderCamera"), function(e)
-	local room = CRoom.getRoom(CRenderFocus.getFocusedRoomID())
-	if room then
-		draw(e.renderer, room.tilemap)
-	elseif true then
-		draw(e.renderer, testTilemap)
-	end
+	-- if CWorldScene.contains(CRenderFocus.getFocusedSceneID()) then
+	-- 	CTileMap
+		
+	-- 	draw(e.renderer, room.tilemap)
+	-- elseif true then
+	-- 	draw(e.renderer, testTilemap)
+	-- end
 end, "RenderTilemap", "Tilemap")

@@ -12,8 +12,8 @@
 local Table = require("TE.Table")
 
 local GWorldSession = require("dr2c.Shared.World.Session")
-local GMessage = require("dr2c.Shared.Network.Message")
-local SServer = require("dr2c.Server.Network.Server")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local SNetworkServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.SWorldSession : dr2c.WorldSession
 local SWorldSession = GWorldSession.new()
@@ -36,15 +36,17 @@ SWorldSession.eventSWorldSessionUnpause = TE.events:new(N_("SWorldSessionUnpause
 	"Time",
 })
 
---- @param args table<dr2c.WorldSessionAttribute, any>?
-function SWorldSession.start(clientID, args)
+--- @param attributes table<dr2c.WorldSessionAttribute, any>?
+function SWorldSession.start(clientID, attributes)
 	SWorldSession.resetAttributes()
 
 	local worldSessionAttributes = SWorldSession.getAttributes()
 
-	for attribute, value in pairs(args or Table.empty) do
+	for attribute, value in pairs(attributes or Table.empty) do
 		if GWorldSession.validateAttribute(attribute, value) then
 			worldSessionAttributes[attribute] = value
+		elseif log.canTrace() then
+			log.trace(("Validation to attribute %s failed"):format(attribute))
 		end
 	end
 
@@ -62,11 +64,11 @@ function SWorldSession.start(clientID, args)
 	TE.events:invoke(SWorldSession.eventSWorldSessionStart, e)
 
 	if not e.suppressed then
-		SServer.broadcastReliable(GMessage.Type.WorldSessionStart, {
+		SNetworkServer.broadcastReliable(GNetworkMessage.Type.WorldSessionStart, {
 			attributes = worldSessionAttributes,
 		})
 	elseif clientID then
-		SServer.sendReliable(clientID, GMessage.Type.WorldSessionStart, {
+		SNetworkServer.sendReliable(clientID, GNetworkMessage.Type.WorldSessionStart, {
 			suppressed = e.suppressed,
 		})
 	end
@@ -75,7 +77,7 @@ end
 --- @param e dr2c.E.SMessage
 TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.start(e.clientID, e.content)
-end, "ReceiveWorldSessionStart", "Receive", GMessage.Type.WorldSessionStart)
+end, "ReceiveWorldSessionStart", "Receive", GNetworkMessage.Type.WorldSessionStart)
 
 function SWorldSession.restart()
 	-- TODO
@@ -83,7 +85,7 @@ end
 
 TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.restart()
-end, "ReceiveWorldSessionRestart", "Receive", GMessage.Type.WorldSessionRestart)
+end, "ReceiveWorldSessionRestart", "Receive", GNetworkMessage.Type.WorldSessionRestart)
 
 function SWorldSession.finish()
 	SWorldSession.resetAttributes()
@@ -92,14 +94,14 @@ function SWorldSession.finish()
 	TE.events:invoke(SWorldSession.eventSWorldSessionFinish, e)
 
 	if not e.suppressed then
-		SServer.broadcastReliable(GMessage.Type.WorldSessionFinish)
+		SNetworkServer.broadcastReliable(GNetworkMessage.Type.WorldSessionFinish)
 	end
 end
 
 --- @param e {}
 TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.finish()
-end, "ReceiveWorldSessionFinish", "Receive", GMessage.Type.WorldSessionFinish)
+end, "ReceiveWorldSessionFinish", "Receive", GNetworkMessage.Type.WorldSessionFinish)
 
 --- @return boolean
 function SWorldSession.pause()
@@ -116,7 +118,7 @@ function SWorldSession.pause()
 		SWorldSession.setAttribute(GWorldSession.Attribute.State, GWorldSession.State.Paused)
 		SWorldSession.setAttribute(GWorldSession.Attribute.TimePaused, time)
 
-		SServer.broadcastReliable(GMessage.Type.WorldSessionPause, time)
+		SNetworkServer.broadcastReliable(GNetworkMessage.Type.WorldSessionPause, time)
 
 		return true
 	else
@@ -126,7 +128,7 @@ end
 
 TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.pause()
-end, "ReceiveWorldSessionPause", "Receive", GMessage.Type.WorldSessionPause)
+end, "ReceiveWorldSessionPause", "Receive", GNetworkMessage.Type.WorldSessionPause)
 
 --- @return boolean
 function SWorldSession.unpause()
@@ -146,7 +148,7 @@ function SWorldSession.unpause()
 		SWorldSession.setAttribute(GWorldSession.Attribute.State, GWorldSession.State.Paused)
 		SWorldSession.setAttribute(GWorldSession.Attribute.ElapsedPaused, elapsedPaused + time - timePaused)
 
-		SServer.broadcastReliable(GMessage.Type.WorldSessionUnpause, time)
+		SNetworkServer.broadcastReliable(GNetworkMessage.Type.WorldSessionUnpause, time)
 
 		TE.events:invoke(SWorldSession.eventSWorldSessionUnpause)
 
@@ -158,6 +160,6 @@ end
 
 TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.pause()
-end, "ReceiveWorldSessionUnpause", "Receive", GMessage.Type.WorldSessionUnpause)
+end, "ReceiveWorldSessionUnpause", "Receive", GNetworkMessage.Type.WorldSessionUnpause)
 
 return SWorldSession

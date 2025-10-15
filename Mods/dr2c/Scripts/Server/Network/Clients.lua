@@ -20,19 +20,19 @@ local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local SNetworkServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.ServerUnverifiedClient
---- @field clientID Network.ClientID
+--- @field clientID TE.Network.ClientID
 --- @field expireTime number
 
 --- @class dr2c.SNetworkClients
 local SNetworkClients = {}
 
---- @type Network.ClientID[]
+--- @type TE.Network.ClientID[]
 local clientList = {}
 
---- @type table<Network.ClientID, table<dr2c.NetworkClientPublicAttribute, any>>
+--- @type table<TE.Network.ClientID, table<dr2c.NetworkClientPublicAttribute, any>>
 local clientsPublicAttributes = {}
 
---- @type table<Network.ClientID, table<dr2c.NetworkClientPublicAttribute, any>>
+--- @type table<TE.Network.ClientID, table<dr2c.NetworkClientPublicAttribute, any>>
 local clientsPrivateAttributes = {}
 
 --- @type dr2c.ServerUnverifiedClient[]
@@ -51,7 +51,7 @@ unverifiedClients = persist("unverifiedClients", function()
 	return unverifiedClients
 end)
 
---- @return Network.ClientID?
+--- @return TE.Network.ClientID?
 function SNetworkClients.getAuthoritativeClient()
 	for _, clientID in ipairs(clientList) do
 		local permissions = clientsPublicAttributes[clientID][GNetworkClient.PublicAttribute.Permissions]
@@ -61,7 +61,7 @@ function SNetworkClients.getAuthoritativeClient()
 	end
 end
 
---- @param clientID Network.ClientID
+--- @param clientID TE.Network.ClientID
 --- @return boolean?
 function SNetworkClients.isAuthoritativeClient(clientID)
 	local publicAttributes = clientsPublicAttributes[clientID]
@@ -73,7 +73,7 @@ function SNetworkClients.isAuthoritativeClient(clientID)
 	end
 end
 
---- @param clientID Network.ClientID
+--- @param clientID TE.Network.ClientID
 --- @param verified boolean?
 function SNetworkClients.addClient(clientID, verified)
 	clientList[#clientList + 1] = clientID
@@ -109,14 +109,14 @@ local verifyPrivateAttributes = {
 
 --- @param entry table
 --- @param _ integer
---- @param clientID Network.ClientID
+--- @param clientID TE.Network.ClientID
 --- @return boolean
 local function unverifiedClientEquals(entry, _, clientID)
 	return entry.clientID == clientID
 end
 
 --- Send server clients attributes to lately verified client.
---- @param clientID Network.ClientID
+--- @param clientID TE.Network.ClientID
 local function onVerifiedClient(clientID)
 	List.removeFirstIfV(unverifiedClients, unverifiedClientEquals, clientID)
 

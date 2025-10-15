@@ -12,10 +12,13 @@
 local Enum = require("TE.Enum")
 local Table = require("TE.Table")
 
+local CForthSession = require("dr2c.Client.Forth.Session")
 local CUI = require("dr2c.Client.UI.UI")
 local CUIDraw = require("dr2c.Client.UI.Draw")
 local CUICanvas = require("dr2c.Client.UI.Canvas")
 local CWorldSession = require("dr2c.Client.World.Session")
+local GForthSession = require("dr2c.Shared.Forth.Session")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GWorldSession = require("dr2c.Shared.World.Session")
 
 --- @class dr2c.MenuEntry
@@ -187,7 +190,7 @@ TE.events:add(N_("CRenderUI"), CUIMenu.draw, "RenderMenu", "Menu")
 TE.events:add(N_("CUpdate"), function(e)
 	if
 		not CUIMenu.isOpened() --
-		and CWorldSession.getAttribute(GWorldSession.Attribute.State) == GWorldSession.State.Inactive
+		and not CForthSession.isActive()
 	then
 		CUIMenu.open(CUIMenu.Type.TitleScreen)
 	end
@@ -204,7 +207,10 @@ TE.events:add("ScriptUnload", function(e)
 	end
 end, "ClientUIMenuUpdateIfRemoveTypedWidget", "Client")
 
--- TE.events:add()
--- CUIMenu.update()
+local function handlerCloseAllMenu()
+	-- CUIMenu.closeAll()
+end
+
+TE.events:add(N_("CMessage"), handlerCloseAllMenu, "CloseMenu", "Receive", GNetworkMessage.Type.ForthSessionStart)
 
 return CUIMenu

@@ -9,7 +9,7 @@ function TestSynchrony.enable()
 	local Function = require("TE.Function")
 	local Math = require("TE.Math")
 
-	local CECS = require("dr2c.Client.Entity.ECS")
+	local CEntityECS = require("dr2c.Client.Entity.ECS")
 	local CNetworkClient = require("dr2c.Client.Network.Client")
 	local CNetworkClock = require("dr2c.Client.Network.Clock")
 	local CWorldSnapshot = require("dr2c.Client.World.Snapshot")
@@ -18,7 +18,7 @@ function TestSynchrony.enable()
 
 	TestSynchrony.enable = Function.empty
 
-	local filter = CECS.filter({
+	local filter = CEntityECS.filter({
 		"GameObject",
 	})
 
@@ -69,9 +69,9 @@ function TestSynchrony.enable()
 	end, "TestSynchronyInfo", "Debug")
 
 	TE.events:add(N_("CWorldTickProcess"), function(e)
-		if CECS.countEntitiesByType("Character") < 2 then
+		if CEntityECS.countEntitiesByType("Character") < 2 then
 			print("Spawn a Character")
-			CECS.spawnEntity("Character")
+			CEntityECS.spawnEntity("Character")
 		end
 	end, "testSpawnCharacters", "Test")
 end

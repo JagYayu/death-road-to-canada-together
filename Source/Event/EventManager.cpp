@@ -17,15 +17,15 @@
 #include "Event/LoadtimeEvent.hpp"
 #include "Event/RuntimeEvent.hpp"
 #include "Exception/EventHandlerAddException.hpp"
-#include "mod/ModManager.hpp"
 #include "Mod/ScriptEngine.hpp"
-#include "mod/ScriptErrors.hpp"
-#include "mod/ScriptLoader.hpp"
 #include "Program/Context.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/Definitions.hpp"
 #include "Util/LuaUtils.hpp"
 #include "Util/Utils.hpp"
+#include "mod/ModManager.hpp"
+#include "mod/ScriptErrors.hpp"
+#include "mod/ScriptLoader.hpp"
 
 #include "sol/forward.hpp"
 #include "sol/types.hpp"
@@ -133,7 +133,10 @@ void EventManager::OnScriptsLoaded()
 		{
 			for (auto it = event->BeginHandlers(); it != event->EndHandlers(); ++it)
 			{
-				scriptLoader.AddReverseDependency(it->scriptID, scriptID);
+				if (it->scriptID != scriptID)
+				{
+					scriptLoader.AddReverseDependency(it->scriptID, scriptID);
+				}
 			}
 		}
 	}
@@ -563,8 +566,8 @@ EventID EventManager::LuaNew(sol::object event, sol::object orders, sol::object 
 		std::optional<ScriptID> failed = TryBuildEvent(eventID, scriptID, orders_, keys_);
 		if (failed.has_value())
 		{
-			ScriptID sourceScriptID = failed.has_value();
-			std::string_view scriptName = GetScriptProvider().GetScriptNameByID(sourceScriptID).value_or("$UNKNOWN");
+			ScriptID sourceScriptID = failed.value();
+			std::string_view scriptName = GetScriptProvider().GetScriptNameByID(sourceScriptID).value_or(Constants::ImplStrUnknown);
 
 			LuaUtils::Deconstruct(orders_, keys_);
 			GetScriptEngine().ThrowError("Failed to new event <{}>{}, already been registered from script <{}>{}",

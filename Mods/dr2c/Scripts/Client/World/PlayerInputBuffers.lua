@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.world.PlayerInputBuffers
+-- @module dr2c.Client.World.PlayerInputBuffers
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -11,11 +11,11 @@
 
 local Table = require("TE.Table")
 
-local CClients = require("dr2c.Client.Network.Clients")
-local CPlayers = require("dr2c.Client.Network.Players")
-local CServer = require("dr2c.Client.Network.Server")
+local CNetworkClients = require("dr2c.Client.Network.Clients")
+local CNetworkPlayers = require("dr2c.Client.Network.Players")
+local CNetworkServer = require("dr2c.Client.Network.Server")
 
-local GMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GPlayerInput = require("dr2c.Shared.World.PlayerInput")
 local GPlayerInputBuffers = require("dr2c.Shared.World.PlayerInputBuffers")
 
@@ -37,7 +37,7 @@ TE.events:add(N_("CMessage"), function(e)
 
 		CPlayerInputBuffers.setInputs(playerID, worldTick, playerInputs)
 	end
-end, "ReceivePlayerInput", "Receive", GMessage.Type.PlayerInputs)
+end, "ReceivePlayerInput", "Receive", GNetworkMessage.Type.PlayerInputs)
 
 TE.events:add(N_("CConnect"), function(e)
 	CPlayerInputBuffers.clear()

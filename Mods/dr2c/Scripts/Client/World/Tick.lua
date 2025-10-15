@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.world.Tick
+-- @module dr2c.Client.World.Tick
 -- @author JagYayu
 -- @brief
 -- @version 1.0

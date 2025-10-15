@@ -32,18 +32,21 @@ GWorldSession.Attribute = Enum.sequence({
 	TimeStart = 2,
 	TimePaused = 3,
 	ElapsedPaused = 4,
-	Mode = 5,
-	Zombies = 6,
+	Scenes = 5,
+	Mode = 6,
+	TileMaps = 7,
+	Zombies = 8,
 })
 
 local GWorldSession_Attribute_State = GWorldSession.Attribute.State
 local GWorldSession_Attribute_TimeStart = GWorldSession.Attribute.TimeStart
 local GWorldSession_Attribute_TimePaused = GWorldSession.Attribute.TimePaused
 local GWorldSession_Attribute_ElapsedPaused = GWorldSession.Attribute.ElapsedPaused
+local GWorldSession_Attribute_ElapsedScenes = GWorldSession.Attribute.Scenes
 
 GWorldSession.Mode = Enum.sequence({
 	None = 0,
-	Default = 1,
+	DeathRoad = 1,
 })
 
 local GWorldSession_Attribute_Mode = GWorldSession.Attribute.Mode
@@ -54,6 +57,7 @@ GWorldSession.State = Enum.immutable({
 	Paused = 2,
 })
 
+local GWorldSession_State_Inactive = GWorldSession.State.Inactive
 local GWorldSession_State_Paused = GWorldSession.State.Paused
 local GWorldSession_State_Playing = GWorldSession.State.Playing
 
@@ -97,6 +101,8 @@ end
 
 --- @return dr2c.WorldSession WorldSession
 function GWorldSession.new()
+	TE.scriptLoader:addReverseDependency(TE.scriptLoader:getLoadingScriptID(), scriptID)
+
 	--- @class dr2c.WorldSession
 	local WorldSession
 
@@ -115,14 +121,16 @@ function GWorldSession.new()
 	worldSessionModules[scriptName] = WorldSession
 
 	--- @class dr2c.WorldSessionAttributes
+	--- @field [dr2c.WorldSessionAttribute] any
 	local worldSessionAttributes
 
 	function WorldSession.resetAttributes()
 		worldSessionAttributes = {
-			[GWorldSession_Attribute_State] = GWorldSession.State.Inactive,
+			[GWorldSession_Attribute_State] = GWorldSession_State_Inactive,
 			[GWorldSession_Attribute_TimeStart] = Time.getSystemTime(),
 			[GWorldSession_Attribute_TimePaused] = Time.getSystemTime(),
 			[GWorldSession_Attribute_ElapsedPaused] = 0,
+			[GWorldSession_Attribute_ElapsedScenes] = {},
 			[GWorldSession_Attribute_Mode] = GWorldSession.Mode.None,
 		}
 	end
@@ -151,6 +159,21 @@ function GWorldSession.new()
 		end
 
 		worldSessionAttributes[attribute] = value
+	end
+
+	--- @return boolean
+	function WorldSession.isInactive()
+		return worldSessionAttributes[GWorldSession_Attribute_State] == GWorldSession_State_Inactive
+	end
+
+	--- @return boolean
+	function WorldSession.isPLaying()
+		return worldSessionAttributes[GWorldSession_Attribute_State] == GWorldSession_State_Playing
+	end
+
+	--- @return boolean
+	function WorldSession.isPaused()
+		return worldSessionAttributes[GWorldSession_Attribute_State] == GWorldSession_State_Paused
 	end
 
 	WorldSession.resetAttributes()

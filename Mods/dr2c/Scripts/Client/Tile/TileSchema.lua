@@ -1,5 +1,0 @@
-local CTileSchema = {}
-
-
-
-return CTileSchema

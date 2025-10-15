@@ -17,27 +17,31 @@ local GForthSession = {}
 --- @alias dr2c.ForthSessionAttribute dr2c.GForthSession.Attribute
 
 GForthSession.Attribute = Enum.protocol({
+	-- 是否正在进行
+	Active = 1,
 	-- App版本
-	Version = 1,
+	Version = 2,
 	-- 游戏Mods
-	Mods = 2,
+	Mods = 3,
 	-- 游戏Mods哈希值，用于快速判断
-	ModsHash = 3,
+	ModsHash = 4,
 	-- 游戏模式
-	GameMode = 4,
+	GameMode = 5,
 	-- 创建时间
-	CreateTime = 5,
+	CreateTime = 6,
 	-- 上次保存时间
-	LastSaveTime = 6,
+	LastSaveTime = 7,
 	-- 游玩时间
-	Playtime = 7,
+	Playtime = 8,
 	-- 小队角色
-	Characters = 8,
+	Characters = 9,
 	-- 小队载具
-	Vehicle = 9,
+	Vehicle = 10,
 	-- 小队背包
-	Inventory = 10,
+	Inventory = 11,
 })
+
+local GForthSession_Attribute_Active = GForthSession.Attribute.Active
 
 --- @type table<string, dr2c.ForthSession>
 local forthSessionModules = {}
@@ -86,6 +90,10 @@ function GForthSession.new()
 	--- @param value any?
 	function ForthSession.setAttribute(attribute, value)
 		forthSessionAttributes[attribute] = value
+	end
+
+	function ForthSession.isActive()
+		return forthSessionAttributes[GForthSession_Attribute_Active]
 	end
 
 	return ForthSession

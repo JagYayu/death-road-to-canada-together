@@ -12,7 +12,7 @@
 local Function = require("TE.Function")
 local Table = require("TE.Table")
 
-local CECS = require("dr2c.Client.Entity.ECS")
+local CEntityECS = require("dr2c.Client.Entity.ECS")
 
 --- @class dr2c.CInput
 local CInput = {}

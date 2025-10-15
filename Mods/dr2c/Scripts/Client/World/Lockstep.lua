@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.world.Lockstep
+-- @module dr2c.Client.World.Lockstep
 -- @author JagYayu
 -- @brief
 -- @version 1.0

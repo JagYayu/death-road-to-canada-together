@@ -11,7 +11,7 @@
 
 local CClient = require("dr2c.Client.Network.Client")
 
-local GMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessage = require("dr2c.Shared.Network.Message")
 
 --- @class dr2c.CClock
 local CClock = {}
@@ -28,12 +28,12 @@ function CClock.getTime()
 end
 
 function CClock.sync()
-	CClient.sendReliable(GMessage.Type.Clock)
+	CClient.sendReliable(GNetworkMessage.Type.Clock)
 end
 
 TE.events:add(N_("CMessage"), function(e)
 	clientClockTimeOffset = e.content.timeOffset
-end, "ReceiveClockTime", "Receive", GMessage.Type.Clock)
+end, "ReceiveClockTime", "Receive", GNetworkMessage.Type.Clock)
 
 TE.events:add(N_("CConnect"), function(e)
 	CClock.sync()

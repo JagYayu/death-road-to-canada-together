@@ -22,7 +22,7 @@ local CPlayers = {}
 --- @type table<dr2c.PlayerID, table<dr2c.PlayerAttribute, any>>
 local clientPlayersAttributes = {}
 
---- @param clientID Network.ClientID
+--- @param clientID TE.Network.ClientID
 --- @return dr2c.PlayerID[]
 function CPlayers.getPlayers(clientID)
 	if clientID ~= 0 then
@@ -32,7 +32,7 @@ function CPlayers.getPlayers(clientID)
 	end
 end
 
---- @param clientID Network.ClientID
+--- @param clientID TE.Network.ClientID
 --- @return dr2c.PlayerID?
 function CPlayers.getFirstPlayer(clientID)
 	return clientID

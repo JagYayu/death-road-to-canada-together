@@ -2,10 +2,18 @@
 error("this is a lua library module")
 
 --- @class TE.ScriptLoader
-TE.scriptLoader = {}
+local scriptLoader
+
+--- Link script dependency
+--- e.g. "A.lua" has script `require target "B.lua"`, "B.lua" procession will also affect "A.lua".
+--- @param source string | integer | nil
+--- @param target string | integer
+function scriptLoader:addReverseDependency(source, target) end
 
 --- @return integer
-function TE.scriptLoader:getLoadingScriptID() end
+function scriptLoader:getLoadingScriptID() end
 
 --- @return string
-function TE.scriptLoader:getLoadingScriptName() end
+function scriptLoader:getLoadingScriptName() end
+
+TE.scriptLoader = scriptLoader

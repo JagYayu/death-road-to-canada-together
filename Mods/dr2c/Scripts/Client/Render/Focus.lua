@@ -9,7 +9,7 @@
 --
 --]]
 
-local CECS = require("dr2c.Client.Entity.ECS")
+local CEntityECS = require("dr2c.Client.Entity.ECS")
 
 local CRenderFocus = {}
 
@@ -18,17 +18,25 @@ function CRenderFocus.getFocusedEntityID()
 	return 1
 end
 
+function CRenderFocus.updateFocusedEntityID()
+	-- TODO
+end
+
 --- @return dr2c.NetworkRoomID
-function CRenderFocus.getFocusedRoomID()
+function CRenderFocus.getFocusedSceneID()
 	local entityID = CRenderFocus.getFocusedEntityID()
 	if entityID then
-		local gameObject = CECS.getComponent(entityID, "GameObject")
+		local gameObject = CEntityECS.getComponent(entityID, "GameObject")
 		if gameObject then
 			return gameObject.room
 		end
 	end
 
 	return 1
+end
+
+function CRenderFocus.updateFocusedSceneID()
+	-- TODO
 end
 
 return CRenderFocus

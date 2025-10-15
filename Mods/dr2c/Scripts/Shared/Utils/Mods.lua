@@ -8,7 +8,8 @@ function GUtilsMods.collectMods()
 	--- @param value TE.Mod
 	for index, value in TE.mods:getLoadedMods():pairs() do
 		local config = value:getConfig()
-		mods[#mods + 1] = { config.uid, tostring(config.version) }
+		local version = config.version
+		mods[#mods + 1] = { config.uid, tostring(version) }
 	end
 
 	return mods
