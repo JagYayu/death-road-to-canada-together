@@ -12,20 +12,20 @@
 #include "Event/RuntimeEvent.hpp"
 
 #include "Data/Constants.hpp"
-#include "debug/EventProfiler.hpp"
 #include "Event/AbstractEvent.hpp"
 #include "Event/EventHandler.hpp"
 #include "Event/EventManager.hpp"
 #include "Event/RuntimeEvent.hpp"
-#include "exception/EventHandlerAddBadKeyException.hpp"
-#include "exception/EventHandlerAddBadOrderException.hpp"
-#include "exception/EventHandlerAddDuplicateException.hpp"
 #include "Mod/ScriptEngine.hpp"
-#include "mod/ScriptErrors.hpp"
-#include "mod/ScriptProvider.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/Definitions.hpp"
 #include "Util/EnumFlag.hpp"
+#include "debug/EventProfiler.hpp"
+#include "exception/EventHandlerAddBadKeyException.hpp"
+#include "exception/EventHandlerAddBadOrderException.hpp"
+#include "exception/EventHandlerAddDuplicateException.hpp"
+#include "mod/ScriptErrors.hpp"
+#include "mod/ScriptProvider.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -215,17 +215,17 @@ std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 	}
 
 	std::unordered_map<std::string, size_t> orderSequenceMap;
-	for (auto &&i = 0; i < _orders.size(); ++i)
+	for (std::int32_t index = 0; index < _orders.size(); ++index)
 	{
-		orderSequenceMap[_orders[i]] = i;
+		orderSequenceMap[_orders[index]] = index;
 	}
 
 	if (!orderSequenceMap.empty())
 	{
 		std::sort(_handlers.begin(), _handlers.end(), [this, &orderSequenceMap](const EventHandler &lhs, const EventHandler &rhs)
 		{
-			auto &&lhsOrder = orderSequenceMap.count(lhs.order) ? orderSequenceMap[lhs.order] : SIZE_MAX;
-			auto &&rhsOrder = orderSequenceMap.count(rhs.order) ? orderSequenceMap[rhs.order] : SIZE_MAX;
+			std::size_t lhsOrder = orderSequenceMap.count(lhs.order) ? orderSequenceMap[lhs.order] : SIZE_MAX;
+			std::size_t rhsOrder = orderSequenceMap.count(rhs.order) ? orderSequenceMap[rhs.order] : SIZE_MAX;
 			if (lhsOrder != rhsOrder)
 			{
 				return lhsOrder < rhsOrder;
@@ -323,7 +323,7 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 			{
 				_invocationCache = InvocationCache();
 
-				for (auto &&handler : GetSortedHandlers())
+				for (EventHandler &handler : GetSortedHandlers())
 				{
 					_invocationCache->emplace_back(&handler);
 				}
@@ -340,7 +340,7 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 		else [[unlikely]]
 		{
 			cache = &_invocationCaches.try_emplace(key, InvocationCache()).first->second;
-			for (auto &&handler : GetSortedHandlers())
+			for (EventHandler &handler : GetSortedHandlers())
 			{
 				if (handler.key.Match(key))
 				{
@@ -422,8 +422,9 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 			{
 				if (progression != nullptr)
 				{
-					progression->total = _handlers.size();
-					for (EventHandler &handler : _handlers)
+					auto &&handlers = GetSortedHandlers();
+					progression->total = handlers.size();
+					for (EventHandler &handler : handlers)
 					{
 						PCallHandler(obj, handler, e);
 						_profile->eventProfiler->TraceHandler(scriptEngine, handler.name);
@@ -432,7 +433,7 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 				}
 				else
 				{
-					for (EventHandler &handler : _handlers)
+					for (EventHandler &handler : GetSortedHandlers())
 					{
 						PCallHandler(obj, handler, e);
 						_profile->eventProfiler->TraceHandler(scriptEngine, handler.name);
@@ -443,8 +444,9 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 			{
 				if (progression != nullptr)
 				{
-					progression->total = _handlers.size();
-					for (EventHandler &handler : _handlers)
+					auto &&handlers = GetSortedHandlers();
+					progression->total = handlers.size();
+					for (EventHandler &handler : GetSortedHandlers())
 					{
 						PCallHandler(obj, handler, e, key);
 						++progression->value;
@@ -452,7 +454,7 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 				}
 				else
 				{
-					for (EventHandler &handler : _handlers)
+					for (EventHandler &handler : GetSortedHandlers())
 					{
 						PCallHandler(obj, handler, e, key);
 					}
@@ -465,8 +467,9 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 			{
 				if (progression != nullptr)
 				{
-					progression->total = _handlers.size();
-					for (EventHandler &handler : _handlers)
+					auto &&handlers = GetSortedHandlers();
+					progression->total = handlers.size();
+					for (EventHandler &handler : handlers)
 					{
 						if (handler.key.Match(key))
 						{
@@ -478,7 +481,7 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 				}
 				else
 				{
-					for (EventHandler &handler : _handlers)
+					for (EventHandler &handler : GetSortedHandlers())
 					{
 						if (handler.key.Match(key))
 						{
@@ -492,8 +495,9 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 			{
 				if (progression != nullptr)
 				{
-					progression->total = _handlers.size();
-					for (EventHandler &handler : _handlers)
+					auto &&handlers = GetSortedHandlers();
+					progression->total = handlers.size();
+					for (EventHandler &handler : handlers)
 					{
 						if (handler.key.Match(key))
 						{
@@ -504,7 +508,7 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 				}
 				else
 				{
-					for (EventHandler &handler : _handlers)
+					for (EventHandler &handler : GetSortedHandlers())
 					{
 						if (handler.key.Match(key))
 						{

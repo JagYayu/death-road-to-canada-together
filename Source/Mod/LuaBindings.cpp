@@ -263,6 +263,7 @@ void LuaBindings::ProvideLuaBindings(sol::state &lua, Context &context)
 	InstallNetwork(lua, context);
 	InstallScanCode(lua, context);
 	InstallSystem(lua, context);
+	InstallUtil(lua, context);
 }
 
 const std::vector<std::string_view> &LuaBindings::GetModGlobalsMigration() const noexcept
@@ -299,30 +300,30 @@ const std::vector<std::string_view> &LuaBindings::GetModGlobalsMigration() const
 		    "table.clear",
 		    "table.new",
 		    // C++ enum classes
-		    "EClientSessionState",
-		    "EDebugConsoleCode",
-		    "EDisconnectionCode",
-		    "EEventInvocation",
-		    "ELogVerbosity",
-		    "EMouseButton",
-		    "EMouseButtonFlag",
-		    "EOperatingSystem",
-		    "EPathListOption",
-		    "EServerSessionState",
-		    "EScanCode",
-		    "ESocketType",
-		    // C++ classes
-		    "DrawRectArgs",
-		    "DrawTextArgs",
-		    "RectangleF",
-		    "TE",
-		    "Timer",
+		    TE_NAMEOF(EClientSessionState),
+		    TE_NAMEOF(EDebugConsoleCode),
+		    TE_NAMEOF(EDisconnectionCode),
+		    TE_NAMEOF(EEventInvocation),
+		    TE_NAMEOF(ELogVerbosity),
+		    TE_NAMEOF(EMouseButton),
+		    TE_NAMEOF(EMouseButtonFlag),
+		    TE_NAMEOF(EOperatingSystem),
+		    TE_NAMEOF(EPathListOption),
+		    TE_NAMEOF(EServerSessionState),
+		    TE_NAMEOF(EScanCode),
+		    TE_NAMEOF(ESocketType),
+		    // C++ userdata classes
+		    TE_NAMEOF(DrawRectArgs),
+		    TE_NAMEOF(DrawTextArgs),
+		    TE_NAMEOF(PerlinNoiseRandom),
+		    TE_NAMEOF(RectangleF),
+		    TE_NAMEOF(Timer),
+		    TE_NAMEOF(Version),
 		    // C++ static classes
-		    "OperatingSystem",
-		    "RandomDevice",
-		    "PerlinNoiseRandom",
-		    "Time",
-		    "Version",
+		    TE_NAMEOF(OperatingSystem),
+		    TE_NAMEOF(RandomDevice),
+		    TE_NAMEOF(TE),
+		    TE_NAMEOF(Time),
 		    // C++ exports
 		    "binaries",
 		    "engine",

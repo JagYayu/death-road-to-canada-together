@@ -21,7 +21,7 @@
 --- @field type dr2c.ComponentType
 --- @field typeID dr2c.ComponentTypeID
 --- @field fields dr2c.ECSSchema.Fields
---- @field trait dr2c.CECSSchema.ComponentTrait
+--- @field trait dr2c.EntityComponentTrait
 
 --- @class dr2c.ECSSchema.Components
 --- @field [dr2c.ComponentType] dr2c.ECSSchema.Component
@@ -60,6 +60,8 @@ local Table = require("TE.Table")
 
 --- @class dr2c.EntityECSSchema
 local CEntityECSSchema = {}
+
+--- @alias dr2c.EntityComponentTrait dr2c.CEntityECSSchema.ComponentTrait
 
 CEntityECSSchema.ComponentTrait = Enum.immutable({
 	ArchetypeConstant = 0,
@@ -154,7 +156,7 @@ function CEntityECSSchema.getComponentFields(componentTypeOrID)
 end
 
 --- @param componentTypeOrID dr2c.ComponentType | dr2c.EntityTypeID
---- @return dr2c.CECSSchema.ComponentTrait?
+--- @return dr2c.EntityComponentTrait?
 function CEntityECSSchema.getComponentTrait(componentTypeOrID)
 	local componentSchema = componentsSchema[componentTypeOrID]
 	return componentSchema and componentSchema.trait or nil
@@ -285,7 +287,7 @@ local function reloadComponentsSchema(oldComponentsSchema)
 	local tempComponentsSchema = {}
 
 	--- @class dr2c.E.EntitySchemaLoadComponents
-	--- @field new table<string, { fields: table, trait: dr2c.CECSSchema.ComponentTrait, [...]: any }>
+	--- @field new table<string, { fields: table, trait: dr2c.EntityComponentTrait, [...]: any }>
 	--- @field dependencies table?
 	local e = {
 		new = {},
@@ -307,7 +309,7 @@ local function reloadComponentsSchema(oldComponentsSchema)
 
 		local componentTrait = tonumber(entry.trait) or CEntityECSSchema.ComponentTrait.EntitySerializable
 		--- @diagnostic disable-next-line: cast-type-mismatch
-		--- @cast componentTrait dr2c.CECSSchema.ComponentTrait
+		--- @cast componentTrait dr2c.EntityComponentTrait
 
 		--- @type dr2c.ECSSchema.Component
 		local componentSchema = {

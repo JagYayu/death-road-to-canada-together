@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.server.world.Session
+-- @module dr2c.Server.World.Session
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -21,9 +21,14 @@ local SWorldSession = GWorldSession.new()
 SWorldSession.eventSWorldSessionStart = TE.events:new(N_("SWorldSessionStart"), {
 	"Reset",
 	"Level",
+	"Scene",
+	"Map",
+	"Network",
 })
 
 SWorldSession.eventSWorldSessionFinish = TE.events:new(N_("SWorldSessionFinish"), {
+	"Map",
+	"Scene",
 	"Level",
 	"Reset",
 })
@@ -37,7 +42,7 @@ SWorldSession.eventSWorldSessionUnpause = TE.events:new(N_("SWorldSessionUnpause
 })
 
 --- @param attributes table<dr2c.WorldSessionAttribute, any>?
-function SWorldSession.start(clientID, attributes)
+function SWorldSession.start(attributes, sponsorClientID)
 	SWorldSession.resetAttributes()
 
 	local worldSessionAttributes = SWorldSession.getAttributes()
@@ -59,24 +64,30 @@ function SWorldSession.start(clientID, attributes)
 
 	local e = {
 		attributes = worldSessionAttributes,
+		sponsorClientID = sponsorClientID,
 		suppressed = nil,
 	}
 	TE.events:invoke(SWorldSession.eventSWorldSessionStart, e)
+end
 
+TE.events:add(SWorldSession.eventSWorldSessionStart, function(e)
+	print(e.attributes)
 	if not e.suppressed then
 		SNetworkServer.broadcastReliable(GNetworkMessage.Type.WorldSessionStart, {
-			attributes = worldSessionAttributes,
+			attributes = e.attributes,
+			sponsorClientID = e.sponsorClientID,
 		})
-	elseif clientID then
-		SNetworkServer.sendReliable(clientID, GNetworkMessage.Type.WorldSessionStart, {
+	elseif e.sponsorClientID then
+		SNetworkServer.sendReliable(e.sponsorClientID, GNetworkMessage.Type.WorldSessionStart, {
 			suppressed = e.suppressed,
+			sponsorClientID = e.sponsorClientID,
 		})
 	end
-end
+end, "SendMessage", "Network")
 
 --- @param e dr2c.E.SMessage
 TE.events:add(N_("SMessage"), function(e)
-	SWorldSession.start(e.clientID, e.content)
+	SWorldSession.start(e.content, e.clientID)
 end, "ReceiveWorldSessionStart", "Receive", GNetworkMessage.Type.WorldSessionStart)
 
 function SWorldSession.restart()

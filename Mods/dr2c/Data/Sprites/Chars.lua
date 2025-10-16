@@ -1,6 +1,7 @@
 --- [Sprites Definition]
---- "gfx/tiles/street.png"
+local Chars = {}
 
+local image = "gfx/tiles/street.png"
 local w = 24
 local h = 24
 
@@ -9,7 +10,7 @@ local femaleHead = {}
 for frameY = 1, 8 do
 	for frameX = 1, 8 do
 		femaleHead[#femaleHead + 1] = {
-			image = "gfx/tiles/street.png",
+			image = image,
 			x = (frameX - 1) * w,
 			y = (frameY - 1) * h,
 			w = w,
@@ -18,6 +19,6 @@ for frameY = 1, 8 do
 	end
 end
 
-return {
-	FemaleHead = femaleHead,
-}
+Chars.femaleHead = femaleHead
+
+return Chars

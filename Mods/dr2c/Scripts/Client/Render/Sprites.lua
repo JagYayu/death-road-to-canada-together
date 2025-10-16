@@ -49,7 +49,7 @@ local function registerSpritesImpl(e, sprites)
 	for spriteName, spriteInfos in pairs(sprites) do
 		for index, spriteInfo in ipairs(spriteInfos) do
 			local imageName = spriteInfo.image
-			local imageID = TE.fonts:getID(imageName)
+			local imageID = TE.images:getID(imageName)
 
 			if imageID then
 				local spriteTable = {
@@ -126,8 +126,15 @@ local function registerSpritesFromDirectoryImpl(path, options, suffix, func)
 		error(('Directory "%s" does not exist!'):format(path))
 	end
 
-	options = options
-		or bit.bor(EPathListOption.File, EPathListOption.Recursed, EPathListOption.Sorted, EPathListOption.FullPath)
+	if not options then
+		options = bit.bor( --
+			EPathListOption.File,
+			EPathListOption.Recursed,
+			EPathListOption.Sorted,
+			EPathListOption.FullPath
+		)
+	end
+
 	local entries = TE.vfs:list(path, options)
 
 	for _, entry in ipairs(entries) do
@@ -166,6 +173,7 @@ end
 
 function CRenderSprites.reload()
 	reloadPending = true
+
 	TE.engine:triggerLoadPending()
 end
 
@@ -190,7 +198,6 @@ TE.events:add("DebugSnapshot", function(e)
 	e.spriteTablesMap = spriteTablesMap
 end, scriptName, nil, scriptName)
 
-CRenderSprites.registerSpritesFromJsonDirectory("Mods/dr2c/Data/Sprites")
 CRenderSprites.registerSpritesFromLuaDirectory("Mods/dr2c/Data/Sprites")
 
 CRenderSprites.reload()

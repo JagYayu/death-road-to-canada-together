@@ -124,7 +124,6 @@ end
 local function createMenu(menuType, menuArgs)
 	--- @class dr2c.UIMenu
 	--- @field draw fun(self: self)
-	--- @field update nil
 	--- @field canvas dr2c.UICanvas
 	--- @field type dr2c.MenuType
 	--- @field args table?
@@ -190,7 +189,7 @@ TE.events:add(N_("CRenderUI"), CUIMenu.draw, "RenderMenu", "Menu")
 TE.events:add(N_("CUpdate"), function(e)
 	if
 		not CUIMenu.isOpened() --
-		and not CForthSession.isActive()
+		-- and not CForthSession.isActive()
 	then
 		CUIMenu.open(CUIMenu.Type.TitleScreen)
 	end
@@ -199,6 +198,8 @@ TE.events:add(N_("CUpdate"), function(e)
 		CUIMenu.updateImmediately()
 	end
 end, "UpdateMenu")
+
+TE.events:add("WindowResize", CUIMenu.update, "UpdateMenu", "Client")
 
 --- @param e Events.E.ScriptUnload
 TE.events:add("ScriptUnload", function(e)

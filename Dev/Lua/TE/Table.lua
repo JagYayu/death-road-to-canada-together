@@ -172,7 +172,7 @@ end
 
 --- @generic T
 --- @param tbl table<T, any>
---- @param keys? (table | integer) @An alias of return table, to avoid GC in specific situations.
+--- @param keys? table | integer @An alias of return table, to avoid GC in specific situations.
 --- @return T[] list
 function Table.getKeyList(tbl, keys)
 	local keysType = type(keys)
@@ -252,13 +252,14 @@ local sortedPairsEmptyState = { {}, 0 }
 
 --- @generic TK, TV
 --- @param tbl table<TK, TV>
---- @param sort fun(comp: (fun(a: TK, b: TK): boolean)?)?
---- @param comp (fun(a: TK, b: TK): boolean)?
+--- @param sort? fun(comp: (fun(a: TK, b: TK): boolean)?)
+--- @param comp? fun(a: TK, b: TK): boolean
+--- @param keys? table | integer
 --- @return fun(): TK, TV
 --- @return table<TK, TV> tbl
 --- @return { [1]: TK[], [2]: integer } state @readonly
-function Table.sortedPairs(tbl, sort, comp)
-	local keyList = Table.getKeyList(tbl)
+function Table.sortedPairs(tbl, sort, comp, keys)
+	local keyList = Table.getKeyList(tbl, keys)
 	if keyList[1] then
 		do
 			(sort or table.sort)(keyList, comp)

@@ -9,10 +9,23 @@
 --
 --]]
 
+local Enum = require("TE.Enum")
+local Table = require("TE.Table")
+local stringBuffer = require("string.buffer")
+
+local CWorldCollision = require("dr2c.Client.World.Collision")
+
 local type = type
 
 --- @class dr2c.CTileSchema
 local CTileSchema = {}
+
+--- @alias dr2c.TileTag dr2c.CTileSchema.Tag
+
+CTileSchema.Tag = Enum.immutable({
+	Floor = 1,
+	Wall = 2,
+})
 
 --- @class dr2c.TileType : string
 
@@ -21,10 +34,11 @@ local CTileSchema = {}
 --- @class dr2c.TileInfo
 --- @field type dr2c.TileType
 --- @field typeID dr2c.TileTypeID
---- @field collision dr2c.CWorldCollisionFlag
---- @field sprite { [1]: dr2c.SpriteName, [2]: dr2c.SpriteIndex? }
+--- @field tag? dr2c.TileTag
+--- @field collision? dr2c.CWorldCollisionFlag
+--- @field sprite dr2c.SpriteName
 
---- @class dr2c.CTileSchema.Tiles
+--- @class dr2c.CTileSchema.Tiles : table
 --- @field [dr2c.TileTypeID] dr2c.TileInfo
 --- @field [dr2c.TileType] dr2c.TileInfo
 
@@ -42,28 +56,61 @@ function CTileSchema.getInfo(tileTypeOrID)
 	return tilesSchema[tileTypeOrID]
 end
 
---- @param tileTypeOrID dr2c.TileType | dr2c.TileTypeID
---- @return dr2c.CWorldCollisionFlag? flags
-function CTileSchema.getCollision(tileTypeOrID)
-	local tileSchema = tilesSchema[tileTypeOrID]
-	return tileSchema and tileSchema.collision or nil
+--- @param tileTypeID dr2c.TileTypeID
+--- @return dr2c.TileType tileType
+function CTileSchema.getTileType(tileTypeID)
+	local tileSchema = tilesSchema[tileTypeID]
+	return tileSchema and tileSchema.type or nil
 end
 
---- @param tileTypeOrID dr2c.TileType | dr2c.TileTypeID
---- @return dr2c.SpriteName? spriteName
---- @return dr2c.SpriteIndex? spriteIndex
-function CTileSchema.getSprite(tileTypeOrID)
-	local tileSchema = tilesSchema[tileTypeOrID]
-	if tileSchema then
-		return tileSchema[1], tileSchema[2]
-	end
+--- @param tileType dr2c.TileType
+--- @return dr2c.TileTypeID tileTypeID
+function CTileSchema.getTileTypeID(tileType)
+	local tileSchema = tilesSchema[tileType]
+	return tileSchema and tileSchema.typeID or nil
 end
+
+CTileSchema.eventCTileSchemaLoad = TE.events:new(N_("CTileSchemaLoad"), {
+	"Register",
+	"Override",
+	"Validate",
+	"Finalize",
+})
 
 CTileSchema.eventCTileSchemaLoaded = TE.events:new(N_("CTileSchemaLoaded"), {
 	"",
 })
 
 function CTileSchema.reloadImmediately()
+	local e = {
+		new = {},
+		old = tilesSchema,
+	}
+	TE.events:invoke(CTileSchema.eventCTileSchemaLoad, e)
+
+	tilesSchema = {
+		[0] = {
+			type = "",
+			typeID = 0,
+			collision = CWorldCollision.Type.All,
+		},
+	}
+
+	for state, tileType, tileDef in Table.sortedPairs(e.new) do
+		local tileTypeID = state[2]
+		if not tilesSchema[tileTypeID] then
+			tileType = tostring(tileType)
+
+			--- @type dr2c.TileInfo
+			local tileInfo = Table.copy(tileDef)
+			tileInfo.type = tileType
+			tileInfo.typeID = tileTypeID
+
+			tilesSchema[tileType] = tileInfo
+			tilesSchema[tileTypeID] = tileInfo
+		end
+	end
+
 	TE.events:invoke(CTileSchema.eventCTileSchemaLoaded, {})
 
 	reloadPending = false
@@ -83,7 +130,7 @@ TE.events:add(N_("CLoad"), function(e)
 		CTileSchema.reloadImmediately()
 
 		--- @class dr2c.E.CLoad
-		--- @field tilesSchema? table
+		--- @field tilesSchema? dr2c.CTileSchema.Tiles
 		e.tilesSchema = tilesSchema
 	end
 end, "loadTileSchema", "Tile")

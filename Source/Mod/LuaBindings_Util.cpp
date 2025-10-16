@@ -30,11 +30,18 @@ void LuaBindings::InstallUtil(sol::state &lua, Context &context) noexcept
 	    "minor", sol::property(&Version::LuaGetMinor, &Version::LuaSetMinor),
 	    "patch", sol::property(&Version::LuaGetPatch, &Version::LuaSetPatch));
 
-	TE_LB_CLASS(
+	TE_LB_USERTYPE(
 	    PerlinNoiseRandom,
 	    sol::call_constructor, sol::constructors<PerlinNoiseRandom(), PerlinNoiseRandom(std::int32_t seed), PerlinNoiseRandom(std::int32_t seed, std::float_t _frequency)>(),
+	    "float1", &PerlinNoiseRandom::Float1,
+	    "float2", &PerlinNoiseRandom::Float2,
+	    "float3", &PerlinNoiseRandom::Float3,
 	    "getFrequency", &PerlinNoiseRandom::GetFrequency,
 	    "getSeed", &PerlinNoiseRandom::GetSeed,
+	    "int1", &PerlinNoiseRandom::Int1,
+	    "int2", &PerlinNoiseRandom::Int2,
+	    "int3", &PerlinNoiseRandom::Int3,
+	    "noise1", &PerlinNoiseRandom::Noise1,
 	    "noise2", &PerlinNoiseRandom::Noise2,
 	    "noise3", &PerlinNoiseRandom::Noise3,
 	    "setFrequency", &PerlinNoiseRandom::SetFrequency,

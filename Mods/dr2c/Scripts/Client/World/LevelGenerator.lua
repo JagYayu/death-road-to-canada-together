@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Server.World.Level
+-- @module dr2c.Client.World.LevelGenerator
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -10,8 +10,10 @@
 --]]
 
 local GWorldLevel = require("dr2c.Shared.World.Level")
-local SWorldSession = require("dr2c.Server.World.Session")
 
-local SWorldLevel = GWorldLevel.new(SWorldSession)
+--- @class dr2c.CWorldLevelGenerator
+local CWorldLevelGenerator = {}
 
-return SWorldLevel
+
+
+return CWorldLevelGenerator

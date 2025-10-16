@@ -76,14 +76,18 @@ CWorldSession.eventCWorldSessionUnpause = TE.events:new(N_("CWorldSessionUnpause
 	"Time",
 })
 
---- 开始世界会话，将在本地客户端立即开始
---- @param sponsorClientID TE.Network.ClientID
---- @param attributes table
-function CWorldSession.startLocally(sponsorClientID, attributes)
+--- 开始世界会话，将立即应用到本地客户端
+--- 不是所有可用的属性都是有效的，一些内部的属性例如`GWorldSession.Attribute.TimeStart`会被自动覆盖。
+--- @param attributes dr2c.WorldSessionAttributes
+--- @param sponsorClientID TE.Network.ClientID?
+function CWorldSession.startLocally(attributes, sponsorClientID)
+	sponsorClientID = sponsorClientID or CNetworkClient.getClientID() or 0
 	CWorldSession.setAttributes(attributes)
 
+	--- @class dr2c.E.CWorldSessionStart
 	local e = {
 		attributes = CWorldSession.getAttributes(),
+		sponsorClientID = sponsorClientID,
 	}
 
 	TE.events:invoke(
@@ -93,19 +97,19 @@ function CWorldSession.startLocally(sponsorClientID, attributes)
 	)
 end
 
---- 重启世界会话，将在本地客户端立即开始
+--- 重启世界会话，将立即应用到本地客户端
 function CWorldSession.restartLocally()
 	-- TODO
 end
 
---- 结束世界会话，将在本地客户端立即开始
+--- 结束世界会话，将立即应用到本地客户端
 function CWorldSession.finishLocally()
 	CWorldSession.resetAttributes()
 
 	TE.events:invoke(CWorldSession.eventCWorldSessionFinish, {})
 end
 
---- 暂停世界会话，将在本地客户端立即开始
+--- 暂停世界会话，将立即应用到本地客户端
 --- @param timePaused number
 function CWorldSession.pauseLocally(timePaused)
 	CWorldSession.setAttribute(GWorldSession.Attribute.State, GWorldSession.State.Paused)
@@ -114,7 +118,7 @@ function CWorldSession.pauseLocally(timePaused)
 	TE.events:invoke(CWorldSession.eventCWorldSessionPause, {})
 end
 
---- 继续世界会话，将在本地客户端立即开始
+--- 继续世界会话，将立即应用到本地客户端
 --- @param timePaused number
 function CWorldSession.unpauseLocally(timePaused)
 	CWorldSession.setAttribute(GWorldSession.Attribute.State, GWorldSession.State.Playing)

@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Shared.world.PlayerInputBuffers
+-- @module dr2c.Shared.World.PlayerInputBuffers
 -- @author JagYayu
 -- @brief
 -- @version 1.0

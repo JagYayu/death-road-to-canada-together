@@ -22,15 +22,16 @@ function CRenderFocus.updateFocusedEntityID()
 	-- TODO
 end
 
---- @return dr2c.NetworkRoomID
-function CRenderFocus.getFocusedSceneID()
-	local entityID = CRenderFocus.getFocusedEntityID()
-	if entityID then
-		local gameObject = CEntityECS.getComponent(entityID, "GameObject")
-		if gameObject then
-			return gameObject.room
-		end
-	end
+--- @return dr2c.WorldSceneIndex
+--- @return dr2c.WorldSceneName?
+function CRenderFocus.getFocusedScene()
+	-- local entityID = CRenderFocus.getFocusedEntityID()
+	-- if entityID then
+	-- 	local gameObject = CEntityECS.getComponent(entityID, "GameObject")
+	-- 	if gameObject then
+	-- 		return gameObject.room
+	-- 	end
+	-- end
 
 	return 1
 end

@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Shared.world.Snapshot
+-- @module dr2c.Shared.World.Snapshot
 -- @author JagYayu
 -- @brief
 -- @version 1.0

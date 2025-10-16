@@ -18,7 +18,14 @@ local CWorldCollision = {}
 
 --- @enum dr2c.CWorldCollision.Flag
 CWorldCollision.Flag = { -- TODO use `Enum.flags` in future for extendability.
-	Object = bit.lshift(1, 0),
+	Object = 0b1,
 }
+
+CWorldCollision.Type = Enum.immutable({
+	--- @type dr2c.CWorldCollisionFlag
+	All = -1,
+	--- @type dr2c.CWorldCollisionFlag
+	None = 0,
+})
 
 return CWorldCollision

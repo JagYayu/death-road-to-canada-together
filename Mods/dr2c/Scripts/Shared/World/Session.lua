@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Shared.world.Session
+-- @module dr2c.Shared.World.Session
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -32,10 +32,11 @@ GWorldSession.Attribute = Enum.sequence({
 	TimeStart = 2,
 	TimePaused = 3,
 	ElapsedPaused = 4,
-	Scenes = 5,
-	Mode = 6,
-	TileMaps = 7,
-	Zombies = 8,
+	Level = 5,
+	Scenes = 6,
+	Mode = 7,
+	TileMaps = 8,
+	Zombies = 9,
 })
 
 local GWorldSession_Attribute_State = GWorldSession.Attribute.State

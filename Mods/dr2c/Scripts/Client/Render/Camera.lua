@@ -87,11 +87,11 @@ TE.events:add(N_("CRender"), function(e)
 
 	drawRectArgs.texture = imageID
 
-	for x = -1, 2 do
-		drawRectArgs.destination = { x = x * 100, y = x * 100, w = 80, h = 57 }
-		drawRectArgs.source = { x = 14, y = 302, w = 80, h = 57 }
-		renderer:drawRect(drawRectArgs)
-	end
+	-- for x = -1, 2 do
+	-- 	drawRectArgs.destination = { x = x * 100, y = x * 100, w = 80, h = 57 }
+	-- 	drawRectArgs.source = { x = 14, y = 302, w = 80, h = 57 }
+	-- 	renderer:drawRect(drawRectArgs)
+	-- end
 
 	local drawRect = renderer.drawRect
 

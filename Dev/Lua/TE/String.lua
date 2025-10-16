@@ -104,7 +104,7 @@ end
 --- @return boolean
 function String.hasSuffix(str, suffix)
 	local len = #suffix
-	return str:sub(-len) == len
+	return str:sub(-len) == suffix
 end
 
 --- @param str1 string

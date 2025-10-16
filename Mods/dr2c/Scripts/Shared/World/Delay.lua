@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Shared.world.Delay
+-- @module dr2c.Shared.World.Delay
 -- @author JagYayu
 -- @brief
 -- @version 1.0

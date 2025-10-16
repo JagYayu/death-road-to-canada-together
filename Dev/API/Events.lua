@@ -85,8 +85,8 @@ error("this is a lua library module")
 --- @field data Events.E.RUDPClientConnect.Data
 
 --- @class Events.E.ClientConnect.Data : userdata
---- @field socketType ESocketType
---- @field clientID Network.ClientID
+--- @field socketType TE.ESocketType
+--- @field clientID TE.Network.ClientID
 
 --- @class Events.E.LocalClientConnect.Data : Events.E.ClientConnect.Data
 --- @field clientSlot integer
@@ -106,7 +106,7 @@ error("this is a lua library module")
 --- @field data Events.E.RUDPClientDisconnect.Data
 
 --- @class Events.E.ClientDisconnect.Data : userdata
---- @field socketType ESocketType
+--- @field socketType TE.ESocketType
 --- @field message string
 
 --- @class Events.E.LocalClientDisconnect.Data : Events.E.ClientDisconnect.Data
@@ -127,7 +127,7 @@ error("this is a lua library module")
 --- @field data Events.E.RUDPClientMessage.Data
 
 --- @class Events.E.ClientMessage.Data : userdata
---- @field socketType ESocketType
+--- @field socketType TE.ESocketType
 --- @field message string
 
 --- @class Events.E.LocalClientMessage.Data : Events.E.ClientMessage.Data
@@ -139,8 +139,8 @@ error("this is a lua library module")
 --- @field port integer
 
 --- @class Events.E.ServerConnect.Data : userdata
---- @field socketType ESocketType
---- @field clientID Network.ClientID
+--- @field socketType TE.ESocketType
+--- @field clientID TE.Network.ClientID
 
 --- @class Events.E.LocalServerConnect.Data : Events.E.ServerConnect.Data
 --- @field clientSlot integer
@@ -160,8 +160,8 @@ error("this is a lua library module")
 --- @field data Events.E.RUDPServerConnect.Data
 
 --- @class Events.E.ServerDisconnect.Data : userdata
---- @field socketType ESocketType
---- @field clientID Network.ClientID
+--- @field socketType TE.ESocketType
+--- @field clientID TE.Network.ClientID
 
 --- @class Events.E.LocalServerDisconnect.Data : Events.E.ServerDisconnect.Data
 --- @field clientSlot integer
@@ -181,8 +181,8 @@ error("this is a lua library module")
 --- @field data Events.E.RUDPServerDisconnect.Data
 
 --- @class Events.E.ServerMessage.Data : userdata
---- @field socketType ESocketType
---- @field clientID Network.ClientID
+--- @field socketType TE.ESocketType
+--- @field clientID TE.Network.ClientID
 --- @field message string
 --- @field broadcast string?
 
@@ -228,6 +228,7 @@ error("this is a lua library module")
 --- @alias Events.Event "TickLoad"
 --- @alias Events.Event "TickRender"
 --- @alias Events.Event "TickUpdate"
+--- @alias Events.Event "WindowResize"
 
 --- @diagnostic enable: duplicate-doc-alias
 
