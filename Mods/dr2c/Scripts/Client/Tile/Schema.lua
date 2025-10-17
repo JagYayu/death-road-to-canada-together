@@ -36,7 +36,8 @@ CTileSchema.Tag = Enum.immutable({
 --- @field typeID dr2c.TileTypeID
 --- @field tag? dr2c.TileTag
 --- @field collision? dr2c.CWorldCollisionFlag
---- @field sprite dr2c.SpriteName
+--- @field sprite? dr2c.SpriteName
+--- @field floor? dr2c.TileType
 
 --- @class dr2c.CTileSchema.Tiles : table
 --- @field [dr2c.TileTypeID] dr2c.TileInfo
@@ -52,7 +53,7 @@ end)
 
 --- @param tileTypeOrID dr2c.TileType | dr2c.TileTypeID
 --- @return dr2c.TileInfo? tileInfo
-function CTileSchema.getInfo(tileTypeOrID)
+function CTileSchema.getTypeInfo(tileTypeOrID)
 	return tilesSchema[tileTypeOrID]
 end
 

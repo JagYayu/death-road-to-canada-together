@@ -14,7 +14,7 @@ local CWorldScenes = require("dr2c.Client.World.Scenes")
 local CWorldSession = require("dr2c.Shared.World.Session")
 local Table = require("TE.Table")
 
-local CTileSchema_getInfo = CTileSchema.getInfo
+local CTileSchema_getInfo = CTileSchema.getTypeInfo
 local math_floor = math.floor
 
 --- TODO 无JIT时测试，对高频访问的函数进行内联展开，如果性能几乎没影响则无需改动
@@ -100,9 +100,21 @@ end
 --- @param tileMap dr2c.TileMap
 --- @param tx integer
 --- @param ty integer
+--- @return boolean
+function CTileMap.isInBound(tileMap, tx, ty)
+	local boundX = tileMap[fieldX]
+	local boundY = tileMap[fieldY]
+	return tx >= boundX and tx < boundX + tileMap[fieldWidth] and ty >= boundY and ty < boundY + tileMap[fieldHeight]
+end
+
+local CTileMap_isInBound = CTileMap.isInBound
+
+--- @param tileMap dr2c.TileMap
+--- @param tx integer
+--- @param ty integer
 --- @return integer ti
 function CTileMap.coord2index(tileMap, tx, ty)
-	return (ty - tileMap[fieldY]) * tileMap[fieldWidth] + (tx - tileMap[fieldX]) + 1
+	return (ty - tileMap[fieldY]) * tileMap[fieldWidth] + (tx - tileMap[fieldX])
 end
 
 local CTileMap_coord2index = CTileMap.coord2index
@@ -118,19 +130,33 @@ end
 
 --- @param tileMap dr2c.TileMap
 --- @param ti integer
-function CTileMap.getTileAtIndex(tileMap, ti)
-	local typeID = tileMap[fieldTypeIDs][ti]
+--- @return dr2c.TileInfo?
+function CTileMap.getTileInfoAtIndex(tileMap, ti)
+	local typeID = tileMap[fieldTypeIDs][ti + 1]
 	return typeID and CTileSchema_getInfo(typeID)
 end
 
-local CTileMap_getTileAtIndex = CTileMap.getTileAtIndex
+local CTileMap_getTileInfoAtIndex = CTileMap.getTileInfoAtIndex
 
 --- @param tileMap dr2c.TileMap
 --- @param tx integer
 --- @param ty integer
 --- @return dr2c.TileInfo?
 function CTileMap.getTileInfoAt(tileMap, tx, ty)
-	return CTileMap_getTileAtIndex(tileMap, CTileMap_coord2index(tileMap, tx, ty))
+	if CTileMap_isInBound(tileMap, tx, ty) then
+		return CTileMap_getTileInfoAtIndex(tileMap, CTileMap_coord2index(tileMap, tx, ty))
+	end
+end
+
+local CTileMap_getTileInfoAt = CTileMap.getTileInfoAt
+
+--- @param tileMap dr2c.TileMap
+--- @param tx integer
+--- @param ty integer
+--- @return dr2c.TileTag?
+function CTileMap.getTileTagAt(tileMap, tx, ty)
+	local tileInfo = CTileMap_getTileInfoAt(tileMap, tx, ty)
+	return tileInfo and tileInfo.tag or nil
 end
 
 --- @param e dr2c.E.CWorldSessionStart

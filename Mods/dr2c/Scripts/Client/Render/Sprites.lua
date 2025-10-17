@@ -41,6 +41,31 @@ local eventCSpritesLoad = TE.events:new(N_("CSpritesLoad"), {
 	"Register",
 })
 
+--- @param imageID integer
+--- @param x integer
+--- @param y integer
+--- @param w integer
+--- @param h integer
+--- @return dr2c.SpriteTable
+local function newSpriteTable(imageID, x, y, w, h)
+	--- @diagnostic disable-next-line: return-type-mismatch
+	return {
+		[0] = imageID,
+		x,
+		y,
+		w,
+		h,
+	}
+end
+
+CRenderSprites.Field = Table.readonly({
+	Texture = 0,
+	X = 1,
+	Y = 2,
+	Width = 3,
+	Height = 4,
+})
+
 --- @param e dr2c.E.CSpritesLoad
 --- @param sprites table<string, dr2c.Sprites>
 local function registerSpritesImpl(e, sprites)
@@ -52,13 +77,7 @@ local function registerSpritesImpl(e, sprites)
 			local imageID = TE.images:getID(imageName)
 
 			if imageID then
-				local spriteTable = {
-					spriteInfo.x,
-					spriteInfo.y,
-					spriteInfo.w,
-					spriteInfo.h,
-					[0] = imageID,
-				}
+				local spriteTable = newSpriteTable(imageID, spriteInfo.x, spriteInfo.y, spriteInfo.w, spriteInfo.h)
 
 				dst[spriteName] = dst[spriteName] or {}
 				dst[spriteName][index] = spriteTable
@@ -107,7 +126,11 @@ function CRenderSprites.registerSpritesFromJsonFile(filePath, noLog)
 end
 
 --- @param filePath string
---- @param noLog boolean?
+--- @param noLog? boolean
+--- @param chunkname? string
+--- @param mode? any
+--- @param env? table
+--- @param ... any
 function CRenderSprites.registerSpritesFromLuaFile(filePath, noLog, chunkname, mode, env, ...)
 	local args = { ... }
 

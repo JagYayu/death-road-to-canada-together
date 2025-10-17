@@ -6,11 +6,10 @@ local image = "gfx/tiles/walls.png"
 local w = 16
 local h = 16
 
-for frameX = 1, 16 do
-	local wallCeiling = {}
-	Walls["WallCeiling" .. frameX] = wallCeiling
+local wallCeiling = {}
 
-	wallCeiling[#wallCeiling + 1] = {
+for frameX = 1, 16 do
+	wallCeiling[frameX] = {
 		image = image,
 		x = (frameX - 1) * w,
 		y = 0,
@@ -18,6 +17,8 @@ for frameX = 1, 16 do
 		h = h,
 	}
 end
+
+Walls.WallCeiling = wallCeiling
 
 local wallIndex = 0
 
@@ -33,10 +34,11 @@ local function addWall(frameX, frameY)
 			x = (frameX + index - 2) * w,
 			y = (frameY - 1) * h,
 			w = w,
-			h = w,
+			h = h,
 		}
 	end
 
+	wallIndex = wallIndex + 1
 	Walls["Wall" .. wallIndex] = wall
 end
 
@@ -44,7 +46,7 @@ addWall(1, 2)
 
 for x = 1, 2 do
 	for y = 4, 16 do
-		addWall((x - 1) * 8, y - 1)
+		addWall((x - 1) * 8 + 1, y)
 	end
 end
 

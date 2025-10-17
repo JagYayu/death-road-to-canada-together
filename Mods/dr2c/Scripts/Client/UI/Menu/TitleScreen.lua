@@ -101,12 +101,21 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 		callback = function()
 			local tileTypes = {}
 			for i = 1, 8 * 8 do
-				tileTypes[i] = "Floor15"
+				tileTypes[i] = "Floor2"
 			end
 
-			tileTypes[12] = "Wall1"
-			tileTypes[13] = "Wall1"
-			tileTypes[14] = "Wall1"
+			for i = 1, 8 do
+				tileTypes[i] = "Wall2"
+				tileTypes[i * 8 - 7] = "Wall2"
+				tileTypes[i * 8] = "Wall2"
+				tileTypes[7 * 8 + i] = "Wall2"
+			end
+
+			tileTypes[13] = "Wall2"
+			tileTypes[20] = "Wall2"
+			tileTypes[21] = "Wall2"
+			tileTypes[22] = "Wall2"
+			tileTypes[29] = "Wall2"
 
 			CWorldSession.start({
 				[GWorldAttribute.Attribute.Mode] = GWorldAttribute.Mode.DeathRoad,
@@ -115,33 +124,33 @@ TE.events:add(CUIMenu.eventCMenu, function(e)
 					"main",
 				},
 				[GWorldAttribute.Attribute.TileMaps] = {
-					main = CTileMap.newTileMap(-4, -4, 8, 8, tileTypes),
+					main = CTileMap.newTileMap(-4, -6, 8, 8, tileTypes),
 				},
 			})
 		end,
 	}))
 
-	root:addChild(CUIWidget.newButton({
-		label = "EXIT",
-		margin = commonMargin,
-		scale = uiScale,
-		border = commonBorder,
-		callback = function()
-			local ExitJumpscare = require("dr2c.Client.UI.ExitJumpscare")
+	-- root:addChild(CUIWidget.newButton({
+	-- 	label = "EXIT",
+	-- 	margin = commonMargin,
+	-- 	scale = uiScale,
+	-- 	border = commonBorder,
+	-- 	callback = function()
+	-- 		local ExitJumpscare = require("dr2c.Client.UI.ExitJumpscare")
 
-			ExitJumpscare.trigger()
-		end,
-	}))
+	-- 		ExitJumpscare.trigger()
+	-- 	end,
+	-- }))
 
 	e.menu.canvas:addWidget(root)
 
-	local update = e.menu.update
-	--- @param self dr2c.UIMenu
-	function e.menu.update(self)
-		root.rectangle = newFlexRectangle()
+	-- local update = e.menu.update
+	-- --- @param self dr2c.UIMenu
+	-- function e.menu.update(self)
+	-- 	root.rectangle = newFlexRectangle()
 
-		-- update(self)
-	end
+	-- 	-- update(self)
+	-- end
 
 	e.initialized = true
 end, "InitializeTitleScreen", "Initialize", CUIMenu.Type.TitleScreen)

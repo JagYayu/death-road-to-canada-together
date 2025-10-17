@@ -13,7 +13,7 @@ local CWorldCollision = require("dr2c.Client.World.Collision")
 local CTileSchema = require("dr2c.Client.Tile.Schema")
 
 --- @class dr2c.CTileData
-local CTileData = {}
+local CTileDataTiles = {}
 
 TE.events:add(N_("CTileSchemaLoad"), function(e)
 	for i = 1, 18 do
@@ -28,9 +28,12 @@ TE.events:add(N_("CTileSchemaLoad"), function(e)
 		e.new["Wall" .. i] = {
 			tag = CTileSchema.Tag.Wall,
 			collision = CWorldCollision.Type.None,
-			sprite = "Floor" .. i,
+			sprite = "Wall" .. i,
+			floor = "Floor" .. i,
 		}
 	end
 end, "RegisterTiles", "Register")
 
-return CTileData
+CTileSchema.reload()
+
+return CTileDataTiles

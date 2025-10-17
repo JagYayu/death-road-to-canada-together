@@ -7,6 +7,10 @@ local renderTarget = {}
 --- @return boolean resized
 function renderTarget:resizeToFit() end
 
+--- @param x number
+--- @param y number
+function renderTarget:setCameraTargetPosition(x, y) end
+
 --- @param scaleX number
 --- @param scaleY number
 function renderTarget:setCameraTargetScale(scaleX, scaleY) end

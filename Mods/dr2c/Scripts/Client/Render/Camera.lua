@@ -45,8 +45,6 @@ function CUICamera.getRenderTarget()
 	return renderTarget
 end
 
-local imageID = TE.images:getID("gfx/cars/cars_unique_110x96.png")
-
 local eventRenderCamera = TE.events:new(N_("CRenderCamera"), {
 	"Begin",
 	"Tilemap",
@@ -84,16 +82,6 @@ TE.events:add(N_("CRender"), function(e)
 	renderTarget:setCameraTargetScale(scale, scale)
 
 	TE.events:invoke(eventRenderCamera, e)
-
-	drawRectArgs.texture = imageID
-
-	-- for x = -1, 2 do
-	-- 	drawRectArgs.destination = { x = x * 100, y = x * 100, w = 80, h = 57 }
-	-- 	drawRectArgs.source = { x = 14, y = 302, w = 80, h = 57 }
-	-- 	renderer:drawRect(drawRectArgs)
-	-- end
-
-	local drawRect = renderer.drawRect
 
 	drawRectArgs.texture = renderer:endTarget()
 	drawRectArgs.destination = {
