@@ -9,12 +9,12 @@
  *
  */
 
-#include "mod/ScriptModule.hpp"
+#include "Mod/ScriptModule.hpp"
 
 #include "Mod/ScriptEngine.hpp"
-#include "mod/ScriptErrors.hpp"
-#include "mod/ScriptLoader.hpp"
-#include "mod/ScriptProvider.hpp"
+#include "Mod/ScriptErrors.hpp"
+#include "Mod/ScriptLoader.hpp"
+#include "Mod/ScriptProvider.hpp"
 #include "Program/Engine.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/LuaUtils.hpp"

@@ -9,6 +9,6 @@
  *
  */
 
-#include "mod/ModPortal.hpp"
+#include "Mod/ModPortal.hpp"
 
 using namespace tudov;

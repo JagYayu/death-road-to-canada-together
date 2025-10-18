@@ -13,7 +13,7 @@
 
 #include "Data/Constants.hpp"
 #include "Event/EventManager.hpp"
-#include "mod/ScriptProvider.hpp"
+#include "Mod/ScriptProvider.hpp"
 
 #include <format>
 

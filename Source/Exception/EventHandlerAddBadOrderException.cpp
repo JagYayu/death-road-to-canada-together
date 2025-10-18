@@ -9,11 +9,11 @@
  *
  */
 
-#include "exception/EventHandlerAddBadOrderException.hpp"
+#include "Exception/EventHandlerAddBadOrderException.hpp"
 
 #include "Data/Constants.hpp"
 #include "Event/EventManager.hpp"
-#include "mod/ScriptProvider.hpp"
+#include "Mod/ScriptProvider.hpp"
 
 #include <format>
 

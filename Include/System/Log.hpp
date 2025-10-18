@@ -195,6 +195,7 @@ namespace tudov
 		[[nodiscard]] bool CanOutput(ELogVerbosity flag) const noexcept;
 		void Output(std::string_view verb, std::string_view str) const noexcept;
 
+		bool LuaCanOutput(sol::object verb) const noexcept;
 		void LuaOutput(sol::object verb, sol::table args) const noexcept;
 	};
 

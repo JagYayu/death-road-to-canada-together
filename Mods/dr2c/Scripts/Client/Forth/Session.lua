@@ -16,6 +16,7 @@ local GForthSession = require("dr2c.Shared.Forth.Session")
 local GForthCharacter = require("dr2c.Shared.Forth.Character")
 local GForthGameMode = require("dr2c.Shared.Forth.GameMode")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 
 --- @class dr2c.CForthSession : dr2c.ForthSession
 local CForthSession = GForthSession.new()
@@ -45,7 +46,11 @@ function CForthSession.startNew(args)
 		characters = characters,
 	}
 
-	CClient.sendReliable(GNetworkMessage.Type.ForthSessionStart, content)
+	local fields = GNetworkMessageFields.ForthSessionStart
+	CClient.sendReliable(GNetworkMessage.Type.ForthSessionStart, {
+		[fields.gameMode] = gameMode,
+		[fields.characters] = characters,
+	})
 end
 
 function CForthSession.startSave(saveName)
@@ -72,7 +77,8 @@ TE.events:add(N_("CMessage"), function(e)
 		if not e.suppressed then
 			log.info(("Client %s started forth session"):format(e.content.sponsorClientID))
 
-			CForthSession.startLocally(e.content.attributes)
+			local fields = GNetworkMessageFields.ForthSessionStart
+			CForthSession.startLocally(e.content[fields.attributes])
 		elseif e.content.sponsorClientID == CClient.getClientID() and log.canWarn() then
 			log.warn(("Cannot start forth session: %s"):format(e.suppressed))
 		end

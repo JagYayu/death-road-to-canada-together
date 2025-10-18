@@ -9,11 +9,11 @@
  *
  */
 
-#include "exception/EventHandlerAddBadKeyException.hpp"
+#include "Exception/EventHandlerAddBadKeyException.hpp"
 
 #include "Data/Constants.hpp"
 #include "Event/EventManager.hpp"
-#include "mod/ScriptProvider.hpp"
+#include "Mod/ScriptProvider.hpp"
 
 #include <format>
 

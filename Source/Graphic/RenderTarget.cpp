@@ -37,9 +37,9 @@ using namespace tudov;
 
 RenderTarget::RenderTarget(Renderer &renderer, std::int32_t width, std::int32_t height) noexcept
     : _renderer(renderer),
-      _positionLerpFactor(0.95f),
-      _scaleLerpFactor(0.975f),
-      _viewLerpFactor(0.925f),
+      _positionLerpFactor(0.0f),
+      _scaleLerpFactor(0.0f),
+      _viewLerpFactor(0.0f),
       _cameraX(0.0f),
       _cameraY(0.0f),
       _cameraScaleX(1.0f),
@@ -53,6 +53,9 @@ RenderTarget::RenderTarget(Renderer &renderer, std::int32_t width, std::int32_t 
       _targetViewX(width),
       _targetViewY(height)
 {
+	SetPositionLerpFactor(0.5f);
+	SetScaleLerpFactor(0.5f);
+
 	_texture = std::make_shared<Texture>(_renderer);
 	_texture->Initialize(width, height, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET);
 }
@@ -160,7 +163,7 @@ std::float_t RenderTarget::GetPositionLerpFactor() noexcept
 
 void RenderTarget::SetPositionLerpFactor(std::float_t factor) noexcept
 {
-	_positionLerpFactor = factor;
+	_positionLerpFactor = std::log10(1.0f + factor);
 }
 
 std::float_t RenderTarget::GetScaleLerpFactor() noexcept
@@ -170,7 +173,7 @@ std::float_t RenderTarget::GetScaleLerpFactor() noexcept
 
 void RenderTarget::SetScaleLerpFactor(std::float_t factor) noexcept
 {
-	_scaleLerpFactor = factor;
+	_scaleLerpFactor = std::log10(1.0f + factor);
 }
 
 std::tuple<std::float_t, std::float_t> RenderTarget::GetCameraTargetPosition() noexcept
@@ -249,8 +252,7 @@ void RenderTarget::Update() noexcept
 	std::float_t deltaTime = GetEngine().GetDeltaTime();
 
 	std::float_t tPosition = 1.0f - std::exp(-_positionLerpFactor * deltaTime);
-	std::float_t tScale = 1.0f - std::exp(-_positionLerpFactor * deltaTime);
-	std::float_t tView = 1.0f - std::exp(-_positionLerpFactor * deltaTime);
+	std::float_t tScale = 1.0f - std::exp(-_scaleLerpFactor * deltaTime);
 
 	if (_snapCameraPosition)
 	{
@@ -260,8 +262,8 @@ void RenderTarget::Update() noexcept
 	}
 	else
 	{
-		_cameraX = std::lerp(_cameraX, _targetPositionX, tPosition);
-		_cameraY = std::lerp(_cameraY, _targetPositionY, tPosition);
+		_cameraX = std::lerp(_cameraX, _targetPositionX, _positionLerpFactor);
+		_cameraY = std::lerp(_cameraY, _targetPositionY, _positionLerpFactor);
 	}
 	if (_snapCameraScale)
 	{
@@ -274,7 +276,4 @@ void RenderTarget::Update() noexcept
 		_cameraScaleX = std::lerp(_cameraScaleX, _targetScaleX, tScale);
 		_cameraScaleY = std::lerp(_cameraScaleY, _targetScaleY, tScale);
 	}
-
-	// _viewX = std::lerp(_viewX, _targetViewX, tView);
-	// _viewY = std::lerp(_viewY, _targetViewY, tView);
 }

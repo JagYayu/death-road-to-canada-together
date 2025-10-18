@@ -15,6 +15,7 @@ local json = require("Lib.json")
 local CNetworkClient = require("dr2c.Client.Network.Client")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GWorldSession = require("dr2c.Shared.World.Session")
+local GMessageFields = require("dr2c.Shared.Network.MessageFields")
 
 --- @class dr2c.CWorldSession : dr2c.WorldSession
 local CWorldSession = GWorldSession.new()
@@ -137,7 +138,8 @@ TE.events:add(N_("CMessage"), function(e)
 		if not e.content.suppressed then
 			log.info(("Client %s started world session"):format(e.content.sponsorClientID))
 
-			CWorldSession.startLocally(e.content.attributes)
+			local fields = GMessageFields.WorldSessionStart
+			CWorldSession.startLocally(e.content[fields.attributes])
 		elseif e.content.sponsorClientID == CNetworkClient.getClientID() and log.canWarn() then
 			log.warn(("Cannot start world session: %s"):format(e.suppressed))
 		end

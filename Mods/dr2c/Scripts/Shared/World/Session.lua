@@ -162,17 +162,23 @@ function GWorldSession.new()
 		worldSessionAttributes[attribute] = value
 	end
 
+	--- A short to `WorldSession.getAttribute(GWorldSession.Attribute.State) == GWorldSession.State.Inactive`
 	--- @return boolean
+	--- @nodiscard
 	function WorldSession.isInactive()
 		return worldSessionAttributes[GWorldSession_Attribute_State] == GWorldSession_State_Inactive
 	end
 
+	--- A short to `WorldSession.getAttribute(GWorldSession.Attribute.State) == GWorldSession.State.Playing`
 	--- @return boolean
-	function WorldSession.isPLaying()
+	--- @nodiscard
+	function WorldSession.isPlaying()
 		return worldSessionAttributes[GWorldSession_Attribute_State] == GWorldSession_State_Playing
 	end
 
+	--- A short to `WorldSession.getAttribute(GWorldSession.Attribute.State) == GWorldSession.State.Paused`
 	--- @return boolean
+	--- @nodiscard
 	function WorldSession.isPaused()
 		return worldSessionAttributes[GWorldSession_Attribute_State] == GWorldSession_State_Paused
 	end

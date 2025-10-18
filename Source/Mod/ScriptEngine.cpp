@@ -14,17 +14,17 @@
 #include "Event/CoreEvents.hpp"
 #include "Event/CoreEventsData.hpp"
 #include "Event/RuntimeEvent.hpp"
+#include "Mod/LuaBindings.hpp"
+#include "Mod/ModManager.hpp"
+#include "Mod/ScriptLoader.hpp"
+#include "Mod/ScriptModule.hpp"
+#include "Mod/ScriptProvider.hpp"
 #include "Program/Memory.hpp"
 #include "Scripts/GameScripts.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/Definitions.hpp"
 #include "Util/LuaUtils.hpp"
 #include "Util/Utils.hpp"
-#include "mod/LuaBindings.hpp"
-#include "mod/ModManager.hpp"
-#include "mod/ScriptLoader.hpp"
-#include "mod/ScriptModule.hpp"
-#include "mod/ScriptProvider.hpp"
 #include "program/Memory.hpp"
 
 #include "sol/environment.hpp"
@@ -79,7 +79,7 @@ ScriptEngine::ScriptEngine(Context &context) noexcept
     : _context(context),
       _memory(std::make_unique<Memory>()),
       _log(Log::Get("ScriptEngine")),
-      _lua(),//sol::state(nullptr, Memory::LuaAlloc, _memory.get())),
+      _lua(), // sol::state(nullptr, Memory::LuaAlloc, _memory.get())),
       _luaInit()
 {
 }
@@ -311,7 +311,7 @@ sol::object ScriptEngine::LuaRequire(sol::string_view targetScriptName, ScriptRe
 				GetScriptEngine().ThrowError("Cannot require '{}': Target module is invalid (probably loadtime error)", targetScriptName.data());
 			}
 
-			if (!scriptProvider.IsStaticScript(targetScriptID))
+			if (!scriptProvider.IsStaticScript(targetScriptID) && script->id == scriptLoader.GetLoadingScriptID())
 			{
 				scriptLoader.AddReverseDependency(script->id, targetScriptID);
 			}
@@ -528,7 +528,10 @@ void ScriptEngine::InitializeScript(ScriptID scriptID, std::string_view scriptNa
 		return;
 	}
 
-	scriptGlobals["log"] = Log::Get(scriptName);
+	scriptGlobals.set_function("log", [scriptName]() -> std::shared_ptr<Log>
+	{
+		return Log::Get(scriptName);
+	});
 
 	scriptGlobals.set_function("persist", [this, scriptName](sol::string_view key, sol::object defaultValue, sol::object getter)
 	{

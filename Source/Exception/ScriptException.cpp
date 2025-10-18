@@ -9,11 +9,11 @@
  *
  */
 
-#include "exception/ScriptException.hpp"
+#include "Exception/ScriptException.hpp"
 
 #include "Data/Constants.hpp"
 #include "Event/EventManager.hpp"
-#include "mod/ScriptProvider.hpp"
+#include "Mod/ScriptProvider.hpp"
 
 using namespace tudov;
 

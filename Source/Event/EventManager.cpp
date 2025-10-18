@@ -17,15 +17,15 @@
 #include "Event/LoadtimeEvent.hpp"
 #include "Event/RuntimeEvent.hpp"
 #include "Exception/EventHandlerAddException.hpp"
+#include "Mod/ModManager.hpp"
 #include "Mod/ScriptEngine.hpp"
+#include "Mod/ScriptErrors.hpp"
+#include "Mod/ScriptLoader.hpp"
 #include "Program/Context.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/Definitions.hpp"
 #include "Util/LuaUtils.hpp"
 #include "Util/Utils.hpp"
-#include "mod/ModManager.hpp"
-#include "mod/ScriptErrors.hpp"
-#include "mod/ScriptLoader.hpp"
 
 #include "sol/forward.hpp"
 #include "sol/types.hpp"
@@ -377,7 +377,7 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		else
 		{
 			LuaUtils::Deconstruct(name_);
-			GetScriptEngine().ThrowError("{}", "Failed to add event handler: invalid arg#3 `name` type, nil or string expected, got {}", GetLuaTypeStringView(name.get_type()));
+			GetScriptEngine().ThrowError("Failed to add event handler: invalid arg#3 `name` type, nil or string expected, got {}", GetLuaTypeStringView(name.get_type()));
 		}
 
 		std::optional<std::string> order_;
@@ -392,7 +392,7 @@ void EventManager::LuaAdd(sol::object event, sol::object func, sol::object name,
 		else
 		{
 			LuaUtils::Deconstruct(name_, order_);
-			GetScriptEngine().ThrowError("{}", "Failed to add event handler: invalid arg#4 `order` type, nil or string expected, got {}", GetLuaTypeStringView(order.get_type()));
+			GetScriptEngine().ThrowError("Failed to add event handler: invalid arg#4 `order` type, nil or string expected, got {}", GetLuaTypeStringView(order.get_type()));
 		}
 
 		std::optional<EventHandleKey> key_;

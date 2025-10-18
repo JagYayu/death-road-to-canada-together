@@ -83,9 +83,9 @@ end
 --- @param clientID TE.Network.ClientID
 --- @param messageType dr2c.NetworkMessageType
 --- @param messageContent any?
---- @param channel dr2c.NetworkMessageChannel?
+--- @param messageChannel dr2c.NetworkMessageChannel?
 --- @return boolean
-function SNetworkServer.sendReliable(clientID, messageType, messageContent, channel)
+function SNetworkServer.sendReliable(clientID, messageType, messageContent, messageChannel)
 	local session = SNetworkServer.getNetworkSession()
 	if session then
 		local data = GNetworkMessage.pack(messageType, messageContent)
@@ -94,9 +94,9 @@ function SNetworkServer.sendReliable(clientID, messageType, messageContent, chan
 			log.trace(("Send reliable message to client %s: %s"):format(clientID, data))
 		end
 
-		channel = channel or GNetworkMessage.Channel.Main
+		messageChannel = messageChannel or GNetworkMessage.Channel.Main
 		--- @diagnostic disable-next-line: param-type-mismatch
-		session:sendReliable(clientID, data, channel)
+		session:sendReliable(clientID, data, messageChannel)
 
 		return true
 	else

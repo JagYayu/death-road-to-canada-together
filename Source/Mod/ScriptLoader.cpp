@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/ScriptLoader.hpp"
+#include "Mod/ScriptLoader.hpp"
 
 #include "Data/Constants.hpp"
 #include "Event/CoreEvents.hpp"
@@ -26,9 +26,9 @@
 #include "Util/StringUtils.hpp"
 #include "Util/Utils.hpp"
 #include "misc/Text.hpp"
-#include "mod/ModManager.hpp"
-#include "mod/ScriptModule.hpp"
-#include "mod/ScriptProvider.hpp"
+#include "Mod/ModManager.hpp"
+#include "Mod/ScriptModule.hpp"
+#include "Mod/ScriptProvider.hpp"
 
 #include <sol/error.hpp>
 #include <sol/forward.hpp>

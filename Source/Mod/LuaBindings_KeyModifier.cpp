@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/LuaBindings.hpp"
+#include "Mod/LuaBindings.hpp"
 
 #include "System/KeyModifier.hpp"
 #include "Util/MicrosImpl.hpp"

@@ -12,20 +12,20 @@
 #include "Event/RuntimeEvent.hpp"
 
 #include "Data/Constants.hpp"
+#include "Debug/EventProfiler.hpp"
 #include "Event/AbstractEvent.hpp"
 #include "Event/EventHandler.hpp"
 #include "Event/EventManager.hpp"
 #include "Event/RuntimeEvent.hpp"
+#include "Exception/EventHandlerAddBadKeyException.hpp"
+#include "Exception/EventHandlerAddBadOrderException.hpp"
+#include "Exception/EventHandlerAddDuplicateException.hpp"
 #include "Mod/ScriptEngine.hpp"
+#include "Mod/ScriptErrors.hpp"
+#include "Mod/ScriptProvider.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/Definitions.hpp"
 #include "Util/EnumFlag.hpp"
-#include "debug/EventProfiler.hpp"
-#include "exception/EventHandlerAddBadKeyException.hpp"
-#include "exception/EventHandlerAddBadOrderException.hpp"
-#include "exception/EventHandlerAddDuplicateException.hpp"
-#include "mod/ScriptErrors.hpp"
-#include "mod/ScriptProvider.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -38,7 +38,6 @@ using namespace tudov;
 
 RuntimeEvent::RuntimeEvent(IEventManager &eventManager, EventID eventID, const std::vector<std::string> &orders, const std::unordered_set<EventHandleKey, EventHandleKey::Hash, EventHandleKey::Equal> &keys, ScriptID scriptID)
     : AbstractEvent(eventManager, eventID, scriptID),
-      _log(Log::Get("RuntimeEvent")),
       _hasAnyCache(false),
       _handlersSortedCache(false),
       _invocationCache(),
@@ -66,7 +65,7 @@ RuntimeEvent::~RuntimeEvent() noexcept
 
 Log &RuntimeEvent::GetLog() noexcept
 {
-	return *_log;
+	return *Log::Get(TE_NAMEOF(RuntimeEvent));
 }
 
 std::vector<EventHandler>::const_iterator RuntimeEvent::BeginHandlers() const noexcept
@@ -244,15 +243,8 @@ std::vector<EventHandler> &RuntimeEvent::GetSortedHandlers()
 	return _handlers;
 }
 
-struct PCallHandlerObject
-{
-	const std::shared_ptr<Log> &log;
-	IEventManager &eventManager;
-	ScriptID &invokingScriptID;
-};
-
 template <typename... TArgs>
-TE_FORCEINLINE void PCallHandler(const PCallHandlerObject &obj, EventHandler &handler, TArgs &&...args) noexcept
+TE_FORCEINLINE void PCallHandler(const impl::PCallHandlerObject &obj, EventHandler &handler, TArgs &&...args) noexcept
 {
 	ScriptID previousScriptID = obj.invokingScriptID;
 	obj.invokingScriptID = handler.scriptID;
@@ -263,11 +255,13 @@ TE_FORCEINLINE void PCallHandler(const PCallHandlerObject &obj, EventHandler &ha
 	}
 	catch (std::exception &e)
 	{
-		obj.log->Error("{}", e.what());
+		auto *TE_L_log = &obj.event->GetLog();
+
+		TE_L_ERROR("{}", e.what());
 
 		if (handler.scriptID != 0)
 		{
-			obj.eventManager.GetScriptErrors().AddRuntimeError(handler.scriptID, e.what());
+			obj.event->GetEventManager().GetScriptErrors().AddRuntimeError(handler.scriptID, e.what());
 		}
 	}
 
@@ -294,9 +288,8 @@ void RuntimeEvent::Invoke(sol::object e, const EventHandleKey &key, EEventInvoca
 		profile = nullptr;
 	}
 
-	PCallHandlerObject obj{
-	    _log,
-	    eventManager,
+	impl::PCallHandlerObject obj{
+	    this,
 	    _invokingScriptID,
 	};
 
@@ -572,7 +565,7 @@ void RuntimeEvent::ClearScriptHandlersImpl(std::function<bool(const EventHandler
 
 void RuntimeEvent::ClearInvalidScriptsHandlers(const IScriptProvider &scriptProvider)
 {
-	ClearScriptHandlersImpl([this, &scriptProvider](const EventHandler &handler)
+	ClearScriptHandlersImpl([this, &scriptProvider](const EventHandler &handler) -> bool
 	{
 		return handler.scriptID != 0 && !scriptProvider.IsValidScript(handler.scriptID);
 	});
@@ -599,7 +592,7 @@ void RuntimeEvent::ClearSpecificScriptHandlers(const IScriptProvider &scriptProv
 
 void RuntimeEvent::ClearScriptsHandlers()
 {
-	ClearScriptHandlersImpl([](const EventHandler &handler)
+	ClearScriptHandlersImpl([](const EventHandler &handler) -> bool
 	{
 		return handler.eventID != 0;
 	});

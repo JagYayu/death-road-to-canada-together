@@ -11,9 +11,10 @@
 
 local Table = require("TE.Table")
 
-local GWorldSession = require("dr2c.Shared.World.Session")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local SNetworkServer = require("dr2c.Server.Network.Server")
+local GWorldSession = require("dr2c.Shared.World.Session")
 
 --- @class dr2c.SWorldSession : dr2c.WorldSession
 local SWorldSession = GWorldSession.new()
@@ -71,16 +72,17 @@ function SWorldSession.start(attributes, sponsorClientID)
 end
 
 TE.events:add(SWorldSession.eventSWorldSessionStart, function(e)
-	print(e.attributes)
 	if not e.suppressed then
+		local fields = GNetworkMessageFields.WorldSessionStart
 		SNetworkServer.broadcastReliable(GNetworkMessage.Type.WorldSessionStart, {
-			attributes = e.attributes,
-			sponsorClientID = e.sponsorClientID,
+			[fields.sponsorClientID] = e.sponsorClientID,
+			[fields.attributes] = e.attributes,
 		})
 	elseif e.sponsorClientID then
+		local fields = GNetworkMessageFields.WorldSessionStart
 		SNetworkServer.sendReliable(e.sponsorClientID, GNetworkMessage.Type.WorldSessionStart, {
-			suppressed = e.suppressed,
-			sponsorClientID = e.sponsorClientID,
+			[fields.sponsorClientID] = e.sponsorClientID,
+			[fields.suppressed] = e.suppressed,
 		})
 	end
 end, "SendMessage", "Network")

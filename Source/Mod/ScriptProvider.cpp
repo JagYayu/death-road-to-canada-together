@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/ScriptProvider.hpp"
+#include "Mod/ScriptProvider.hpp"
 
 #include "Data/VirtualFileSystem.hpp"
 #include "Resource/GlobalResourcesCollection.hpp"

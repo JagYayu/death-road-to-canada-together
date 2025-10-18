@@ -1,10 +1,6 @@
 --- @class dr2c.TestSynchrony
 local TestSynchrony = {}
 
-local drawTextArgs = DrawTextArgs()
-
-drawTextArgs.font = TE.fonts:getID("Mods/dr2c/Fonts/Galmuri7.ttf")
-
 function TestSynchrony.enable()
 	local Function = require("TE.Function")
 	local Math = require("TE.Math")
@@ -23,6 +19,10 @@ function TestSynchrony.enable()
 	})
 
 	local i = 0
+
+	local drawTextArgs = DrawTextArgs()
+
+	drawTextArgs.font = TE.fonts:getID("Mods/dr2c/Fonts/Galmuri7.ttf")
 
 	--- @param e dr2c.E.CRender
 	TE.events:add(N_("CRenderCamera"), function(e)
@@ -66,7 +66,7 @@ function TestSynchrony.enable()
 
 		-- 	drawLine(("entity %s position: x=%s, y=%s"):format(id, gameObject.x, gameObject.y))
 		-- end
-	end, "TestSynchronyInfo", "Debug")
+	end, "TestSynchrony", "Debug")
 
 	TE.events:add(N_("CWorldTickProcess"), function(e)
 		if CEntityECS.countEntitiesByType("Character") < 2 then

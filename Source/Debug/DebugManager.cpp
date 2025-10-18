@@ -12,11 +12,11 @@
 #include "Debug/DebugManager.hpp"
 
 #include "Debug/DebugConsole.hpp"
-#include "debug/DebugFileSystem.hpp"
-#include "debug/DebugLog.hpp"
-#include "debug/DebugMods.hpp"
-#include "debug/DebugProfiler.hpp"
-#include "debug/DebugScripts.hpp"
+#include "Debug/DebugFileSystem.hpp"
+#include "Debug/DebugLog.hpp"
+#include "Debug/DebugMods.hpp"
+#include "Debug/DebugProfiler.hpp"
+#include "Debug/DebugScripts.hpp"
 #include "Program/Window.hpp"
 
 #include "imgui.h"

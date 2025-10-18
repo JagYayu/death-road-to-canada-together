@@ -10,15 +10,13 @@
 --]]
 
 local String = require("TE.String")
-local Utility = require("TE.Utility")
 
 local CNetworkClient = require("dr2c.Client.Network.Client")
-local CNetworkServer = require("dr2c.Client.Network.Server")
 
+local CNetworkClientMisc = require("dr2c.Client.Network.ClientMisc")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local GWorldSnapshot = require("dr2c.Shared.World.Snapshot")
-
-local hasServer = pcall(require, "dr2c.Server.World.Snapshot")
 
 local floor = math.floor
 
@@ -29,32 +27,14 @@ local floor = math.floor
 --- @class dr2c.CWorldSnapshot : dr2c.WorldSnapshot
 local CWorldSnapshot = GWorldSnapshot.new()
 
-local CWorldSnapshotGet = CWorldSnapshot.get
-local CWorldSnapshotSet = CWorldSnapshot.set
-CWorldSnapshot.get = nil
-CWorldSnapshot.set = nil
-
-local ticksPerSnapshot = 1
-
-local snapshotRegistryLatestID = 0
+local latestSnapshotRegistryID = 0
 local snapshotRegistryTable = {}
 
-snapshotRegistryLatestID = persist("snapshotRegistryLatestID", function()
-	return snapshotRegistryLatestID
+latestSnapshotRegistryID = persist("latestSnapshotRegistryID", function()
+	return latestSnapshotRegistryID
 end)
 snapshotRegistryTable = persist("snapshotRegistryTable", function()
 	return snapshotRegistryTable
-end)
-
---- @class dr2c.ClientSnapshots
---- @field first dr2c.SnapshotID?
---- @field [integer] string
-local clientSnapshots = {
-	first = nil,
-}
-
-clientSnapshots = persist("clientSnapshots", function()
-	return clientSnapshots
 end)
 
 local eventClientSnapshotCollect = TE.events:new(N_("CSnapshotCollect"), {
@@ -64,43 +44,6 @@ local eventClientSnapshotCollect = TE.events:new(N_("CSnapshotCollect"), {
 local eventClientSnapshotDispense = TE.events:new(N_("CSnapshotDispense"), {
 	"ECS",
 })
-
-function CWorldSnapshot.getAll()
-	return clientSnapshots
-end
-
-function CWorldSnapshot.clearAll()
-	clientSnapshots = {
-		first = nil,
-	}
-end
-
---- @param snapshotID dr2c.SnapshotID
---- @return string?
-function CWorldSnapshot.getSnapshot(snapshotID)
-	local firstID = clientSnapshots.first
-	if firstID then
-		return clientSnapshots[snapshotID - firstID + 1]
-	end
-end
-
---- @param index any
---- @return dr2c.SnapshotID?
-function CWorldSnapshot.getSnapshotID(index)
-	local firstID = clientSnapshots.first
-	return firstID and (firstID + index - 1) or nil
-end
-
---- @return dr2c.SnapshotID?
-function CWorldSnapshot.getFirstSnapshotID()
-	return clientSnapshots.first
-end
-
---- @return dr2c.SnapshotID?
-function CWorldSnapshot.getLastSnapshotID()
-	local firstID = clientSnapshots.first
-	return firstID and (firstID + #clientSnapshots - 1) or nil
-end
 
 --- @param name string
 --- @param default any?
@@ -122,8 +65,8 @@ function CWorldSnapshot.registerVariable(name, default)
 		entry[3] = buffer
 		entry[4] = String.bufferDecode(buffer)
 	else
-		snapshotRegistryLatestID = snapshotRegistryLatestID + 1
-		id = snapshotRegistryLatestID
+		latestSnapshotRegistryID = latestSnapshotRegistryID + 1
+		id = latestSnapshotRegistryID
 		local entry = {
 			id,
 			name,
@@ -141,6 +84,7 @@ function CWorldSnapshot.registerCoroutine(name)
 	--
 end
 
+--- @return string data
 function CWorldSnapshot.serialize()
 	-- Utility.assertRuntime()
 
@@ -157,6 +101,7 @@ function CWorldSnapshot.serialize()
 	return data
 end
 
+--- @param data string
 function CWorldSnapshot.deserialize(data)
 	-- Utility.assertRuntime()
 
@@ -176,40 +121,38 @@ function CWorldSnapshot.deserialize(data)
 end
 
 --- Request a snapshot from server.
+--- 请求服务器的快照信息。
 --- @param snapshotID dr2c.SnapshotID
 function CWorldSnapshot.request(snapshotID)
-	CNetworkClient.sendReliable(GNetworkMessage.Type.SnapshotRequest, {
-		snapshotID = snapshotID,
-	})
+	return CNetworkClient.sendReliable(GNetworkMessage.Type.SnapshotRequest, snapshotID)
 end
 
---- Deliver snapshots to server.
---- @deprecated
-function CWorldSnapshot.deliver()
-	-- CClient.sendReliable(GMessage.Type.Snapshot, clientSnapshots)
+--- Upload snapshots to server, only allowed for clients with permission `GNetworkClient.Permission.Authority`.
+--- 上传快照给服务器，只允许带`GNetworkClient.Permission.Authority`许可的客户端上传。
+--- @return boolean?
+function CWorldSnapshot.upload()
+	if CNetworkClientMisc.hasPermissionAuthority() then
+		return CNetworkClient.sendReliable(GNetworkMessage.Type.Snapshots, CWorldSnapshot.getSnapshotDataList())
+	end
 end
 
 --- @param e dr2c.E.CMessage
 TE.events:add(N_("CMessage"), function(e)
-	if hasServer then
-		CWorldSnapshot.dropBackward(e.content.snapshotID)
+	local snapshotID = e.content[1]
 
-		e.content.snapshotID = e.content.snapshot
-	end
+	CWorldSnapshot.dropBackward(snapshotID)
 end, "ReceiveSnapshotResponse", "Receive", GNetworkMessage.Type.SnapshotResponse)
 
 --- @param snapshotID integer
 function CWorldSnapshot.save(snapshotID)
-	clientSnapshots[snapshotID] = CWorldSnapshot.serialize()
+	local snapshotData = CWorldSnapshot.serialize()
+	CWorldSnapshot.setSnapshotData(snapshotID, snapshotData)
 
-	if not clientSnapshots.first then
-		clientSnapshots.first = snapshotID
-	end
-
-	if hasServer then
+	if CNetworkClientMisc.hasPermissionAuthority() then
+		local fields = GNetworkMessageFields.Snapshot
 		CNetworkClient.sendReliable(GNetworkMessage.Type.Snapshot, {
-			snapshotID = snapshotID,
-			snapshot = clientSnapshots[snapshotID],
+			[fields.snapshotID] = snapshotID,
+			[fields.snapshotData] = snapshotData,
 		})
 	end
 end
@@ -217,65 +160,24 @@ end
 --- @param snapshotID integer
 --- @return boolean
 function CWorldSnapshot.load(snapshotID)
-	if snapshotID ~= floor(snapshotID) then
-		error("Must be integer", 2)
-	end
+	local firstID = CWorldSnapshot.getFirstSnapshotID()
+	local list = CWorldSnapshot.getSnapshotDataList()
 
-	local firstID = clientSnapshots.first
 	if not firstID then
 		return false
 	elseif snapshotID < firstID then
 		return false
-	elseif snapshotID >= firstID + #clientSnapshots then
+	elseif snapshotID >= firstID + #list then
 		return false
 	end
 
-	CWorldSnapshot.deserialize(clientSnapshots[snapshotID])
+	CWorldSnapshot.deserialize(list[snapshotID])
+
 	return true
 end
 
---- Remove current and subsequent snapshots.
---- @return integer count
-function CWorldSnapshot.dropBackward(snapshotID)
-	local firstID = clientSnapshots.first
-	if not firstID then
-		return 0
-	end
-
-	local len = #clientSnapshots
-	for i = len, snapshotID - firstID + 1, -1 do
-		clientSnapshots[i] = nil
-	end
-
-	return len - snapshotID + firstID
-end
-
---- Remove current and previous snapshots.
---- @return integer count
-function CWorldSnapshot.dropForward(snapshotID)
-	local firstID = clientSnapshots.first
-	if not firstID then
-		return 0
-	end
-
-	local len = #clientSnapshots
-	local diff = snapshotID - firstID
-
-	for i = len - diff, 1, -1 do
-		local j = i + diff
-		clientSnapshots[i] = clientSnapshots[j]
-		clientSnapshots[j] = nil
-	end
-
-	for i = diff, len - diff + 1, -1 do
-		clientSnapshots[i] = nil
-	end
-
-	return diff + 1
-end
-
 local function resetSnapshots()
-	CWorldSnapshot.clearAll()
+	CWorldSnapshot.clear()
 end
 
 TE.events:add(N_("CConnect"), resetSnapshots, N_("ResetSnapshot"), "Reset")
@@ -288,7 +190,13 @@ TE.events:add(N_("CWorldSessionFinish"), resetSnapshots, "ResetSnapshots", "Rese
 
 TE.events:add(N_("CWorldTickProcess"), function(e)
 	-- Save snapshot every tick, for now :)
-	CWorldSnapshot.save(e.tick)
+	CWorldSnapshot.save(GWorldSnapshot.tick2id(e.tick))
+
+	-- Then drop faraway snapshots
+	local maximumSnapshotCount = 300 -- 10s * 30tps
+	if CWorldSnapshot.getSnapshotCount() > maximumSnapshotCount then
+		CWorldSnapshot.dropForward(latestSnapshotRegistryID)
+	end
 end, "SaveSnapshot", "SnapshotSave")
 
 TE.events:add(N_("CWorldRollback"), function(e)
@@ -300,7 +208,7 @@ TE.events:add(N_("CWorldRollback"), function(e)
 		CWorldSnapshot.dropBackward(e.tick)
 
 		if log.canTrace() then
-			log.trace("Rollback: load snapshot to tick " .. e.tick)
+			log.trace(("Rollback: load snapshot to tick %d"):format(e.tick))
 		end
 	else
 		e.suppressed = true

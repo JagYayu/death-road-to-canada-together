@@ -28,6 +28,17 @@
 #include <unordered_map>
 #include <unordered_set>
 
+namespace tudov::impl
+{
+	// An internal object
+	struct PCallHandlerObject
+	{
+		RuntimeEvent *event;
+		ScriptID &invokingScriptID;
+	};
+
+} // namespace tudov::impl
+
 namespace tudov
 {
 	struct CoreEventData;
@@ -37,6 +48,8 @@ namespace tudov
 
 	class RuntimeEvent : public AbstractEvent, private ILogProvider
 	{
+		friend struct PCallHandlerObject;
+
 		using InvocationCache = std::vector<EventHandler *>;
 		using ProgressionID = std::uint32_t;
 
@@ -64,7 +77,6 @@ namespace tudov
 		};
 
 	  private:
-		std::shared_ptr<Log> _log;
 		std::shared_ptr<Profile> _profile;
 		bool _hasAnyCache;
 		bool _handlersSortedCache;

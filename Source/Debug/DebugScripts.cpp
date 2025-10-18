@@ -9,21 +9,21 @@
  *
  */
 
-#include "debug/DebugScripts.hpp"
+#include "Debug/DebugScripts.hpp"
 
 #include "Data/Constants.hpp"
-#include "debug/DebugUtils.hpp"
+#include "Debug/DebugUtils.hpp"
 #include "Event/CoreEvents.hpp"
 #include "Event/EventInvocation.hpp"
 #include "Event/EventManager.hpp"
 #include "Event/RuntimeEvent.hpp"
 #include "I18n/Localization.hpp"
-#include "mod/ModManager.hpp"
+#include "Mod/ModManager.hpp"
 #include "Mod/ScriptEngine.hpp"
-#include "mod/ScriptErrors.hpp"
-#include "mod/ScriptLoader.hpp"
-#include "mod/ScriptModule.hpp"
-#include "mod/ScriptProvider.hpp"
+#include "Mod/ScriptErrors.hpp"
+#include "Mod/ScriptLoader.hpp"
+#include "Mod/ScriptModule.hpp"
+#include "Mod/ScriptProvider.hpp"
 #include "Resource/GlobalResourcesCollection.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/SystemUtils.hpp"

@@ -24,19 +24,25 @@ local filterControllable = CEntityECS.filter({
 	"GameObject",
 })
 
+--- @param e dr2c.E.CWorldTickProcess
 TE.events:add(N_("CWorldTickProcess"), function(e)
-	local CECS_getComponent = CEntityECS.getComponent
-
 	local playerInputs = e.playerInputs
+	if not playerInputs then
+		return
+	end
+
+	local getComponent = CEntityECS.getComponent
+
 	local delta = CWorldTick.getDeltaTime() * 100
 
 	for index, entityID, entityTypeID in CEntityECS.iterateEntities(filterControllable) do
-		local gameObject = CECS_getComponent(entityID, "GameObject")
+		-- print(entityID, 2)
+		local gameObject = getComponent(entityID, "GameObject") --- @cast gameObject dr2c.Component.GameObject
 
 		-- local playerID = 1
 
 		local inputs = playerInputs[entityID]
-		local dir = inputs and inputs.entry[true] and inputs.entry[true][GWorldPlayerInput.ID.Move]
+		local dir = inputs and inputs.map[GWorldPlayerInput.ID.Move]
 		if dir then
 			local dx, dy
 			if dir == 0 then

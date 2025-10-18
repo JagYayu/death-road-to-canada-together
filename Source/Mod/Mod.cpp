@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/Mod.hpp"
+#include "Mod/Mod.hpp"
 
 using namespace tudov;
 

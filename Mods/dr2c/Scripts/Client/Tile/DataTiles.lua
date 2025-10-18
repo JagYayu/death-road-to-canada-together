@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.Tile.Data
+-- @module dr2c.Client.Tile.DataTiles
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -9,8 +9,8 @@
 --
 --]]
 
-local CWorldCollision = require("dr2c.Client.World.Collision")
 local CTileSchema = require("dr2c.Client.Tile.Schema")
+local CWorldCollision = require("dr2c.Client.World.Collision")
 
 --- @class dr2c.CTileData
 local CTileDataTiles = {}

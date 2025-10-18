@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/LuaBindings.hpp"
+#include "Mod/LuaBindings.hpp"
 
 #include "Event/CoreEventsData.hpp"
 #include "Util/MicrosImpl.hpp"

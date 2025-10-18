@@ -5,7 +5,7 @@ error("this is a lua library module")
 --- @field _TE_locked true? @A marker field, means this metatable is locked by engine and inaccessible to sandboxed scripts.
 
 --- @class userdata
---- @field getTypeID? fun(): TE.TypeID?
+--- @field getTypeID? fun(): TE.TypeID? @Get typeID of a userdata. Note you must access this field carefully through `pcall`, an error will occur if this field doesn't exist.
 
 --- @diagnostic disable-next-line: duplicate-doc-alias
 --- @alias N_Hint string
@@ -45,7 +45,7 @@ error("this is a lua library module")
 --- @field [1] number
 --- @field [2] number
 
---- @class TE.TypeID
+--- @class TE.TypeID : string
 
 --- @class TE.TudovEngine
 TE = {}

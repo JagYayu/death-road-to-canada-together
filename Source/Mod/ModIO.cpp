@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/ModIO.hpp"
+#include "Mod/ModIO.hpp"
 
 using namespace tudov;
 

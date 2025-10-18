@@ -55,7 +55,7 @@ end)
 function SNetworkClients.getAuthoritativeClient()
 	for _, clientID in ipairs(clientList) do
 		local permissions = clientsPublicAttributes[clientID][GNetworkClient.PublicAttribute.Permissions]
-		if permissions and EnumFlag.hasAll1(permissions, GNetworkClient.Permission.Authority) then
+		if permissions and EnumFlag.hasAll(permissions, GNetworkClient.Permission.Authority) then
 			return clientID
 		end
 	end
@@ -66,7 +66,7 @@ end
 function SNetworkClients.isAuthoritativeClient(clientID)
 	local publicAttributes = clientsPublicAttributes[clientID]
 	if publicAttributes then
-		return EnumFlag.hasAll1(
+		return EnumFlag.hasAll(
 			publicAttributes[GNetworkClient.PublicAttribute.Permissions],
 			GNetworkClient.Permission.Authority
 		)
@@ -130,7 +130,7 @@ local function onVerifiedClient(clientID)
 		end
 
 		local permissions = publicAttributes[GNetworkClient.PublicAttribute.Permissions]
-		if permissions and EnumFlag.hasAll(permissions, GNetworkClient.Permissions.Host) then
+		if permissions and EnumFlag.hasAllV(permissions, GNetworkClient.Permissions.Host) then
 			hasHostClient = true
 		end
 	end

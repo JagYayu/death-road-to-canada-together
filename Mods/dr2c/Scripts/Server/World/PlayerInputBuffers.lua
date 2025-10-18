@@ -12,19 +12,21 @@
 local String = require("TE.String")
 
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local GWorldPlayerInputBuffers = require("dr2c.Shared.World.PlayerInputBuffers")
 local SNetworkServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.SPlayerInputBuffer : dr2c.PlayerInputBuffers
 local SPlayerInputBuffer = GWorldPlayerInputBuffers.new()
 
-local latestArchivedTick = 0
-
 --- @param e dr2c.E.SMessage
 TE.events:add(N_("SMessage"), function(e)
-	if SPlayerInputBuffer.setInputs(e.content.playerID, e.content.worldTick, e.content.playerInputs) then
-		latestArchivedTick = e.content.worldTick
-	end
+	local fields = GNetworkMessageFields.PlayerInputs
+	SPlayerInputBuffer.setInputs(
+		e.content[fields.playerID],
+		e.content[fields.worldTick],
+		e.content[fields.playerInputs]
+	)
 
 	SNetworkServer.broadcastReliable(e.type, e.content)
 end, "ReceivePlayerInput", "Receive", GNetworkMessage.Type.PlayerInputs)

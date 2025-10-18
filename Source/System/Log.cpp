@@ -397,6 +397,18 @@ void Log::OutputImpl(std::string_view module, std::string_view verb, std::string
 	}
 }
 
+bool Log::LuaCanOutput(sol::object verb) const noexcept
+{
+	if (verb.is<std::double_t>())
+	{
+		return CanOutput(verb.as<ELogVerbosity>());
+	}
+	else
+	{
+		return false;
+	}
+}
+
 void Log::LuaOutput(sol::object verb, sol::table args) const noexcept
 {
 	static std::string buffer;
@@ -416,7 +428,36 @@ void Log::LuaOutput(sol::object verb, sol::table args) const noexcept
 		}
 	}
 
-	Output(verb.as<std::string_view>(), buffer.c_str());
+	if (verb.is<std::double_t>())
+	{
+		switch (verb.as<ELogVerbosity>())
+		{
+		case ELogVerbosity::Fatal:
+			Fatal("{}", buffer.c_str());
+			break;
+		case ELogVerbosity::Error:
+			Error("{}", buffer.c_str());
+			break;
+		case ELogVerbosity::Warn:
+			Warn("{}", buffer.c_str());
+			break;
+		case ELogVerbosity::Info:
+			Info("{}", buffer.c_str());
+			break;
+		case ELogVerbosity::Debug:
+			Debug("{}", buffer.c_str());
+			break;
+		case ELogVerbosity::Trace:
+			Trace("{}", buffer.c_str());
+			break;
+		default:
+			break;
+		}
+	}
+	else if (verb.is<std::string_view>())
+	{
+		Output(verb.as<std::string_view>(), buffer.c_str());
+	}
 
 	buffer.clear();
 }

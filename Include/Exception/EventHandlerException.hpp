@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "exception/ScriptException.hpp"
+#include "Exception/ScriptException.hpp"
 #include "Program/Context.hpp"
 #include "Util/Definitions.hpp"
 

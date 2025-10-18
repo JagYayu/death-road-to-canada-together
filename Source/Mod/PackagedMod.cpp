@@ -9,4 +9,4 @@
  *
  */
 
-#include "mod/PackagedMod.hpp"
+#include "Mod/PackagedMod.hpp"

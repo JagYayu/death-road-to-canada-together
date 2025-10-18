@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.render.BatchDraw
+-- @module dr2c.Client.Render.BatchDraw
 -- @author JagYayu
 -- @brief
 -- @version 1.0

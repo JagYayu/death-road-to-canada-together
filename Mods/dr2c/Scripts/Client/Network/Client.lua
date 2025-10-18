@@ -20,29 +20,29 @@ local GUtilsThrottle = require("dr2c.Shared.Utils.Throttle")
 
 local network = TE.network
 
---- @class dr2c.CClient
-local CClient = {}
+--- @class dr2c.CNetworkClient
+local CNetworkClient = {}
 
 local clientPrivateAttributes = {}
 
 --- @type integer
-CClient.sessionSlot = 0
+local sessionSlot = 0
 
 --- @return TE.Network.Client?
-function CClient.getNetworkSession()
-	return network:getClient(CClient.sessionSlot)
+function CNetworkClient.getNetworkSession()
+	return network:getClient(sessionSlot)
 end
 
 --- @return TE.Network.ClientID?
-function CClient.getClientID()
-	local session = CClient.getNetworkSession()
+function CNetworkClient.getClientID()
+	local session = CNetworkClient.getNetworkSession()
 	return session and session:getSessionID()
 end
 
 --- @param publicAttribute dr2c.NetworkClientPublicAttribute
 --- @return any?
-function CClient.getPublicAttribute(publicAttribute)
-	local clientID = CClient.getClientID()
+function CNetworkClient.getPublicAttribute(publicAttribute)
+	local clientID = CNetworkClient.getClientID()
 	if clientID then
 		return CNetworkClients.getPublicAttribute(clientID, publicAttribute)
 	end
@@ -50,8 +50,70 @@ end
 
 --- @param privateAttribute dr2c.NetworkClientPrivateAttribute
 --- @return any?
-function CClient.getPrivateAttribute(privateAttribute)
+function CNetworkClient.getPrivateAttribute(privateAttribute)
 	return clientPrivateAttributes[privateAttribute]
+end
+
+CNetworkClient.eventCConnect = TE.events:new(N_("CConnect"), {
+	"Reset",
+	"Initialize",
+})
+
+CNetworkClient.eventCDisconnect = TE.events:new(N_("CDisconnect"), {
+	"Reset",
+})
+
+CNetworkClient.eventCMessage = TE.events:new(N_("CMessage"), {
+	"Overrides",
+	"Receive",
+	"PlayerInputBuffer",
+	"Rollback",
+}, Enum.eventKeys(GNetworkMessage.Type))
+
+--- @param messageType dr2c.NetworkMessageType
+--- @param messageContent? any
+--- @param messageChannel? dr2c.NetworkMessageChannel
+--- @return boolean success
+function CNetworkClient.sendReliable(messageType, messageContent, messageChannel, messageDictionary)
+	local session = CNetworkClient.getNetworkSession()
+	if session then
+		local data = GNetworkMessage.pack(messageType, messageContent)
+
+		if log.canTrace() then
+			log.trace(("Send reliable message to server: %s"):format(data))
+		end
+
+		messageChannel = messageChannel or GNetworkMessage.Channel.Main
+		---@diagnostic disable-next-line: param-type-mismatch
+		session:sendReliable(data, messageChannel)
+
+		return true
+	else
+		return false
+	end
+end
+
+--- @param messageType dr2c.NetworkMessageType
+--- @param messageContent any?
+--- @param channel dr2c.NetworkMessageChannel?
+--- @return boolean success
+function CNetworkClient.sendUnreliable(messageType, messageContent, channel)
+	local session = CNetworkClient.getNetworkSession()
+	if session then
+		local data = GNetworkMessage.pack(messageType, messageContent)
+
+		if log.canTrace() then
+			-- log.trace(("Send unreliable message to server: %s"):format(data))
+		end
+
+		channel = channel or GNetworkMessage.Channel.Main
+		---@diagnostic disable-next-line: param-type-mismatch
+		session:sendUnreliable(data, channel)
+
+		return true
+	else
+		return false
+	end
 end
 
 TE.events:add(N_("CUpdate"), function(e)
@@ -91,72 +153,10 @@ TE.events:add(N_("CUpdate"), function(e)
 	-- setPrivateAttribute(clientID, PrivateAttribute.SecretStatistics, nil)
 end, N_("InitializeLocalClientAttributes"), "Network")
 
-CClient.eventCConnect = TE.events:new(N_("CConnect"), {
-	"Reset",
-	"Initialize",
-})
-
-CClient.eventCDisconnect = TE.events:new(N_("CDisconnect"), {
-	"Reset",
-})
-
-CClient.eventCMessage = TE.events:new(N_("CMessage"), {
-	"Overrides",
-	"Receive",
-	"PlayerInputBuffer",
-	"Rollback",
-}, Enum.eventKeys(GNetworkMessage.Type))
-
---- @param messageType dr2c.NetworkMessageType
---- @param messageContent any?
---- @param channel dr2c.NetworkMessageChannel?
---- @return boolean success
-function CClient.sendReliable(messageType, messageContent, channel)
-	local session = CClient.getNetworkSession()
-	if session then
-		local data = GNetworkMessage.pack(messageType, messageContent)
-
-		if log.canTrace() then
-			-- log.trace(("Send reliable message to server: %s"):format(data))
-		end
-
-		channel = channel or GNetworkMessage.Channel.Main
-		---@diagnostic disable-next-line: param-type-mismatch
-		session:sendReliable(data, channel)
-
-		return true
-	else
-		return false
-	end
-end
-
---- @param messageType dr2c.NetworkMessageType
---- @param messageContent any?
---- @param channel dr2c.NetworkMessageChannel?
---- @return boolean success
-function CClient.sendUnreliable(messageType, messageContent, channel)
-	local session = CClient.getNetworkSession()
-	if session then
-		local data = GNetworkMessage.pack(messageType, messageContent)
-
-		if log.canTrace() then
-			-- log.trace(("Send unreliable message to server: %s"):format(data))
-		end
-
-		channel = channel or GNetworkMessage.Channel.Main
-		---@diagnostic disable-next-line: param-type-mismatch
-		session:sendUnreliable(data, channel)
-
-		return true
-	else
-		return false
-	end
-end
-
 local function invokeEventClientConnect()
 	--- @class dr2c.E.ClientConnect
 	local e = {}
-	TE.events:invoke(CClient.eventCConnect, e)
+	TE.events:invoke(CNetworkClient.eventCConnect, e)
 end
 
 --- @param e Events.E.ClientConnect
@@ -170,7 +170,7 @@ local function invokeEventClientDisconnect(clientID)
 		clientID = clientID,
 	}
 
-	TE.events:invoke(CClient.eventCDisconnect, e)
+	TE.events:invoke(CNetworkClient.eventCDisconnect, e)
 end
 
 --- @param e Events.E.ClientConnect
@@ -189,7 +189,7 @@ local function invokeEventClientMessage(messageContent, messageType)
 		type = messageType,
 	}
 
-	TE.events:invoke(CClient.eventCMessage, e, messageType)
+	TE.events:invoke(CNetworkClient.eventCMessage, e, messageType)
 end
 
 --- @param e Events.E.ClientMessage
@@ -201,7 +201,7 @@ TE.events:add("ClientMessage", function(e)
 	local messageType, messageContent = GNetworkMessage.unpack(e.data.message)
 
 	invokeEventClientMessage(messageContent, messageType)
-end, "clientMessage", nil, CClient.sessionSlot)
+end, "clientMessage", nil, sessionSlot)
 
 local throttleClientUpdateClientsPrivateAttributeRequests = GUtilsThrottle.newTime(0.25)
 
@@ -212,7 +212,7 @@ end, "AssignNetworkThrottle", "Network", nil, -1)
 
 local sendClientVerifyingAttributesTime = 0
 
-CClient.eventCCollectVerifyAttributes = TE.events:new(N_("CCollectVerifyAttributes"), {
+CNetworkClient.eventCCollectVerifyAttributes = TE.events:new(N_("CCollectVerifyAttributes"), {
 	"Public",
 	"Private",
 	"State",
@@ -236,7 +236,7 @@ local function invokeEventClientCollectVerifyAttributes(pe)
 		attributes = attributes,
 	}
 
-	TE.events:invoke(CClient.eventCCollectVerifyAttributes, e)
+	TE.events:invoke(CNetworkClient.eventCCollectVerifyAttributes, e)
 
 	if log.canTrace() then
 		log.trace("Collected verify attributes: ", attributes)
@@ -251,7 +251,7 @@ TE.events:add(N_("CUpdate"), function(e)
 		return
 	end
 
-	local clientID = CClient.getClientID()
+	local clientID = CNetworkClient.getClientID()
 	if not clientID then
 		return
 	end
@@ -268,19 +268,15 @@ TE.events:add(N_("CUpdate"), function(e)
 
 	local entries = invokeEventClientCollectVerifyAttributes(e)
 
-	print("Send client verifying attributes")
-
 	for _, entry in ipairs(entries) do
 		if entry.public then
-			CClient.sendReliable(GNetworkMessage.Type.ClientPublicAttribute, entry)
+			CNetworkClient.sendReliable(GNetworkMessage.Type.ClientPublicAttribute, entry)
 		else
-			CClient.sendReliable(GNetworkMessage.Type.ClientPrivateAttribute, entry)
+			CNetworkClient.sendReliable(GNetworkMessage.Type.ClientPrivateAttribute, entry)
 		end
 	end
 
 	sendClientVerifyingAttributesTime = time + 5
 end, "SendClientVerifyingAttributes", "Network")
 
-function CClient.getRoom() end
-
-return CClient
+return CNetworkClient

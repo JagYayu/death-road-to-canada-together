@@ -16,15 +16,15 @@ local GPlayers = require("dr2c.Shared.Network.Players")
 
 --- TODO
 --- not implement yet, currently assume every client has a playerID which equals to clientID
---- @class dr2c.CPlayers
-local CPlayers = {}
+--- @class dr2c.CNetworkPlayers
+local CNetworkPlayers = {}
 
 --- @type table<dr2c.PlayerID, table<dr2c.PlayerAttribute, any>>
 local clientPlayersAttributes = {}
 
 --- @param clientID TE.Network.ClientID
 --- @return dr2c.PlayerID[]
-function CPlayers.getPlayers(clientID)
+function CNetworkPlayers.getPlayers(clientID)
 	if clientID ~= 0 then
 		return { clientID }
 	else
@@ -34,21 +34,21 @@ end
 
 --- @param clientID TE.Network.ClientID
 --- @return dr2c.PlayerID?
-function CPlayers.getFirstPlayer(clientID)
+function CNetworkPlayers.getFirstPlayer(clientID)
 	return clientID
 end
 
 --- @param playerID dr2c.PlayerID
-function CPlayers.getClientID(playerID)
+function CNetworkPlayers.getClientID(playerID)
 	--
 end
 
-function CPlayers.isLocalPlayer(playerID)
+function CNetworkPlayers.isLocalPlayer(playerID)
 	--
 end
 
-function CPlayers.listPlayers()
+function CNetworkPlayers.listPlayers()
 	--
 end
 
-return CPlayers
+return CNetworkPlayers

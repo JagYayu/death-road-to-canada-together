@@ -16,7 +16,7 @@
 #include "Event/EventHandleKey.hpp"
 #include "Graphic/RenderTarget.hpp"
 #include "Graphic/Renderer.hpp"
-#include "mod/ScriptErrors.hpp"
+#include "Mod/ScriptErrors.hpp"
 #include "Program/Engine.hpp"
 #include "Program/Window.hpp"
 #include "System/Time.hpp"

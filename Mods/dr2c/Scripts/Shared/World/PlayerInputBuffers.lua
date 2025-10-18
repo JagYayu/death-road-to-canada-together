@@ -13,68 +13,70 @@ local Table = require("TE.Table")
 
 local GPlayerInput = require("dr2c.Shared.World.PlayerInput")
 
---- @class dr2c.PlayerTickInputsData
---- @field archivedTick dr2c.WorldTick
---- @field [dr2c.PlayerID] dr2c.PlayerTickInputs
-
---- @class dr2c.PlayerInputCollectedEntry
---- @field [1] boolean isPrediction
---- @field [2] dr2c.PlayerInput value
-
 --- @class dr2c.GPlayerInputBuffers
 local GPlayerInputBuffers = {}
 
---- @type table<table, dr2c.PlayerTickInputsData>
-local playersTickInputsDataModules = setmetatable({}, {
+--- @type table<table, dr2c.PlayerInputBuffers>
+local playerInputBuffersModules = setmetatable({}, {
 	__mode = "k",
 })
 
-playersTickInputsDataModules = persist("playerTickInputsMapCollection", function()
-	return playersTickInputsDataModules
+playerInputBuffersModules = persist("playerInputBuffersModules", function()
+	return playerInputBuffersModules
 end)
 
 --- @return dr2c.PlayerInputBuffers
 function GPlayerInputBuffers.new()
 	local scriptName = TE.scriptLoader:getLoadingScriptName()
-	if scriptName ~= "" and playersTickInputsDataModules[scriptName] then
-		return playersTickInputsDataModules[scriptName]
+	if scriptName ~= "" and playerInputBuffersModules[scriptName] then
+		return playerInputBuffersModules[scriptName]
 	end
 
 	--- @class dr2c.PlayerInputBuffers
 	local PlayerInputBuffers = {}
 
-	playersTickInputsDataModules[scriptName] = PlayerInputBuffers
-
-	--- @class dr2c.PlayersTickInputsData
-	local playersTickInputsData = {
-		archivedTick = 0,
-	}
-
 	--- @class dr2c.PlayerInputs
-	--- @field [true] table<dr2c.PlayerInputID, Serializable>
-	--- @field [false] { [1]: dr2c.PlayerInputID, [2]: Serializable }[]
+	--- @field [1]? table<dr2c.PlayerInputID, Serializable> @A map of inputs, where store continuous inputs.
+	--- @field [2]? { [1]: dr2c.PlayerInputID, [2]: Serializable }[] @A list of inputs, where store continuous inputs.
 
 	--- @class dr2c.PlayerTickInputs
-	--- @field [integer] dr2c.PlayerInputs
-	--- @field beginTick integer?
-	--- @field endTick integer?
+	--- @field [dr2c.WorldTick] dr2c.PlayerInputs
+	--- @field beginTick? dr2c.WorldTick
+	--- @field endTick? dr2c.WorldTick
+
+	--- @class dr2c.PlayerInputCollectedEntry
+	--- @field deterministic boolean
+	--- @field map table<dr2c.PlayerInputID, Serializable>
+	--- @field list { [1]: dr2c.PlayerInputID, [2]: Serializable }[]
+
+	playerInputBuffersModules[scriptName] = PlayerInputBuffers
+
+	--- @class dr2c.PlayersTickInputsData
+	local playersTicksInputsData = {}
+	--- @type dr2c.WorldTick
+	local playersTicksInputsAchievedTick = 0
 
 	--- @warn Do not use this function unless you know what you're doing.
-	function PlayerInputBuffers.getRawTable()
-		return playersTickInputsData
+	--- @return dr2c.PlayersTickInputsData data
+	function PlayerInputBuffers.getData()
+		return playersTicksInputsData
 	end
 
-	function PlayerInputBuffers.clear()
-		playersTickInputsData = {
-			archivedTick = 0,
-		}
+	--- @return dr2c.WorldTick achievedTick
+	function PlayerInputBuffers.getAchievedTick()
+		return playersTicksInputsAchievedTick
+	end
+
+	function PlayerInputBuffers.reset()
+		playersTicksInputsData = {}
+		playersTicksInputsAchievedTick = 0
 	end
 
 	--- @param playerID dr2c.PlayerID
 	--- @param worldTick dr2c.WorldTick
 	--- @return dr2c.PlayerInputs?
 	function PlayerInputBuffers.getPlayerInputs(playerID, worldTick)
-		local playerTickInputsBuffer = playersTickInputsData[playerID]
+		local playerTickInputsBuffer = playersTicksInputsData[playerID]
 		if playerTickInputsBuffer then
 			return playerTickInputsBuffer[worldTick]
 		end
@@ -82,44 +84,44 @@ function GPlayerInputBuffers.new()
 
 	--- @param playerID dr2c.PlayerID
 	function PlayerInputBuffers.addPlayer(playerID)
-		if playersTickInputsData[playerID] then
+		if playersTicksInputsData[playerID] then
 			error(("Player %s already exists"):format(playerID), 2)
 		end
 
-		playersTickInputsData[playerID] = {}
+		playersTicksInputsData[playerID] = {}
 	end
 
 	--- @param playerID dr2c.PlayerID
 	function PlayerInputBuffers.removePlayer(playerID)
-		if not playersTickInputsData[playerID] then
+		if not playersTicksInputsData[playerID] then
 			error(("Player %s does not exists"):format(playerID), 2)
 		end
 
-		playersTickInputsData[playerID] = nil
+		playersTicksInputsData[playerID] = nil
 	end
 
 	--- @param playerID dr2c.PlayerID
 	--- @return boolean
 	function PlayerInputBuffers.hasPlayer(playerID)
-		return not not playersTickInputsData[playerID]
+		return not not playersTicksInputsData[playerID]
 	end
 
 	local function checkWorldTick(worldTick)
 		if type(worldTick) ~= "number" then
-			error("'worldTick' number expected", 2)
+			error("'worldTick' number expected", 3)
 		elseif worldTick <= 0 then
-			error("'worldTick' should be greater than 0", 2)
+			error("'worldTick' should be greater than 0", 3)
 		end
 	end
 
 	--- @param playerID dr2c.PlayerID
-	--- @param worldTick integer
+	--- @param worldTick dr2c.WorldTick
 	--- @param playerInputID dr2c.PlayerInputID
 	--- @param playerInputArg Serializable
 	function PlayerInputBuffers.addInput(playerID, worldTick, playerInputID, playerInputArg)
 		checkWorldTick(worldTick)
 
-		local playerTickInputs = playersTickInputsData[playerID]
+		local playerTickInputs = playersTicksInputsData[playerID]
 		if not playerTickInputs then
 			error(("Player %s not exist"):format(playerID), 2)
 		end
@@ -131,18 +133,18 @@ function GPlayerInputBuffers.new()
 		end
 
 		if GPlayerInput.isContinuous(playerInputID) then
-			local set = playerInputs[true]
+			local set = playerInputs[1]
 			if not set then
 				set = {}
-				playerInputs[true] = set
+				playerInputs[1] = set
 			end
 
 			set[playerInputID] = playerInputArg
 		else
-			local list = playerInputs[false]
+			local list = playerInputs[2]
 			if not list then
 				list = {}
-				playerInputs[false] = list
+				playerInputs[2] = list
 			end
 
 			if #list < GPlayerInput.InputListMaxSize then
@@ -168,7 +170,7 @@ function GPlayerInputBuffers.new()
 		checkWorldTick(worldTick)
 
 		do
-			local playerTickInputs = playersTickInputsData[playerID]
+			local playerTickInputs = playersTicksInputsData[playerID]
 			if not playerTickInputs then
 				error(("Player %s does not exists"):format(playerID), 2)
 			end
@@ -177,7 +179,7 @@ function GPlayerInputBuffers.new()
 		end
 
 		local archived = true
-		for _, playerTickInputs in pairs(playersTickInputsData) do
+		for _, playerTickInputs in pairs(playersTicksInputsData) do
 			if type(playerTickInputs) == "table" and not playerTickInputs[worldTick] then
 				archived = false
 				break
@@ -185,7 +187,7 @@ function GPlayerInputBuffers.new()
 		end
 
 		if archived then
-			playersTickInputsData.archivedTick = worldTick
+			playersTicksInputsData.archivedTick = worldTick
 
 			return true
 		else
@@ -194,49 +196,52 @@ function GPlayerInputBuffers.new()
 	end
 
 	--- @param playerID dr2c.PlayerID
-	--- @param worldTick integer
+	--- @param worldTick dr2c.WorldTick
 	function PlayerInputBuffers.removeInput(playerID, worldTick)
 		checkWorldTick(worldTick)
 
-		local inputBuffer = playersTickInputsData[playerID]
+		local inputBuffer = playersTicksInputsData[playerID]
 		if not inputBuffer then
 			inputBuffer = {}
-			playersTickInputsData[playerID] = inputBuffer
+			playersTicksInputsData[playerID] = inputBuffer
 		else
 			inputBuffer[worldTick] = nil
 		end
 	end
 
+	--- @param worldTick dr2c.WorldTick
+	--- @return boolean
 	function PlayerInputBuffers.isArchived(worldTick)
-		return worldTick <= playersTickInputsData.archivedTick
+		return worldTick <= playersTicksInputsData.archivedTick
 	end
 
-	--- @param playerInputBuffer dr2c.PlayerTickInputs
-	--- @param beginWorldTick integer
-	--- @param endWorldTick integer
-	--- @return table<integer, { deterministic: boolean, entry: dr2c.PlayerInputs }>
-	local function collectInputsInRangeImpl(playerInputBuffer, beginWorldTick, endWorldTick)
+	--- @param ticksInputsData dr2c.PlayerTickInputs
+	--- @param beginWorldTick dr2c.WorldTick
+	--- @param endWorldTick dr2c.WorldTick
+	--- @return table<dr2c.WorldTick, dr2c.PlayerInputCollectedEntry>
+	local function collectInputsInRangeImpl(ticksInputsData, beginWorldTick, endWorldTick)
 		local inputs = Table.new(endWorldTick - beginWorldTick + 1, 0)
 
 		--- @type dr2c.PlayerInputs
-		local prevEntry = {}
+		local prevInputsData = {}
 
 		for worldTick = beginWorldTick, endWorldTick do
-			local entry = playerInputBuffer[worldTick]
-			if entry then
-				prevEntry = entry
+			local inputsData = ticksInputsData[worldTick]
+			if inputsData then
+				prevInputsData = inputsData
 
 				inputs[worldTick] = {
 					deterministic = true,
-					entry = entry,
+					map = inputsData[1] or Table.empty,
+					list = inputsData[2] or Table.empty,
 				}
 			else -- Predict continuous inputs
-				entry = {}
-				local prevContinuousSet = prevEntry[GPlayerInput.Type.Continuous]
+				inputsData = {}
+				local prevContinuousSet = prevInputsData[GPlayerInput.Type.Continuous]
 
 				if prevContinuousSet then
 					local set = {}
-					entry[GPlayerInput.Type.Continuous] = set
+					inputsData[GPlayerInput.Type.Continuous] = set
 
 					for key, value in pairs(prevContinuousSet) do
 						set[key] = value
@@ -245,7 +250,8 @@ function GPlayerInputBuffers.new()
 
 				inputs[worldTick] = {
 					deterministic = false,
-					entry = entry,
+					map = inputsData[1] or Table.empty,
+					list = inputsData[2] or Table.empty,
 				}
 			end
 		end
@@ -253,26 +259,30 @@ function GPlayerInputBuffers.new()
 		return inputs
 	end
 
+	--- 收集一个玩家在两个时刻范围内的输入
 	--- @param playerID dr2c.PlayerID
-	--- @param beginWorldTick integer
-	--- @param endWorldTick integer
-	--- @return table<integer, { deterministic: boolean, entry: dr2c.PlayerInputs }>
-	function PlayerInputBuffers.collectInputsInRange(playerID, beginWorldTick, endWorldTick)
-		local inputBuffer = playersTickInputsData[playerID]
-		if not inputBuffer then
+	--- @param beginWorldTick dr2c.WorldTick
+	--- @param endWorldTick dr2c.WorldTick
+	--- @return table<dr2c.WorldTick, dr2c.PlayerInputCollectedEntry>
+	--- @nodiscard
+	function PlayerInputBuffers.collectPlayerInputsInRange(playerID, beginWorldTick, endWorldTick)
+		local ticksInputsData = playersTicksInputsData[playerID]
+		if ticksInputsData then
 			return Table.empty
 		end
 
-		return collectInputsInRangeImpl(inputBuffer, beginWorldTick, endWorldTick)
+		return collectInputsInRangeImpl(ticksInputsData, beginWorldTick, endWorldTick)
 	end
 
-	--- @param beginWorldTick integer
-	--- @param endWorldTick integer
-	--- @return table<dr2c.PlayerID, table<integer, { deterministic: boolean, entry: dr2c.PlayerInputCollectedEntry }>>
+	--- 收集所有玩家在两个时刻范围内的输入
+	--- @param beginWorldTick dr2c.WorldTick
+	--- @param endWorldTick dr2c.WorldTick
+	--- @return table<dr2c.PlayerID, table<dr2c.WorldTick, dr2c.PlayerInputCollectedEntry>>
+	--- @nodiscard
 	function PlayerInputBuffers.collectPlayersInputsInRange(beginWorldTick, endWorldTick)
 		local playersInputs = {}
 
-		for playerID, playerTickInputs in pairs(playersTickInputsData) do
+		for playerID, playerTickInputs in pairs(playersTicksInputsData) do
 			if type(playerTickInputs) == "table" then
 				playersInputs[playerID] = collectInputsInRangeImpl(playerTickInputs, beginWorldTick, endWorldTick)
 			end

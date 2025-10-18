@@ -2,7 +2,7 @@
 error("this is a lua library module")
 
 --- Import from cpp
---- @enum Log.ELogVerbosity
+--- @enum TE.ELogVerbosity
 ELogVerbosity = {
 	All = 255,
 	Debug = 16,

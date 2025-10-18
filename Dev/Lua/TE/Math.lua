@@ -21,7 +21,12 @@ local math_pi = math.pi
 --- @class TE.FMath
 local Math = {}
 
+Math.intMax = 2 ^ 53
+
+Math.intMin = -2 ^ 53
+
 Math.tau = 2 * math_pi
+
 Math.nan = 0 / 0
 
 local tau = Math.tau

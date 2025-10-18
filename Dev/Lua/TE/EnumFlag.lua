@@ -21,7 +21,7 @@ local select = select
 --- @param a integer
 --- @param ... integer
 --- @return boolean
-function EnumFlag.hasAny(a, ...)
+function EnumFlag.hasAnyV(a, ...)
 	for i = 1, select("#", ...) do
 		local b = select(i, ...)
 		if bit_band(a, b) ~= 0 then
@@ -32,19 +32,19 @@ function EnumFlag.hasAny(a, ...)
 	return false
 end
 
---- Single parameter overload version, slightly faster than `EnumFlag.hasAny`.
+--- Single parameter overload version, slightly faster than `EnumFlag.hasAnyV`.
 --- @see EnumFlag.hasAny
 --- @param a integer
 --- @param b integer
 --- @return boolean
-function EnumFlag.hasAny1(a, b)
+function EnumFlag.hasAny(a, b)
 	return bit_band(a, b) ~= 0
 end
 
 --- @param a integer
 --- @param ... integer
 --- @return boolean
-function EnumFlag.hasAll(a, ...)
+function EnumFlag.hasAllV(a, ...)
 	for i = 1, select("#", ...) do
 		local b = select(i, ...)
 		if bit_band(a, b) ~= b then
@@ -55,12 +55,12 @@ function EnumFlag.hasAll(a, ...)
 	return true
 end
 
---- Single parameter overload version, slightly faster than `EnumFlag.hasAll`.
+--- Single parameter overload version, slightly faster than `EnumFlag.hasAllV`.
 --- @see EnumFlag.hasAll
 --- @param a integer
 --- @param b integer
 --- @return boolean
-function EnumFlag.hasAll1(a, b)
+function EnumFlag.hasAll(a, b)
 	return bit_band(a, b) == b
 end
 
@@ -70,7 +70,7 @@ EnumFlag.mask = bit_bor
 --- @param a integer
 --- @param ... integer
 --- @return integer
-function EnumFlag.unmask(a, ...)
+function EnumFlag.unmaskV(a, ...)
 	for i = 1, select("#", ...) do
 		local b = select(i, ...)
 		a = bit_band(a, bit_bnot(b))
@@ -79,19 +79,19 @@ function EnumFlag.unmask(a, ...)
 	return a
 end
 
---- Single parameter overload version, slightly faster than `EnumFlag.unmask`.
+--- Single parameter overload version, slightly faster than `EnumFlag.unmaskV`.
 --- @see EnumFlag.unmask
 --- @param a integer
 --- @param b integer
 --- @return integer
-function EnumFlag.unmask1(a, b)
+function EnumFlag.unmask(a, b)
 	return bit_band(a, bit_bnot(b))
 end
 
 --- @param a integer
 --- @param ... integer
 --- @return integer
-function EnumFlag.toggle(a, ...)
+function EnumFlag.toggleV(a, ...)
 	for i = 1, select("#", ...) do
 		local b = select(i, ...)
 		a = bit_bxor(a, b)
@@ -100,12 +100,12 @@ function EnumFlag.toggle(a, ...)
 	return a
 end
 
---- Single parameter overload version, slightly faster than `EnumFlag.toggle`.
+--- Single parameter overload version, slightly faster than `EnumFlag.toggleV`.
 --- @see EnumFlag.toggle
 --- @param a integer
 --- @param b integer
 --- @return integer
-function EnumFlag.toggle1(a, b)
+function EnumFlag.toggle(a, b)
 	return bit_bxor(a, b)
 end
 

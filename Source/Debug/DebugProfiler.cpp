@@ -9,8 +9,8 @@
  *
  */
 
-#include "debug/DebugProfiler.hpp"
-#include "debug/EventProfiler.hpp"
+#include "Debug/DebugProfiler.hpp"
+#include "Debug/EventProfiler.hpp"
 #include "Event/EventManager.hpp"
 #include "Event/RuntimeEvent.hpp"
 #include "Mod/ScriptEngine.hpp"

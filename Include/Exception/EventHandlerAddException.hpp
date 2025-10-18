@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "exception/EventHandlerException.hpp"
+#include "Exception/EventHandlerException.hpp"
 #include "Program/Context.hpp"
 #include "Util/Definitions.hpp"
 

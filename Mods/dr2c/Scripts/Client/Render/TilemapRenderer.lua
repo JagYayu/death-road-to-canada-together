@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.render.TilemapRenderer
+-- @module dr2c.Client.Render.TilemapRenderer
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -12,6 +12,7 @@
 local CEntityECS = require("dr2c.Client.Entity.ECS")
 local CRenderFocus = require("dr2c.Client.Render.Focus")
 local CWorldScenes = require("dr2c.Client.World.Scenes")
+local CRenderCamera      = require("dr2c.Client.Render.Camera")
 local CRenderSprites = require("dr2c.Client.Render.Sprites")
 local CTileMap = require("dr2c.Client.Tile.Map")
 local CTileSchema = require("dr2c.Client.Tile.Schema")
@@ -283,7 +284,7 @@ local drawTileFunctions = {
 local function drawTileMap(renderer, tileMap)
 	if not noiseRandom then
 		noiseRandom = PerlinNoiseRandom()
-		noiseRandom:setSeed(67223)
+		noiseRandom:setSeed(67223) -- TODO
 		noiseRandom:setFrequency(0.875)
 	end
 
@@ -313,3 +314,9 @@ TE.events:add(N_("CRenderCamera"), function(e)
 		drawTileMap(e.renderer, tileMap)
 	end
 end, "RenderTilemap", "Tilemap")
+
+--- @param e dr2c.E.CRender
+TE.events:add(N_("CRenderCamera"), function(e)
+	local cameraX, cameraY = CRenderCamera.getCenter()
+	-- e.renderer:
+end, "", "Debug")

@@ -9,9 +9,9 @@
  *
  */
 
-#include "mod/ScriptErrors.hpp"
+#include "Mod/ScriptErrors.hpp"
 
-#include "mod/ScriptLoader.hpp"
+#include "Mod/ScriptLoader.hpp"
 #include "sol/string_view.hpp"
 #include "Util/Definitions.hpp"
 

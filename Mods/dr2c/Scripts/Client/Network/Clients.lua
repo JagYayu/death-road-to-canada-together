@@ -17,6 +17,7 @@ local CClient = require("dr2c.Client.Network.Client")
 local GThrottle = require("dr2c.Shared.Utils.Throttle")
 local GClient = require("dr2c.Shared.Network.Client")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 
 --- @class dr2c.ClientPrivateRequestEntry
 --- @field attribute dr2c.NetworkClientPrivateAttribute
@@ -125,10 +126,11 @@ function CClients.requestPrivateAttribute(clientID, privateAttribute, callback)
 		local requestID = privateAttributeRequestLatestID + 1
 		privateAttributeRequestLatestID = requestID
 
+		local fields = GNetworkMessageFields.ClientPrivateAttribute
 		CClient.sendReliable(GNetworkMessage.Type.ClientPrivateAttribute, {
-			requestID = requestID,
-			clientID = clientID,
-			attribute = privateAttribute,
+			[fields.requestID] = requestID,
+			[fields.clientID] = clientID,
+			[fields.attribute] = privateAttribute,
 		})
 
 		privateAttributeRequests[requestID] = {

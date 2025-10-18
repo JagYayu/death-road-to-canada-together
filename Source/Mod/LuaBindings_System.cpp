@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/LuaBindings.hpp"
+#include "Mod/LuaBindings.hpp"
 
 #include "Program/Window.hpp"
 #include "System/Keyboard.hpp"
@@ -31,12 +31,12 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	    {
 	        {"All", ELogVerbosity::All},
 	        {"None", ELogVerbosity::None},
+	        {"Fatal", ELogVerbosity::Fatal},
 	        {"Error", ELogVerbosity::Error},
 	        {"Warn", ELogVerbosity::Warn},
 	        {"Info", ELogVerbosity::Info},
 	        {"Debug", ELogVerbosity::Debug},
 	        {"Trace", ELogVerbosity::Trace},
-	        {"Fatal", ELogVerbosity::Fatal},
 	    });
 
 	TE_LB_ENUM(
@@ -70,6 +70,11 @@ void LuaBindings::InstallSystem(sol::state &lua, Context &context) noexcept
 	        {"Android", EOperatingSystem::Android},
 	        {"IOS", EOperatingSystem::IOS},
 	    });
+
+	TE_LB_USERTYPE(
+	    Log,
+	    "canOutput", &Log::CanOutput,
+	    "output", &Log::LuaOutput);
 
 	TE_LB_USERTYPE(
 	    Timer,

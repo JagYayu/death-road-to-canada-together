@@ -9,7 +9,7 @@
  *
  */
 
-#include "debug/DebugUtils.hpp"
+#include "Debug/DebugUtils.hpp"
 
 #include "Program/Window.hpp"
 

@@ -11,7 +11,7 @@
 
 #include "Network/NetworkManager.hpp"
 
-#include "exception/BadEnumException.hpp"
+#include "Exception/BadEnumException.hpp"
 #include "Mod/ScriptEngine.hpp"
 #include "Network/LocalClientSession.hpp"
 #include "Network/LocalServerSession.hpp"

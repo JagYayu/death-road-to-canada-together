@@ -9,7 +9,7 @@
  *
  */
 
-#include "debug/DebugLog.hpp"
+#include "Debug/DebugLog.hpp"
 #include "Util/EnumFlag.hpp"
 
 #include "imgui.h"

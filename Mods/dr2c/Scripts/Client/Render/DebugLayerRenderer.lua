@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.render.DebugLayerRenderer
+-- @module dr2c.Client.Render.DebugLayerRenderer
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -20,16 +20,16 @@ local filterTest = CEntityECS.filter({
 	"GameObject",
 })
 
+local drawRectArgs
+
 --- @param e dr2c.E.CRender
 TE.events:add(N_("CRenderCamera"), function(e)
 	local renderer = e.renderer
 
 	local CECS_getComponent = CEntityECS.getComponent
 
-	local drawArgs = {
-		destination = { 0, 0, 100, 100 },
-	}
-	local destination = drawArgs.destination
+	drawRectArgs = drawRectArgs or DrawRectArgs()
+	local drawRectArgsDest = drawRectArgs.destination
 
 	for index, id, typeID in CEntityECS.iterateEntities(filterTest) do
 		local gameObject = CECS_getComponent(id, "GameObject") --- @cast gameObject dr2c.Component.GameObject
@@ -38,12 +38,12 @@ TE.events:add(N_("CRenderCamera"), function(e)
 		local width = debugVisualRectangle.width
 		local height = debugVisualRectangle.height
 
-		destination[1] = gameObject.x - width * 0.5
-		destination[2] = gameObject.y - height * 0.5
-		destination[3] = width
-		destination[4] = height
+		drawRectArgsDest.x = gameObject.x - width * 0.5
+		drawRectArgsDest.y = gameObject.y - height * 0.5
+		drawRectArgsDest.w = width
+		drawRectArgsDest.h = height
 
-		-- renderer:drawRect(drawArgs)
+		renderer:drawRect(drawRectArgs)
 	end
 end, "RenderDebugObjects", "DebugObjects")
 

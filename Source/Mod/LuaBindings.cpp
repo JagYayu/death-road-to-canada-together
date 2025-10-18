@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/LuaBindings.hpp"
+#include "Mod/LuaBindings.hpp"
 
 #include "Data/VirtualFileSystem.hpp"
 #include "Debug/Debug.hpp"
@@ -172,11 +172,6 @@ void LuaBindings::ProvideLuaBindings(sol::state &lua, Context &context)
 	    ImageResources,
 	    "getID", &ImageResources::LuaGetID,
 	    "getPath", &ImageResources::LuaGetPath);
-
-	TE_LB_USERTYPE(
-	    Log,
-	    "canOutput", &Log::CanOutput,
-	    "output", &Log::LuaOutput);
 
 	TE_LB_USERTYPE(
 	    RectangleF,

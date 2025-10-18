@@ -266,20 +266,12 @@ TE.events = {}
 
 --- @alias Events.Sequence number
 
---- @class Events.AddHandlerArgs
---- @field event Events.Event
---- @field func fun(e: any)
---- @field name string?
---- @field order Events.Order?
---- @field key Events.Key?
---- @field sequence integer?
-
 --- @param event Events.Event
 --- @param func fun(e: any)
---- @param name string?
---- @param order Events.Order?
---- @param key (string | integer)?
---- @param sequence integer?
+--- @param name? string
+--- @param order? Events.Order
+--- @param key? string | integer
+--- @param sequence? integer
 function TE.events:add(event, func, name, order, key, sequence) end
 
 --- @param event Events.Event

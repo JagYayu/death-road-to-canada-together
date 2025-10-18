@@ -9,13 +9,13 @@
  *
  */
 
-#include "mod/LuaBindings.hpp"
+#include "Mod/LuaBindings.hpp"
 
 #include "Util/MicrosImpl.hpp"
 #include "Util/Version.hpp"
-#include "mod/ModManager.hpp"
-#include "mod/ScriptErrors.hpp"
-#include "mod/ScriptLoader.hpp"
+#include "Mod/ModManager.hpp"
+#include "Mod/ScriptErrors.hpp"
+#include "Mod/ScriptLoader.hpp"
 #include "sol/property.hpp"
 
 using namespace tudov;

@@ -9,14 +9,14 @@
  *
  */
 
-#include "mod/UnpackagedMod.hpp"
+#include "Mod/UnpackagedMod.hpp"
 
 #include "Data/PathType.hpp"
 #include "Data/VirtualFileSystem.hpp"
-#include "mod/Mod.hpp"
-#include "mod/ModConfig.hpp"
-#include "mod/ModManager.hpp"
-#include "mod/ScriptLoader.hpp"
+#include "Mod/Mod.hpp"
+#include "Mod/ModConfig.hpp"
+#include "Mod/ModManager.hpp"
+#include "Mod/ScriptLoader.hpp"
 #include "Program/Engine.hpp"
 #include "Resource/FontResources.hpp"
 #include "Resource/GlobalResourcesCollection.hpp"

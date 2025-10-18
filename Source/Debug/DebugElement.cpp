@@ -9,6 +9,6 @@
  *
  */
 
-#include "debug/DebugElement.hpp"
+#include "Debug/DebugElement.hpp"
 
 using namespace tudov;

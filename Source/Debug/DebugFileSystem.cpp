@@ -9,7 +9,7 @@
  *
  */
 
-#include "debug/DebugFileSystem.hpp"
+#include "Debug/DebugFileSystem.hpp"
 
 #include "Data/PathType.hpp"
 #include "Data/VirtualFileSystem.hpp"

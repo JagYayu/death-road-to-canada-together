@@ -9,7 +9,7 @@
  *
  */
 
-#include "debug/DebugMods.hpp"
+#include "Debug/DebugMods.hpp"
 
 using namespace tudov;
 

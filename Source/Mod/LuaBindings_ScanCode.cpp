@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/LuaBindings.hpp"
+#include "Mod/LuaBindings.hpp"
 
 #include "System/ScanCode.hpp"
 #include "Util/MicrosImpl.hpp"

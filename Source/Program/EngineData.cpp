@@ -28,10 +28,10 @@
 #include "System/KeyboardManager.hpp"
 #include "System/Log.hpp"
 #include "System/MouseManager.hpp"
-#include "mod/LuaBindings.hpp"
-#include "mod/ModManager.hpp"
-#include "mod/ScriptErrors.hpp"
-#include "mod/ScriptLoader.hpp"
+#include "Mod/LuaBindings.hpp"
+#include "Mod/ModManager.hpp"
+#include "Mod/ScriptErrors.hpp"
+#include "Mod/ScriptLoader.hpp"
 #include "scripts/GameScripts.hpp"
 
 

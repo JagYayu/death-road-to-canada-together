@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Shared.network.Message
+-- @module dr2c.Shared.Network.Message
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -11,6 +11,7 @@
 
 local String = require("TE.String")
 local Enum = require("TE.Enum")
+local stringBuffer = require("string.buffer")
 
 local Enum_hasValue = Enum.hasValue
 local String_bufferDecode = String.bufferDecode
@@ -125,17 +126,18 @@ end
 local encodingTable = { 0, nil }
 
 --- @param messageType dr2c.NetworkMessageType
---- @param messageContent any?
+--- @param messageContent? any
 --- @return string
 function GNetworkMessage.pack(messageType, messageContent)
 	encodingTable[1] = tonumber(messageType) or GNetworkMessage_Type_Heartbeat
-	encodingTable[2] = messageContent or nil
+	encodingTable[2] = messageContent
 	return String_bufferEncode(encodingTable)
 end
 
 --- @param message string
 --- @return dr2c.NetworkMessageType
 --- @return any?
+--- @nodiscard
 local function unpackImpl(message)
 	local messageTable = String_bufferDecode(message)
 	--- @diagnostic disable-next-line: need-check-nil
@@ -148,9 +150,10 @@ local function unpackImpl(message)
 	end
 end
 
---- @param message string?
+--- @param message? string
 --- @return dr2c.NetworkMessageType
 --- @return any?
+--- @nodiscard
 function GNetworkMessage.unpack(message)
 	if message then
 		local success, messageType, messageContent = pcall(unpackImpl, message)

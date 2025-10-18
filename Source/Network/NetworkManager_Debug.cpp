@@ -13,7 +13,7 @@
 
 #include "Debug/DebugConsole.hpp"
 #include "Debug/DebugManager.hpp"
-#include "exception/Exception.hpp"
+#include "Exception/Exception.hpp"
 #include "Network/LocalClientSession.hpp"
 #include "Network/LocalServerSession.hpp"
 #include "Network/NetworkSessionData.hpp"

@@ -19,6 +19,7 @@ local CNetworkPlayers = require("dr2c.Client.Network.Players")
 local CNetworkClient = require("dr2c.Client.Network.Client")
 local CWorldSession = require("dr2c.Client.World.Session")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local GWorldPlayerInput = require("dr2c.Shared.World.PlayerInput")
 local GWorldSession = require("dr2c.Shared.World.Session")
 
@@ -80,12 +81,12 @@ end
 
 --- @param e dr2c.E.ClientUpdate
 TE.events:add(N_("CUpdate"), function(e)
-	local nextWorldTick = CWorldTick.getCurrentTick() + 1
+	local nextWorldTick = CWorldTick.getLatestTick() + 1
 	if nextWorldTick <= 0 then
 		return
 	end
 
-	if CWorldSession.getAttribute(GWorldSession.Attribute.State) == GWorldSession.State.Inactive then
+	if CWorldSession.isInactive() then
 		return
 	end
 
@@ -121,20 +122,31 @@ TE.events:add(N_("CUpdate"), function(e)
 		return
 	end
 
-	local currentWorldTick = CWorldTick.getCurrentTick()
+	local currentWorldTick = CWorldTick.getLatestTick()
+	local canTrace = log.canTrace()
 
 	while previousWorldTick < currentWorldTick do
 		local worldTick = previousWorldTick + 1
 		previousWorldTick = worldTick
 
 		for _, playerID in ipairs(CNetworkPlayers.getPlayers(clientID)) do
+			local fields = GNetworkMessageFields.PlayerInputs
 			local messageContent = {
-				worldTick = worldTick,
-				playerID = playerID,
-				playerInputs = CWorldPlayerInputBuffers.getPlayerInputs(playerID, worldTick),
+				[fields.worldTick] = worldTick,
+				[fields.playerID] = playerID,
+				[fields.playerInputs] = CWorldPlayerInputBuffers.getPlayerInputs(playerID, worldTick),
 			}
 
-			CNetworkClient.sendReliable(GNetworkMessage.Type.PlayerInputs, messageContent)
+			CNetworkClient.sendReliable(
+				GNetworkMessage.Type.PlayerInputs,
+				messageContent,
+				nil,
+				GNetworkMessageFields.PlayerInputs
+			)
+
+			if canTrace then
+				log.trace(("Send player %d input"):format(playerID), messageContent)
+			end
 		end
 	end
 end, "SendPlayersInputs", "Inputs")

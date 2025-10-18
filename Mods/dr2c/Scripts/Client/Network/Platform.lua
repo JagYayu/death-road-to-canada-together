@@ -12,9 +12,9 @@
 local GClient = require("dr2c.Shared.Network.Client")
 local GPlatform = require("dr2c.Shared.Network.Platform")
 
-local CPlatform = {}
+local CNetworkPlatform = {}
 
-function CPlatform.getType()
+function CNetworkPlatform.getType()
 	return GPlatform.Type.Standalone
 end
 
@@ -32,4 +32,4 @@ TE.events:add(N_("CCollectVerifyAttributes"), function(e)
 	}
 end, "SendPlatformAndID", "Public")
 
-return CPlatform
+return CNetworkPlatform

@@ -37,6 +37,9 @@ local continuousIDSet = {
 	[GPlayerInput.ID.Move] = true,
 }
 
+--- @param playerInputID dr2c.PlayerInputID
+--- @return boolean
+--- @nodiscard
 function GPlayerInput.isContinuous(playerInputID)
 	return not not continuousIDSet[playerInputID]
 end

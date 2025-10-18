@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.render.Camera
+-- @module dr2c.Client.Render.Camera
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -9,13 +9,31 @@
 --
 --]]
 
-local Matrix3x3 = require("TE.Matrix3x3")
-
 --- @class dr2c.CUICamera
 local CUICamera = {}
 
 local centerX = 0
 local centerY = 0
+local viewWidth = 960 * 0.5
+local viewHeight = 640 * 0.5
+--- @type TE.RenderTarget?
+local renderTarget
+
+centerX = persist("centerX", function()
+	return centerX
+end)
+centerY = persist("centerY", function()
+	return centerY
+end)
+viewWidth = persist("viewWidth", function()
+	return viewWidth
+end)
+viewHeight = persist("viewHeight", function()
+	return viewHeight
+end)
+renderTarget = persist("renderTarget", function()
+	return renderTarget
+end)
 
 --- @return integer x
 --- @return integer y
@@ -30,17 +48,19 @@ function CUICamera.setCenter(x, y)
 	centerY = y
 end
 
---- @return integer x
---- @return integer y
+--- @return integer centerX
+--- @return integer centerY
 function CUICamera.getTargetCenterPosition()
 	return centerX, centerY
 end
 
---- @type TE.RenderTarget?
-local renderTarget
-local renderTargetWidth = 960 * 0.5
-local renderTargetHeight = 640 * 0.5
+--- @return number viewWidth
+--- @return number viewHeight
+function CUICamera.getViewSize()
+	return viewWidth, viewHeight
+end
 
+--- @return TE.RenderTarget
 function CUICamera.getRenderTarget()
 	return renderTarget
 end
@@ -61,7 +81,7 @@ TE.events:add(N_("CRender"), function(e)
 	local snapScale
 	local renderer = e.renderer
 	if not renderTarget then
-		renderTarget = renderer:newRenderTarget(renderTargetWidth, renderTargetHeight)
+		renderTarget = renderer:newRenderTarget(viewWidth, viewHeight)
 		snapScale = true
 	elseif renderTarget:resizeToFit() then
 		snapScale = true
@@ -77,8 +97,8 @@ TE.events:add(N_("CRender"), function(e)
 
 	local width, height = e.window:getSize()
 
-	local scale = math.max(width / renderTargetWidth, height / renderTargetHeight)
-	renderTarget:setCameraTargetPosition(0, 0)
+	local scale = math.max(width / viewWidth, height / viewHeight)
+	renderTarget:setCameraTargetPosition(centerX, centerY)
 	renderTarget:setCameraTargetScale(scale, scale)
 
 	TE.events:invoke(eventRenderCamera, e)
@@ -93,5 +113,16 @@ TE.events:add(N_("CRender"), function(e)
 	drawRectArgs.source = nil
 	renderer:drawRect(drawRectArgs)
 end, N_("RenderCamera"), "Camera")
+
+TE.events:add(N_("CUpdate"), function(e)
+	local CInput = require("dr2c.Client.System.Input")
+
+	if CInput.isKeyboardAvailable then
+		-- local dx = (CInput.isScanCodeHeld(EScanCode.A) and -1 or 0) + (CInput.isScanCodeHeld(EScanCode.D) and 1 or 0)
+		-- local dy = (CInput.isScanCodeHeld(EScanCode.W) and -1 or 0) + (CInput.isScanCodeHeld(EScanCode.S) and 1 or 0)
+		-- centerX = centerX + dx
+		-- centerY = centerY + dy
+	end
+end, "MoveCamera", "Inputs")
 
 return CUICamera

@@ -9,7 +9,7 @@
  *
  */
 
-#include "mod/ModManager.hpp"
+#include "Mod/ModManager.hpp"
 
 #include "Data/Constants.hpp"
 #include "Debug/DebugConsole.hpp"
@@ -21,11 +21,11 @@
 #include "Util/Definitions.hpp"
 #include "Util/EnumFlag.hpp"
 #include "Util/Version.hpp"
-#include "debug/DebugUtils.hpp"
-#include "mod/ModRequirement.hpp"
-#include "mod/ScriptLoader.hpp"
-#include "mod/ScriptProvider.hpp"
-#include "mod/UnpackagedMod.hpp"
+#include "Debug/DebugUtils.hpp"
+#include "Mod/ModRequirement.hpp"
+#include "Mod/ScriptLoader.hpp"
+#include "Mod/ScriptProvider.hpp"
+#include "Mod/UnpackagedMod.hpp"
 
 #include <functional>
 #include <memory>

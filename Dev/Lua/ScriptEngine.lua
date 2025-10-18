@@ -223,55 +223,69 @@ local function postProcessModGlobals(modUID, sandboxed, modGlobals, luaGlobals)
 	end
 end
 
-local function generateCanOutputFunction(scriptGlobals, rawLog, verb)
+local function generateCanOutputFunction(getLog, verb)
 	return function()
-		return rawLog:canOutput(verb)
+		return getLog():canOutput(verb)
 	end
 end
 
-local function generateOutputFunction(scriptGlobals, rawLog, verb)
-	local func = function(...)
+local function generateOutputFunction(getLog, verb)
+	return function(...)
 		local args = { ... }
 		for index, arg in ipairs(args) do
 			args[index] = inspect.inspect(arg)
 		end
 
-		rawLog:output(verb, args)
+		getLog():output(verb, args)
 	end
-
-	return func
 end
 
 local function wrapScriptGlobalsLog(scriptGlobals)
-	local rawLog = scriptGlobals.log
-	local generated = false
+	local rawGetLog = scriptGlobals.log
+	assert(type(rawGetLog) == "function")
 
-	local function index(self, k)
-		if not generated then
-			rawset(self, "canTrace", generateCanOutputFunction(self, rawLog, "Trace"))
-			rawset(self, "canDebug", generateCanOutputFunction(self, rawLog, "Debug"))
-			rawset(self, "canInfo", generateCanOutputFunction(self, rawLog, "Info"))
-			rawset(self, "canWarn", generateCanOutputFunction(self, rawLog, "Warn"))
-			rawset(self, "canError", generateCanOutputFunction(self, rawLog, "Error"))
-			rawset(self, "trace", generateOutputFunction(self, rawLog, "Trace"))
-			rawset(self, "debug", generateOutputFunction(self, rawLog, "Debug"))
-			rawset(self, "info", generateOutputFunction(self, rawLog, "Info"))
-			rawset(self, "warn", generateOutputFunction(self, rawLog, "Warn"))
-			rawset(self, "error", generateOutputFunction(self, rawLog, "Error"))
+	local metatable = {}
 
-			generated = true
-
-			if self[k] ~= nil then
-				return self[k]
-			end
+	local function getLog()
+		local log = metatable[metatable]
+		if not log then
+			log = assert(rawGetLog())
+			metatable[metatable] = log
 		end
 
-		return rawLog[k]
+		return log
 	end
 
-	scriptGlobals.log = setmetatable({}, {
-		__index = index,
-	})
+	metatable.__call = getLog
+
+	function metatable.__index(self, k)
+		local ELogVerbosity = scriptGlobals.ELogVerbosity
+
+		rawset(self, "canError", generateCanOutputFunction(getLog, ELogVerbosity.Error))
+		rawset(self, "canWarn", generateCanOutputFunction(getLog, ELogVerbosity.Warn))
+		rawset(self, "canInfo", generateCanOutputFunction(getLog, ELogVerbosity.Info))
+		rawset(self, "canDebug", generateCanOutputFunction(getLog, ELogVerbosity.Debug))
+		rawset(self, "canTrace", generateCanOutputFunction(getLog, ELogVerbosity.Trace))
+		rawset(self, "error", generateOutputFunction(getLog, ELogVerbosity.Error))
+		rawset(self, "warn", generateOutputFunction(getLog, ELogVerbosity.Warn))
+		rawset(self, "info", generateOutputFunction(getLog, ELogVerbosity.Info))
+		rawset(self, "debug", generateOutputFunction(getLog, ELogVerbosity.Debug))
+		rawset(self, "trace", generateOutputFunction(getLog, ELogVerbosity.Trace))
+
+		function metatable.__index(_, k1)
+			return getLog()[k1]
+		end
+
+		if self[k] ~= nil then
+			return self[k]
+		end
+
+		return getLog()[k]
+	end
+
+	lockMetatable(metatable)
+
+	scriptGlobals.log = setmetatable({}, metatable)
 end
 
 --- @param scriptID integer

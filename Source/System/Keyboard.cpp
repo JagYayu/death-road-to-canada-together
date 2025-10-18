@@ -243,7 +243,7 @@ bool Keyboard::LuaIsScanCodeHeld(sol::object scanCode, sol::object windowID) noe
 		GetScriptEngine().ThrowError("Bad argument to #1 '{}': number expected", TE_NAMEOF(scanCode));
 	}
 
-	return IsKeyCodeHeld(scanCode.as<EKeyCode>(), LuaObjectToWindowID(windowID));
+	return IsScanCodeHeld(scanCode.as<EScanCode>(), LuaObjectToWindowID(windowID));
 }
 
 template <typename T>
@@ -296,7 +296,7 @@ bool PrimaryKeyboard::IsScanCodeHeld(EScanCode scanCode, WindowID windowID) noex
 	const bool *state = SDL_GetKeyboardState(&count);
 	auto index = static_cast<std::size_t>(scanCode);
 
-	if (index >= count || index < 0)
+	if (index < count)
 	{
 		return state[index];
 	}

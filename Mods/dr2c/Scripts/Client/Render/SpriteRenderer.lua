@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.render.SpriteRenderer
+-- @module dr2c.Client.Render.SpriteRenderer
 -- @author JagYayu
 -- @brief
 -- @version 1.0

@@ -27,6 +27,7 @@ local CEntityECSSchema_getComponentTrait = CEntityECSSchema.getComponentTrait
 local CEntityECSSchema_getEntityTypeID = CEntityECSSchema.getEntityTypeID
 local assert = assert
 local setmetatable = setmetatable
+local ipairs = ipairs
 local type = type
 
 --- @class dr2c.EntityECS
@@ -57,6 +58,21 @@ local entitiesOperations = {}
 --- @class dr2c.ComponentPoolIDBased
 --- @field [dr2c.EntityTypeID] dr2c.Component
 
+--- @class dr2c.EntityFilterKey : string
+
+--- @class dr2c.EntityFilter
+--- @field key string
+
+--- @class dr2c.EntityFilters
+--- @field [integer] dr2c.EntityFilter
+--- @field [string] dr2c.EntityFilter
+
+--- @class dr2c.EntityIterationState
+--- @field [1] dr2c.EntityFilter
+--- @field [2] integer
+
+--- @class dr2c.ECSSerialTable
+
 --- @type dr2c.ComponentPoolTypeBased
 local componentsPoolArchetypeConstant = {}
 --- @type dr2c.ComponentPoolTypeBased
@@ -68,32 +84,15 @@ local componentsPoolEntitySerializable = {}
 --- @type dr2c.ComponentPoolIDBased
 local componentsPoolEntityTransient = {}
 
---- @class dr2c.EntityFilterToken : {}
-
---- @class dr2c.EntityFilterKey : string
-
---- @class dr2c.EntityFilter
-
---- @class dr2c.EntityFilters
---- @field [integer] dr2c.EntityFilter
---- @field [string] dr2c.EntityFilter
---- @field [dr2c.EntityFilterToken] dr2c.EntityFilter
-
---- @class dr2c.EntityIterationState
---- @field [1] dr2c.EntityFilter
---- @field [2] integer
-
 --- @type dr2c.EntityFilters
 local entityFilters = {}
-
---- @type boolean
-local hasAnyFilter = false
+--- @type table<dr2c.EntityFilter, table>
+local entityFilterValidations = setmetatable({}, { __mode = "k" })
+--- @type table<dr2c.EntityFilter, fun(entityTypeID: dr2c.EntityTypeID): boolean>
+local entityFilterCheckFunctions = setmetatable({}, { __mode = "k" })
 
 --- @type boolean
 local isIteratingEntities = false
-
---- @type table<dr2c.EntityTypeID, integer>
-local typedEntitiesCountCaches = {}
 
 entities = persist("entities", function()
 	return entities
@@ -136,6 +135,7 @@ local eventEntityDespawned = TE.events:new(N_("CEntityDespawn"), {
 
 --- @param l dr2c.Entity
 --- @param r dr2c.Entity
+--- @nodiscard
 local function compareEntityInstance(l, r)
 	if l[2] ~= r[2] then
 		return l[2] < r[2]
@@ -145,7 +145,7 @@ local function compareEntityInstance(l, r)
 end
 
 --- @return dr2c.Entity[]
-local function getSortedEntities()
+local function sortAndGetEntities()
 	if not entitiesSorted then
 		table.sort(entities, compareEntityInstance)
 		entitiesSorted = true
@@ -306,6 +306,8 @@ local function convertEntityImpl(entry)
 	-- operation, entityID, entityTypeID, ...
 end
 
+--- Update entities, execute all pending operations in queue.
+--- @return boolean operated
 function CEntityECS.update()
 	if isIteratingEntities then
 		error("Attempt to update ECS while iterating entities", 2)
@@ -377,13 +379,11 @@ local function createEntityFilter(key, requires, excludes)
 	entityFilter.key = key
 
 	if log.canWarn() then
-		entityFilter.validation = {
+		entityFilterValidations[entityFilter] = {
 			requires = requires,
 			excludes = excludes,
 			traceback = debug.traceback("", 3),
 		}
-	else
-		entityFilter.validation = nil
 	end
 
 	--- @type boolean[]
@@ -391,7 +391,7 @@ local function createEntityFilter(key, requires, excludes)
 
 	--- @param entityTypeID dr2c.EntityTypeID
 	--- @return boolean
-	function entityFilter.check(entityTypeID)
+	entityFilterCheckFunctions[entityFilter] = function(entityTypeID)
 		local result = filterEntityTypeIDCache[entityTypeID]
 
 		if result == nil then
@@ -430,7 +430,6 @@ function CEntityECS.filter(requiredComponents, excludedComponents)
 
 	if not entityFilter then
 		entityFilter = createEntityFilter(key, requires, excludes)
-		hasAnyFilter = true
 
 		entityFilters[#entityFilters + 1] = entityFilter
 		entityFilters[key] = entityFilter
@@ -445,7 +444,7 @@ end
 --- @return dr2c.EntityID id
 --- @return dr2c.EntityTypeID typeID
 local function entitiesIterator(entityFilter, index)
-	local check = entityFilter.check
+	local check = entityFilterCheckFunctions[entityFilter]
 
 	local entity = entities[index]
 	while entity do
@@ -469,7 +468,7 @@ end
 --- @return integer index
 --- @nodiscard
 function CEntityECS.iterateEntities(entityFilter)
-	getSortedEntities()
+	sortAndGetEntities()
 	isIteratingEntities = true
 	return entitiesIterator, entityFilter, 1
 end
@@ -516,7 +515,7 @@ end
 --- @return dr2c.EntityTypeID
 --- @nodiscard
 function CEntityECS.iterateEntitiesByType(entityTypeOrID)
-	getSortedEntities()
+	sortAndGetEntities()
 	isIteratingEntities = true
 	return entitiesTypedIterator, toEntityTypeID(entityTypeOrID), 1
 end
@@ -531,9 +530,9 @@ end
 --- @nodiscard
 function CEntityECS.countEntities(entityFilter)
 	local counter = 0
-	local check = entityFilter.check
+	local check = entityFilterCheckFunctions[entityFilter]
 
-	for _, entity in ipairs(getSortedEntities()) do
+	for _, entity in ipairs(sortAndGetEntities()) do
 		if check(entity[2]) then
 			counter = counter + 1
 		end
@@ -549,7 +548,7 @@ function CEntityECS.countEntitiesByType(entityTypeOrID)
 	local counter = 0
 	local entityTypeID = toEntityTypeID(entityTypeOrID)
 
-	for _, entity in ipairs(getSortedEntities()) do
+	for _, entity in ipairs(sortAndGetEntities()) do
 		if entity[2] == entityTypeID then
 			counter = counter + 1
 		end
@@ -587,26 +586,28 @@ function CEntityECS.clearEntities()
 	componentsPoolEntityTransient = {}
 end
 
---- @return table
+--- @return dr2c.ECSSerialTable
 --- @nodiscard
 function CEntityECS.getSerialTable()
 	CEntityECS.update()
 
 	return {
-		getSortedEntities(),
+		sortAndGetEntities(),
 		entitiesLatestID,
 		componentsPoolEntitySerializable,
 		componentsPoolArchetypeSerializable,
 	}
 end
 
---- @param data table
+--- @param data dr2c.ECSSerialTable
 function CEntityECS.setSerialTable(data)
 	entities = data[1]
 	entitiesLatestID = data[2]
 	componentsPoolEntitySerializable = data[3]
 	componentsPoolArchetypeSerializable = data[4]
 end
+
+function CEntityECS.receiveSnapshot() end
 
 --- @param e dr2c.E.CWorldTickProcess
 TE.events:add(N_("CWorldTickProcess"), function(e)
@@ -618,6 +619,10 @@ TE.events:add(N_("CWorldTickProcess"), function(e)
 Did an error occurred while iterating entities? Or not calling iterators inside a loop?")
 		end
 	end
+
+	--- @class dr2c.E.CWorldTickProcess
+	--- @field entitiesChanged boolean?
+	e = e
 
 	e.entitiesChanged = CEntityECS.update()
 end, "UpdateECS", "ECS")
@@ -641,7 +646,7 @@ end, "ResetArchetypeConstantComponents", "Components")
 
 --- @param e {}
 TE.events:add(N_("CEntitySchemaLoaded"), function(e)
-	if not hasAnyFilter or not log.canWarn() then
+	if not entityFilters[1] or not log.canWarn() then
 		return
 	end
 
@@ -657,11 +662,12 @@ TE.events:add(N_("CEntitySchemaLoaded"), function(e)
 	end
 
 	for _, entityFilter in ipairs(entityFilters) do
-		if entityFilter.validation then
-			validate(entityFilter.validation, entityFilter.validation.requires)
-			validate(entityFilter.validation, entityFilter.validation.excludes)
+		local validation = entityFilterValidations[entityFilter]
+		if validation then
+			validate(validation, validation.requires)
+			validate(validation, validation.excludes)
 
-			entityFilter.validation = nil
+			entityFilterValidations[entityFilter] = nil
 		end
 	end
 end, "ValidateEntityFilters", "Filters")

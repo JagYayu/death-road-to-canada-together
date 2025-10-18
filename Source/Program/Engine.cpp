@@ -30,8 +30,8 @@
 #include "System/Log.hpp"
 #include "System/LogMicros.hpp"
 #include "Util/MicrosImpl.hpp"
-#include "mod/ModManager.hpp"
-#include "mod/ScriptErrors.hpp"
+#include "Mod/ModManager.hpp"
+#include "Mod/ScriptErrors.hpp"
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_timer.h"

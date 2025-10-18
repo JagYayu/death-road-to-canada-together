@@ -9,7 +9,7 @@
  *
  */
 
-#include "exception/Exception.hpp"
+#include "Exception/Exception.hpp"
 #include "Program/Context.hpp"
 #include "Util/Definitions.hpp"
 
