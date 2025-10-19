@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Shared.utils.Throttle
+-- @module dr2c.Shared.Utils.Throttle
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -14,8 +14,10 @@ local GShared = require("dr2c.Shared.Module")
 local GShared_getTick = GShared.getTick
 local Time_getSystemTime = Time.getSystemTime
 
+--- @alias dr2c.ThrottleType "call" | "tick" | "time"
+
 --- @class dr2c.ThrottleData
---- @field [0] "call" | "tick" | "time"
+--- @field [0] dr2c.ThrottleType
 --- @field [1] boolean
 --- @field [2] integer
 --- @field [3] (integer | boolean)?
@@ -24,8 +26,9 @@ local Time_getSystemTime = Time.getSystemTime
 --- @class dr2c.Throttle : dr2c.ThrottleData
 --- @overload fun(): boolean
 
---- @class dr2c.GThrottle
-local GThrottle = {}
+--- 限流器，给函数设置调用频率
+--- @class dr2c.GUtilsThrottle
+local GUtilsThrottle = {}
 
 --- @type table<dr2c.Throttle, dr2c.Throttle>
 local instances = setmetatable({}, {
@@ -53,10 +56,11 @@ local metatableCall = {
 	end,
 }
 
+--- 根据调用次数限流，每隔`interval`次返回`false`
 --- @param interval integer
 --- @param invert boolean?
 --- @return dr2c.Throttle
-function GThrottle.newCall(interval, invert)
+function GUtilsThrottle.newCall(interval, invert)
 	checkParamInterval(interval, true)
 
 	local proxy = setmetatable({
@@ -85,7 +89,7 @@ local metatableTick = {
 --- @param interval integer
 --- @param invert boolean?
 --- @return dr2c.Throttle
-function GThrottle.newTick(interval, invert)
+function GUtilsThrottle.newTick(interval, invert)
 	checkParamInterval(interval, true)
 
 	local proxy = setmetatable({
@@ -99,7 +103,8 @@ function GThrottle.newTick(interval, invert)
 	return proxy
 end
 
-local metatableTime = {
+--- @type metatable
+local metatableThrottle = {
 	__call = function(t)
 		local st = Time_getSystemTime()
 		local v = (st - t[4]) > t[2]
@@ -123,7 +128,7 @@ local metatableTime = {
 --- @param invert boolean?
 --- @param lazy boolean? @default: true
 --- @return dr2c.Throttle
-function GThrottle.newTime(interval, invert, lazy)
+function GUtilsThrottle.newTime(interval, invert, lazy)
 	checkParamInterval(interval, false)
 
 	local proxy = setmetatable({
@@ -132,19 +137,25 @@ function GThrottle.newTime(interval, invert, lazy)
 		interval,
 		lazy ~= false,
 		Time_getSystemTime(),
-	}, metatableTime)
+	}, metatableThrottle)
 
 	instances[proxy] = proxy
 
 	return proxy
 end
 
-function GThrottle.getAll()
+function GUtilsThrottle.getAll()
 	return instances
+end
+
+--- @param throttle dr2c.Throttle
+--- @return dr2c.ThrottleType
+function GUtilsThrottle.getType(throttle)
+	return throttle[0]
 end
 
 TE.events:add("DebugSnapshot", function(e)
 	e.instances = instances
 end, scriptName, nil, scriptName)
 
-return GThrottle
+return GUtilsThrottle

@@ -26,7 +26,11 @@ local GWorldSession = require("dr2c.Shared.World.Session")
 --- @class dr2c.CPlayerInput
 local CPlayerInput = {}
 
-local previousWorldTick = 0
+local previousInputTick = 0
+
+previousInputTick = persist("previousInputTick", function()
+	return previousInputTick
+end)
 
 -- local function handleLocalPlayersMovement()
 -- 	--
@@ -79,7 +83,7 @@ function CPlayerInput.getPlayerMoveArg(playerID)
 	-- return (dx ~= 0 or dy ~= 0) and math.atan2(dy, dx) or nil
 end
 
---- @param e dr2c.E.ClientUpdate
+--- @param e dr2c.E.CUpdate
 TE.events:add(N_("CUpdate"), function(e)
 	local nextWorldTick = CWorldTick.getLatestTick() + 1
 	if nextWorldTick <= 0 then
@@ -93,10 +97,6 @@ TE.events:add(N_("CUpdate"), function(e)
 	local clientID = CNetworkClient.getClientID()
 	if not clientID then
 		return
-	end
-
-	if log.canTrace() then
-		-- log.trace("Adding players input")
 	end
 
 	local messageContent = {}
@@ -117,6 +117,10 @@ TE.events:add(N_("CUpdate"), function(e)
 end, "HandlePlayersContinuousInputs", "Inputs")
 
 TE.events:add(N_("CUpdate"), function(e)
+	if CWorldSession.isInactive() then
+		return
+	end
+
 	local clientID = CNetworkClient.getClientID()
 	if not clientID then
 		return
@@ -125,16 +129,28 @@ TE.events:add(N_("CUpdate"), function(e)
 	local currentWorldTick = CWorldTick.getLatestTick()
 	local canTrace = log.canTrace()
 
-	while previousWorldTick < currentWorldTick do
-		local worldTick = previousWorldTick + 1
-		previousWorldTick = worldTick
+	if previousInputTick > currentWorldTick then
+		previousInputTick = currentWorldTick
+	elseif previousInputTick < currentWorldTick - CWorldTick.getTPS() then
+		previousInputTick = currentWorldTick - CWorldTick.getTPS()
+	end
+
+	local i = 0
+	while previousInputTick < currentWorldTick do
+		i = i + 1
+		if i > 1000 then
+			error()
+		end
+
+		local worldTick = previousInputTick + 1
+		previousInputTick = worldTick
 
 		for _, playerID in ipairs(CNetworkPlayers.getPlayers(clientID)) do
 			local fields = GNetworkMessageFields.PlayerInputs
 			local messageContent = {
 				[fields.worldTick] = worldTick,
 				[fields.playerID] = playerID,
-				[fields.playerInputs] = CWorldPlayerInputBuffers.getPlayerInputs(playerID, worldTick),
+				[fields.playerInputs] = CWorldPlayerInputBuffers.getInputs(playerID, worldTick),
 			}
 
 			CNetworkClient.sendReliable(

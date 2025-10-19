@@ -12,9 +12,11 @@
 local Enum = require("TE.Enum")
 local EnumFlag = require("TE.EnumFlag")
 local Table = require("TE.Table")
-local List  = require("TE.List")
+local List = require("TE.List")
+local inspect = require("inspect")
 
 local GNetworkClient = require("dr2c.Shared.Network.Client")
+local GNetworkClients = require("dr2c.Shared.Network.Clients")
 local GNetworkDisconnection = require("dr2c.Shared.Network.Disconnection")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local SNetworkServer = require("dr2c.Server.Network.Server")
@@ -38,6 +40,8 @@ local clientsPrivateAttributes = {}
 --- @type dr2c.ServerUnverifiedClient[]
 local unverifiedClients = {}
 
+local authoritativeClient
+
 clientList = persist("clientList", function()
 	return clientList
 end)
@@ -51,14 +55,38 @@ unverifiedClients = persist("unverifiedClients", function()
 	return unverifiedClients
 end)
 
---- @return TE.Network.ClientID?
-function SNetworkClients.getAuthoritativeClient()
-	for _, clientID in ipairs(clientList) do
-		local permissions = clientsPublicAttributes[clientID][GNetworkClient.PublicAttribute.Permissions]
-		if permissions and EnumFlag.hasAll(permissions, GNetworkClient.Permission.Authority) then
-			return clientID
-		end
+function SNetworkClients.hasClient() end
+
+--- @param clientID TE.Network.ClientID
+--- @param verified boolean?
+function SNetworkClients.addClient(clientID, verified)
+	clientList[#clientList + 1] = clientID
+	local publicAttributes, privateAttributes = GNetworkClient.initializeClientAttributes(clientID, {}, {})
+	clientsPublicAttributes[clientID] = publicAttributes
+	clientsPrivateAttributes[clientID] = privateAttributes
+
+	if verified then
+		publicAttributes[GNetworkClient.PublicAttribute.State] = GNetworkClient.State.Verified
+	else
+		publicAttributes[GNetworkClient.PublicAttribute.State] = GNetworkClient.State.Verifying
+
+		unverifiedClients[#unverifiedClients + 1] = {
+			clientID = clientID,
+			expireTime = Time.getSystemTime() + 15,
+		}
 	end
+end
+
+--- @param clientID TE.Network.ClientID
+--- @return boolean
+function SNetworkClients.removeClient(clientID)
+	if not SNetworkClients.hasClient() then
+		return false
+	end
+
+	List.removeFirst(clientList, clientID)
+
+	return true
 end
 
 --- @param clientID TE.Network.ClientID
@@ -73,24 +101,23 @@ function SNetworkClients.isAuthoritativeClient(clientID)
 	end
 end
 
---- @param clientID TE.Network.ClientID
---- @param verified boolean?
-function SNetworkClients.addClient(clientID, verified)
-	clientList[#clientList + 1] = clientID
+--- 获取权威客户端
+--- @return TE.Network.ClientID?
+--- @nodiscard
+function SNetworkClients.getAuthoritativeClient()
+	if authoritativeClient ~= nil then
+		return authoritativeClient or nil
+	end
 
-	local publicAttributes, privateAttributes = GNetworkClient.initializeClientAttributes(clientID, {}, {})
-	clientsPublicAttributes[clientID] = publicAttributes
-	clientsPrivateAttributes[clientID] = privateAttributes
-
-	if verified then
-		publicAttributes[GNetworkClient.PublicAttribute.State] = GNetworkClient.State.Verified
-	else
-		publicAttributes[GNetworkClient.PublicAttribute.State] = GNetworkClient.State.Verifying
-
-		unverifiedClients[#unverifiedClients + 1] = {
-			clientID = clientID,
-			expireTime = Time.getSystemTime() + 15,
-		}
+	local clients = GNetworkClients.getAuthoritativeClients(clientList, clientsPublicAttributes)
+	if #clients == 1 then
+		authoritativeClient = clients[1]
+	elseif #clients == 0 then
+		authoritativeClient = false
+	elseif log.canWarn() then
+		log.warn(("Multiple authoritative clients detected in this server: %s"):format( --
+			inspect(clients)
+		))
 	end
 end
 

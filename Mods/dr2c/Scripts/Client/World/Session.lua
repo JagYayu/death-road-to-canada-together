@@ -78,12 +78,14 @@ CWorldSession.eventCWorldSessionUnpause = TE.events:new(N_("CWorldSessionUnpause
 })
 
 --- 开始世界会话，将立即应用到本地客户端
---- 不是所有可用的属性都是有效的，一些内部的属性例如`GWorldSession.Attribute.TimeStart`会被自动覆盖。
+--- 不是所有可用的属性都是有效的，一些内部的属性例如`GWorldSession.Attribute.TimeStart`会被函数或其他时间句柄重写。
 --- @param attributes dr2c.WorldSessionAttributes
 --- @param sponsorClientID TE.Network.ClientID?
 function CWorldSession.startLocally(attributes, sponsorClientID)
 	sponsorClientID = sponsorClientID or CNetworkClient.getClientID() or 0
 	CWorldSession.setAttributes(attributes)
+
+	CWorldSession.setAttribute(GWorldSession.Attribute.TimeStart, Time.getSystemTime())
 
 	--- @class dr2c.E.CWorldSessionStart
 	local e = {

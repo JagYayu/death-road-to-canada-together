@@ -15,9 +15,11 @@ local List = require("TE.List")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local GNetworkReason = require("dr2c.Shared.Network.Reason")
+local GWorldSession = require("dr2c.Shared.World.Session")
 local GWorldSnapshot = require("dr2c.Shared.World.Snapshot")
 local SNetworkClients = require("dr2c.Server.Network.Clients")
 local SNetworkServer = require("dr2c.Server.Network.Server")
+local SWorldSession = require("dr2c.Server.World.Session")
 
 --- @class dr2c.SWorldSnapshot : dr2c.WorldSnapshot
 local SWorldSnapshot = GWorldSnapshot.new()
@@ -105,12 +107,6 @@ local function updateAndTryRemoveRequest(entry, index)
 	return false
 end
 
-function SWorldSnapshot.update()
-	if serverSnapshotRequests[1] then
-		List.removeIf(serverSnapshotRequests, updateAndTryRemoveRequest)
-	end
-end
-
 local function resetSnapshots()
 	SWorldSnapshot.clear()
 end
@@ -124,7 +120,18 @@ TE.events:add(N_("SWorldSessionStart"), resetSnapshots, "ResetSnapshots", "Reset
 TE.events:add(N_("SWorldSessionFinish"), resetSnapshots, "ResetSnapshots", "Reset")
 
 TE.events:add(N_("SUpdate"), function(e)
-	SWorldSnapshot.update()
+	if serverSnapshotRequests[1] then
+		List.removeIf(serverSnapshotRequests, updateAndTryRemoveRequest)
+	end
+
+	local snapshotLifetime = SWorldSession.getAttribute(GWorldSession.Attribute.DataLifetime)
+	if snapshotLifetime then
+		local droppedNumber = SWorldSnapshot.dropOldSnapshots(snapshotLifetime)
+
+		if droppedNumber and log.canDebug() then
+			log.debug(("Dropped %d old snapshots"):format(droppedNumber))
+		end
+	end
 end, "responseSnapshotRequests", "Network", nil, 1)
 
 --- @param e dr2c.E.SMessage

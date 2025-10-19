@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.network.Clients
+-- @module dr2c.Client.Network.Clients
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -9,8 +9,7 @@
 --
 --]]
 
-local String = require("TE.String")
-local Enum = require("TE.Enum")
+local List = require("TE.List")
 local Utility = require("TE.Utility")
 
 local CClient = require("dr2c.Client.Network.Client")
@@ -25,7 +24,35 @@ local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 --- @field expireTime number
 
 --- @class dr2c.CClients
-local CClients = {}
+local CNetworkClients = {}
+
+--- @type TE.Network.ClientID[]
+local clientList = {}
+
+--- @type table<TE.Network.ClientID, table<dr2c.NetworkClientPublicAttribute, any>>
+local clientsPublicAttributes = {}
+
+--- @type table<TE.Network.ClientID, table<dr2c.NetworkClientPublicAttribute, any>>
+local clientsPrivateAttributes = {}
+
+--- @type table<number, dr2c.ClientPrivateRequestEntry>
+local privateAttributeRequests = {}
+
+--- @type integer
+local latestPrivateAttributeRequestID = 0
+
+clientsPublicAttributes = persist("clientsPublicAttributes", function()
+	return clientsPublicAttributes
+end)
+clientsPrivateAttributes = persist("clientsPrivateAttributes", function()
+	return clientsPrivateAttributes
+end)
+privateAttributeRequests = persist("privateAttributeRequests", function()
+	return privateAttributeRequests
+end)
+latestPrivateAttributeRequestID = persist("latestPrivateAttributeRequestID", function()
+	return latestPrivateAttributeRequestID
+end)
 
 --- @type table<number, TE.Network.ClientID>
 local secretToken2ClientID = {}
@@ -33,49 +60,27 @@ secretToken2ClientID = persist("secretToken2ClientID", function()
 	return secretToken2ClientID
 end)
 
---- @type table<TE.Network.ClientID, table<dr2c.NetworkClientPublicAttribute, any>>
-local clientsPublicAttributes = {}
-clientsPublicAttributes = persist("clientsPublicAttributes", function()
-	return clientsPublicAttributes
-end)
-
---- @type table<TE.Network.ClientID, table<dr2c.NetworkClientPublicAttribute, any>>
-local clientsPrivateAttributes = {}
-clientsPrivateAttributes = persist("clientsPrivateAttributes", function()
-	return clientsPrivateAttributes
-end)
-
---- @type table<number, dr2c.ClientPrivateRequestEntry>
-local privateAttributeRequests = {}
-privateAttributeRequests = persist("privateAttributeRequests", function()
-	return privateAttributeRequests
-end)
-
-local privateAttributeRequestLatestID = 0
-privateAttributeRequestLatestID = persist("privateAttributeRequestLatestID", function()
-	return privateAttributeRequestLatestID
-end)
-
-CClients.eventCClientAdded = TE.events:new(N_("CClientAdded"), {
+CNetworkClients.eventCClientAdded = TE.events:new(N_("CClientAdded"), {
 	"PlayerInputBuffer",
 })
-CClients.eventCClientRemoved = TE.events:new(N_("CClientRemoved"), {
+CNetworkClients.eventCClientRemoved = TE.events:new(N_("CClientRemoved"), {
 	"PlayerInputBuffer",
 })
 
 --- @param clientID TE.Network.ClientID
 --- @return boolean
 --- @nodiscard
-function CClients.hasClient(clientID)
+function CNetworkClients.hasClient(clientID)
 	return clientsPublicAttributes[clientID] ~= nil
 end
 
 --- @param clientID TE.Network.ClientID
-function CClients.addClient(clientID)
-	if CClients.hasClient(clientID) then
+function CNetworkClients.addClient(clientID)
+	if CNetworkClients.hasClient(clientID) then
 		error(("Client %s already exists"):format(clientID), 2)
 	end
 
+	clientList[#clientList + 1] = clientID
 	clientsPublicAttributes[clientID] = {}
 	clientsPrivateAttributes[clientID] = {}
 
@@ -83,15 +88,16 @@ function CClients.addClient(clientID)
 	local e = {
 		clientID = clientID,
 	}
-	TE.events:invoke(CClients.eventCClientAdded, e)
+	TE.events:invoke(CNetworkClients.eventCClientAdded, e)
 end
 
 --- @param clientID TE.Network.ClientID
-function CClients.removeClient(clientID)
-	if not CClients.hasClient(clientID) then
+function CNetworkClients.removeClient(clientID)
+	if not CNetworkClients.hasClient(clientID) then
 		error(("Client %s already does not exist"):format(clientID), 2)
 	end
 
+	List.removeFirst(clientList, clientID)
 	clientsPublicAttributes[clientID] = nil
 	clientsPrivateAttributes[clientID] = nil
 
@@ -99,14 +105,14 @@ function CClients.removeClient(clientID)
 	local e = {
 		clientID = clientID,
 	}
-	TE.events:invoke(CClients.eventCClientRemoved, e)
+	TE.events:invoke(CNetworkClients.eventCClientRemoved, e)
 end
 
 --- @param clientID TE.Network.ClientID
 --- @param publicAttribute dr2c.NetworkClientPublicAttribute
 --- @return any?
 --- @nodiscard
-function CClients.getPublicAttribute(clientID, publicAttribute)
+function CNetworkClients.getPublicAttribute(clientID, publicAttribute)
 	local attributes = clientsPublicAttributes[clientID]
 	if attributes then
 		return attributes[publicAttribute]
@@ -116,15 +122,15 @@ end
 --- @param clientID TE.Network.ClientID
 --- @param privateAttribute dr2c.NetworkClientPrivateAttribute
 --- @param callback fun(success: boolean, attribute: any)
-function CClients.requestPrivateAttribute(clientID, privateAttribute, callback)
+function CNetworkClients.requestPrivateAttribute(clientID, privateAttribute, callback)
 	local attributes = clientsPublicAttributes[clientID]
 	local value = attributes[privateAttribute]
 
 	if value ~= nil then
 		callback(true, value)
 	else
-		local requestID = privateAttributeRequestLatestID + 1
-		privateAttributeRequestLatestID = requestID
+		local requestID = latestPrivateAttributeRequestID + 1
+		latestPrivateAttributeRequestID = requestID
 
 		local fields = GNetworkMessageFields.ClientPrivateAttribute
 		CClient.sendReliable(GNetworkMessage.Type.ClientPrivateAttribute, {
@@ -145,7 +151,7 @@ end
 --- @param clientID TE.Network.ClientID
 --- @param publicAttribute dr2c.NetworkClientPublicAttribute
 --- @param attributeValue any
-function CClients.setPublicAttribute(clientID, publicAttribute, attributeValue)
+function CNetworkClients.setPublicAttribute(clientID, publicAttribute, attributeValue)
 	local attributes = clientsPublicAttributes[clientID]
 	if not attributes then
 		error(("Client %s does not exists"):format(clientID), 2)
@@ -158,7 +164,7 @@ end
 --- @param clientID TE.Network.ClientID
 --- @param privateAttribute dr2c.NetworkClientPrivateAttribute
 --- @param attributeValue any
-function CClients.setPrivateAttribute(clientID, privateAttribute, attributeValue)
+function CNetworkClients.setPrivateAttribute(clientID, privateAttribute, attributeValue)
 	local attributes = clientsPrivateAttributes[clientID]
 	if not attributes then
 		error(("Client %s does not exists"):format(clientID), 2)
@@ -181,7 +187,7 @@ TE.events:add(N_("CMessage"), function(e)
 		log.trace(("Received client %s connect message"):format(clientID))
 	end
 
-	CClients.addClient(clientID)
+	CNetworkClients.addClient(clientID)
 end, "ReceiveClientConnect", "Receive", GNetworkMessage.Type.ClientConnect)
 
 TE.events:add(N_("CMessage"), function(e)
@@ -191,13 +197,13 @@ TE.events:add(N_("CMessage"), function(e)
 		log.trace(("Received client %s disconnect message"):format(clientID))
 	end
 
-	CClients.removeClient(clientID)
+	CNetworkClients.removeClient(clientID)
 end, "ReceiveClientDisconnect", "Receive", GNetworkMessage.Type.ClientDisconnect)
 
 local function initializeClientsAttributes(serverClientsPublicAttributes)
 	for clientID, clientPublicAttributes in pairs(serverClientsPublicAttributes) do
-		if not CClients.hasClient(clientID) then
-			CClients.addClient(clientID)
+		if not CNetworkClients.hasClient(clientID) then
+			CNetworkClients.addClient(clientID)
 
 			clientsPublicAttributes[clientID] = clientPublicAttributes
 		end
@@ -276,4 +282,4 @@ TE.events:add(N_("CUpdate"), function(e)
 	end
 end, "UpdatePrivateAttributeRequests", "Network")
 
-return CClients
+return CNetworkClients

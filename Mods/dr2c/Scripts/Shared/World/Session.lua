@@ -28,15 +28,35 @@ local Function = require("TE.Function")
 local GWorldSession = {}
 
 GWorldSession.Attribute = Enum.sequence({
+	-- Framework
+	-- 框架
+
+	--- 当前游戏状态
 	State = 1,
+	--- 开始的时间
 	TimeStart = 2,
+	--- 暂停的时间
 	TimePaused = 3,
+	--- 总暂停时间
 	ElapsedPaused = 4,
-	Level = 5,
-	Scenes = 6,
-	Mode = 7,
-	TileMaps = 8,
-	Zombies = 9,
+	--- 数据寿命，影响快照、玩家输入的缓存，超过最远部分会被丢弃。单位为时间秒，默认10
+	DataLifetime = 5,
+	--- 回滚限度，用于确定回滚的预期最远距离，服务器会忽略过于遥远的用户输入。单位为时间秒，默认1
+	RollbackLimit = 6,
+
+	-- Gameplay
+	-- 玩法
+
+	--- 当前关卡
+	Level = 11,
+	--- 关卡内所有的场景
+	Scenes = 12,
+	--- 游戏模式
+	Mode = 13,
+	--- 所有瓦片地图
+	TileMaps = 14,
+	--- 僵尸数量乘数
+	ZombieMultiplier = 15,
 })
 
 local GWorldSession_Attribute_State = GWorldSession.Attribute.State

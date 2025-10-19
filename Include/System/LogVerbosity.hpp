@@ -24,4 +24,5 @@ enum class ELogVerbosity : std::uint8_t
 	Info = 1 << 3,
 	Debug = 1 << 4,
 	Trace = 1 << 5,
+	Default = Fatal | Error | Warn | Info,
 };

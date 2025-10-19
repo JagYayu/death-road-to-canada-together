@@ -3,12 +3,20 @@ error("this is a lua library module")
 
 --- @diagnostic disable: duplicate-doc-alias
 
+--- Invoke when the server of the client connected a new client.
+--- 当客户端的服务器连接了一个新的客户端时调用。
 --- @alias N_Hint "CClientAdded"
+--- Invoke when the server of the client disconnected a client.
+--- 当客户端的服务器断开连接了一个客户端时调用。
 --- @alias N_Hint "CClientRemoved"
+--- Invoke when the client is collecting verifying attributes.
+--- 当客户端在收集验证属性时调用。
 --- @alias N_Hint "CCollectVerifyAttributes"
---- Invoke when the local client is connected to server
+--- Invoke when the client is connected to server.
+--- 当客户端连接到服务器时调用。
 --- @alias N_Hint "CConnect"
---- Invoke when the local client is disconnected from server
+--- Invoke when the client is disconnected from server
+--- 当客户端从服务器断开连接时调用。
 --- @alias N_Hint "CDisconnect"
 --- @alias N_Hint "CEntitySchemaLoadComponents"
 --- @alias N_Hint "CEntitySchemaLoadEntities"

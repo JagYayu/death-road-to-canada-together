@@ -9,12 +9,7 @@
 --
 --]]
 
-local String = require("TE.String")
-local Utility = require("TE.Utility")
-
-local GNetworkMessage = require("dr2c.Shared.Network.Message")
-
-local hasServer = pcall(require, "dr2c.Server.World.Snapshot")
+local Table = require("TE.Table")
 
 local math_floor = math.floor
 
@@ -24,17 +19,17 @@ local math_floor = math.floor
 local GWorldSnapshot = {}
 
 --- @type table<string, dr2c.WorldSnapshot>
-local worldSnapshotModules = setmetatable({}, { __mode = "v" })
+local modules = setmetatable({}, { __mode = "v" })
 
 local ticksPerID = 1
 local idsPerTick = 1 / ticksPerID
 
-worldSnapshotModules = persist("worldSnapshotModules", function()
-	return worldSnapshotModules
+modules = persist("modulesData", function()
+	return modules
 end)
 
 function GWorldSnapshot.getAll()
-	return worldSnapshotModules
+	return modules
 end
 
 --- @param snapshotID dr2c.SnapshotID
@@ -54,15 +49,10 @@ end
 --- @return dr2c.WorldSnapshot
 --- @nodiscard
 function GWorldSnapshot.new()
-	local scriptName = TE.scriptLoader:getLoadingScriptName()
-	if scriptName ~= "" and worldSnapshotModules[scriptName] then
-		return worldSnapshotModules[scriptName]
-	end
+	local GWorldTick = require("dr2c.Shared.World.Tick")
 
 	--- @class dr2c.WorldSnapshot
 	local WorldSnapshot = {}
-
-	worldSnapshotModules[scriptName] = WorldSnapshot
 
 	--- 快照数据列表
 	--- 快照ID都是连续的，中间不允许出现ID空洞或跳跃，因此只能连续批量地移除。
@@ -72,6 +62,19 @@ function GWorldSnapshot.new()
 	--- @type dr2c.SnapshotID?
 	local firstSnapshotID = nil
 
+	local scriptName = TE.scriptLoader:getLoadingScriptName()
+	if scriptName ~= "" then
+		if modules[scriptName] then
+			snapshotDataList = modules[scriptName][1]
+			firstSnapshotID = modules[scriptName][2]
+		else
+			modules[scriptName] = {
+				snapshotDataList,
+				firstSnapshotID,
+			}
+		end
+	end
+
 	function WorldSnapshot.clear()
 		snapshotDataList = {}
 		firstSnapshotID = nil
@@ -80,6 +83,11 @@ function GWorldSnapshot.new()
 	--- @return string[]
 	function WorldSnapshot.getSnapshotDataList()
 		return snapshotDataList
+	end
+
+	function WorldSnapshot.setSnapshotDataList(snapshotDataList_)
+		snapshotDataList = snapshotDataList_
+		firstSnapshotID = snapshotDataList[1]
 	end
 
 	--- @return integer
@@ -97,13 +105,9 @@ function GWorldSnapshot.new()
 		return firstSnapshotID and (firstSnapshotID + #snapshotDataList - 1) or nil
 	end
 
-	--- @param snapshotID integer
+	--- @param snapshotID dr2c.SnapshotID
 	--- @return string?
 	function WorldSnapshot.getSnapshotData(snapshotID)
-		if snapshotID ~= math_floor(snapshotID) then
-			return
-		end
-
 		if not firstSnapshotID then
 			return
 		elseif snapshotID < firstSnapshotID then
@@ -112,21 +116,29 @@ function GWorldSnapshot.new()
 			return
 		end
 
-		return snapshotDataList[snapshotID]
+		return snapshotDataList[snapshotID - firstSnapshotID + 1]
 	end
 
 	--- @param snapshotID integer
 	--- @param snapshotData string
 	function WorldSnapshot.setSnapshotData(snapshotID, snapshotData)
 		if snapshotID <= 0 then
-			error("snapshotID must be greater than 0", 2)
-		elseif firstSnapshotID and not snapshotDataList[snapshotID - 1] then
-			error("Snapshot list cannot have holes", 2)
+			error("SnapshotID must be greater than 0", 2)
 		end
 
-		snapshotDataList[snapshotID] = snapshotData
+		WorldSnapshot.dropBackward(snapshotID)
 
-		if not firstSnapshotID then
+		-- print(#snapshotDataList, firstSnapshotID and (snapshotID - firstSnapshotID), snapshotID, firstSnapshotID)
+		if firstSnapshotID then
+			local index = snapshotID - firstSnapshotID
+			if not snapshotDataList[index] then
+				print(snapshotDataList)
+				error("Snapshot list cannot have holes", 2)
+			end
+
+			snapshotDataList[index + 1] = snapshotData
+		else
+			snapshotDataList[1] = snapshotData
 			firstSnapshotID = snapshotID
 		end
 	end
@@ -140,11 +152,20 @@ function GWorldSnapshot.new()
 		end
 
 		local len = #snapshotDataList
-		for i = len, snapshotID - firstSnapshotID + 1, -1 do
-			snapshotDataList[i] = nil
-		end
+		local index = snapshotID - firstSnapshotID + 1
 
-		return len - snapshotID + firstSnapshotID
+		if index <= 1 then
+			Table.clear(snapshotDataList)
+			firstSnapshotID = nil
+
+			return len
+		else
+			for i = len, index, -1 do
+				snapshotDataList[i] = nil
+			end
+
+			return len - snapshotID + firstSnapshotID
+		end
 	end
 
 	--- Remove current and previous snapshots.
@@ -156,26 +177,49 @@ function GWorldSnapshot.new()
 		end
 
 		local len = #snapshotDataList
-		local diff = snapshotID - firstSnapshotID
+		local count = snapshotID - firstSnapshotID + 1
 
-		for i = len - diff, 1, -1 do
-			local j = i + diff
-			snapshotDataList[i] = snapshotDataList[j]
-			snapshotDataList[j] = nil
+		if count >= len then
+			Table.clear(snapshotDataList)
+			firstSnapshotID = nil
+
+			return len
+		else
+			for i = count + 1, len do
+				local j = i - count
+				snapshotDataList[j] = snapshotDataList[i]
+				snapshotDataList[i] = nil
+			end
+
+			for i = len, len - count + 1, -1 do
+				snapshotDataList[i] = nil
+			end
+
+			firstSnapshotID = firstSnapshotID + count
+			return count
 		end
+	end
 
-		for i = diff, len - diff + 1, -1 do
-			snapshotDataList[i] = nil
+	--- @param snapshotLifetime number
+	--- @return integer?
+	function WorldSnapshot.dropOldSnapshots(snapshotLifetime, factor)
+		factor = factor or 2
+		local maxCount = math_floor(snapshotLifetime * GWorldTick.getTPS() * idsPerTick) * factor -- 3 * CWorldTick.getTPS()
+
+		if #snapshotDataList > maxCount then
+			local snapshotID = WorldSnapshot.getLastSnapshotID() - math.floor(maxCount / factor)
+
+			local droppedNumber = WorldSnapshot.dropForward(snapshotID)
+
+			return droppedNumber
 		end
-
-		return diff + 1
 	end
 
 	return WorldSnapshot
 end
 
 TE.events:add("DebugSnapshot", function(e)
-	e.worldSnapshotModules = worldSnapshotModules
+	e.worldSnapshotModules = modules
 end, scriptName, nil, scriptName)
 
 return GWorldSnapshot

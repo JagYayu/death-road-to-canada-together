@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.network.ClientAuthoritativeMessage
+-- @module dr2c.Client.Network.ClientAuthoritativeMessage
 -- @author JagYayu
 -- @brief
 -- @version 1.0

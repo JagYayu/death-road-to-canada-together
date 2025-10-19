@@ -9,18 +9,17 @@
 --
 --]]
 
-local Table = require("TE.Table")
-
-local CSnapshot = require("dr2c.Client.World.Snapshot")
-local CClock = require("dr2c.Client.Network.Clock")
-local CPlayerInputBuffers = require("dr2c.Client.World.PlayerInputBuffers")
+local CNetworkClock = require("dr2c.Client.Network.Clock")
 local CWorldSession = require("dr2c.Client.World.Session")
 local GWorldSession = require("dr2c.Shared.World.Session")
+local GWorldTick = require("dr2c.Shared.World.Tick")
 
-local CSnapshot_get = CSnapshot.getSnapshot
-local CClock_getTime = CClock.getTime
-local math_ceil = math.ceil
+local CWorldSession_getAttribute = CWorldSession.getAttribute
+local GWorldSession_Attribute_TimeStart = GWorldSession.Attribute.TimeStart
+local GWorldTick_getTPS = GWorldTick.getTPS
+local CNetworkClock_getTime = CNetworkClock.getTime
 local math_floor = math.floor
+local math_max = math.max
 local type = type
 
 --- @class dr2c.WorldTick : integer
@@ -28,10 +27,9 @@ local type = type
 --- @class dr2c.CWorldTick
 local CWorldTick = {}
 
-CWorldTick.ticksPerSeconds = 2 ^ 3 -- 2 ^ 5
-local deltaTime = 1 / CWorldTick.ticksPerSeconds
-
+--- @type dr2c.WorldTick
 local currentTick = 0
+local tickBeginTime = Time.getSystemTime()
 
 --- @type integer?
 local processingTick
@@ -44,43 +42,41 @@ currentTick = persist("currentTick", function()
 	return currentTick
 end)
 
---- 获取刻增量时间
---- @return number
-function CWorldTick.getDeltaTime()
-	return deltaTime
-end
+CWorldTick.getTPS = GWorldTick.getTPS
+CWorldTick.getDeltaTime = GWorldTick.getDeltaTime
 
 --- 获取世界理论最新刻
---- @return integer tick
+--- @return dr2c.WorldTick tick
 --- @nodiscard
 function CWorldTick.getLatestTick()
-	return math_floor(CClock_getTime() * CWorldTick.ticksPerSeconds)
+	local time = CNetworkClock_getTime() - CWorldSession_getAttribute(GWorldSession_Attribute_TimeStart)
+	return math_max(0, math_floor(time * GWorldTick_getTPS()))
 end
 
 local CWorldTick_getLatestTick = CWorldTick.getLatestTick
 
 --- 获取世界当前刻
---- @param tick integer
+--- @return dr2c.WorldTick
 --- @nodiscard
-function CWorldTick.getCurrentTick(tick)
+function CWorldTick.getCurrentTick()
 	return currentTick
 end
 
 --- 修改世界当前刻
---- @param tick integer
+--- @param tick dr2c.WorldTick
 function CWorldTick.setCurrentTick(tick)
 	currentTick = tonumber(tick) or 0
 end
 
 --- 获取正在执行的世界刻
---- @return integer? @若在事件`dr2c_CWorldTickProcess`之外调用则总是返回`nil`
+--- @return dr2c.WorldTick? @若在事件`dr2c_CWorldTickProcess`之外调用则总是返回`nil`
 --- @nodiscard
 function CWorldTick.getProcessingTargetTick()
 	return processingTargetTick
 end
 
 --- 获取正在执行的或上一次执行的世界目标刻
---- @return integer? @若在事件`dr2c_CWorldTickProcess`之外调用则总是返回`nil`
+--- @return dr2c.WorldTick? @若在事件`dr2c_CWorldTickProcess`之外调用则总是返回`nil`
 --- @nodiscard
 function CWorldTick.getProcessingTick()
 	return processingTick
@@ -101,6 +97,7 @@ function CWorldTick.isOnLatestTick()
 end
 
 CWorldTick.eventCWorldTickProcess = TE.events:new(N_("CWorldTickProcess"), {
+	"Rollback",
 	"PlayerInputs",
 	"SnapshotSave",
 	"AccelThreadBegin",
@@ -125,6 +122,9 @@ local function process(targetTick)
 
 	while currentTick < targetTick do
 		processedTicks = processedTicks + 1
+		if processedTicks > 1000 then
+			error("TOO MANY TICKS EXECUTED!")
+		end
 
 		currentTick = currentTick + 1
 		processingTick = currentTick
@@ -173,7 +173,11 @@ TE.events:add(N_("CUpdate"), function(e)
 		local completed = process(CWorldTick_getLatestTick())
 
 		if processedTicks > 0 and log.canTrace() then
-			log.trace(("Processed %d ticks, %s"):format(processedTicks, completed and "complete" or "incomplete"))
+			log.trace(("Processed %d ticks, %s, current tick: %d"):format( --
+				processedTicks,
+				completed and "complete" or "incomplete",
+				currentTick
+			))
 		end
 	end
 end, "ProcessWorldTicks", "World")

@@ -45,9 +45,7 @@ TE.events:add(N_("CWorldTickProcess"), function(e)
 		local dir = inputs and inputs.map[GWorldPlayerInput.ID.Move]
 		if dir then
 			local dx, dy
-			if dir == 0 then
-				dx, dy = 0, 0
-			elseif dir == 1 then
+			if dir == 1 then
 				dx, dy = 1, 0
 			elseif dir == 2 then
 				dx, dy = 1, 1
@@ -65,8 +63,12 @@ TE.events:add(N_("CWorldTickProcess"), function(e)
 				dx, dy = 1, -1
 			end
 
-			gameObject.x = gameObject.x + dx * delta
-			gameObject.y = gameObject.y + dy * delta
+			if dx then
+				gameObject.x = gameObject.x + dx * delta
+			end
+			if dy then
+				gameObject.y = gameObject.y + dy * delta
+			end
 		end
 	end
 end, "ControlObjects", "Move")

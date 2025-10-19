@@ -57,12 +57,15 @@ end
 --- @param list T[]
 --- @param depth integer? @default: 0
 --- @return T[]
+--- @nodiscard
 function List.copy(list, depth)
 	depth = tonumber(depth) or 0
 
 	return copyArrayImpl(list, depth)
 end
 
+--- 从列表`list`中快速移除第一个值为`value`的元素。
+--- 与`List.removeFirst`不同的是，它通过交换待移除元素与列表最后一个元素来实现，因此该函数会使列表无序。
 --- @generic T
 --- @param list T[]
 --- @param value T
@@ -89,13 +92,16 @@ function List.fastRemoveFirstIf(list, func)
 	end
 end
 
+--- 从列表`list`中移除第一个值为`value`的元素，并返回下标索引。它通过`table.remove`实现，会保持列表有序。
 --- @generic T
 --- @param list T[]
 --- @param value T
+--- @return integer?
 function List.removeFirst(list, value)
 	for pos, val in ipairs(list) do
 		if val == value then
-			return remove(list, pos)
+			remove(list, pos)
+			return pos
 		end
 	end
 end

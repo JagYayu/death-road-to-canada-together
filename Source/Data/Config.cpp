@@ -15,6 +15,7 @@
 #include "Data/PathType.hpp"
 #include "System/Log.hpp"
 #include "System/LogMicros.hpp"
+#include "System/LogVerbosity.hpp"
 #include "Util/FileSystemWatch.hpp"
 
 #include "SDL3/SDL_properties.h"
@@ -38,7 +39,7 @@ static constexpr const char *keyWidth = "width";
 static constexpr const char *keyWindow = "window";
 
 static const auto valueLog = nlohmann::json::object({
-    {"global", -1},
+    {"global", ELogVerbosity::Default},
     {"module", nlohmann::json::object()},
 });
 static const auto valueMountBitmaps = std::vector<std::string>{
@@ -46,7 +47,7 @@ static const auto valueMountBitmaps = std::vector<std::string>{
 };
 static const auto valueMountDirectories = std::vector<std::string>{
     "data",
-	"deathforth",
+    "deathforth",
     "gfx",
 };
 static const auto valueMountFiles = std::unordered_map<std::string, EResourceType>{

@@ -14,8 +14,12 @@ local ScriptEngine = require("ScriptEngine")
 --- @class TE.SortedList.Data
 --- @field compare fun(l: any, r: any): boolean?
 
+--- 没写完呢 :P
 --- @class TE.SortedList
 local SortedList = {}
+
+function SortedList.isSorted()
+end
 
 function SortedList:insert(value)
 	--

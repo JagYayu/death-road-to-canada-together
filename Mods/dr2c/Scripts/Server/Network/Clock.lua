@@ -16,20 +16,25 @@ local SNetworkServer = require("dr2c.Server.Network.Server")
 --- @class dr2c.SClock
 local SClock = {}
 
-local serverClockTimeOffset = -Time.getSystemTime()
+local time = 0
 
-serverClockTimeOffset = persist("serverClockTimeOffset", function()
-	return serverClockTimeOffset
+time = persist("time", function()
+	return time
 end)
 
 function SClock.getTime()
-	return Time.getSystemTime() + serverClockTimeOffset
+	return time
 end
 
 TE.events:add(N_("SMessage"), function(e)
-	SNetworkServer.broadcastReliable(GNetworkMessage.Type.Clock, {
-		timeOffset = serverClockTimeOffset,
-	})
+	-- TODO 只允许权威客户端
+
+	local serverTime = tonumber(e.content)
+	if serverTime then
+		time = serverTime
+
+		SNetworkServer.broadcastReliable(GNetworkMessage.Type.Clock, time)
+	end
 end, "ResponseClockTime", "Receive", GNetworkMessage.Type.Clock)
 
 return SClock

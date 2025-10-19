@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Client.network.Client
+-- @module dr2c.Client.Network.Client
 -- @author JagYayu
 -- @brief
 -- @version 1.0
@@ -11,6 +11,7 @@
 
 local String = require("TE.String")
 local Enum = require("TE.Enum")
+local EnumFlag = require("TE.EnumFlag")
 
 local CNetworkClients = require("dr2c.Client.Network.Clients")
 local GNetworkClient = require("dr2c.Shared.Network.Client")
@@ -103,7 +104,7 @@ function CNetworkClient.sendUnreliable(messageType, messageContent, channel)
 		local data = GNetworkMessage.pack(messageType, messageContent)
 
 		if log.canTrace() then
-			-- log.trace(("Send unreliable message to server: %s"):format(data))
+			log.trace(("Send unreliable message to server: %s"):format(data))
 		end
 
 		channel = channel or GNetworkMessage.Channel.Main
@@ -114,6 +115,12 @@ function CNetworkClient.sendUnreliable(messageType, messageContent, channel)
 	else
 		return false
 	end
+end
+
+
+function CNetworkClient.hasPermissionAuthority()
+	local permissions = CNetworkClient.getPublicAttribute(GNetworkClient.PublicAttribute.Permissions)
+	return permissions and EnumFlag.hasAny(permissions, GNetworkClient.Permission.Authority) or false
 end
 
 TE.events:add(N_("CUpdate"), function(e)
@@ -203,12 +210,12 @@ TE.events:add("ClientMessage", function(e)
 	invokeEventClientMessage(messageContent, messageType)
 end, "clientMessage", nil, sessionSlot)
 
-local throttleClientUpdateClientsPrivateAttributeRequests = GUtilsThrottle.newTime(0.25)
+local throttleClientUpdateClientsPrivateAttributeRequests = GUtilsThrottle.newTime(0.5)
 
---- @param e dr2c.E.ClientUpdate
+--- @param e dr2c.E.CUpdate
 TE.events:add(N_("CUpdate"), function(e)
 	e.networkThrottle = throttleClientUpdateClientsPrivateAttributeRequests()
-end, "AssignNetworkThrottle", "Network", nil, -1)
+end, "AssignNetworkThrottle", "Throttle")
 
 local sendClientVerifyingAttributesTime = 0
 
@@ -226,7 +233,7 @@ TE.events:add(N_("CCollectVerifyAttributes"), function(e)
 	}
 end, "SendState", "State")
 
---- @param pe dr2c.E.ClientUpdate
+--- @param pe dr2c.E.CUpdate
 local function invokeEventClientCollectVerifyAttributes(pe)
 	local attributes = {}
 
@@ -245,7 +252,7 @@ local function invokeEventClientCollectVerifyAttributes(pe)
 	return attributes
 end
 
---- @param e dr2c.E.ClientUpdate
+--- @param e dr2c.E.CUpdate
 TE.events:add(N_("CUpdate"), function(e)
 	if e.networkThrottle then
 		return

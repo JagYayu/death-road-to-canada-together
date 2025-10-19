@@ -12,10 +12,10 @@
 local String = require("TE.String")
 
 local CNetworkClient = require("dr2c.Client.Network.Client")
-
-local CNetworkClientMisc = require("dr2c.Client.Network.ClientMisc")
+local CWorldSession = require("dr2c.Client.World.Session")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
+local GWorldSession = require("dr2c.Shared.World.Session")
 local GWorldSnapshot = require("dr2c.Shared.World.Snapshot")
 
 local floor = math.floor
@@ -131,7 +131,7 @@ end
 --- 上传快照给服务器，只允许带`GNetworkClient.Permission.Authority`许可的客户端上传。
 --- @return boolean?
 function CWorldSnapshot.upload()
-	if CNetworkClientMisc.hasPermissionAuthority() then
+	if CNetworkClient.hasPermissionAuthority() then
 		return CNetworkClient.sendReliable(GNetworkMessage.Type.Snapshots, CWorldSnapshot.getSnapshotDataList())
 	end
 end
@@ -143,12 +143,14 @@ TE.events:add(N_("CMessage"), function(e)
 	CWorldSnapshot.dropBackward(snapshotID)
 end, "ReceiveSnapshotResponse", "Receive", GNetworkMessage.Type.SnapshotResponse)
 
---- @param snapshotID integer
+--- @param snapshotID dr2c.SnapshotID
 function CWorldSnapshot.save(snapshotID)
+	CWorldSnapshot.dropBackward(snapshotID)
+
 	local snapshotData = CWorldSnapshot.serialize()
 	CWorldSnapshot.setSnapshotData(snapshotID, snapshotData)
 
-	if CNetworkClientMisc.hasPermissionAuthority() then
+	if CNetworkClient.hasPermissionAuthority() then
 		local fields = GNetworkMessageFields.Snapshot
 		CNetworkClient.sendReliable(GNetworkMessage.Type.Snapshot, {
 			[fields.snapshotID] = snapshotID,
@@ -160,20 +162,14 @@ end
 --- @param snapshotID integer
 --- @return boolean
 function CWorldSnapshot.load(snapshotID)
-	local firstID = CWorldSnapshot.getFirstSnapshotID()
-	local list = CWorldSnapshot.getSnapshotDataList()
+	local snapshotData = CWorldSnapshot.getSnapshotData(snapshotID)
+	if snapshotData then
+		CWorldSnapshot.deserialize(snapshotData)
 
-	if not firstID then
-		return false
-	elseif snapshotID < firstID then
-		return false
-	elseif snapshotID >= firstID + #list then
+		return true
+	else
 		return false
 	end
-
-	CWorldSnapshot.deserialize(list[snapshotID])
-
-	return true
 end
 
 local function resetSnapshots()
@@ -192,10 +188,13 @@ TE.events:add(N_("CWorldTickProcess"), function(e)
 	-- Save snapshot every tick, for now :)
 	CWorldSnapshot.save(GWorldSnapshot.tick2id(e.tick))
 
-	-- Then drop faraway snapshots
-	local maximumSnapshotCount = 300 -- 10s * 30tps
-	if CWorldSnapshot.getSnapshotCount() > maximumSnapshotCount then
-		CWorldSnapshot.dropForward(latestSnapshotRegistryID)
+	local snapshotLifetime = CWorldSession.getAttribute(GWorldSession.Attribute.DataLifetime)
+	if snapshotLifetime then
+		local droppedNumber = CWorldSnapshot.dropOldSnapshots(snapshotLifetime)
+
+		if droppedNumber and log.canDebug() then
+			log.debug(("Dropped %d old snapshots"):format(droppedNumber))
+		end
 	end
 end, "SaveSnapshot", "SnapshotSave")
 
@@ -204,14 +203,21 @@ TE.events:add(N_("CWorldRollback"), function(e)
 		return
 	end
 
-	if CWorldSnapshot.load(e.tick) then
-		CWorldSnapshot.dropBackward(e.tick)
+	local tick = e.tick
+	local snapshotID = GWorldSnapshot.tick2id(tick)
+
+	if CWorldSnapshot.load(snapshotID) then
+		CWorldSnapshot.dropBackward(snapshotID)
 
 		if log.canTrace() then
-			log.trace(("Rollback: load snapshot to tick %d"):format(e.tick))
+			log.trace(("Rollback and loaded snapshot, tick: %d, snapshotID: %d"):format(tick, snapshotID))
 		end
 	else
 		e.suppressed = true
+
+		if log.canDebug() then
+			log.debug(("Rollback but failed to load snapshot, tick: %d, snapshotID: %d"):format(e.tick, snapshotID))
+		end
 	end
 end, N_("UpdateSnapshots"), "Snapshot")
 

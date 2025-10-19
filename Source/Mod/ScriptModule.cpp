@@ -154,33 +154,37 @@ void CopyTableMetatableFields(sol::table dst, sol::table src)
 
 void ScriptModule::ModuleFieldModifier(std::shared_ptr<ScriptModule> module, sol::object key, sol::object value) noexcept
 {
-	if (module == nullptr) [[unlikely]]
-	{
-		if (module->CanWarn())
-		{
-			module->Warn("Attempt to modify member from a deallocated module!");
-		}
+	IScriptEngine &scriptEngine = module->GetScriptEngine();
+	LuaUtils::Deconstruct(module);
+	scriptEngine.ThrowError("Cannot modify module fields!");
 
-		return;
-	}
+	// if (module == nullptr) [[unlikely]]
+	// {
+	// 	if (module->CanWarn())
+	// 	{
+	// 		module->Warn("Attempt to modify member from a deallocated module!");
+	// 	}
 
-	if (module->GetScriptLoader().GetLoadingScriptID() == 0) [[unlikely]]
-	{
-		module->GetScriptEngine().ThrowError("Cannot modify module field at script runtime!");
-	}
+	// 	return;
+	// }
 
-	auto &&field = module->GetTable()[key];
-	if (!field.valid() || field.get_type() == sol::type::nil) [[unlikely]]
-	{
-		module->GetScriptEngine().ThrowError("Module field does not exists");
-	}
+	// if (module->GetScriptLoader().GetLoadingScriptID() == 0) [[unlikely]]
+	// {
+	// 	module->GetScriptEngine().ThrowError("Cannot modify module field at script runtime!");
+	// }
 
-	if (field.get_type() != value.get_type()) [[unlikely]]
-	{
-		module->GetScriptEngine().ThrowError("Module field's type mismatch value's type");
-	}
+	// auto &&field = module->GetTable()[key];
+	// if (!field.valid() || field.get_type() == sol::type::nil) [[unlikely]]
+	// {
+	// 	module->GetScriptEngine().ThrowError("Module field does not exists");
+	// }
 
-	module->GetTable()[key] = value;
+	// if (field.get_type() != value.get_type()) [[unlikely]]
+	// {
+	// 	module->GetScriptEngine().ThrowError("Module field's type mismatch value's type");
+	// }
+
+	// module->GetTable()[key] = value;
 }
 
 sol::table &ScriptModule::RawLoad()

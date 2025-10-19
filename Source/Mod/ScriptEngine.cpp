@@ -152,8 +152,12 @@ void ScriptEngine::Initialize() noexcept
 
 		AssertLuaValue(_luaStackTrackPlus["stacktrace"], "#StackTracePlus.stacktrace");
 
-		sol::protected_function::set_default_handler(_luaStackTrackPlus["stacktrace"]);
-		_lua["debug"]["trackback"] = _luaStackTrackPlus["stacktrace"];
+		// TODO 通过启动参数可选启用吧？
+		if (false)
+		{
+			sol::protected_function::set_default_handler(_luaStackTrackPlus["stacktrace"]);
+			_lua["debug"]["trackback"] = _luaStackTrackPlus["stacktrace"];
+		}
 	}
 	else
 	{

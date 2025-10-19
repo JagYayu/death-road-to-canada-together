@@ -26,6 +26,7 @@ function CModule.getWindow()
 end
 
 local eventClientUpdate = TE.events:new(N_("CUpdate"), {
+	"Throttle",
 	"Inputs",
 	"Network",
 	--- depreciated
@@ -69,7 +70,7 @@ CModule.eventCMouseRelease = TE.events:new(N_("CMouseRelease"), mouseEventCommon
 
 --- @param e Events.E.TickUpdate
 TE.events:add("TickUpdate", function(e)
-	--- @class dr2c.E.ClientUpdate : Events.E.TickUpdate
+	--- @class dr2c.E.CUpdate : Events.E.TickUpdate
 	--- @field networkThrottle? boolean
 	local e_ = e
 

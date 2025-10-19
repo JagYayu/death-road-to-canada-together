@@ -1,5 +1,5 @@
 --[[
--- @module dr2c.Shared.utils.Serializers
+-- @module dr2c.Shared.Utils.Serializers
 -- @author JagYayu
 -- @brief
 -- @version 1.0
