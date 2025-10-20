@@ -42,7 +42,9 @@ currentTick = persist("currentTick", function()
 	return currentTick
 end)
 
+--- @deprecated Use `GWorldTick.getTPS` instead
 CWorldTick.getTPS = GWorldTick.getTPS
+--- @deprecated Use `GWorldTick.getDeltaTime` instead
 CWorldTick.getDeltaTime = GWorldTick.getDeltaTime
 
 --- 获取世界理论最新刻
@@ -97,35 +99,33 @@ function CWorldTick.isOnLatestTick()
 end
 
 CWorldTick.eventCWorldTickProcess = TE.events:new(N_("CWorldTickProcess"), {
-	"Rollback",
-	"PlayerInputs",
-	"SnapshotSave",
-	"AccelThreadBegin",
+	"Rollback", -- end rollback state
+	"Snapshot", -- Save tick initial snapshot
+	"PlayerInputs", -- Collect players' inputs
+	"BeginAccel", -- begin physics/... accelerations from cpp
 	"Move",
 	"Test",
-	"AccelThreadEnd",
-	"ECS",
+	"EndAccel", -- end physics/... accelerations from cpp
+	"ECS", -- post update ECS
 })
 
 --- @param targetTick integer
---- @return boolean
 local function process(targetTick)
 	processingTargetTick = targetTick
 	processedTicks = 0
+
+	if targetTick - currentTick > 1e5 and log.canWarn() then
+		log.warn(("Too many ticks pending to execute: %d"):format(targetTick - currentTick))
+	end
 
 	--- @class dr2c.E.CWorldTickProcess
 	--- @field tick dr2c.WorldTick
 	--- @field targetTick dr2c.WorldTick
 	--- @field processedTicks integer
-	--- @field suppressed boolean
+	--- @field abort? boolean
 	local e
 
 	while currentTick < targetTick do
-		processedTicks = processedTicks + 1
-		if processedTicks > 1000 then
-			error("TOO MANY TICKS EXECUTED!")
-		end
-
 		currentTick = currentTick + 1
 		processingTick = currentTick
 
@@ -137,23 +137,20 @@ local function process(targetTick)
 				tick = processingTick,
 				targetTick = targetTick,
 				processedTicks = processedTicks,
-				suppressed = false,
 			}
 		end
 
 		TE.events:invoke(CWorldTick.eventCWorldTickProcess, e)
 
-		if e.suppressed then
+		if e.abort then
 			break
 		end
 	end
 
 	processingTick = nil
-
-	return currentTick >= targetTick
 end
 
---- 执行世界刻，直到当前世界刻大于或等于目标世界刻
+--- 执行世界刻，直到当前世界刻大于或等于目标世界刻，或被强制终止
 --- @param targetTick integer?
 --- @return boolean completed
 function CWorldTick.process(targetTick)
@@ -165,23 +162,36 @@ function CWorldTick.process(targetTick)
 		error("Target tick must be an integer number", 2)
 	end
 
-	return process(targetTick)
+	process(targetTick)
+	return currentTick >= targetTick
 end
 
+function CWorldTick.reset()
+	currentTick = 0
+end
+
+TE.events:add(N_("CConnect"), CWorldTick.reset, N_("ResetWorldTick"), "Reset")
+TE.events:add(N_("CDisconnect"), CWorldTick.reset, N_("ResetWorldTick"), "Reset")
+TE.events:add(N_("CWorldSessionStart"), CWorldTick.reset, N_("ResetWorldTick"), "Reset")
+TE.events:add(N_("CWorldSessionFinish"), CWorldTick.reset, N_("ResetWorldTick"), "Reset")
+
+--- @param e dr2c.E.CUpdate
 TE.events:add(N_("CUpdate"), function(e)
 	if CWorldSession.isPlaying() then
-		local completed = process(CWorldTick_getLatestTick())
+		local latestTick = CWorldTick_getLatestTick()
+		process(latestTick)
 
 		if processedTicks > 0 and log.canTrace() then
 			log.trace(("Processed %d ticks, %s, current tick: %d"):format( --
 				processedTicks,
-				completed and "complete" or "incomplete",
+				currentTick >= latestTick and "complete" or "incomplete",
 				currentTick
 			))
 		end
 	end
-end, "ProcessWorldTicks", "World")
+end, "ProcessWorldTick", "World")
 
+--- @param e dr2c.E.CWorldRollback
 TE.events:add(N_("CWorldRollback"), function(e)
 	if not e.suppressed then
 		currentTick = math.min(currentTick, e.tick - 1)

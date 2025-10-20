@@ -18,7 +18,7 @@ SModule.eventSUpdate = TE.events:new(N_("SUpdate"), {
 })
 
 TE.events:add("TickUpdate", function(e)
-	--- @class dr2c.E.SUpdate : Events.E.TickUpdate
+	--- @class dr2c.E.SUpdate : TE.E.TickUpdate
 	local e_ = e
 
 	TE.events:invoke(SModule.eventSUpdate, e_)

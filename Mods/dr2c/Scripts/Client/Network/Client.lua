@@ -117,7 +117,6 @@ function CNetworkClient.sendUnreliable(messageType, messageContent, channel)
 	end
 end
 
-
 function CNetworkClient.hasPermissionAuthority()
 	local permissions = CNetworkClient.getPublicAttribute(GNetworkClient.PublicAttribute.Permissions)
 	return permissions and EnumFlag.hasAny(permissions, GNetworkClient.Permission.Authority) or false
@@ -166,7 +165,7 @@ local function invokeEventClientConnect()
 	TE.events:invoke(CNetworkClient.eventCConnect, e)
 end
 
---- @param e Events.E.ClientConnect
+--- @param e TE.E.ClientConnect
 TE.events:add("ClientConnect", function(e)
 	invokeEventClientConnect()
 end)
@@ -180,7 +179,7 @@ local function invokeEventClientDisconnect(clientID)
 	TE.events:invoke(CNetworkClient.eventCDisconnect, e)
 end
 
---- @param e Events.E.ClientConnect
+--- @param e TE.E.ClientConnect
 TE.events:add("ClientDisconnect", function(e)
 	invokeEventClientDisconnect(e.data.clientID)
 end)
@@ -199,7 +198,7 @@ local function invokeEventClientMessage(messageContent, messageType)
 	TE.events:invoke(CNetworkClient.eventCMessage, e, messageType)
 end
 
---- @param e Events.E.ClientMessage
+--- @param e TE.E.ClientMessage
 TE.events:add("ClientMessage", function(e)
 	if type(e.data) ~= "userdata" then
 		return

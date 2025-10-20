@@ -60,10 +60,6 @@ GWorldSession.Attribute = Enum.sequence({
 })
 
 local GWorldSession_Attribute_State = GWorldSession.Attribute.State
-local GWorldSession_Attribute_TimeStart = GWorldSession.Attribute.TimeStart
-local GWorldSession_Attribute_TimePaused = GWorldSession.Attribute.TimePaused
-local GWorldSession_Attribute_ElapsedPaused = GWorldSession.Attribute.ElapsedPaused
-local GWorldSession_Attribute_ElapsedScenes = GWorldSession.Attribute.Scenes
 
 GWorldSession.Mode = Enum.sequence({
 	None = 0,
@@ -148,11 +144,13 @@ function GWorldSession.new()
 	function WorldSession.resetAttributes()
 		worldSessionAttributes = {
 			[GWorldSession_Attribute_State] = GWorldSession_State_Inactive,
-			[GWorldSession_Attribute_TimeStart] = Time.getSystemTime(),
-			[GWorldSession_Attribute_TimePaused] = Time.getSystemTime(),
-			[GWorldSession_Attribute_ElapsedPaused] = 0,
-			[GWorldSession_Attribute_ElapsedScenes] = {},
-			[GWorldSession_Attribute_Mode] = GWorldSession.Mode.None,
+			[GWorldSession.Attribute.TimeStart] = Time.getSystemTime(),
+			[GWorldSession.Attribute.TimePaused] = Time.getSystemTime(),
+			[GWorldSession.Attribute.ElapsedPaused] = 0,
+			[GWorldSession.Attribute.Scenes] = {},
+			[GWorldSession.Attribute.Mode] = GWorldSession.Mode.None,
+			[GWorldSession.Attribute.DataLifetime] = 10,
+			[GWorldSession.Attribute.RollbackLimit] = 1,
 		}
 	end
 

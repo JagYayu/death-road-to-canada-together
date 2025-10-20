@@ -14,11 +14,11 @@ local GUtilsDelay = {}
 
 --- @class dr2c.UtilsDelayRegisterArgs
 --- @field callback fun()
---- @field event Events.Event?
---- @field eventKey Events.Key?
---- @field eventOrder Events.Order?
---- @field eventSequence Events.Sequence?
---- @field events { event: Events.Event, eventKey: Events.Key?, eventOrder: Events.Order?, eventSequence: Events.Sequence? }[]?
+--- @field event TE.Event?
+--- @field eventKey TE.EventKey?
+--- @field eventOrder TE.EventOrder?
+--- @field eventSequence TE.EventSequence?
+--- @field events { event: TE.Event, eventKey: TE.EventKey?, eventOrder: TE.EventOrder?, eventSequence: TE.EventSequence? }[]?
 
 local registeredDelayLatestID = 0
 

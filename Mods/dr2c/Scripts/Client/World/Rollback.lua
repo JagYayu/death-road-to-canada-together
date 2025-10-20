@@ -18,13 +18,13 @@ local CWorldRollback = {}
 
 --- @type dr2c.WorldTick?
 local rollbackPending
-local rollbackIsApplied = false
+local rollbackIsActivated = false
 
 rollbackPending = persist("rollbackPending", function()
 	return rollbackPending
 end)
-rollbackIsApplied = persist("rollbackIsApplied", function()
-	return rollbackIsApplied
+rollbackIsActivated = persist("rollbackIsApplied", function()
+	return rollbackIsActivated
 end)
 
 CWorldRollback.eventClientWorldRollback = TE.events:new(N_("CWorldRollback"), {
@@ -36,45 +36,42 @@ CWorldRollback.eventClientWorldRollback = TE.events:new(N_("CWorldRollback"), {
 --- 检测当前是否应用了回滚
 --- @return boolean
 --- @nodiscard
-function CWorldRollback.isApplied()
-	return rollbackIsApplied
+function CWorldRollback.isActivated()
+	return rollbackIsActivated
 end
 
 --- 应用回滚，将世界状态设置到过去的某一刻
 --- @param worldTick dr2c.WorldTick
+--- @param extras? any
 --- @return boolean
-function CWorldRollback.apply(worldTick)
+function CWorldRollback.apply(worldTick, extras)
 	if worldTick > CWorldTick.getCurrentTick() then -- 不允许滚到未来世界帧
 		return false
 	end
 
 	--- @class dr2c.E.CWorldRollback
 	--- @field tick dr2c.WorldTick
-	--- @field suppressed true?
+	--- @field extras? any
+	--- @field suppressed? boolean
 	local e = {
 		tick = worldTick,
-		suppressed = nil,
+		extras = extras,
 	}
 	TE.events:invoke(CWorldRollback.eventClientWorldRollback, e)
 
-	rollbackIsApplied = not e.suppressed
+	rollbackIsActivated = not e.suppressed
 
 	return true
 end
 
---- @param e dr2c.E.CMessage
-TE.events:add(N_("CMessage"), function(e)
-	local fields = GNetworkMessageFields.PlayerInputs
-	local worldTick = e.content[fields.worldTick]
-
-	if worldTick then
-		if rollbackPending then
-			rollbackPending = math.min(rollbackPending, worldTick)
-		else
-			rollbackPending = worldTick
-		end
+--- @param worldTick dr2c.WorldTick
+function CWorldRollback.setPending(worldTick)
+	if rollbackPending then
+		rollbackPending = math.min(rollbackPending, worldTick)
+	else
+		rollbackPending = worldTick
 	end
-end, "RollbackPending", "Rollback", GNetworkMessage.Type.PlayerInputs)
+end
 
 TE.events:add(N_("CUpdate"), function(e)
 	if rollbackPending then
@@ -86,9 +83,18 @@ end, "ApplyRollback", "Rollback")
 
 --- @param e dr2c.E.CWorldTickProcess
 TE.events:add(N_("CWorldTickProcess"), function(e)
-	if rollbackIsApplied and CWorldTick.isOnLatestTick() then
-		rollbackIsApplied = false
+	if rollbackIsActivated and CWorldTick.isOnLatestTick() then
+		rollbackIsActivated = false
 	end
 end, "DeactivateRollback", "Rollback")
+
+--- @param e dr2c.E.CPlayerInputsPredictFailed
+TE.events:add(N_("CPlayerInputsPredictFailed"), function(e)
+	if log.canDebug() then
+		log.debug(("Player inputs predict failed, set rollback pending to tick %s"):format(e.worldTick))
+	end
+
+	CWorldRollback.setPending(e.worldTick)
+end, "RollbackPending", "Rollback", GNetworkMessage.Type.PlayerInputs)
 
 return CWorldRollback

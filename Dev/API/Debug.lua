@@ -6,7 +6,7 @@ EDebugConsoleCode = {
 	Warn = 3,
 }
 
---- @class Events.E.DebugCommand.Data
+--- @class TE.E.DebugCommand.Data
 local Events_E_DebugCommand_Data = {}
 
 --- @param cmd { name: string, help: string, func: fun(arg: string): table }

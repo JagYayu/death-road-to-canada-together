@@ -68,18 +68,18 @@ CModule.eventCMouseMotion = TE.events:new(N_("CMouseMotion"), mouseEventCommonOr
 CModule.eventCMousePress = TE.events:new(N_("CMousePress"), mouseEventCommonOrders)
 CModule.eventCMouseRelease = TE.events:new(N_("CMouseRelease"), mouseEventCommonOrders)
 
---- @param e Events.E.TickUpdate
+--- @param e TE.E.TickUpdate
 TE.events:add("TickUpdate", function(e)
-	--- @class dr2c.E.CUpdate : Events.E.TickUpdate
+	--- @class dr2c.E.CUpdate : TE.E.TickUpdate
 	--- @field networkThrottle? boolean
 	local e_ = e
 
 	TE.events:invoke(eventClientUpdate, e_)
 end, N_("ClientUpdate"), "Client", "Primary")
 
---- @param e Events.E.TickRender
+--- @param e TE.E.TickRender
 TE.events:add("TickRender", function(e)
-	--- @class dr2c.E.CRender : Events.E.TickRender
+	--- @class dr2c.E.CRender : TE.E.TickRender
 	--- @field renderer TE.Renderer
 
 	--- @cast e dr2c.E.CRender
@@ -93,44 +93,44 @@ TE.events:add("TickRender", function(e)
 	collectgarbage()
 end, N_("ClientRender"), "Client", "Primary")
 
---- @param e Events.E.TickLoad
+--- @param e TE.E.TickLoad
 TE.events:add("TickLoad", function(e)
-	--- @class dr2c.E.CLoad : Events.E.TickLoad
+	--- @class dr2c.E.CLoad : TE.E.TickLoad
 	--- @cast e dr2c.E.CLoad
 	TE.events:invoke(CModule.eventCLoad, e)
 end, N_("ClientContentLoad"), "Client")
 
---- @param e Events.E.KeyboardPress
+--- @param e TE.E.KeyboardPress
 TE.events:add("KeyboardPress", function(e)
-	--- @class dr2c.E.CKeyboardPress : Events.E.KeyboardPress
+	--- @class dr2c.E.CKeyboardPress : TE.E.KeyboardPress
 	--- @cast e dr2c.E.CKeyboardPress
 	TE.events:invoke(CModule.eventCKeyboardPress, e, e.data.scanCode, EEventInvocation.CacheHandlers)
 end, N_("ClientKeyboardPress"))
 
---- @param e Events.E.KeyboardRelease
+--- @param e TE.E.KeyboardRelease
 TE.events:add("KeyboardRelease", function(e)
-	--- @class dr2c.E.CKeyboardRelease : Events.E.KeyboardRelease
+	--- @class dr2c.E.CKeyboardRelease : TE.E.KeyboardRelease
 	--- @cast e dr2c.E.CKeyboardRelease
 	TE.events:invoke(CModule.eventCKeyboardRelease, e, e.data.scanCode, EEventInvocation.CacheHandlers)
 end, N_("ClientKeyboardRelease"))
 
---- @param e Events.E.MouseMotion
+--- @param e TE.E.MouseMotion
 TE.events:add("MouseMotion", function(e)
-	--- @class dr2c.E.MouseMotion : Events.E.MouseMotion
+	--- @class dr2c.E.MouseMotion : TE.E.MouseMotion
 	--- @cast e dr2c.E.MouseMotion
 	TE.events:invoke(CModule.eventCMouseMotion, e)
 end, N_("ClientKeyboardPress"))
 
---- @param e Events.E.MousePress
+--- @param e TE.E.MousePress
 TE.events:add("MousePress", function(e)
-	--- @class dr2c.E.MousePress : Events.E.MousePress
+	--- @class dr2c.E.MousePress : TE.E.MousePress
 	--- @cast e dr2c.E.MousePress
 	TE.events:invoke(CModule.eventCMousePress, e)
 end, N_("ClientKeyboardPress"))
 
---- @param e Events.E.MouseRelease
+--- @param e TE.E.MouseRelease
 TE.events:add("MouseRelease", function(e)
-	--- @class dr2c.E.MouseRelease : Events.E.MouseRelease
+	--- @class dr2c.E.MouseRelease : TE.E.MouseRelease
 	--- @cast e dr2c.E.MouseRelease
 	TE.events:invoke(CModule.eventCMouseRelease, e)
 end, N_("ClientKeyboardPress"))

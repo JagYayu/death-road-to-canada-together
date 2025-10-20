@@ -201,7 +201,7 @@ end, "UpdateMenu")
 
 TE.events:add("WindowResize", CUIMenu.update, "UpdateMenu", "Client")
 
---- @param e Events.E.ScriptUnload
+--- @param e TE.E.ScriptUnload
 TE.events:add("ScriptUnload", function(e)
 	if e.data.module.UIWidgetType then
 		CUIMenu.update()

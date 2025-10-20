@@ -609,6 +609,8 @@ end
 
 function CEntityECS.receiveSnapshot() end
 
+--#region Events
+
 --- @param e dr2c.E.CWorldTickProcess
 TE.events:add(N_("CWorldTickProcess"), function(e)
 	if isIteratingEntities then
@@ -627,9 +629,10 @@ Did an error occurred while iterating entities? Or not calling iterators inside 
 	e.entitiesChanged = CEntityECS.update()
 end, "UpdateECS", "ECS")
 
-TE.events:add(N_("CConnect"), CEntityECS.clearEntities, "InitializeECS", "Initialize")
-
+TE.events:add(N_("CConnect"), CEntityECS.clearEntities, "ResetECS", "Reset")
 TE.events:add(N_("CDisconnect"), CEntityECS.clearEntities, "ResetECS", "Reset")
+TE.events:add(N_("CWorldSessionStart"), CEntityECS.clearEntities, "ResetECS", "Reset")
+TE.events:add(N_("CWorldSessionFinish"), CEntityECS.clearEntities, "ResetECS", "Reset")
 
 TE.events:add(N_("CSnapshotCollect"), function(e)
 	e.snapshot.ecs = CEntityECS.getSerialTable()
@@ -671,5 +674,7 @@ TE.events:add(N_("CEntitySchemaLoaded"), function(e)
 		end
 	end
 end, "ValidateEntityFilters", "Filters")
+
+--#endregion
 
 return CEntityECS

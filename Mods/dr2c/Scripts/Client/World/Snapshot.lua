@@ -172,17 +172,10 @@ function CWorldSnapshot.load(snapshotID)
 	end
 end
 
-local function resetSnapshots()
-	CWorldSnapshot.clear()
-end
-
-TE.events:add(N_("CConnect"), resetSnapshots, N_("ResetSnapshot"), "Reset")
-
-TE.events:add(N_("CDisconnect"), resetSnapshots, N_("ResetSnapshot"), "Reset")
-
-TE.events:add(N_("CWorldSessionStart"), resetSnapshots, "ResetSnapshots", "Reset")
-
-TE.events:add(N_("CWorldSessionFinish"), resetSnapshots, "ResetSnapshots", "Reset")
+TE.events:add(N_("CConnect"), CWorldSnapshot.clear, N_("ResetWorldSnapshot"), "Reset")
+TE.events:add(N_("CDisconnect"), CWorldSnapshot.clear, N_("ResetWorldSnapshot"), "Reset")
+TE.events:add(N_("CWorldSessionStart"), CWorldSnapshot.clear, N_("ResetWorldSnapshot"), "Reset")
+TE.events:add(N_("CWorldSessionFinish"), CWorldSnapshot.clear, N_("ResetWorldSnapshot"), "Reset")
 
 TE.events:add(N_("CWorldTickProcess"), function(e)
 	-- Save snapshot every tick, for now :)
@@ -196,7 +189,7 @@ TE.events:add(N_("CWorldTickProcess"), function(e)
 			log.debug(("Dropped %d old snapshots"):format(droppedNumber))
 		end
 	end
-end, "SaveSnapshot", "SnapshotSave")
+end, "SaveSnapshot", "Snapshot")
 
 TE.events:add(N_("CWorldRollback"), function(e)
 	if e.suppressed then

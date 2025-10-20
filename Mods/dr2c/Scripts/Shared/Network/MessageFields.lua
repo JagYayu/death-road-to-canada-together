@@ -40,7 +40,7 @@ MessageFields.SnapshotResponse = {
 MessageFields.WorldSessionStart = {
 	sponsorClientID = 1,
 	attributes = 2,
-	suppressed = 3,
+	suppressedReason = 3,
 }
 
 MessageFields.ForthSessionStart = {

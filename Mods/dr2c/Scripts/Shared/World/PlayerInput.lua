@@ -44,6 +44,13 @@ function GPlayerInput.isContinuous(playerInputID)
 	return not not continuousIDSet[playerInputID]
 end
 
+--- @param playerInputID dr2c.PlayerInputID
+--- @return boolean
+--- @nodiscard
+function GPlayerInput.isDiscrete(playerInputID)
+	return not continuousIDSet[playerInputID]
+end
+
 -- --- @param playerInputID dr2c.PlayerInputID
 -- --- @return dr2c.PlayerInputType
 -- function GPlayerInput.getType(playerInputID)

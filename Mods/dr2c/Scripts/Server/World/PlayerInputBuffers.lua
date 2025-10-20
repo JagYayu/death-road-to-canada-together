@@ -19,8 +19,9 @@ local SWorldSession = require("dr2c.Server.World.Session")
 --- @class dr2c.SPlayerInputBuffers : dr2c.PlayerInputBuffers
 local SPlayerInputBuffers = GWorldPlayerInputBuffers.new()
 
+--- @param e dr2c.E.SMessage
 TE.events:add(N_("SUpdate"), function(e)
-	local inputsLifetime = SWorldSession.getAttribute(GWorldSession.Attribute.DataLifetime)
+	local inputsLifetime = tonumber(SWorldSession.getAttribute(GWorldSession.Attribute.DataLifetime))
 	if inputsLifetime then
 		SPlayerInputBuffers.removeOldInputs(inputsLifetime)
 	end

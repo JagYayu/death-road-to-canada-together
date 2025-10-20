@@ -22,6 +22,7 @@ local math_min = math.min
 local newproxy = newproxy
 local pairs = pairs
 local remove = table.remove
+local select = select
 local setmetatable = setmetatable
 local type = type
 
@@ -458,7 +459,7 @@ end
 --- @param r any
 --- @param visited table<any, true>
 --- @return boolean
-local function deepEqualsImpl(l, r, visited)
+local function equalsImpl(l, r, visited)
 	if l == r then
 		return true
 	end
@@ -480,7 +481,7 @@ local function deepEqualsImpl(l, r, visited)
 	visited[l][r] = true
 
 	for k, v in pairs(l) do
-		if not deepEqualsImpl(v, r[k], visited) then
+		if not equalsImpl(v, r[k], visited) then
 			return false
 		end
 	end
@@ -497,8 +498,28 @@ end
 --- @param l table
 --- @param r table
 --- @return boolean
-function Table.deepEquals(l, r)
-	return deepEqualsImpl(l, r, {})
+function Table.equals(l, r)
+	return equalsImpl(l, r, {})
+end
+
+--- @param l table
+--- @param r table
+--- @param ... table
+--- @return boolean
+function Table.equalsV(l, r, ...)
+	local visited = {}
+	if not equalsImpl(l, r, visited) then
+		return false
+	end
+
+	for i = 1, select("#", ...) do
+		table_clear(visited)
+		if not equalsImpl(l, select(i, ...), visited) then
+			return false
+		end
+	end
+
+	return true
 end
 
 Table.lockMetatable(Table.empty)

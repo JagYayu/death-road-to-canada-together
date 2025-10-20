@@ -41,6 +41,7 @@ local clientsPrivateAttributes = {}
 local unverifiedClients = {}
 
 local authoritativeClient
+local hasMultiple
 
 clientList = persist("clientList", function()
 	return clientList
@@ -55,11 +56,20 @@ unverifiedClients = persist("unverifiedClients", function()
 	return unverifiedClients
 end)
 
-function SNetworkClients.hasClient() end
+--- @param clientID TE.Network.ClientID
+--- @return boolean
+function SNetworkClients.hasClient(clientID)
+	return not not clientsPublicAttributes[clientID]
+end
 
+--- 添加一个客户端
 --- @param clientID TE.Network.ClientID
 --- @param verified boolean?
 function SNetworkClients.addClient(clientID, verified)
+	if clientsPublicAttributes[clientID] then
+		error("Client %d has already been added to server", 2)
+	end
+
 	clientList[#clientList + 1] = clientID
 	local publicAttributes, privateAttributes = GNetworkClient.initializeClientAttributes(clientID, {}, {})
 	clientsPublicAttributes[clientID] = publicAttributes
@@ -75,30 +85,19 @@ function SNetworkClients.addClient(clientID, verified)
 			expireTime = Time.getSystemTime() + 15,
 		}
 	end
+
+	authoritativeClient = nil
 end
 
+--- 移除一个客户端
 --- @param clientID TE.Network.ClientID
---- @return boolean
 function SNetworkClients.removeClient(clientID)
-	if not SNetworkClients.hasClient() then
-		return false
+	if not clientsPublicAttributes[clientID] then
+		error("Client %d does not exist in server", 2)
 	end
 
 	List.removeFirst(clientList, clientID)
-
-	return true
-end
-
---- @param clientID TE.Network.ClientID
---- @return boolean?
-function SNetworkClients.isAuthoritativeClient(clientID)
-	local publicAttributes = clientsPublicAttributes[clientID]
-	if publicAttributes then
-		return EnumFlag.hasAll(
-			publicAttributes[GNetworkClient.PublicAttribute.Permissions],
-			GNetworkClient.Permission.Authority
-		)
-	end
+	authoritativeClient = nil
 end
 
 --- 获取权威客户端
@@ -121,6 +120,12 @@ function SNetworkClients.getAuthoritativeClient()
 	end
 end
 
+--- @param clientID TE.Network.ClientID
+--- @return boolean?
+function SNetworkClients.isAuthoritativeClient(clientID)
+	return SNetworkClients.getAuthoritativeClient() == clientID
+end
+
 --- @param e dr2c.E.SConnect
 TE.events:add(N_("SConnect"), function(e)
 	SNetworkClients.addClient(e.clientID)
@@ -138,14 +143,14 @@ local verifyPrivateAttributes = {
 --- @param _ integer
 --- @param clientID TE.Network.ClientID
 --- @return boolean
-local function unverifiedClientEquals(entry, _, clientID)
+local function conditionUnverifiedClientEquals(entry, _, clientID)
 	return entry.clientID == clientID
 end
 
 --- Send server clients attributes to lately verified client.
 --- @param clientID TE.Network.ClientID
 local function onVerifiedClient(clientID)
-	List.removeFirstIfV(unverifiedClients, unverifiedClientEquals, clientID)
+	List.removeFirstIfV(unverifiedClients, conditionUnverifiedClientEquals, clientID)
 
 	local hasHostClient
 	local clients

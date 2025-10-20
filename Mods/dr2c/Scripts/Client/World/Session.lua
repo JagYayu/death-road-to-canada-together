@@ -137,12 +137,15 @@ end
 --- @param e table
 TE.events:add(N_("CMessage"), function(e)
 	if type(e.content) == "table" then
-		if not e.content.suppressed then
-			log.info(("Client %s started world session"):format(e.content.sponsorClientID))
+		local field = GMessageFields.WorldSessionStart
+		local suppressedReason = e.content[field.suppressedReason]
+
+		if not suppressedReason then
+			log.info(("Client %s started world session"):format(e.content[field.sponsorClientID]))
 
 			local fields = GMessageFields.WorldSessionStart
 			CWorldSession.startLocally(e.content[fields.attributes])
-		elseif e.content.sponsorClientID == CNetworkClient.getClientID() and log.canWarn() then
+		elseif e.content[field.sponsorClientID] == CNetworkClient.getClientID() and log.canWarn() then
 			log.warn(("Cannot start world session: %s"):format(e.suppressed))
 		end
 	end
@@ -184,7 +187,7 @@ TE.events:add(N_("CMessage"), function(e)
 	end
 end, "UnpauseWorldSessionLocally", "Receive", GNetworkMessage.Type.WorldSessionUnpause)
 
---- @param e Events.E.DebugCommand
+--- @param e TE.E.DebugCommand
 TE.events:add("DebugProvide", function(e)
 	e.data:setDebugCommand({
 		name = "startWorldSession",

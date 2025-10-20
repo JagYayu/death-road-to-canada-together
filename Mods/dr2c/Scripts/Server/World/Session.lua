@@ -82,7 +82,7 @@ TE.events:add(SWorldSession.eventSWorldSessionStart, function(e)
 		local fields = GNetworkMessageFields.WorldSessionStart
 		SNetworkServer.sendReliable(e.sponsorClientID, GNetworkMessage.Type.WorldSessionStart, {
 			[fields.sponsorClientID] = e.sponsorClientID,
-			[fields.suppressed] = e.suppressed,
+			[fields.suppressedReason] = e.suppressed,
 		})
 	end
 end, "SendMessage", "Network")

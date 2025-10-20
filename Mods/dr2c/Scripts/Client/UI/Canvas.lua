@@ -419,7 +419,7 @@ TE.events:add(N_("CMouseRelease"), function(e)
 	end
 end, "UICanvasHandleMouseControlRelease", "UI")
 
---- @param e Events.E.KeyboardPress
+--- @param e TE.E.KeyboardPress
 TE.events:add(N_("CKeyboardPress"), function(e)
 	if isKeyboardControlEnabled then
 		if e.data.scanCode == EScanCode.Up then
@@ -434,7 +434,7 @@ TE.events:add(N_("CKeyboardPress"), function(e)
 	end
 end, "UICanvasHandleKeyboardControl", "UI") -- we don't use key filter, we'd let ui controller key bindings editable in future!
 
---- @param e Events.E.ScriptUnload
+--- @param e TE.E.ScriptUnload
 TE.events:add("ScriptUnload", function(e)
 	--- If a module representing a certain widget type is unloaded,
 	--- call this function to remove all corresponding widgets within all canvases.

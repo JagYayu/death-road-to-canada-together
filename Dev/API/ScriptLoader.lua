@@ -10,10 +10,12 @@ local scriptLoader
 --- @param target string | integer
 function scriptLoader:addReverseDependency(source, target) end
 
---- @return integer
+--- 获取当前正在加载的脚本ID，若没有则返回`0`
+--- @return integer | 0
 function scriptLoader:getLoadingScriptID() end
 
---- @return string
+--- 获取当前正在加载的脚本名，若没有则返回`""`
+--- @return string | ""
 function scriptLoader:getLoadingScriptName() end
 
 TE.scriptLoader = scriptLoader

@@ -220,7 +220,7 @@ local function invokeEventServerConnect(clientID)
 	TE.events:invoke(SNetworkServer.eventSConnect, e)
 end
 
---- @param e Events.E.ServerMessage
+--- @param e TE.E.ServerMessage
 TE.events:add("ServerConnect", function(e)
 	invokeEventServerConnect(e.data.clientID)
 end)
@@ -235,7 +235,7 @@ local function invokeEventServerDisconnect(clientID)
 	TE.events:invoke(SNetworkServer.eventSDisconnect, e, nil, EEventInvocation.None)
 end
 
---- @param e Events.E.ServerDisconnect
+--- @param e TE.E.ServerDisconnect
 TE.events:add("ServerDisconnect", function(e)
 	invokeEventServerDisconnect(e.data.clientID)
 end)
@@ -258,7 +258,7 @@ local function invokeEventServerMessage(clientID, messageContent, messageType)
 	TE.events:invoke(SNetworkServer.eventSMessage, e, messageType)
 end
 
---- @param e Events.E.ServerMessage
+--- @param e TE.E.ServerMessage
 TE.events:add("ServerMessage", function(e)
 	local messageType, messageContent = GNetworkMessage.unpack(e.data.message)
 

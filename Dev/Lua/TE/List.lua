@@ -471,4 +471,41 @@ function List.lowerBound(list, value)
 	return first
 end
 
+--- @param l any[]
+--- @param r any[]
+--- @return boolean
+function List.equals(l, r)
+	if #l ~= #r then
+		return false
+	end
+
+	for i = 1, #l do
+		if l[i] ~= r[i] then
+			return false
+		end
+	end
+
+	return true
+end
+
+local List_equals = List.equals
+
+--- @param l any[]
+--- @param r any[]
+--- @param ... any[]
+--- @return boolean
+function List.equalsV(l, r, ...)
+	if not List_equals(l, r) then
+		return false
+	end
+
+	for i = 1, select("#", ...) do
+		if not List_equals(l, select(i, ...)) then
+			return false
+		end
+	end
+
+	return true
+end
+
 return List

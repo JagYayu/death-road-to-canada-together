@@ -9,6 +9,7 @@
 --
 --]]
 
+--- @deprecated 我们不使用锁帧同步
 --- @class dr2c.CWorldLockstep
 local CWorldLockstep = {}
 

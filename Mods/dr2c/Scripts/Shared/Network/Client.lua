@@ -26,9 +26,14 @@ local GNetworkPlatform = require("dr2c.Shared.Network.Platform")
 local GNetworkClient = {}
 
 GNetworkClient.State = Enum.sequence({
+	--- 断开连接
 	Disconnected = 0,
+	--- 验证阶段
 	Verifying = 1,
+	--- 已验证
 	Verified = 2,
+	--- 假客户端
+	Dummy = 3,
 })
 
 local State = GNetworkClient.State
@@ -47,7 +52,7 @@ local AttributeTrait = GNetworkClient.AttributeTrait
 GNetworkClient.PublicAttribute = Enum.sequence({
 	-- 存储ClientID
 	ID = 0,
-	-- 当前连接状态
+	-- 当前客户端状态
 	State = 1,
 	-- 许可
 	Permissions = 2,

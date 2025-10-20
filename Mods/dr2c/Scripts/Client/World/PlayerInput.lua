@@ -11,17 +11,16 @@
 
 local Math = require("TE.Math")
 
-local CNetworkClock = require("dr2c.Client.Network.Clock")
-local CWorldTick = require("dr2c.Client.World.Tick")
 local CSystemInput = require("dr2c.Client.System.Input")
-local CWorldPlayerInputBuffers = require("dr2c.Client.World.PlayerInputBuffers")
 local CNetworkPlayers = require("dr2c.Client.Network.Players")
 local CNetworkClient = require("dr2c.Client.Network.Client")
+local CWorldTick = require("dr2c.Client.World.Tick")
+local CWorldPlayerInputBuffers = require("dr2c.Client.World.PlayerInputBuffers")
 local CWorldSession = require("dr2c.Client.World.Session")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local GWorldPlayerInput = require("dr2c.Shared.World.PlayerInput")
-local GWorldSession = require("dr2c.Shared.World.Session")
+local GWorldTick = require("dr2c.Shared.World.Tick")
 
 --- @class dr2c.CPlayerInput
 local CPlayerInput = {}
@@ -86,11 +85,7 @@ end
 --- @param e dr2c.E.CUpdate
 TE.events:add(N_("CUpdate"), function(e)
 	local nextWorldTick = CWorldTick.getLatestTick() + 1
-	if nextWorldTick <= 0 then
-		return
-	end
-
-	if CWorldSession.isInactive() then
+	if nextWorldTick <= 0 or CWorldSession.isInactive() then
 		return
 	end
 
@@ -127,23 +122,21 @@ TE.events:add(N_("CUpdate"), function(e)
 	end
 
 	local currentWorldTick = CWorldTick.getLatestTick()
-	local canTrace = log.canTrace()
 
 	if previousInputTick > currentWorldTick then
 		previousInputTick = currentWorldTick
-	elseif previousInputTick < currentWorldTick - CWorldTick.getTPS() then
-		previousInputTick = currentWorldTick - CWorldTick.getTPS()
+	elseif previousInputTick < currentWorldTick - GWorldTick.getTPS() then
+		previousInputTick = currentWorldTick - GWorldTick.getTPS()
 	end
 
-	local i = 0
-	while previousInputTick < currentWorldTick do
-		i = i + 1
-		if i > 1000 then
-			error()
-		end
+	if currentWorldTick - previousInputTick > 1e5 and log.canWarn() then
+		log.warn("Too many ticks pending to execute, might cause infinite loop?")
+	end
 
+	local canTrace = log.canTrace()
+
+	while previousInputTick < currentWorldTick do
 		local worldTick = previousInputTick + 1
-		previousInputTick = worldTick
 
 		for _, playerID in ipairs(CNetworkPlayers.getPlayers(clientID)) do
 			local fields = GNetworkMessageFields.PlayerInputs
@@ -164,7 +157,12 @@ TE.events:add(N_("CUpdate"), function(e)
 				log.trace(("Send player %d input"):format(playerID), messageContent)
 			end
 		end
+
+		previousInputTick = worldTick
 	end
 end, "SendPlayersInputs", "Inputs")
+
+--- @param e dr2c.E.CWorldSessionStart
+TE.events:add(N_("CWorldSessionStart"), function(e) end)
 
 return CPlayerInput
