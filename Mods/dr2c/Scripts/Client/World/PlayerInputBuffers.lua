@@ -234,11 +234,12 @@ end, "RemoveOldInputsFromPlayerInputBuffers", "ClearCaches")
 --- @param e dr2c.E.CWorldTickProcess
 TE.events:add(N_("CWorldTickProcess"), function(e)
 	--- @class dr2c.E.CWorldTickProcess
-	--- @field playerInputs? table<dr2c.WorldTick, dr2c.PlayerInputCollectedEntry>
+	--- @field playersTicksInputs? table<dr2c.PlayerID, table<dr2c.WorldTick, dr2c.PlayerInputCollectedEntry>>
 	e = e
 
-	if not e.playerInputs then
-		e.playerInputs = CPlayerInputBuffers.makePlayerInputsArg(e.tick, e.targetTick)
+	if not e.playersTicksInputs then
+		-- e.playerInputs = CPlayerInputBuffers.makePlayerInputsArg(e.tick, e.targetTick)
+		e.playersTicksInputs = CPlayerInputBuffers.collectPlayersInputsInRange(e.tick, e.targetTick)
 	end
 end, "ReadPlayerInputs", "PlayerInputs")
 

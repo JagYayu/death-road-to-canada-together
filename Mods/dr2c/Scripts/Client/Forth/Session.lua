@@ -64,7 +64,7 @@ function CForthSession.finishLocally()
 	--
 end
 
---- 将会话
+--- 将会话保存到本地
 function CForthSession.saveSession()
 	--
 end

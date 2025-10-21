@@ -144,7 +144,7 @@ function GPlayerInputBuffers.new()
 		return playerTicksInputs[worldTick]
 	end
 
-	--- 给一个玩家在某一世界刻添加输入，该函数应该只作用于本地玩家
+	--- 给一个玩家在某一世界刻添加输入,该函数只作用于本地玩家，并且不视为权威输入
 	--- @param playerID dr2c.PlayerID
 	--- @param worldTick dr2c.WorldTick
 	--- @param playerInputID dr2c.PlayerInputID

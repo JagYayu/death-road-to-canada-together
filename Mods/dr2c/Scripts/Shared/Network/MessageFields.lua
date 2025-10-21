@@ -37,66 +37,77 @@ MessageFields.ClientPrivateAttribute = {
 
 --- @enum dr2c.MessageFields.PlayerInputs
 MessageFields.PlayerInputs = {
-	worldTick = 1,
-	playerID = 2,
-	playerInputs = 3,
+	worldSessionID = 1,
+	worldTick = 2,
+	playerID = 3,
+	playerInputs = 4,
 }
 
 --- @enum dr2c.MessageFields.Snapshot
 MessageFields.Snapshot = {
-	snapshotID = 1,
-	snapshotData = 2,
+	worldSessionID = 1,
+	snapshotID = 2,
+	snapshotData = 3,
 }
 
 --- @enum dr2c.MessageFields.SnapshotResponse
 MessageFields.SnapshotResponse = {
-	snapshotID = 1,
-	snapshotData = 2,
-	reason = 3,
+	worldSessionID = 1,
+	snapshotID = 2,
+	snapshotData = 3,
+	reason = 4,
 }
 
 --- @enum dr2c.MessageFields.WorldSessionStart
 MessageFields.WorldSessionStart = {
-	sponsorClientID = 1,
-	attributes = 2,
-	suppressedReason = 3,
+	worldSessionID = 1,
+	sponsorClientID = 2,
+	attributes = 3,
+	suppressedReason = 4,
 }
 
 --- @enum dr2c.MessageFields.WorldSessionRestart
-MessageFields.WorldSessionRestart = {}
+MessageFields.WorldSessionRestart = {
+	worldSessionID = 1,
+}
 
 --- @enum dr2c.MessageFields.WorldSessionFinish
 MessageFields.WorldSessionFinish = {
-	sponsorClientID = 1,
-	attributes = 2,
-	suppressedReason = 3,
+	worldSessionID = 1,
+	sponsorClientID = 2,
+	attributes = 3,
+	suppressedReason = 4,
 }
 
 --- @enum dr2c.MessageFields.WorldSessionPause
 MessageFields.WorldSessionPause = {
-	sponsorClientID = 1,
-	suppressedReason = 2,
-	timePaused = 3,
+	worldSessionID = 1,
+	sponsorClientID = 2,
+	suppressedReason = 3,
+	timePaused = 4,
 }
 
 --- @enum dr2c.MessageFields.WorldSessionUnpause
 MessageFields.WorldSessionUnpause = {
-	sponsorClientID = 1,
-	suppressedReason = 2,
-	timePaused = 3,
+	worldSessionID = 1,
+	sponsorClientID = 2,
+	suppressedReason = 3,
+	timePaused = 4,
 }
 
 --- @enum dr2c.MessageFields.ForthSessionStart
 MessageFields.ForthSessionStart = {
-	sponsorClientID = 1,
-	attributes = 2,
-	suppressedReason = 3,
+	forthSessionID = 1,
+	sponsorClientID = 2,
+	attributes = 3,
+	suppressedReason = 4,
 }
 
 --- @enum dr2c.MessageFields.ForthSessionFinish
 MessageFields.ForthSessionFinish = {
-	gameMode = 1,
-	characters = 2,
+	forthSessionID = 1,
+	gameMode = 2,
+	characters = 3,
 }
 
 return MessageFields

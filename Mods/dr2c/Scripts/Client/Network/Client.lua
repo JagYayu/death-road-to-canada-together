@@ -197,7 +197,7 @@ local function updateLatencySimulatedEntry(entry, _, time)
 end
 
 function CNetworkClient.updateLatencySimulatedQueue()
-	List.removeIfV(latencySimulatedQueue, updateLatencySimulatedEntry, Time.getSystemTime() + 1000)
+	List.removeIfV(latencySimulatedQueue, updateLatencySimulatedEntry, Time.getSystemTime())
 end
 
 CNetworkClient.eventCCollectVerifyAttributes = TE.events:new(N_("CCollectVerifyAttributes"), {

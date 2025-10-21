@@ -28,10 +28,10 @@ local dummyFilter = CEntityECS.filter({
 
 --- @param e dr2c.E.CWorldTickProcess
 TE.events:add(N_("CWorldTickProcess"), function(e)
-	CNetworkClient.simulateLatency(0.5) -- 设置500ms延迟
+	CNetworkClient.simulateLatency(0.2) -- 设置200ms延迟
 
 	local characterCount = CEntityECS.countEntitiesByType("Character")
-	for _ = characterCount + 1, 2 do -- 创建2个玩家
+	for _ = characterCount + 1, 3 do -- 创建2个玩家
 		CEntityECS.spawnEntity("Character")
 	end
 

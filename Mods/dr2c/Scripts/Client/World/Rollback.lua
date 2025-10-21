@@ -38,7 +38,7 @@ end
 --- @return boolean
 function CWorldRollback.perform(worldTick, extras)
 	local currentTick = CWorldTick.getCurrentTick()
-	if currentTick <= 1 or worldTick > currentTick then -- 不允许滚到未来世界刻
+	if currentTick <= 0 or worldTick > currentTick then -- 不允许滚到未来世界刻
 		return false
 	end
 
@@ -72,11 +72,13 @@ end
 
 --- @param e dr2c.E.CPlayerInputsPredictFailed
 TE.events:add(N_("CPlayerInputsPredictFailed"), function(e)
+	local targetTick = e.worldTick --math.min(e.archivedTick, e.worldTick)
+
 	if log.canDebug() then
-		log.debug(("Perform rollback to tick %s"):format(e.worldTick))
+		log.debug(("Perform rollback to tick %s"):format(targetTick))
 	end
 
-	CWorldRollback.perform(e.worldTick)
+	CWorldRollback.perform(targetTick)
 end, "PerformRollback", "Rollback")
 
 return CWorldRollback

@@ -436,8 +436,7 @@ local function reloadEntitiesSchema(oldEntitiesSchema, tempComponentsSchema)
 end
 
 CEntityECSSchema.eventCEntitySchemaLoaded = TE.events:new(N_("CEntitySchemaLoaded"), {
-	"Components",
-	"Filters",
+	"ECS",
 })
 
 function CEntityECSSchema.reloadImmediately()
@@ -459,18 +458,22 @@ end
 
 CEntityECSSchema.reload()
 
---- @param e dr2c.E.CLoad
-TE.events:add(N_("CLoad"), function(e)
+function CEntityECSSchema.onLoad()
 	if reloadPending then
 		CEntityECSSchema.reloadImmediately()
-
-		--- @class dr2c.E.CLoad
-		--- @field ecsSchema? { components: dr2c.ECSSchema.Components, entities: dr2c.ECSSchema.Entities }
-		e.ecsSchema = {
-			components = componentsSchema,
-			entities = entitiesSchema,
-		}
 	end
+end
+
+--- @param e dr2c.E.CLoad
+TE.events:add(N_("CLoad"), function(e)
+	CEntityECSSchema.onLoad()
+
+	--- @class dr2c.E.CLoad
+	--- @field ecsSchema? { components: dr2c.ECSSchema.Components, entities: dr2c.ECSSchema.Entities }
+	e.ecsSchema = {
+		components = componentsSchema,
+		entities = entitiesSchema,
+	}
 end, "loadECSSchema", "ECS")
 
 return CEntityECSSchema
