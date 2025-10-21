@@ -9,6 +9,8 @@
 --
 --]]
 
+local Table = require("TE.Table")
+
 local CNetworkClock = require("dr2c.Client.Network.Clock")
 local CWorldSession = require("dr2c.Client.World.Session")
 local GWorldSession = require("dr2c.Shared.World.Session")
@@ -29,11 +31,10 @@ local CWorldTick = {}
 
 --- @type dr2c.WorldTick
 local currentTick = 0
-local tickBeginTime = Time.getSystemTime()
 
 --- @type integer?
 local processingTick
---- @type integer
+--- @type integer?
 local processingTargetTick
 --- @type integer
 local processedTicks = 0
@@ -110,7 +111,8 @@ CWorldTick.eventCWorldTickProcess = TE.events:new(N_("CWorldTickProcess"), {
 })
 
 --- @param targetTick integer
-local function process(targetTick)
+--- @param extras table?
+local function process(targetTick, extras)
 	processingTargetTick = targetTick
 	processedTicks = 0
 
@@ -128,6 +130,7 @@ local function process(targetTick)
 	while currentTick < targetTick do
 		currentTick = currentTick + 1
 		processingTick = currentTick
+		processedTicks = processedTicks + 1
 
 		if e then
 			e.tick = processingTick
@@ -138,6 +141,7 @@ local function process(targetTick)
 				targetTick = targetTick,
 				processedTicks = processedTicks,
 			}
+			--TODO e = extras and Table.merge(e, extras) or e
 		end
 
 		TE.events:invoke(CWorldTick.eventCWorldTickProcess, e)
@@ -147,13 +151,15 @@ local function process(targetTick)
 		end
 	end
 
+	processingTargetTick = nil
 	processingTick = nil
 end
 
 --- 执行世界刻，直到当前世界刻大于或等于目标世界刻，或被强制终止
---- @param targetTick integer?
+--- @param targetTick? integer
+--- @param extras? table @额外参数，会覆盖事件参数`e`的字段
 --- @return boolean completed
-function CWorldTick.process(targetTick)
+function CWorldTick.process(targetTick, extras)
 	if targetTick == nil then
 		targetTick = CWorldTick_getLatestTick()
 	elseif type(targetTick) ~= "number" then
@@ -162,7 +168,7 @@ function CWorldTick.process(targetTick)
 		error("Target tick must be an integer number", 2)
 	end
 
-	process(targetTick)
+	process(targetTick, extras)
 	return currentTick >= targetTick
 end
 

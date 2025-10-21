@@ -29,31 +29,24 @@ local GNetworkMessage = {}
 GNetworkMessage.Type = Enum.sequence({
 	Heartbeat = 0,
 
-	--- {en}
 	--- Server --> Client: Server send all existed client's public attributes to lately verified client.
-	--- {zn_CN}
 	--- 服务器 --> 客户端: 服务器给刚过验证的客户端发送所有其他客户端的最新公开属性。
 	Clients = 1,
 	--- Server --> Client
 	ClientConnect = 2,
-	--- {en}
 	--- Server --> Client
 	ClientDisconnect = 3,
-	--- {en}
 	--- Client --> Server: A client attempt to change a public attribute, send value to server.
 	--- Server --> Client: Server broadcast a client's modified public attribute to all other clients.
-	--- {zh_CN}
 	--- 客户端 --> 服务器: 一个客户端尝试修改了一个公开属性，将值发送给服务器。
 	--- 服务器 --> 客户端: 服务器发送一个客户端修改后的公开属性给所有其他客户端。
 	ClientPublicAttribute = 4,
 	--- [Client <-> Server]
 	ClientPrivateAttribute = 5,
-	--- [Client --> Server]
-	ClientPrivateAttributeChanged = 6,
 	--- Server --> Client
-	ServerAttribute = 7,
+	ServerAttribute = 6,
 	--- [Client <-> Server]
-	Clock = 8,
+	Clock = 7,
 
 	--- [Client <-> Server]
 	PlayerInputs = 101,
@@ -127,7 +120,7 @@ local encodingTable = { 0, nil }
 
 --- @param messageType dr2c.NetworkMessageType
 --- @param messageContent? any
---- @return string
+--- @return string messagePacket
 function GNetworkMessage.pack(messageType, messageContent)
 	encodingTable[1] = tonumber(messageType) or GNetworkMessage_Type_Heartbeat
 	encodingTable[2] = messageContent
@@ -150,13 +143,13 @@ local function unpackImpl(message)
 	end
 end
 
---- @param message? string
+--- @param messagePacket? string
 --- @return dr2c.NetworkMessageType
 --- @return any?
 --- @nodiscard
-function GNetworkMessage.unpack(message)
-	if message then
-		local success, messageType, messageContent = pcall(unpackImpl, message)
+function GNetworkMessage.unpack(messagePacket)
+	if messagePacket then
+		local success, messageType, messageContent = pcall(unpackImpl, messagePacket)
 		if not success then
 			error("Message unpack failed: " .. messageType)
 		end

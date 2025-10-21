@@ -32,7 +32,7 @@ local function throwPlayerNotFound(playerID)
 end
 
 --- @param worldTick dr2c.WorldTick
-local function checkWorldTick(worldTick)
+local function checkWorldTickValidation(worldTick)
 	if type(worldTick) ~= "number" then
 		error("Bad argument to 'worldTick': number expected", 3)
 	elseif worldTick <= 0 then
@@ -52,7 +52,7 @@ function GPlayerInputBuffers.new()
 	--- @class dr2c.PlayerTicksInputs
 	--- @field [dr2c.WorldTick] dr2c.PlayerTickInputs
 	--- @field beginTick? dr2c.WorldTick
-	--- @field endTick? dr2c.WorldTick @需保证与`beginTick`为同一数据类型。
+	--- @field endTick dr2c.WorldTick
 
 	--- @class dr2c.PlayersTicksInputs
 	--- @field [dr2c.PlayerID] dr2c.PlayerTicksInputs
@@ -95,7 +95,7 @@ function GPlayerInputBuffers.new()
 	--- 清理所有玩家输入
 	function PlayerInputBuffers.clear()
 		for playerID in pairs(playersTicksInputsData) do
-			playersTicksInputsData[playerID] = {}
+			playersTicksInputsData[playerID] = { endTick = 0 }
 		end
 
 		playersTicksInputsArchivedTick = 0
@@ -116,7 +116,7 @@ function GPlayerInputBuffers.new()
 			error(("Player %s already exists"):format(playerID), 2)
 		end
 
-		playersTicksInputsData[playerID] = {}
+		playersTicksInputsData[playerID] = { endTick = 0 }
 	end
 
 	--- 移除某一个玩家
@@ -139,23 +139,28 @@ function GPlayerInputBuffers.new()
 			throwPlayerNotFound(playerID)
 		end
 
-		checkWorldTick(worldTick)
+		checkWorldTickValidation(worldTick)
 
 		return playerTicksInputs[worldTick]
 	end
 
-	--- 给一个玩家在某一世界刻添加输入，该函数应作用于本地玩家
+	--- 给一个玩家在某一世界刻添加输入，该函数应该只作用于本地玩家
 	--- @param playerID dr2c.PlayerID
 	--- @param worldTick dr2c.WorldTick
 	--- @param playerInputID dr2c.PlayerInputID
 	--- @param playerInputArg Serializable
+	--- @return boolean success @若该世界刻已归档，返回`false`，否则为`true`
 	function PlayerInputBuffers.addInput(playerID, worldTick, playerInputID, playerInputArg)
+		-- if worldTick <= playersTicksInputsArchivedTick then
+		-- 	return false
+		-- end
+
 		local playerTicksInputs = playersTicksInputsData[playerID]
 		if not playerTicksInputs then
 			throwPlayerNotFound(playerID)
 		end
 
-		checkWorldTick(worldTick)
+		checkWorldTickValidation(worldTick)
 
 		local tickInputs = playerTicksInputs[worldTick]
 		if not tickInputs then
@@ -163,8 +168,8 @@ function GPlayerInputBuffers.new()
 			playerTicksInputs[worldTick] = tickInputs
 		end
 
-		playerTicksInputs.beginTick = math_min(playerTicksInputs.beginTick or math_huge, worldTick)
-		playerTicksInputs.endTick = math_max(playerTicksInputs.beginTick or -math_huge, worldTick)
+		playerTicksInputs.beginTick = math_min(playerTicksInputs.beginTick or worldTick, worldTick)
+		playerTicksInputs.endTick = math_max(playerTicksInputs.endTick, worldTick)
 
 		if GPlayerInput.isContinuous(playerInputID) then
 			local map = tickInputs[1]
@@ -195,16 +200,18 @@ function GPlayerInputBuffers.new()
 			playerTicksInputs.beginTick = worldTick
 		end
 
-		if (playerTicksInputs.endTick or 0) < worldTick then
+		if playerTicksInputs.endTick < worldTick then
 			playerTicksInputs.endTick = worldTick
 		end
+
+		return true
 	end
 
 	--- @param worldTick dr2c.WorldTick
 	--- @return boolean
 	local function checkArchived(worldTick)
 		for _, playerTicksInputs in pairs(playersTicksInputsData) do
-			local beginTick = math_min(playerTicksInputs.beginTick or math_huge, playersTicksInputsArchivedTick)
+			local beginTick = math_max(playersTicksInputsArchivedTick, playerTicksInputs.beginTick or -math_huge)
 			local endTick = math_max(worldTick, playerTicksInputs.endTick or -math_huge)
 			assert(beginTick <= endTick)
 
@@ -226,27 +233,31 @@ function GPlayerInputBuffers.new()
 	--- @param playerID dr2c.PlayerID
 	--- @param worldTick dr2c.WorldTick
 	--- @param tickInputs dr2c.PlayerTickInputs
-	--- @return boolean archived
+	--- @return boolean? archived @设置了玩家的输入后，返回值表示该刻是否成为了归档刻，若该帧已归档则返回`nil`
 	function PlayerInputBuffers.setInputs(playerID, worldTick, tickInputs)
+		-- if worldTick <= playersTicksInputsArchivedTick then
+		-- 	return
+		-- end
+
 		local playerTicksInputs = playersTicksInputsData[playerID]
 		if not playerTicksInputs then
 			throwPlayerNotFound(playerID)
 		end
 
-		checkWorldTick(worldTick)
+		checkWorldTickValidation(worldTick)
 
 		playerTicksInputs[worldTick] = tickInputs
 
 		playerTicksInputs.beginTick = math_min(playerTicksInputs.beginTick or math_huge, worldTick)
 		playerTicksInputs.endTick = math_max(playerTicksInputs.beginTick or -math_huge, worldTick)
 
-		if checkArchived(worldTick) then
-			playersTicksInputsArchivedTick = worldTick
+		-- if checkArchived(worldTick) then
+		-- 	playersTicksInputsArchivedTick = worldTick
 
-			return true
-		else
-			return false
-		end
+		-- 	return true
+		-- else
+		-- 	return false
+		-- end
 	end
 
 	--- 移除某一玩家在某一世界刻的所有输入
@@ -259,7 +270,7 @@ function GPlayerInputBuffers.new()
 			return false
 		end
 
-		checkWorldTick(worldTick)
+		checkWorldTickValidation(worldTick)
 
 		playerTicksInputs[worldTick] = nil
 
@@ -288,17 +299,20 @@ function GPlayerInputBuffers.new()
 		return true
 	end
 
-	--- 尝试移除所有旧的输入
-	--- @param inputsLifetime number
-	function PlayerInputBuffers.removeOldInputs(inputsLifetime)
-		local ticks = playersTicksInputsArchivedTick - math.floor(inputsLifetime * GWorldTick.getTPS())
-
-		-- print("REMOVE OLD INPUTS AT", ticks, playersTicksInputsArchivedTick, inputsLifetime * GWorldTick.getTPS())
-
+	--- 尝试丢弃所有玩家在目标刻及目标刻前的所有输入
+	--- @param targetTick number
+	function PlayerInputBuffers.discardInputs(targetTick)
 		--- @param playerID dr2c.PlayerID
 		--- @param playerTicksInputs dr2c.PlayerTicksInputs
 		for playerID, playerTicksInputs in pairs(playersTicksInputsData) do
-			--
+			if targetTick >= playerTicksInputs.endTick then
+				playersTicksInputsData[playerID] = { endTick = 0 }
+			else
+				for tick = playerTicksInputs.beginTick, targetTick do
+					playerTicksInputs[tick] = nil
+				end
+				playerTicksInputs.beginTick = targetTick + 1
+			end
 		end
 	end
 

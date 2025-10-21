@@ -19,6 +19,7 @@ local GNetworkClient = require("dr2c.Shared.Network.Client")
 local GNetworkClients = require("dr2c.Shared.Network.Clients")
 local GNetworkDisconnection = require("dr2c.Shared.Network.Disconnection")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local SNetworkServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.ServerUnverifiedClient
@@ -41,7 +42,6 @@ local clientsPrivateAttributes = {}
 local unverifiedClients = {}
 
 local authoritativeClient
-local hasMultiple
 
 clientList = persist("clientList", function()
 	return clientList
@@ -189,14 +189,19 @@ TE.events:add(N_("SMessage"), function(e)
 		return
 	end
 
-	local attribute = e.content.attribute
+	local fields = GNetworkMessageFields.ClientPublicAttribute
+
+	local attribute = e.content[fields.attribute]
+	if not attribute then
+		return
+	end
 
 	local trait = GNetworkClient.getPublicAttributeTrait(attribute)
 	if trait == GNetworkClient.AttributeTrait.Authoritative then
 		return
 	end
 
-	local value = e.content.value
+	local value = e.content[fields.value]
 	if not GNetworkClient.validatePublicAttribute(attribute, value) then
 		return
 	end
@@ -218,12 +223,12 @@ TE.events:add(N_("SMessage"), function(e)
 		log.trace(("Set client %s public attribute: <%s>%s = %s"):format(clientID, attribute, key, value))
 	end
 
-	attributes[e.content.attribute] = e.content.value
+	attributes[attribute] = value
 
-	e.broadcast = {
-		clientID = clientID,
-		attribute = attribute,
-		value = value,
+	e.broadcasts[#e.broadcasts + 1] = {
+		[fields.clientID] = clientID,
+		[fields.attribute] = attribute,
+		[fields.value] = value,
 	}
 end, "ReceiveClientPublicAttribute", "Receive", GNetworkMessage.Type.ClientPublicAttribute)
 

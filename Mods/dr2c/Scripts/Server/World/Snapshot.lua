@@ -74,7 +74,7 @@ local function updateAndTryRemoveRequest(entry, index)
 		local fields = GNetworkMessageFields.SnapshotResponse
 		SNetworkServer.sendReliable(entry.clientID, GNetworkMessage.Type.SnapshotResponse, {
 			[fields.snapshotID] = entry.snapshotID,
-			[fields.snapshot] = nil,
+			[fields.snapshotData] = nil,
 			[fields.reason] = GNetworkReason.ID.NoAuthoritativeSnapshot,
 		})
 
@@ -89,7 +89,7 @@ local function updateAndTryRemoveRequest(entry, index)
 		local fields = GNetworkMessageFields.SnapshotResponse
 		SNetworkServer.sendReliable(entry.clientID, GNetworkMessage.Type.SnapshotResponse, {
 			[fields.snapshotID] = entry.snapshotID,
-			[fields.snapshot] = nil,
+			[fields.snapshotData] = nil,
 			[fields.reason] = GNetworkReason.ID.NoAuthoritativeClient,
 		})
 

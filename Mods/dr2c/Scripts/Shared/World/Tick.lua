@@ -9,7 +9,7 @@
 --
 --]]
 
-local tps = 2 ^ 5 -- 2 ^ 3
+local tps = 2 ^ 5
 local deltaTime = 1 / tps
 
 local GWorldTick = {}

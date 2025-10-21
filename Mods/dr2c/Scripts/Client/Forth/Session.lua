@@ -38,14 +38,6 @@ function CForthSession.startNew(args)
 		characters[1] = GForthCharacter.randomCharacter()
 	end
 
-	--- @class dr2c.MessageContent.ForthSession : dr2c.ForthSessionStartNewArgs
-	--- @field characters dr2c.ForthCharacter[]
-	--- @field gameMode dr2c.ForthGameModeType
-	local content = {
-		gameMode = gameMode,
-		characters = characters,
-	}
-
 	local fields = GNetworkMessageFields.ForthSessionStart
 	CClient.sendReliable(GNetworkMessage.Type.ForthSessionStart, {
 		[fields.gameMode] = gameMode,
@@ -72,27 +64,41 @@ function CForthSession.finishLocally()
 	--
 end
 
+--- 将会话
+function CForthSession.saveSession()
+	--
+end
+
 TE.events:add(N_("CMessage"), function(e)
 	if type(e.content) == "table" then
-		if not e.suppressed then
-			log.info(("Client %s started forth session"):format(e.content.sponsorClientID))
+		local fields = GNetworkMessageFields.ForthSessionStart
+		local suppressedReason = e.content[fields.suppressedReason]
 
-			local fields = GNetworkMessageFields.ForthSessionStart
+		if not suppressedReason then
+			if log.canInfo() then
+				log.info(("Client %s started forth session"):format(e.content[suppressedReason.sponsorClientID]))
+			end
+
 			CForthSession.startLocally(e.content[fields.attributes])
-		elseif e.content.sponsorClientID == CClient.getClientID() and log.canWarn() then
-			log.warn(("Cannot start forth session: %s"):format(e.suppressed))
+		elseif e.content[suppressedReason.sponsorClientID] == CClient.getClientID() and log.canWarn() then
+			log.warn(("Cannot start forth session: %s"):format(suppressedReason))
 		end
 	end
 end, "StartForthSessionLocally", "Receive", GNetworkMessage.Type.ForthSessionStart)
 
 TE.events:add(N_("CMessage"), function(e)
 	if type(e.content) == "table" then
-		if not e.suppressed then
-			log.info(("Client %s finished forth session"):format(e.content.sponsorClientID))
+		local fields = GNetworkMessageFields.ForthSessionStart
+		local suppressedReason = e.content[fields.suppressedReason]
+
+		if not suppressedReason then
+			if log.canInfo() then
+				log.info(("Client %s finished forth session"):format(e.content[fields.sponsorClientID]))
+			end
 
 			CForthSession.finishLocally()
-		elseif e.content.sponsorClientID == CClient.getClientID() and log.canWarn() then
-			log.warn(("Cannot start forth session: %s"):format(e.suppressed))
+		elseif e.content[fields.sponsorClientID] == CClient.getClientID() and log.canWarn() then
+			log.warn(("Cannot start forth session: %s"):format(suppressedReason))
 		end
 	end
 end, "FinishForthSessionLocally", "Receive", GNetworkMessage.Type.ForthSessionFinish)

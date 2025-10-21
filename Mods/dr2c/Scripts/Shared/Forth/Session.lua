@@ -11,6 +11,8 @@
 
 local Enum = require("TE.Enum")
 
+--- Road Traveling Session (The name Forth is actually absolutely incorrect)
+--- 公路旅行会话（实际上Forth这个命名完全不正确）
 --- @class dr2c.GForthSession
 local GForthSession = {}
 

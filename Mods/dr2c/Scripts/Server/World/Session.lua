@@ -13,8 +13,9 @@ local Table = require("TE.Table")
 
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
-local SNetworkServer = require("dr2c.Server.Network.Server")
+local GNetworkReason = require("dr2c.Shared.Network.Reason")
 local GWorldSession = require("dr2c.Shared.World.Session")
+local SNetworkServer = require("dr2c.Server.Network.Server")
 
 --- @class dr2c.SWorldSession : dr2c.WorldSession
 local SWorldSession = GWorldSession.new()
@@ -32,6 +33,7 @@ SWorldSession.eventSWorldSessionFinish = TE.events:new(N_("SWorldSessionFinish")
 	"Scene",
 	"Level",
 	"Reset",
+	"Network",
 })
 
 SWorldSession.eventSWorldSessionPause = TE.events:new(N_("SWorldSessionPause"), {
@@ -42,7 +44,8 @@ SWorldSession.eventSWorldSessionUnpause = TE.events:new(N_("SWorldSessionUnpause
 	"Time",
 })
 
---- @param attributes table<dr2c.WorldSessionAttribute, any>?
+--- @param attributes? table<dr2c.WorldSessionAttribute, any>
+--- @param sponsorClientID? TE.Network.ClientID
 function SWorldSession.start(attributes, sponsorClientID)
 	SWorldSession.resetAttributes()
 
@@ -63,14 +66,17 @@ function SWorldSession.start(attributes, sponsorClientID)
 	worldSessionAttributes[GWorldSession.Attribute.TimePaused] = time
 	worldSessionAttributes[GWorldSession.Attribute.ElapsedPaused] = 0
 
+	--- @class dr2c.E.SWorldSessionStart
 	local e = {
 		attributes = worldSessionAttributes,
 		sponsorClientID = sponsorClientID,
 		suppressed = nil,
 	}
+
 	TE.events:invoke(SWorldSession.eventSWorldSessionStart, e)
 end
 
+--- @param e dr2c.E.SWorldSessionStart
 TE.events:add(SWorldSession.eventSWorldSessionStart, function(e)
 	if not e.suppressed then
 		local fields = GNetworkMessageFields.WorldSessionStart
@@ -87,38 +93,44 @@ TE.events:add(SWorldSession.eventSWorldSessionStart, function(e)
 	end
 end, "SendMessage", "Network")
 
---- @param e dr2c.E.SMessage
-TE.events:add(N_("SMessage"), function(e)
-	SWorldSession.start(e.content, e.clientID)
-end, "ReceiveWorldSessionStart", "Receive", GNetworkMessage.Type.WorldSessionStart)
-
 function SWorldSession.restart()
 	-- TODO
 end
 
-TE.events:add(N_("SMessage"), function(e)
-	SWorldSession.restart()
-end, "ReceiveWorldSessionRestart", "Receive", GNetworkMessage.Type.WorldSessionRestart)
-
-function SWorldSession.finish()
+--- @param sponsorClientID? TE.Network.ClientID
+function SWorldSession.finish(sponsorClientID)
 	SWorldSession.resetAttributes()
 
-	local e = {}
-	TE.events:invoke(SWorldSession.eventSWorldSessionFinish, e)
+	--- @class dr2c.E.SWorldSessionFinish
+	--- @field suppressed? boolean
+	local e = {
+		attributes = SWorldSession.getAttributes(),
+		sponsorClientID = sponsorClientID,
+	}
 
-	if not e.suppressed then
-		SNetworkServer.broadcastReliable(GNetworkMessage.Type.WorldSessionFinish)
-	end
+	TE.events:invoke(SWorldSession.eventSWorldSessionFinish, e)
 end
 
---- @param e {}
-TE.events:add(N_("SMessage"), function(e)
-	SWorldSession.finish()
-end, "ReceiveWorldSessionFinish", "Receive", GNetworkMessage.Type.WorldSessionFinish)
+--- @param e dr2c.E.SWorldSessionFinish
+TE.events:add(SWorldSession.eventSWorldSessionFinish, function(e)
+	if not e.suppressed then
+		local fields = GNetworkMessageFields.WorldSessionFinish
+		SNetworkServer.broadcastReliable(GNetworkMessage.Type.WorldSessionStart, {
+			[fields.sponsorClientID] = e.sponsorClientID,
+		})
+	elseif e.sponsorClientID then
+		local fields = GNetworkMessageFields.WorldSessionFinish
+		SNetworkServer.sendReliable(e.sponsorClientID, GNetworkMessage.Type.WorldSessionStart, {
+			[fields.sponsorClientID] = e.sponsorClientID,
+			[fields.attributes] = e.attributes,
+			[fields.suppressedReason] = e.suppressed,
+		})
+	end
+end, "SendMessage", "Network")
 
 --- @return boolean
 function SWorldSession.pause()
-	if SWorldSession.getAttribute(GWorldSession.Attribute.State) ~= GWorldSession.State.Playing then
+	if not SWorldSession.isPlaying() then
 		return false
 	end
 
@@ -139,13 +151,9 @@ function SWorldSession.pause()
 	end
 end
 
-TE.events:add(N_("SMessage"), function(e)
-	SWorldSession.pause()
-end, "ReceiveWorldSessionPause", "Receive", GNetworkMessage.Type.WorldSessionPause)
-
 --- @return boolean
 function SWorldSession.unpause()
-	if SWorldSession.getAttribute(GWorldSession.Attribute.State) ~= GWorldSession.State.Paused then
+	if not SWorldSession.isPaused() then
 		return false
 	end
 
@@ -170,6 +178,24 @@ function SWorldSession.unpause()
 		return false
 	end
 end
+
+--- @param e dr2c.E.SMessage
+TE.events:add(N_("SMessage"), function(e)
+	SWorldSession.start(e.content, e.clientID)
+end, "ReceiveWorldSessionStart", "Receive", GNetworkMessage.Type.WorldSessionStart)
+
+TE.events:add(N_("SMessage"), function(e)
+	SWorldSession.restart()
+end, "ReceiveWorldSessionRestart", "Receive", GNetworkMessage.Type.WorldSessionRestart)
+
+--- @param e dr2c.E.SMessage
+TE.events:add(N_("SMessage"), function(e)
+	SWorldSession.finish(e.clientID)
+end, "ReceiveWorldSessionFinish", "Receive", GNetworkMessage.Type.WorldSessionFinish)
+
+TE.events:add(N_("SMessage"), function(e)
+	SWorldSession.pause()
+end, "ReceiveWorldSessionPause", "Receive", GNetworkMessage.Type.WorldSessionPause)
 
 TE.events:add(N_("SMessage"), function(e)
 	SWorldSession.pause()

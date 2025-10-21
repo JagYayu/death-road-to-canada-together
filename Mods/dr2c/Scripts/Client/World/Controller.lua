@@ -13,7 +13,7 @@ local Math = require("TE.Math")
 
 local CEntityECS = require("dr2c.Client.Entity.ECS")
 local CSystemInput = require("dr2c.Client.System.Input")
-local CWorldTick = require("dr2c.Client.World.Tick")
+local GWorldTick = require("dr2c.Shared.World.Tick")
 local GWorldPlayerInput = require("dr2c.Shared.World.PlayerInput")
 
 --- @class dr2c.CController
@@ -33,13 +33,10 @@ TE.events:add(N_("CWorldTickProcess"), function(e)
 
 	local getComponent = CEntityECS.getComponent
 
-	local delta = CWorldTick.getDeltaTime() * 100
+	local delta = GWorldTick.getDeltaTime() * 100
 
 	for index, entityID, entityTypeID in CEntityECS.iterateEntities(filterControllable) do
-		-- print(entityID, 2)
 		local gameObject = getComponent(entityID, "GameObject") --- @cast gameObject dr2c.Component.GameObject
-
-		-- local playerID = 1
 
 		local inputs = playerInputs[entityID]
 		local dir = inputs and inputs.map[GWorldPlayerInput.ID.Move]

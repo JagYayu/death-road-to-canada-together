@@ -183,11 +183,11 @@ TE.events:add(N_("CWorldTickProcess"), function(e)
 
 	local snapshotLifetime = CWorldSession.getAttribute(GWorldSession.Attribute.DataLifetime)
 	if snapshotLifetime then
-		local droppedNumber = CWorldSnapshot.dropOldSnapshots(snapshotLifetime)
+		-- local droppedNumber = CWorldSnapshot.dropOldSnapshots(snapshotLifetime)
 
-		if droppedNumber and log.canDebug() then
-			log.debug(("Dropped %d old snapshots"):format(droppedNumber))
-		end
+		-- if droppedNumber and log.canDebug() then
+		-- 	log.debug(("Dropped %d old snapshots"):format(droppedNumber))
+		-- end
 	end
 end, "SaveSnapshot", "Snapshot")
 

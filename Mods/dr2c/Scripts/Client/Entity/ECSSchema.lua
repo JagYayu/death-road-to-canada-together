@@ -348,7 +348,11 @@ local function processEntityComponents(entityComponents, tempComponentsSchema)
 
 		local componentSchema = tempComponentsSchema[componentType]
 		if not componentSchema then
-			error("Invalid component " .. componentType, 3)
+			if log.canError() then
+				log.error(("Invalid component '%s'"):format(componentType))
+			end
+
+			goto continue
 		end
 
 		componentFields = Table.fastCopy(componentFields)
@@ -387,6 +391,8 @@ local function processEntityComponents(entityComponents, tempComponentsSchema)
 			archetypeTransient[#archetypeTransient + 1] = component
 			archetypeTransient[componentType] = component
 		end
+
+		::continue::
 	end
 
 	return all, entitySerializable, entityTransient, archetypeConstant, archetypeSerializable, archetypeTransient

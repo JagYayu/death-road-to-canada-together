@@ -231,12 +231,17 @@ end
 
 local function generateOutputFunction(getLog, verb)
 	return function(...)
+		local log = getLog()
+		if not log:canOutput(verb) then
+			return
+		end
+
 		local args = { ... }
 		for index, arg in ipairs(args) do
 			args[index] = inspect.inspect(arg)
 		end
 
-		getLog():output(verb, args)
+		log:output(verb, args)
 	end
 end
 

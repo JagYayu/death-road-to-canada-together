@@ -10,6 +10,7 @@
 --]]
 
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local GServer = require("dr2c.Shared.Network.Server")
 
 --- @class dr2c.CNetworkServer
@@ -24,13 +25,14 @@ function CNetworkServer.getAttribute(attribute)
 end
 
 TE.events:add(N_("CMessage"), function(e)
-	local content = e.content
-	if type(content) ~= "table" then
+	if type(e.content) ~= "table" then
 		return
 	end
 
-	local attribute = content.attribute
-	local value = content.value
+	local fields = GNetworkMessageFields.ServerAttribute
+
+	local attribute = e.content[fields.attribute]
+	local value = e.content[fields.value]
 	if type(attribute) ~= "string" then
 		return
 	end

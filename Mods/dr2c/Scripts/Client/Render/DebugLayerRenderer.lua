@@ -26,14 +26,14 @@ local drawRectArgs
 TE.events:add(N_("CRenderCamera"), function(e)
 	local renderer = e.renderer
 
-	local CECS_getComponent = CEntityECS.getComponent
+	local getComponent = CEntityECS.getComponent
 
 	drawRectArgs = drawRectArgs or DrawRectArgs()
 	local drawRectArgsDest = drawRectArgs.destination
 
 	for index, id, typeID in CEntityECS.iterateEntities(filterTest) do
-		local gameObject = CECS_getComponent(id, "GameObject") --- @cast gameObject dr2c.Component.GameObject
-		local debugVisualRectangle = CECS_getComponent(id, "DebugVisualRectangle") --- @cast debugVisualRectangle dr2c.Component.DebugVisualRectangle
+		local gameObject = getComponent(id, "GameObject") --- @cast gameObject dr2c.Component.GameObject
+		local debugVisualRectangle = getComponent(id, "DebugVisualRectangle") --- @cast debugVisualRectangle dr2c.Component.DebugVisualRectangle
 
 		local width = debugVisualRectangle.width
 		local height = debugVisualRectangle.height

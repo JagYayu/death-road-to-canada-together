@@ -16,16 +16,8 @@ local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 --- @class dr2c.CWorldRollback
 local CWorldRollback = {}
 
---- @type dr2c.WorldTick?
-local rollbackPending
-local rollbackIsActivated = false
-
-rollbackPending = persist("rollbackPending", function()
-	return rollbackPending
-end)
-rollbackIsActivated = persist("rollbackIsApplied", function()
-	return rollbackIsActivated
-end)
+--- @type boolean
+local isFastForwarding = false
 
 CWorldRollback.eventClientWorldRollback = TE.events:new(N_("CWorldRollback"), {
 	"Snapshot",
@@ -36,22 +28,23 @@ CWorldRollback.eventClientWorldRollback = TE.events:new(N_("CWorldRollback"), {
 --- 检测当前是否应用了回滚
 --- @return boolean
 --- @nodiscard
-function CWorldRollback.isActivated()
-	return rollbackIsActivated
+function CWorldRollback.isFastForwarding()
+	return isFastForwarding
 end
 
---- 应用回滚，将世界状态设置到过去的某一刻
+--- 应用回滚，将世界状态设置到过去的某一刻，并快进回当前刻
 --- @param worldTick dr2c.WorldTick
---- @param extras? any
+--- @param extras? table
 --- @return boolean
-function CWorldRollback.apply(worldTick, extras)
-	if worldTick > CWorldTick.getCurrentTick() then -- 不允许滚到未来世界帧
+function CWorldRollback.perform(worldTick, extras)
+	local currentTick = CWorldTick.getCurrentTick()
+	if currentTick <= 1 or worldTick > currentTick then -- 不允许滚到未来世界刻
 		return false
 	end
 
 	--- @class dr2c.E.CWorldRollback
 	--- @field tick dr2c.WorldTick
-	--- @field extras? any
+	--- @field extras? table
 	--- @field suppressed? boolean
 	local e = {
 		tick = worldTick,
@@ -59,42 +52,31 @@ function CWorldRollback.apply(worldTick, extras)
 	}
 	TE.events:invoke(CWorldRollback.eventClientWorldRollback, e)
 
-	rollbackIsActivated = not e.suppressed
+	isFastForwarding = not e.suppressed
+	if isFastForwarding then
+		extras = e.extras
+		if type(e.extras) == "table" then
+			extras.fastForward = true
+		else
+			extras = { fastForwarding = true }
+		end
+
+		while not CWorldTick.process(currentTick, extras) do
+		end
+
+		isFastForwarding = false
+	end
 
 	return true
 end
 
---- @param worldTick dr2c.WorldTick
-function CWorldRollback.setPending(worldTick)
-	if rollbackPending then
-		rollbackPending = math.min(rollbackPending, worldTick)
-	else
-		rollbackPending = worldTick
-	end
-end
-
-TE.events:add(N_("CUpdate"), function(e)
-	if rollbackPending then
-		CWorldRollback.apply(rollbackPending)
-
-		rollbackPending = nil
-	end
-end, "ApplyRollback", "Rollback")
-
---- @param e dr2c.E.CWorldTickProcess
-TE.events:add(N_("CWorldTickProcess"), function(e)
-	if rollbackIsActivated and CWorldTick.isOnLatestTick() then
-		rollbackIsActivated = false
-	end
-end, "DeactivateRollback", "Rollback")
-
 --- @param e dr2c.E.CPlayerInputsPredictFailed
 TE.events:add(N_("CPlayerInputsPredictFailed"), function(e)
 	if log.canDebug() then
-		log.debug(("Player inputs predict failed, set rollback pending to tick %s"):format(e.worldTick))
+		log.debug(("Perform rollback to tick %s"):format(e.worldTick))
 	end
 
-	CWorldRollback.setPending(e.worldTick)
-end, "RollbackPending", "Rollback", GNetworkMessage.Type.PlayerInputs)
+	CWorldRollback.perform(e.worldTick)
+end, "PerformRollback", "Rollback")
 
 return CWorldRollback

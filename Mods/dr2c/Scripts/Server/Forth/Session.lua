@@ -11,6 +11,7 @@
 
 local GForthSession = require("dr2c.Shared.Forth.Session")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local GNetworkReason = require("dr2c.Shared.Network.Reason")
 local SNetworkServer = require("dr2c.Server.Network.Server")
 local GUtilsMods = require("dr2c.Shared.Utils.Mods")
@@ -90,25 +91,30 @@ TE.events:add(SForthSession.eventSForthSessionStart, function(e)
 end, N_("SetAttributes"), "Attributes")
 
 TE.events:add(SForthSession.eventSForthSessionStart, function(e)
+	local messageContent
+	local fields = GNetworkMessageFields.ForthSessionStart
 	if e.suppressed then
-		SNetworkServer.broadcastReliable(GNetworkMessage.Type.ForthSessionStart, {
-			attributes = {},
-			sponsorClientID = e.sponsorClientID,
-			suppressed = type(e.suppressed) == "string" and e.suppressed or GNetworkReason,
-		})
+		messageContent = {
+			[fields.sponsorClientID] = e.sponsorClientID,
+			[fields.suppressedReason] = type(e.suppressed) == "string" and e.suppressed or GNetworkReason.ID.None,
+		}
 	else
-		SNetworkServer.broadcastReliable(GNetworkMessage.Type.ForthSessionStart, {
-			attributes = SForthSession.getAttributes(),
-			sponsorClientID = e.sponsorClientID,
-			suppressed = false,
-		})
+		messageContent = {
+			[fields.attributes] = SForthSession.getAttributes(),
+			[fields.sponsorClientID] = e.sponsorClientID,
+		}
 	end
+
+	SNetworkServer.broadcastReliable(GNetworkMessage.Type.ForthSessionStart, messageContent)
 end, N_("Broadcast"), "Network")
 
 --- @param e dr2c.E.SMessage
 TE.events:add(N_("SMessage"), function(e)
 	if type(e.content) == "table" then
-		e.content.clientID = e.clientID
+		local fields = GNetworkMessageFields.ForthSessionStart
+		e.content[fields.clientID] = e.clientID
+
+		-- TODO
 		SForthSession.start(e.content)
 	end
 end, "ReceiveForthSessionStart", "Receive", GNetworkMessage.Type.ForthSessionStart)

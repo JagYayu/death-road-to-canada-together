@@ -181,7 +181,16 @@ end, N_("ResetClients"), "Reset")
 
 --- @param e dr2c.E.CMessage
 TE.events:add(N_("CMessage"), function(e)
-	local clientID = e.content.clientID
+	if type(e.content) ~= "table" then
+		return
+	end
+
+	local fields = GNetworkMessageFields.ClientConnect
+
+	local clientID = e.content[fields.clientID]
+	if not clientID then
+		return
+	end
 
 	if log.canTrace() then
 		log.trace(("Received client %s connect message"):format(clientID))
@@ -191,7 +200,16 @@ TE.events:add(N_("CMessage"), function(e)
 end, "ReceiveClientConnect", "Receive", GNetworkMessage.Type.ClientConnect)
 
 TE.events:add(N_("CMessage"), function(e)
-	local clientID = e.content.clientID
+	if type(e.content) ~= "table" then
+		return
+	end
+
+	local fields = GNetworkMessageFields.ClientConnect
+
+	local clientID = e.content[fields.clientID]
+	if not clientID then
+		return
+	end
 
 	if log.canTrace() then
 		log.trace(("Received client %s disconnect message"):format(clientID))
@@ -217,14 +235,15 @@ end, "InitializeClientsAttributes", "Receive", GNetworkMessage.Type.Clients)
 
 --- @param e dr2c.E.CMessage
 local function receiveClientAttribute(e, validate, clientsAttributes)
-	local content = e.content
-	if type(content) ~= "table" then
+	if type(e.content) ~= "table" then
 		return
 	end
 
-	local clientID = content.clientID
-	local attribute = content.attribute
-	local value = content.value
+	local fields = GNetworkMessageFields.ClientPublicAttribute
+
+	local clientID = e.content[fields.clientID]
+	local attribute = e.content[fields.attribute]
+	local value = e.content[fields.value]
 	if type(clientID) ~= "number" or type(attribute) ~= "number" or not validate(attribute, value) then
 		return
 	end
@@ -234,8 +253,9 @@ local function receiveClientAttribute(e, validate, clientsAttributes)
 		attributes[attribute] = value
 	end
 
-	if Utility.canBeIndex(content.requestID) then
-		privateAttributeRequests[content.requestID] = nil
+	local requestID = e.content[fields.requestID]
+	if requestID then
+		privateAttributeRequests[requestID] = nil
 	end
 end
 
@@ -251,16 +271,23 @@ end, "ReceiveClientPrivateAttribute", "Receive", GNetworkMessage.Type.ClientPriv
 
 --- @param e dr2c.E.CMessage
 TE.events:add(N_("CMessage"), function(e)
-	local content = e.content
-	if type(content) ~= "table" or type(content.clientID) ~= "number" or type(content.attribute) ~= "number" then
+	if type(e.content) ~= "table" then
 		return
 	end
 
-	local requests = privateAttributeRequests[e.content.clientID]
-	if requests then
-		requests[content.attribute] = nil
+	local fields = GNetworkMessageFields.ClientPublicAttribute
+
+	local clientID = e.content[fields.clientID]
+	local attribute = e.content[fields.attribute]
+	if type(clientID) ~= "number" or type(attribute) ~= "number" then
+		return
 	end
-end, "ClearPrivateAttributeCache", "Receive", GNetworkMessage.Type.ClientPrivateAttributeChanged)
+
+	local requests = privateAttributeRequests[clientID]
+	if requests then
+		requests[attribute] = nil
+	end
+end, "ClearPrivateAttributeCache", "Receive", GNetworkMessage.Type.ClientPrivateAttribute)
 
 TE.events:add(N_("CUpdate"), function(e)
 	if e.networkThrottle then

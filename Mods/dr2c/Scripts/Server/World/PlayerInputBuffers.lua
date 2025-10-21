@@ -23,20 +23,24 @@ local SPlayerInputBuffers = GWorldPlayerInputBuffers.new()
 TE.events:add(N_("SUpdate"), function(e)
 	local inputsLifetime = tonumber(SWorldSession.getAttribute(GWorldSession.Attribute.DataLifetime))
 	if inputsLifetime then
-		SPlayerInputBuffers.removeOldInputs(inputsLifetime)
+		-- SPlayerInputBuffers.discardInputs(inputsLifetime)
 	end
 end, "RemoveOldInputsFromPlayerInputBuffers", "ClearCaches")
 
 --- @param e dr2c.E.SMessage
 TE.events:add(N_("SMessage"), function(e)
 	local fields = GNetworkMessageFields.PlayerInputs
-	SPlayerInputBuffers.setInputs(
-		e.content[fields.playerID],
-		e.content[fields.worldTick],
-		e.content[fields.playerInputs]
-	)
+	local playerID = e.content[fields.playerID]
+	local worldTick = e.content[fields.worldTick]
+	local playerInputs = e.content[fields.playerInputs]
 
-	SNetworkServer.broadcastReliable(e.type, e.content)
+	if not (playerID and worldTick and playerInputs) or not SPlayerInputBuffers.hasPlayer(playerID) then
+		return
+	end
+
+	SPlayerInputBuffers.setInputs(playerID, worldTick, playerInputs)
+
+	e.broadcasts[#e.broadcasts + 1] = e.content
 end, "ReceivePlayerInput", "Receive", GNetworkMessage.Type.PlayerInputs)
 
 TE.events:add(N_("SConnect"), function(e)
@@ -44,5 +48,8 @@ TE.events:add(N_("SConnect"), function(e)
 
 	SPlayerInputBuffers.addPlayer(clientID)
 end, "AddPlayerToPlayerInputBuffers", "PlayerInputBuffer", GNetworkMessage.Type.ClientConnect)
+
+TE.events:add(N_("SWorldSessionStart"), SPlayerInputBuffers.clear, "ClearPlayerInputBuffers", "Reset")
+TE.events:add(N_("SWorldSessionFinish"), SPlayerInputBuffers.clear, "ClearPlayerInputBuffers", "Reset")
 
 return SPlayerInputBuffers

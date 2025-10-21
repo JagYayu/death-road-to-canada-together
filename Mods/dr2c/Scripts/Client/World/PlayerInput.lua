@@ -35,6 +35,10 @@ end)
 -- 	--
 -- end
 
+function CPlayerInput.reset()
+	previousInputTick = 0
+end
+
 --- @param playerID dr2c.PlayerID
 --- @return any?
 function CPlayerInput.getPlayerMoveArg(playerID)
@@ -121,21 +125,21 @@ TE.events:add(N_("CUpdate"), function(e)
 		return
 	end
 
-	local currentWorldTick = CWorldTick.getLatestTick()
+	local latestWorldTick = CWorldTick.getLatestTick()
 
-	if previousInputTick > currentWorldTick then
-		previousInputTick = currentWorldTick
-	elseif previousInputTick < currentWorldTick - GWorldTick.getTPS() then
-		previousInputTick = currentWorldTick - GWorldTick.getTPS()
+	if previousInputTick > latestWorldTick then
+		previousInputTick = latestWorldTick
+	elseif previousInputTick < latestWorldTick - GWorldTick.getTPS() then
+		previousInputTick = latestWorldTick - GWorldTick.getTPS()
 	end
 
-	if currentWorldTick - previousInputTick > 1e5 and log.canWarn() then
+	if latestWorldTick - previousInputTick > 1e5 and log.canWarn() then
 		log.warn("Too many ticks pending to execute, might cause infinite loop?")
 	end
 
 	local canTrace = log.canTrace()
 
-	while previousInputTick < currentWorldTick do
+	while previousInputTick < latestWorldTick do
 		local worldTick = previousInputTick + 1
 
 		for _, playerID in ipairs(CNetworkPlayers.getPlayers(clientID)) do
@@ -162,7 +166,9 @@ TE.events:add(N_("CUpdate"), function(e)
 	end
 end, "SendPlayersInputs", "Inputs")
 
---- @param e dr2c.E.CWorldSessionStart
-TE.events:add(N_("CWorldSessionStart"), function(e) end)
+TE.events:add(N_("CConnect"), CPlayerInput.reset, "ResetPlayerInputState", "Reset")
+TE.events:add(N_("CDisconnect"), CPlayerInput.reset, "ResetPlayerInputState", "Reset")
+TE.events:add(N_("CWorldSessionStart"), CPlayerInput.reset, "ResetPlayerInputState", "Reset")
+TE.events:add(N_("CWorldSessionFinish"), CPlayerInput.reset, "ResetPlayerInputState", "Reset")
 
 return CPlayerInput

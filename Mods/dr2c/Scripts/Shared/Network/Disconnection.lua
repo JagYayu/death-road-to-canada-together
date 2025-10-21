@@ -26,7 +26,4 @@ GDisconnection.Code = Enum.sequence({
 	Banned = 6,
 })
 
--- function GDisconnection.getReason()
--- end
-
 return GDisconnection

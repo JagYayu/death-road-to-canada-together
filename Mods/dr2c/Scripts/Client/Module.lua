@@ -27,13 +27,10 @@ end
 
 local eventClientUpdate = TE.events:new(N_("CUpdate"), {
 	"Throttle",
+	"Test",
 	"Inputs",
 	"Network",
-	--- depreciated
-	"Control",
-	"Rollback",
 	"World",
-	"ECS",
 	"Snapshot",
 	"ClearCaches",
 })

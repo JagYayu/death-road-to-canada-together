@@ -11,6 +11,7 @@
 
 local GNetworkClient = require("dr2c.Shared.Network.Client")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local GNetworkServer = require("dr2c.Shared.Network.Server")
 local SNetworkClients = require("dr2c.Server.Network.Clients")
 local SNetworkRoom = require("dr2c.Server.Network.Room")
@@ -247,16 +248,24 @@ local function invokeEventServerMessage(clientID, messageContent, messageType)
 	--- @field clientID TE.Network.ClientID
 	--- @field content any
 	--- @field type dr2c.NetworkMessageType
-	--- @field broadcast table?
+	--- @field broadcasts table[]
 	local e = {
 		clientID = clientID,
 		content = messageContent,
 		type = messageType,
+		broadcasts = {},
 	}
 
 	--- @diagnostic disable-next-line: param-type-mismatch
 	TE.events:invoke(SNetworkServer.eventSMessage, e, messageType)
 end
+
+--- @param e dr2c.E.SMessage
+TE.events:add(SNetworkServer.eventSMessage, function(e)
+	for _, messageContent in ipairs(e.broadcasts) do
+		SNetworkServer.broadcastReliable(e.type, messageContent)
+	end
+end, "BroadcastServerMessage", "Broadcast")
 
 --- @param e TE.E.ServerMessage
 TE.events:add("ServerMessage", function(e)
@@ -278,22 +287,21 @@ TE.events:add(SNetworkServer.eventSConnect, function(e)
 		log.trace(("Broadcast client %s connect message & public attribute state"):format(clientID))
 	end
 
-	SNetworkServer.broadcastReliable(GNetworkMessage.Type.ClientConnect, {
-		clientID = clientID,
-	})
-
-	SNetworkServer.broadcastReliable(GNetworkMessage.Type.ClientPublicAttribute, {
-		clientID = clientID,
-		attribute = GNetworkClient.PublicAttribute.State,
-		value = GNetworkClient.State.Verifying,
-	})
-end, "BroadcastClientConnectState", "Clients")
-
---- @param e dr2c.E.SMessage
-TE.events:add(SNetworkServer.eventSMessage, function(e)
-	if e.broadcast then
-		SNetworkServer.broadcastReliable(e.type, e.broadcast)
+	do
+		local fields = GNetworkMessageFields.ClientConnect
+		SNetworkServer.broadcastReliable(GNetworkMessage.Type.ClientConnect, {
+			[fields.clientID] = clientID,
+		})
 	end
-end, "BroadcastServerMessage", "Broadcast")
+
+	do
+		local fields = GNetworkMessageFields.ClientPublicAttribute
+		SNetworkServer.broadcastReliable(GNetworkMessage.Type.ClientPublicAttribute, {
+			[fields.clientID] = clientID,
+			[fields.attribute] = GNetworkClient.PublicAttribute.State,
+			[fields.value] = GNetworkClient.State.Verifying,
+		})
+	end
+end, "BroadcastClientConnectState", "Clients")
 
 return SNetworkServer
