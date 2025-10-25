@@ -31,22 +31,24 @@ TE.events:add(N_("CWorldTickProcess"), function(e)
 	CNetworkClient.simulateLatency(0.2) -- 设置200ms延迟
 
 	local characterCount = CEntityECS.countEntitiesByType("Character")
-	for _ = characterCount + 1, 3 do -- 创建2个玩家
+	for _ = characterCount + 1, 2 do -- 创建2个玩家
 		CEntityECS.spawnEntity("Character")
 	end
 
 	-- local zombieCount = CEntityECS.countEntitiesByType("Dummy")
-	-- for _ = zombieCount + 1, 2 do -- 创建1000个实体，随机移动
+	-- for _ = zombieCount + 1, 1000 do -- 创建1000个实体，随机移动
 	-- 	CEntityECS.spawnEntity("Dummy")
 	-- end
 
-	-- local getComponent = CEntityECS.getComponent
-	-- local random = PerlinNoiseRandom(e.tick)
-	-- for _, id in CEntityECS.iterateEntities(dummyFilter) do
-	-- 	local gameObject = getComponent(id, "GameObject") --- @cast gameObject dr2c.Component.GameObject
+	-- if e.tick < 320 then
+	-- 	local getComponent = CEntityECS.getComponent
+	-- 	local random = PerlinNoiseRandom(e.tick)
+	-- 	for _, id in CEntityECS.iterateEntities(dummyFilter) do
+	-- 		local gameObject = getComponent(id, "GameObject") --- @cast gameObject dr2c.Component.GameObject
 
-	-- 	gameObject.x = gameObject.x + random:noise2(id, gameObject.x) * 20
-	-- 	gameObject.y = gameObject.y + random:noise2(gameObject.y, id) * 20
+	-- 		gameObject.x = gameObject.x + random:noise2(id, gameObject.x) * 20
+	-- 		gameObject.y = gameObject.y + random:noise2(gameObject.y, id) * 20
+	-- 	end
 	-- end
 end, "testSpawnCharacters", "Test")
 

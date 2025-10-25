@@ -10,6 +10,7 @@
 --]]
 
 local Math = require("TE.Math")
+local Table = require("TE.Table")
 
 local type = type
 
@@ -64,6 +65,53 @@ function Utility.evaluate(value, default)
 			return default
 		else
 			return result
+		end
+	end
+end
+
+--- @generic T
+--- @param value T
+--- @return T
+function Utility.copy(value)
+	if type(value) == "table" then
+		return Table.copy(value)
+	else
+		return value
+	end
+end
+
+--- @generic T
+--- @param value T
+--- @return T
+function Utility.fastCopy(value)
+	if type(value) == "table" then
+		return Table.fastCopy(value)
+	else
+		return value
+	end
+end
+
+--- @generic T: any
+--- @param persistentVariables table<string, T>
+--- @param getter fun(): T
+--- @param setter fun(t: T)
+--- @param scriptNamePrefix? any
+--- @return boolean?
+function Utility.persistModule(persistentVariables, getter, setter, scriptNamePrefix)
+	local scriptName = TE.scriptLoader:getLoadingScriptName()
+	if scriptName and scriptName ~= "" then
+		if scriptNamePrefix then
+			scriptName = scriptName .. tostring(scriptNamePrefix)
+		end
+
+		if persistentVariables[scriptName] then
+			setter(persistentVariables[scriptName])
+
+			return true
+		else
+			persistentVariables[scriptName] = getter()
+
+			return false
 		end
 	end
 end

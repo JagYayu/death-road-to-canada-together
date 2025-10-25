@@ -116,6 +116,13 @@ void ReliableUDPServerSession::Host(const IServerSession::HostArgs &baseArgs)
 	char hostName[45];
 	enet_address_get_host(&enetAddress, hostName, sizeof(hostName));
 
+	EventRUDPServerHostData data{
+	    .socketType = ESocketType::RUDP,
+	    .serverSlot = _serverSessionSlot,
+	    .hostName = std::string_view(hostName),
+	};
+	GetEventManager().GetCoreEvents().ServerHost().Invoke(&data, nullptr, EEventInvocation::None);
+
 	TE_DEBUG("Hosting RUDP server! host: {}, port: {}, slot: {}", hostName, _eNetHost->address.port, _serverSessionSlot);
 }
 
@@ -126,6 +133,12 @@ void ReliableUDPServerSession::HostAsync(const IServerSession::HostArgs &args, c
 
 void ReliableUDPServerSession::Shutdown()
 {
+	EventRUDPServerShutdownData data{
+	    .socketType = ESocketType::Local,
+	    .serverSlot = _serverSessionSlot,
+	};
+	GetEventManager().GetCoreEvents().ServerShutdown().Invoke(&data, nullptr, EEventInvocation::None);
+
 	enet_host_destroy(_eNetHost);
 	_eNetHost = nullptr;
 }

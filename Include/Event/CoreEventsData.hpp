@@ -149,12 +149,25 @@ namespace tudov
 		std::uint16_t port;
 	};
 
+	struct EventRUDPServerHostData : public CoreEventData
+	{
+		ESocketType socketType;
+		NetworkSessionSlot serverSlot;
+		std::string_view hostName;
+	};
+
 	struct EventReliableUDPClientMessageData : public CoreEventData
 	{
 		ESocketType socketType;
 		std::string_view message;
 		std::string_view host;
 		std::uint16_t port;
+	};
+
+	struct EventRUDPServerShutdownData : public CoreEventData
+	{
+		ESocketType socketType;
+		NetworkSessionSlot serverSlot;
 	};
 
 	struct EventReliableUDPServerConnectData : public CoreEventData

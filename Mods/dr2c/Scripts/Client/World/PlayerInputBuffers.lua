@@ -13,17 +13,17 @@ local Table = require("TE.Table")
 local List = require("TE.List")
 local inspect = require("inspect")
 
+local CNetworkClientUtils = require("dr2c.Client.Network.ClientUtils")
+local CNetworkRPC = require("dr2c.Client.Network.RPC")
 local CWorldSession = require("dr2c.Client.World.Session")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
-local GPlayerInput = require("dr2c.Shared.World.PlayerInput")
 local GPlayerInputBuffers = require("dr2c.Shared.World.PlayerInputBuffers")
 local GWorldSession = require("dr2c.Shared.World.Session")
-local GWorldTick = require("dr2c.Shared.World.Tick")
 
 local Table_empty = Table.empty
 
---- @class dr2c.CPlayerInputBuffers : dr2c.PlayerInputBuffers
+--- @class dr2c.CPlayerInputBuffers : dr2c.MPlayerInputBuffers
 local CPlayerInputBuffers = GPlayerInputBuffers.new()
 
 --- @class dr2c.PlayerInputCollectedEntry
@@ -35,10 +35,19 @@ local CPlayerInputBuffers_getInputs = CPlayerInputBuffers.getInputs
 
 --- @type table<dr2c.PlayerID, table<dr2c.WorldTick, dr2c.PlayerTickInputs>>
 local playersTicksInputsPredictions = {}
+--- @type dr2c.NetworkRemoteRequestHandle?
+local requestServerPlayerInputBuffers
 
 playersTicksInputsPredictions = persist("playersTicksInputsPredictions", function()
 	return playersTicksInputsPredictions
 end)
+requestServerPlayerInputBuffers = persist("requestServerPlayerInputBuffers", function()
+	return requestServerPlayerInputBuffers
+end)
+
+CPlayerInputBuffers.eventCPlayerInputsPredictFailed = TE.events:new(N_("CPlayerInputsPredictFailed"), {
+	"Rollback",
+})
 
 do
 	local clear = CPlayerInputBuffers.clear
@@ -175,19 +184,63 @@ function CPlayerInputBuffers.collectPlayersInputsInRange(beginWorldTick, endWorl
 	return playersInputs
 end
 
---- @param tick dr2c.WorldTick
---- @param targetTick dr2c.WorldTick
---- @return table<dr2c.WorldTick, dr2c.PlayerInputCollectedEntry>
-function CPlayerInputBuffers.makePlayerInputsArg(tick, targetTick)
-	local playersInputs = CPlayerInputBuffers.collectPlayersInputsInRange(tick, targetTick)
-	local playerIDs = Table.getKeyList(playersInputs)
+--- @param content? table
+--- @param callback fun(success: boolean, snapshotData?: dr2c.SnapshotData)
+local function requestRPCCallback(content, callback)
+	if content then
+		local fields = GNetworkMessageFields.CClientPlayerInputBuffersRequest
+		local buffer = content[fields.buffer]
 
-	local playerInputs = Table.new(0, #playerIDs)
-	for _, playerID in ipairs(playerIDs) do
-		playerInputs[playerID] = playersInputs[playerID][tick]
+		if callback then
+			callback(true, buffer)
+		end
+	else
+		if callback then
+			callback(false)
+		end
+	end
+end
+
+--- @param callback fun(snapshotID: dr2c.SnapshotID, success: boolean, snapshotData?: dr2c.SnapshotData)
+function CPlayerInputBuffers.request(callback)
+	error("NOT IMPLEMENT YET")
+
+	if requestServerPlayerInputBuffers then
+		CNetworkRPC.removeRequest(requestServerPlayerInputBuffers)
 	end
 
-	return playerInputs
+	local fields = GNetworkMessageFields.CClientPlayerInputBuffersRequest
+
+	requestServerPlayerInputBuffers = CNetworkRPC.sendReliable(
+		GNetworkMessage.Type.ClientPlayerInputBuffersRequest,
+		{},
+		nil,
+		requestRPCCallback,
+		nil,
+		callback
+	)
+end
+
+--- @param networkBuffers dr2c.PlayersInputsNetworkBuffers
+function CPlayerInputBuffers.receiveNetworkBuffers(networkBuffers)
+	CPlayerInputBuffers.clear()
+
+	--- @param playerID dr2c.PlayerID
+	--- @param networkBuffer dr2c.PlayersInputsNetworkBuffer
+	for playerID, networkBuffer in pairs(networkBuffers) do
+		local beginTick = networkBuffer[1]
+		local endTick = networkBuffer[2]
+		local tickInputsList = networkBuffer[3]
+
+		for i = 1, endTick - beginTick + 1 do
+			local inputs = tickInputsList[i]
+			if inputs then
+				local tick = beginTick + i
+
+				CPlayerInputBuffers.setInputs(playerID, tick, inputs)
+			end
+		end
+	end
 end
 
 --- @param inputs dr2c.PlayerTickInputs
@@ -197,10 +250,6 @@ local function isMatchPrediction(inputs, predictedInputs)
 	return List.equals(inputs[2] or Table_empty, predictedInputs[2] or Table_empty)
 		and Table.equals(inputs[1] or Table_empty, predictedInputs[1] or Table_empty)
 end
-
-CPlayerInputBuffers.eventCPlayerInputsPredictFailed = TE.events:new(N_("CPlayerInputsPredictFailed"), {
-	"Rollback",
-})
 
 --- @param playerID dr2c.PlayerID
 --- @param worldTick dr2c.WorldTick
@@ -229,7 +278,7 @@ TE.events:add(N_("CUpdate"), function(e)
 	if inputsLifetime then
 		-- CPlayerInputBuffers.discardInputs(inputsLifetime)
 	end
-end, "RemoveOldInputsFromPlayerInputBuffers", "ClearCaches")
+end, "RemoveOldInputsFromPlayerInputBuffers", "Cleanup")
 
 --- @param e dr2c.E.CWorldTickProcess
 TE.events:add(N_("CWorldTickProcess"), function(e)
@@ -241,16 +290,31 @@ TE.events:add(N_("CWorldTickProcess"), function(e)
 		-- e.playerInputs = CPlayerInputBuffers.makePlayerInputsArg(e.tick, e.targetTick)
 		e.playersTicksInputs = CPlayerInputBuffers.collectPlayersInputsInRange(e.tick, e.targetTick)
 	end
-end, "ReadPlayerInputs", "PlayerInputs")
+end, "ReadPlayersTicksInputsFromBuffers", "PlayerInputs")
 
 --- @param e dr2c.E.CMessage
 TE.events:add(N_("CMessage"), function(e)
-	local fields = GNetworkMessageFields.PlayerInputs
+	if type(e.content) ~= "table" then
+		log.debug("Received player inputs from server, ignoring because `content` is not a table")
+
+		return
+	end
+
+	local fields = GNetworkMessageFields.CPlayerInputs
+
+	if CWorldSession.getSessionID() ~= e.content[fields.worldSessionID] then
+		log.debug("Received player inputs from server, ignoring because session id not match")
+
+		return
+	end
+
 	local worldTick = e.content[fields.worldTick]
 	local playerID = e.content[fields.playerID]
 	local playerInputs = e.content[fields.playerInputs]
 
-	if not (worldTick and playerID and playerInputs) or not CPlayerInputBuffers.hasPlayer(playerID) then
+	if not CPlayerInputBuffers.hasPlayer(playerID) then
+		log.debug(("Received player inputs from server, ignoring because player %s does not exists"):format(playerID))
+
 		return
 	end
 
@@ -272,7 +336,22 @@ TE.events:add(N_("CMessage"), function(e)
 
 		onPredictFailed(playerID, worldTick, playerInputs, predictedInputs)
 	end
-end, "ReceivePlayerInput", "Receive", GNetworkMessage.Type.PlayerInputs)
+end, "ReceivePlayerInput", "Receive", GNetworkMessage.Type.CPlayerInputs)
+
+--- @param e dr2c.E.CMessage
+TE.events:add(N_("CMessage"), function(e)
+	if type(e.content) ~= "table" then
+		return
+	end
+
+	local fields = GNetworkMessageFields.CPlayerInputBuffers
+
+	if CWorldSession.getSessionID() ~= e.content[fields.worldSessionID] then
+		return
+	end
+
+	CPlayerInputBuffers.receiveNetworkBuffers(e.content[fields.buffer])
+end, "ReceivePlayerInputNetworkBuffer", "Receive", GNetworkMessage.Type.CPlayerInputBuffers)
 
 TE.events:add(N_("CConnect"), CPlayerInputBuffers.clear, "ClearPlayerInputBuffers", "Reset")
 TE.events:add(N_("CDisconnect"), CPlayerInputBuffers.clear, "ClearPlayerInputBuffers", "Reset")
@@ -282,12 +361,12 @@ TE.events:add(N_("CWorldSessionFinish"), CPlayerInputBuffers.clear, "ClearPlayer
 --- @param e dr2c.E.CClientAdded
 TE.events:add(N_("CClientAdded"), function(e)
 	CPlayerInputBuffers.addPlayer(e.clientID)
-end, "AddPlayerToPlayerInputBuffers", "PlayerInputBuffer")
+end, "AddPlayerToPlayerInputBuffers", "PlayerInputBuffers")
 
 --- @param e dr2c.E.CClientRemoved
 TE.events:add(N_("CClientRemoved"), function(e)
 	CPlayerInputBuffers.removePlayer(e.clientID)
-end, "AddPlayerToPlayerInputBuffers", "PlayerInputBuffer")
+end, "AddPlayerToPlayerInputBuffers", "PlayerInputBuffers")
 
 TE.events:add("DebugSnapshot", function(e)
 	e.playersTicksInputsPredictions = playersTicksInputsPredictions

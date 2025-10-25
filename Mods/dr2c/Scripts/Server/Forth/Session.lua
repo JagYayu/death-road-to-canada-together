@@ -124,4 +124,10 @@ TE.events:add(N_("SMessage"), function(e)
 	SForthSession.finish()
 end, "ReceiveForthSessionFinish", "Receive", GNetworkMessage.Type.ForthSessionFinish)
 
+-- TODO
+-- TE.events:add(N_("SClientVerified"), function(e)
+-- 	e.clientID
+-- 	SNetworkServer.sendReliable(e.clientID, messageType, messageContent?, messageChannel?)
+-- end, "SendForthSessionAttributes", "ForthSession")
+
 return SForthSession

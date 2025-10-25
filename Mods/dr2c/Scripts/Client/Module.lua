@@ -28,11 +28,12 @@ end
 local eventClientUpdate = TE.events:new(N_("CUpdate"), {
 	"Throttle",
 	"Test",
+	"Synchronizer",
 	"Inputs",
 	"Network",
 	"World",
 	"Snapshot",
-	"ClearCaches",
+	"Cleanup",
 })
 
 CModule.eventCRender = TE.events:new(N_("CRender"), {
@@ -68,7 +69,6 @@ CModule.eventCMouseRelease = TE.events:new(N_("CMouseRelease"), mouseEventCommon
 --- @param e TE.E.TickUpdate
 TE.events:add("TickUpdate", function(e)
 	--- @class dr2c.E.CUpdate : TE.E.TickUpdate
-	--- @field networkThrottle? boolean
 	local e_ = e
 
 	TE.events:invoke(eventClientUpdate, e_)

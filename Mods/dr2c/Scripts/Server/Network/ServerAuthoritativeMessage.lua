@@ -47,7 +47,7 @@ local SNetworkServerAuthoritativeMessage = {}
 -- 	end,
 -- }
 
---- @param messageType dr2c.NetworkMessageType
+--- @param messageType dr2c.MessageType
 --- @param onReceived fun(response: any?): table?
 --- @param args table
 --- @return fun(contentExtras: any?)

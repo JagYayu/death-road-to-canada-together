@@ -133,12 +133,13 @@ end
 --- Returns a list of the table’s key-value pairs.
 --- e.g. { b = 42, a = 51, c = 12 } => { "b", 42, "a", 51, "c", 12 }
 --- Use `Table.flattenPairs` to quickly iterate returned table.
---- @generic TKey, TValue
---- @param tbl table<TKey, TValue>
---- @param depth integer? @default: math.huge
---- @return (TKey | TValue)[]
-function Table.flatten(tbl, depth, pairsFunc)
-	return flattenImpl(tbl, tonumber(depth) or 1, type(pairsFunc) == "function" and pairsFunc or Table.sortedPairs)
+--- @generic TK, TV
+--- @param tbl table<TK, TV>
+--- @param depth? integer @default: math.huge
+--- @param iterator? fun(tbl: table<TK, TV>): (fun(tbl: table<TK, TV>, key?: TK): TK, TV)
+--- @return (TK | TV)[]
+function Table.flatten(tbl, depth, iterator)
+	return flattenImpl(tbl, tonumber(depth) or 1, type(iterator) == "function" and iterator or Table.sortedPairs)
 end
 
 --- @generic T : table
@@ -253,17 +254,18 @@ local sortedPairsEmptyState = { {}, 0 }
 
 --- @generic TK, TV
 --- @param tbl table<TK, TV>
---- @param sort? fun(comp: (fun(a: TK, b: TK): boolean)?)
---- @param comp? fun(a: TK, b: TK): boolean
+--- @param sort? fun(comp: (fun(l: TK, r: TK): boolean)?)
+--- @param compare? fun(l: TK, r: TK): boolean
 --- @param keys? table | integer
 --- @return fun(): TK, TV
 --- @return table<TK, TV> tbl
 --- @return { [1]: TK[], [2]: integer } state @readonly
-function Table.sortedPairs(tbl, sort, comp, keys)
-	local keyList = Table.getKeyList(tbl, keys)
-	if keyList[1] then
+function Table.sortedPairs(tbl, sort, compare, keys)
+	if next(tbl) ~= nil then
+		local keyList = Table.getKeyList(tbl, keys)
+
 		do
-			(sort or table.sort)(keyList, comp)
+			(sort or table.sort)(keyList, compare)
 		end
 
 		return sortedPairsIterator, tbl, {
@@ -349,13 +351,13 @@ end
 
 --- @generic K, V, TArgs...
 --- @param tbl table<K, V>
---- @param func fun(value: V, key: K, ...: TArgs...): boolean
+--- @param condition fun(value: V, key: K, ...: TArgs...): boolean
 --- @return K? key
 --- @return V? value
 --- @nodiscard
-local function findFirstIfImpl(tbl, func, funcPairs)
+local function findFirstIfImpl(tbl, condition, funcPairs)
 	for k, v in funcPairs(tbl) do
-		if func(v, k) then
+		if condition(v, k) then
 			return k, v
 		end
 	end
@@ -363,23 +365,25 @@ end
 
 --- @generic TK, TV
 --- @param tbl table<TK, TV>
---- @param func fun(value: TV, key: TK): boolean
+--- @param condition fun(value: TV, key: TK): boolean
+--- @param iterator? fun(tbl: table<TK, TV>): (fun(tbl: table<TK, TV>, key?: TK): TK, TV)
 --- @return TK? key
 --- @return TV? value
 --- @nodiscard
-function Table.findFirstIf(tbl, func, pairsFunc)
-	return findFirstIfImpl(tbl, func, pairsFunc or pairs)
+function Table.findFirstIf(tbl, condition, iterator)
+	return findFirstIfImpl(tbl, condition, iterator or pairs)
 end
 
---- @generic K, V, TArgs...
---- @param tbl table<K, V>
---- @param func fun(value: V, key: K, ...: TArgs...): boolean
---- @return K? key
---- @return V? value
+--- @generic TK, TV, TArgs...
+--- @param tbl table<TK, TV>
+--- @param condition fun(value: TV, key: TK, ...: TArgs...): boolean
+--- @param iterator fun(tbl: table<TK, TV>): (fun(tbl: table<TK, TV>, key?: TK): TK, TV)
+--- @return TK? key
+--- @return TV? value
 --- @nodiscard
-local function findFirstIfVImpl(tbl, func, funcPairs, ...)
-	for k, v in funcPairs(tbl) do
-		if func(v, k, ...) then
+local function findFirstIfVImpl(tbl, condition, iterator, ...)
+	for k, v in iterator(tbl) do
+		if condition(v, k, ...) then
 			return k, v
 		end
 	end
@@ -387,13 +391,14 @@ end
 
 --- @generic TK, TV
 --- @param tbl table<TK, TV>
---- @param func fun(value: TV, key: TK): boolean
+--- @param condition fun(value: TV, key: TK): boolean
+--- @param iterator fun(tbl: table<TK, TV>): (fun(tbl: table<TK, TV>, key?: TK): TK, TV)
 --- @param ... any
 --- @return TK? key
 --- @return TV? value
 --- @nodiscard
-function Table.findFirstIfV(tbl, func, pairsFunc, ...)
-	return findFirstIfVImpl(tbl, func, pairsFunc or pairs, ...)
+function Table.findFirstIfV(tbl, condition, iterator, ...)
+	return findFirstIfVImpl(tbl, condition, iterator or pairs, ...)
 end
 
 --- @generic T : table
@@ -423,6 +428,11 @@ function Table.lockMetatable(tbl)
 	end
 end
 
+--- @generic T: table
+--- @param tbl T
+--- @param seen table<T, any>
+--- @return T proxy
+--- @nodiscard
 local function tableToReadonly(tbl, seen)
 	if seen[tbl] or getmetatable(seen[tbl]) ~= nil then
 		return tbl
@@ -451,6 +461,7 @@ end
 --- @generic T : table
 --- @param tbl T
 --- @return T
+--- @nodiscard
 function Table.readonly(tbl)
 	return tableToReadonly(tbl, {})
 end

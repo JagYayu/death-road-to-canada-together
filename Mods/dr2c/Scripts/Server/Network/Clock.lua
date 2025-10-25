@@ -10,6 +10,7 @@
 --]]
 
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
+local SNetworkClients = require("dr2c.Server.Network.Clients")
 
 local SNetworkServer = require("dr2c.Server.Network.Server")
 
@@ -26,15 +27,28 @@ function SClock.getTime()
 	return time
 end
 
+--- @param e dr2c.E.SMessage
 TE.events:add(N_("SMessage"), function(e)
-	-- TODO 只允许权威客户端
+	if SNetworkClients.getHostClient() == e.clientID then
+		if log.canInfo() then
+			log.info("Received network clock time from client %d, ignoring because its not the host client.")
+		end
+
+		return
+	end
 
 	local serverTime = tonumber(e.content)
-	if serverTime then
-		time = serverTime
-
-		SNetworkServer.broadcastReliable(GNetworkMessage.Type.Clock, time)
+	if not serverTime then
+		return
 	end
-end, "ResponseClockTime", "Receive", GNetworkMessage.Type.Clock)
+
+	time = serverTime
+
+	if log.canInfo() then
+		log.info(("Received network clock time from host client %d, broadcasting to all clients."):format(e.clientID))
+	end
+
+	SNetworkServer.broadcastReliable(GNetworkMessage.Type.CClock, time)
+end, "ResponseClockTime", "Receive", GNetworkMessage.Type.SClock)
 
 return SClock

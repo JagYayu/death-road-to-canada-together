@@ -17,38 +17,38 @@ local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GWorldSession = require("dr2c.Shared.World.Session")
 local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 
---- @class dr2c.CWorldSession : dr2c.WorldSession
+--- @class dr2c.CWorldSession : dr2c.MWorldSession
 local CWorldSession = GWorldSession.new()
 
---- 开始世界会话，将发送申请给服务器，回调事件"CMessage"
+--- 开始世界会话，将发送申请给服务器
 --- @param attributes dr2c.WorldSessionAttributes
 --- @return boolean
 function CWorldSession.start(attributes)
-	return CNetworkClient.sendReliable(GNetworkMessage.Type.WorldSessionStart, attributes)
+	return CNetworkClient.sendReliable(GNetworkMessage.Type.SWorldSessionStart, attributes)
 end
 
---- 重启世界会话，将发送申请给服务器，回调事件"CMessage"
+--- 重启世界会话，将发送申请给服务器
 --- @return boolean
 function CWorldSession.restart()
-	return CNetworkClient.sendReliable(GNetworkMessage.Type.WorldSessionRestart)
+	return CNetworkClient.sendReliable(GNetworkMessage.Type.SWorldSessionRestart)
 end
 
---- 结束世界会话，将发送申请给服务器，回调事件"CMessage"
+--- 结束世界会话，将发送申请给服务器
 --- @return boolean
 function CWorldSession.finish()
-	return CNetworkClient.sendReliable(GNetworkMessage.Type.WorldSessionFinish)
+	return CNetworkClient.sendReliable(GNetworkMessage.Type.SWorldSessionFinish)
 end
 
---- 暂停世界会话，将发送申请给服务器，回调事件"CMessage"
+--- 暂停世界会话，将发送申请给服务器
 --- @return boolean
 function CWorldSession.pause()
-	return CNetworkClient.sendReliable(GNetworkMessage.Type.WorldSessionPause)
+	return CNetworkClient.sendReliable(GNetworkMessage.Type.SWorldSessionPause)
 end
 
---- 继续世界会话，将发送申请给服务器，回调事件"CMessage"
+--- 继续世界会话，将发送申请给服务器
 --- @return boolean
 function CWorldSession.unpause()
-	return CNetworkClient.sendReliable(GNetworkMessage.Type.WorldSessionUnpause)
+	return CNetworkClient.sendReliable(GNetworkMessage.Type.SWorldSessionUnpause)
 end
 
 CWorldSession.eventCWorldSessionStart = TE.events:new(N_("CWorldSessionStart"), {
@@ -136,83 +136,102 @@ end
 
 --- @param e dr2c.E.CMessage
 TE.events:add(N_("CMessage"), function(e)
-	if type(e.content) == "table" then
-		local fields = GNetworkMessageFields.WorldSessionStart
-		local suppressedReason = e.content[fields.suppressedReason]
-
-		if not suppressedReason then
-			log.info(("Client %s started world session"):format(e.content[fields.sponsorClientID]))
-
-			CWorldSession.startLocally(e.content[fields.attributes])
-		elseif e.content[fields.sponsorClientID] == CNetworkClient.getClientID() and log.canWarn() then
-			log.warn(("Cannot start world session: %s"):format(suppressedReason))
-		end
+	if type(e.content) ~= "table" then
+		return
 	end
-end, "StartWorldSessionLocally", "Receive", GNetworkMessage.Type.WorldSessionStart)
+
+	CWorldSession.setAttributes(e.content)
+end, "ReceiveWorldSessionAttributes", "Receive", GNetworkMessage.Type.CWorldSessionAttributes)
 
 --- @param e dr2c.E.CMessage
 TE.events:add(N_("CMessage"), function(e)
-	if type(e.content) == "table" then
-		local fields = GNetworkMessageFields.WorldSessionStart
-		local suppressedReason = e.content[fields.suppressedReason]
-
-		if not suppressedReason then
-			log.info(("Client %s restarted world session"):format(e.content[fields.sponsorClientID]))
-
-			CWorldSession.restartLocally()
-		elseif e.content[fields.sponsorClientID] == CNetworkClient.getClientID() and log.canWarn() then
-			log.warn(("Cannot restart world session: %s"):format(suppressedReason))
-		end
+	if type(e.content) ~= "table" then
+		return
 	end
-end, "RestartWorldSessionLocally", "Receive", GNetworkMessage.Type.WorldSessionRestart)
+
+	local fields = GNetworkMessageFields.CWorldSessionStart
+	local suppressedReason = e.content[fields.suppressedReason]
+
+	if not suppressedReason then
+		log.info(("Client %s started world session"):format(e.content[fields.sponsorClientID]))
+
+		CWorldSession.startLocally(e.content[fields.attributes])
+	elseif e.content[fields.sponsorClientID] == CNetworkClient.getClientID() and log.canWarn() then
+		log.warn(("Cannot start world session: %s"):format(suppressedReason))
+	end
+end, "StartWorldSessionLocally", "Receive", GNetworkMessage.Type.CWorldSessionStart)
 
 --- @param e dr2c.E.CMessage
 TE.events:add(N_("CMessage"), function(e)
-	if type(e.content) == "table" then
-		local fields = GNetworkMessageFields.WorldSessionFinish
-		local suppressedReason = e.content[fields.suppressedReason]
-
-		if not suppressedReason then
-			log.info(("Client %s finished world session"):format(e.content[fields.sponsorClientID]))
-
-			CWorldSession.finishLocally()
-		elseif e.content[fields.sponsorClientID] == CNetworkClient.getClientID() and log.canWarn() then
-			log.warn(("Cannot finish world session: %s"):format(suppressedReason))
-		end
+	if type(e.content) ~= "table" then
+		return
 	end
-end, "FinishWorldSessionLocally", "Receive", GNetworkMessage.Type.WorldSessionFinish)
+
+	local fields = GNetworkMessageFields.CWorldSessionStart
+	local suppressedReason = e.content[fields.suppressedReason]
+
+	if not suppressedReason then
+		log.info(("Client %s restarted world session"):format(e.content[fields.sponsorClientID]))
+
+		CWorldSession.restartLocally()
+	elseif e.content[fields.sponsorClientID] == CNetworkClient.getClientID() and log.canWarn() then
+		log.warn(("Cannot restart world session: %s"):format(suppressedReason))
+	end
+end, "RestartWorldSessionLocally", "Receive", GNetworkMessage.Type.CWorldSessionRestart)
 
 --- @param e dr2c.E.CMessage
 TE.events:add(N_("CMessage"), function(e)
-	if type(e.content) == "table" then
-		local fields = GNetworkMessageFields.WorldSessionPause
-		local suppressedReason = e.content[fields.suppressedReason]
-
-		if not suppressedReason then
-			log.info(("Client %s paused world session"):format(e.content[fields.sponsorClientID]))
-
-			CWorldSession.pauseLocally(e.content[fields.timePaused])
-		elseif e.content[fields.sponsorClientID] == CNetworkClient.getClientID() and log.canWarn() then
-			log.warn(("Cannot pause world session: %s"):format(suppressedReason))
-		end
+	if type(e.content) ~= "table" then
+		return
 	end
-end, "PauseWorldSessionLocally", "Receive", GNetworkMessage.Type.WorldSessionPause)
+
+	local fields = GNetworkMessageFields.CWorldSessionFinish
+	local suppressedReason = e.content[fields.suppressedReason]
+
+	if not suppressedReason then
+		log.info(("Client %s finished world session"):format(e.content[fields.sponsorClientID]))
+
+		CWorldSession.finishLocally()
+	elseif e.content[fields.sponsorClientID] == CNetworkClient.getClientID() and log.canWarn() then
+		log.warn(("Cannot finish world session: %s"):format(suppressedReason))
+	end
+end, "FinishWorldSessionLocally", "Receive", GNetworkMessage.Type.CWorldSessionFinish)
 
 --- @param e dr2c.E.CMessage
 TE.events:add(N_("CMessage"), function(e)
-	if type(e.content) == "table" then
-		local fields = GNetworkMessageFields.WorldSessionUnpause
-		local suppressedReason = e.content[fields.suppressedReason]
-
-		if not suppressedReason then
-			log.info(("Client %s unpaused world session"):format(e.content[fields.sponsorClientID]))
-
-			CWorldSession.unpauseLocally(e.content[fields.timePaused])
-		elseif e.content[fields.sponsorClientID] == CNetworkClient.getClientID() and log.canWarn() then
-			log.warn(("Cannot unpause world session: %s"):format(suppressedReason))
-		end
+	if type(e.content) ~= "table" then
+		return
 	end
-end, "UnpauseWorldSessionLocally", "Receive", GNetworkMessage.Type.WorldSessionUnpause)
+
+	local fields = GNetworkMessageFields.CWorldSessionPause
+	local suppressedReason = e.content[fields.suppressedReason]
+
+	if not suppressedReason then
+		log.info(("Client %s paused world session"):format(e.content[fields.sponsorClientID]))
+
+		CWorldSession.pauseLocally(e.content[fields.timePaused])
+	elseif e.content[fields.sponsorClientID] == CNetworkClient.getClientID() and log.canWarn() then
+		log.warn(("Cannot pause world session: %s"):format(suppressedReason))
+	end
+end, "PauseWorldSessionLocally", "Receive", GNetworkMessage.Type.CWorldSessionPause)
+
+--- @param e dr2c.E.CMessage
+TE.events:add(N_("CMessage"), function(e)
+	if type(e.content) ~= "table" then
+		return
+	end
+
+	local fields = GNetworkMessageFields.CWorldSessionUnpause
+	local suppressedReason = e.content[fields.suppressedReason]
+
+	if not suppressedReason then
+		log.info(("Client %s unpaused world session"):format(e.content[fields.sponsorClientID]))
+
+		CWorldSession.unpauseLocally(e.content[fields.timePaused])
+	elseif e.content[fields.sponsorClientID] == CNetworkClient.getClientID() and log.canWarn() then
+		log.warn(("Cannot unpause world session: %s"):format(suppressedReason))
+	end
+end, "UnpauseWorldSessionLocally", "Receive", GNetworkMessage.Type.CWorldSessionUnpause)
 
 --- @param e TE.E.DebugCommand
 TE.events:add("DebugProvide", function(e)

@@ -9,9 +9,7 @@
 --
 --]]
 
-local String = require("TE.String")
 local Enum = require("TE.Enum")
-local EnumFlag = require("TE.EnumFlag")
 local List = require("TE.List")
 local Table = require("TE.Table")
 
@@ -19,16 +17,20 @@ local CNetworkClients = require("dr2c.Client.Network.Clients")
 local GNetworkClient = require("dr2c.Shared.Network.Client")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
-local GNetworkPlatform = require("dr2c.Client.Network.Platform")
 local GUtilsThrottle = require("dr2c.Shared.Utils.Throttle")
 
 local network = TE.network
 
+--- @class dr2c.ClientAttributeSettingRequest
+--- @field attribute dr2c.ClientPrivateAttribute
+--- @field callback fun(success: boolean, reason?: dr2c.NetworkReasonID)
+--- @field expireTime number
+
 --- @class dr2c.CNetworkClient
 local CNetworkClient = {}
 
---- @type table<dr2c.NetworkClientPrivateAttribute, any?>
-local clientPrivateAttributes = {}
+-- --- @type table<integer, dr2c.ClientAttributeSettingRequest>
+-- local attributeSettingRequests = {}
 --- @type number
 local latencySimulation = 0
 --- @type { time: number, func: fun() }[]
@@ -37,9 +39,6 @@ local latencySimulatedQueue = {}
 --- @type integer
 local sessionSlot = 0
 
-clientPrivateAttributes = persist("clientPrivateAttributes", function()
-	return clientPrivateAttributes
-end)
 latencySimulation = persist("latencySimulation", function()
 	return latencySimulation
 end)
@@ -55,27 +54,79 @@ end
 --- @return TE.Network.ClientID?
 function CNetworkClient.getClientID()
 	local session = CNetworkClient.getNetworkSession()
-	return session and session:getSessionID()
+	local clientID = session and session:getSessionID()
+	if clientID and clientID ~= 0 then
+		return clientID
+	end
 end
 
---- @param publicAttribute dr2c.NetworkClientPublicAttribute
+--- @param publicAttribute dr2c.ClientPublicAttribute
 --- @return any?
+--- @nodiscard
 function CNetworkClient.getPublicAttribute(publicAttribute)
 	local clientID = CNetworkClient.getClientID()
 	if clientID then
+		if not CNetworkClients.hasClient(clientID) then
+			CNetworkClients.addClient(clientID)
+		end
+
 		return CNetworkClients.getPublicAttribute(clientID, publicAttribute)
 	end
 end
 
---- @param privateAttribute dr2c.NetworkClientPrivateAttribute
+--- @param privateAttribute dr2c.ClientPrivateAttribute
 --- @return any?
+--- @nodiscard
 function CNetworkClient.getPrivateAttribute(privateAttribute)
-	return clientPrivateAttributes[privateAttribute]
+	local clientID = CNetworkClient.getClientID()
+	if clientID then
+		return CNetworkClients.getPrivateAttribute(clientID, privateAttribute)
+	end
 end
 
-function CNetworkClient.hasPermissionAuthority()
-	local permissions = CNetworkClient.getPublicAttribute(GNetworkClient.PublicAttribute.Permissions)
-	return permissions and EnumFlag.hasAny(permissions, GNetworkClient.Permission.Authority) or false
+--- @param setFunction function
+--- @param attribute dr2c.ClientPublicAttribute | dr2c.ClientPrivateAttribute
+--- @param value any
+--- @return boolean
+local function SetAttribute(setFunction, attribute, value)
+	local clientID = CNetworkClient.getClientID()
+	if not clientID then
+		return false
+	end
+
+	if setFunction == CNetworkClients.setPublicAttribute then
+		local fields = GNetworkMessageFields.SClientSetPublicAttribute
+		CNetworkClient.sendReliable(GNetworkMessage.Type.SClientSetPublicAttribute, {
+			[fields.attribute] = attribute,
+			[fields.value] = value,
+		})
+	else
+		local fields = GNetworkMessageFields.SClientSetPrivateAttribute
+		CNetworkClient.sendReliable(GNetworkMessage.Type.SClientSetPrivateAttribute, {
+			[fields.attribute] = attribute,
+			[fields.value] = value,
+		})
+	end
+
+	return true
+end
+
+--- 修改客户端公开属性
+--- @warn 属性修改需经过服务器验证，最好传递callback追踪结果
+--- @param publicAttribute dr2c.ClientPublicAttribute
+--- @param attributeValue any
+--- @return boolean
+function CNetworkClient.setPublicAttribute(publicAttribute, attributeValue)
+	return SetAttribute(CNetworkClients.setPublicAttribute, publicAttribute, attributeValue)
+end
+
+--- 修改客户端公开属性
+--- @warn 属性修改需经过服务器验证，最好传递callback追踪结果
+--- @param privateAttribute dr2c.ClientPrivateAttribute
+--- @param attributeValue any
+--- @return boolean
+function CNetworkClient.setPrivateAttribute(privateAttribute, attributeValue)
+	return SetAttribute(CNetworkClients.setPrivateAttribute, privateAttribute, attributeValue)
 end
 
 --- 模拟客户端延迟
@@ -103,7 +154,7 @@ local function delaySendFunction(func)
 	return not not CNetworkClient.getNetworkSession()
 end
 
---- @param messageType dr2c.NetworkMessageType
+--- @param messageType dr2c.MessageType
 --- @param messageContent? any
 --- @param messageChannel dr2c.NetworkMessageChannel
 --- @return boolean
@@ -125,7 +176,7 @@ local function sendReliable(messageType, messageContent, messageChannel)
 	end
 end
 
---- @param messageType dr2c.NetworkMessageType
+--- @param messageType dr2c.MessageType
 --- @param messageContent any?
 --- @param messageChannel dr2c.NetworkMessageChannel
 --- @return boolean success
@@ -147,7 +198,7 @@ local function sendUnreliable(messageType, messageContent, messageChannel)
 	end
 end
 
---- @param messageType dr2c.NetworkMessageType
+--- @param messageType dr2c.MessageType
 --- @param messageContent? any
 --- @param messageChannel? dr2c.NetworkMessageChannel
 --- @return boolean success
@@ -165,7 +216,7 @@ function CNetworkClient.sendReliable(messageType, messageContent, messageChannel
 	end
 end
 
---- @param messageType dr2c.NetworkMessageType
+--- @param messageType dr2c.MessageType
 --- @param messageContent any?
 --- @param messageChannel dr2c.NetworkMessageChannel?
 --- @return boolean success
@@ -188,66 +239,20 @@ end
 --- @param time number
 --- @return boolean
 local function updateLatencySimulatedEntry(entry, _, time)
-	if time >= entry.time then
-		entry.func()
-		return true
-	else
+	if time < entry.time then
 		return false
 	end
+
+	entry.func()
+	return true
 end
 
 function CNetworkClient.updateLatencySimulatedQueue()
 	List.removeIfV(latencySimulatedQueue, updateLatencySimulatedEntry, Time.getSystemTime())
 end
 
-CNetworkClient.eventCCollectVerifyAttributes = TE.events:new(N_("CCollectVerifyAttributes"), {
-	"Public",
-	"Private",
-	"State",
-})
-
-TE.events:add(CNetworkClient.eventCCollectVerifyAttributes, function(e)
-	e.attributes[#e.attributes + 1] = {
-		type = GNetworkClient.PublicAttribute,
-		attribute = GNetworkClient.PublicAttribute.State,
-		value = GNetworkClient.State.Verified,
-	}
-end, "SendState", "State")
-
-local function invokeEventClientCollectVerifyAttributes()
-	local attributes = {}
-
-	--- @class dr2c.E.ClientCollectVerifyAttributes
-	local e = {
-		attributes = attributes,
-	}
-
-	TE.events:invoke(CNetworkClient.eventCCollectVerifyAttributes, e)
-
-	return attributes
-end
-
-function CNetworkClient.sendVerifyingAttributes()
-	local entries = invokeEventClientCollectVerifyAttributes()
-
-	for _, entry in ipairs(entries) do
-		if entry.type == GNetworkClient.PublicAttribute then
-			local fields = GNetworkMessageFields.ClientPublicAttribute
-			CNetworkClient.sendReliable(GNetworkMessage.Type.ClientPublicAttribute, {
-				[fields.attribute] = entry.attribute,
-				[fields.value] = entry.value,
-			})
-		elseif entry.type == GNetworkClient.PrivateAttribute then
-			local fields = GNetworkMessageFields.ClientPrivateAttribute
-			CNetworkClient.sendReliable(GNetworkMessage.Type.ClientPrivateAttribute, {
-				[fields.attribute] = entry.attribute,
-				[fields.value] = entry.value,
-			})
-		end
-	end
-
-	return entries
-end
+--- comment
+function CNetworkClient.getRoomID() end
 
 CNetworkClient.eventCConnect = TE.events:new(N_("CConnect"), {
 	"Reset",
@@ -255,13 +260,16 @@ CNetworkClient.eventCConnect = TE.events:new(N_("CConnect"), {
 })
 
 CNetworkClient.eventCDisconnect = TE.events:new(N_("CDisconnect"), {
+	"Deinitialize",
 	"Reset",
 })
 
 CNetworkClient.eventCMessage = TE.events:new(N_("CMessage"), {
 	"Overrides",
 	"Receive",
-	"PlayerInputBuffer",
+	"Request",
+	"Response",
+	"Effect",
 	"Rollback",
 }, Enum.eventKeys(GNetworkMessage.Type))
 
@@ -290,11 +298,11 @@ TE.events:add("ClientDisconnect", function(e)
 	invokeEventClientDisconnect(e.data.clientID)
 end)
 
---- @param messageType dr2c.NetworkMessageType
+--- @param messageType dr2c.MessageType
 --- @param messageContent any?
 local function invokeEventClientMessage(messageType, messageContent)
 	--- @class dr2c.E.CMessage
-	--- @field type dr2c.NetworkMessageType
+	--- @field type dr2c.MessageType
 	--- @field content any?
 	local e = {
 		type = messageType,
@@ -321,38 +329,11 @@ local throttleClientUpdateClientsPrivateAttributeRequests = GUtilsThrottle.newTi
 
 --- @param e dr2c.E.CUpdate
 TE.events:add(N_("CUpdate"), function(e)
-	e.networkThrottle = throttleClientUpdateClientsPrivateAttributeRequests()
+	--- @class dr2c.E.CUpdate : TE.E.TickUpdate
+	--- @field clientNetworkThrottle? boolean
+	e = e
+
+	e.clientNetworkThrottle = throttleClientUpdateClientsPrivateAttributeRequests()
 end, "AssignNetworkThrottle", "Throttle")
-
-local sendClientVerifyingAttributesTime = 0
-
---- @param e dr2c.E.CUpdate
-TE.events:add(N_("CUpdate"), function(e)
-	if e.networkThrottle then
-		return
-	end
-
-	local clientID = CNetworkClient.getClientID()
-	if not clientID then
-		return
-	end
-
-	local time = Time.getSystemTime()
-	if time < sendClientVerifyingAttributesTime then
-		return
-	end
-
-	local state = CNetworkClients.getPublicAttribute(clientID, GNetworkClient.PublicAttribute.State)
-	if state ~= GNetworkClient.State.Verifying then
-		return
-	end
-
-	local attributes = CNetworkClient.sendVerifyingAttributes()
-	if log.canTrace() then
-		log.trace("Collected verify attributes: ", attributes)
-	end
-
-	sendClientVerifyingAttributesTime = time + 5
-end, "SendClientVerifyingAttributes", "Network")
 
 return CNetworkClient

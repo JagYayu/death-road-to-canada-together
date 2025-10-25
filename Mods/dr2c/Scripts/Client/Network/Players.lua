@@ -40,7 +40,7 @@ end
 
 --- @param playerID dr2c.PlayerID
 function CNetworkPlayers.getClientID(playerID)
-	--
+	return playerID
 end
 
 function CNetworkPlayers.isLocalPlayer(playerID)

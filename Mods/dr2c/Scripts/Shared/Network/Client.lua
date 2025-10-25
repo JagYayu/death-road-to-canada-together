@@ -13,12 +13,13 @@ local Enum = require("TE.Enum")
 local Function = require("TE.Function")
 
 local GNetworkPlatform = require("dr2c.Shared.Network.Platform")
+local GUtilsAttribute = require("dr2c.Shared.Utils.Attribute")
 
 --- @alias dr2c.ClientAttributeTrait dr2c.GNetworkClient.AttributeTrait
 
---- @alias dr2c.NetworkClientPublicAttribute dr2c.GNetworkClient.PublicAttribute
+--- @alias dr2c.ClientPublicAttribute dr2c.GNetworkClient.PublicAttribute
 
---- @alias dr2c.NetworkClientPrivateAttribute dr2c.GNetworkClient.PrivateAttribute
+--- @alias dr2c.ClientPrivateAttribute dr2c.GNetworkClient.PrivateAttribute
 
 --- @alias dr2c.ClientPermission dr2c.GNetworkClient.Permission
 
@@ -120,8 +121,8 @@ GNetworkClient.Permissions = Enum.immutable({
 
 local Permissions = GNetworkClient.Permissions
 
---- @generic TPublic : table<dr2c.NetworkClientPublicAttribute, any>
---- @generic TPrivate : table<dr2c.NetworkClientPrivateAttribute, any>
+--- @generic TPublic : table<dr2c.ClientPublicAttribute, any>
+--- @generic TPrivate : table<dr2c.ClientPrivateAttribute, any>
 --- @param clientID any
 --- @param publicAttributes TPublic
 --- @param privateAttributes TPrivate
@@ -174,72 +175,119 @@ privateAttributeTraits = persist("privateAttributeTraits", function()
 	return privateAttributeTraits
 end)
 
---- @param attribute dr2c.NetworkClientPublicAttribute
+--- @param attribute dr2c.ClientPublicAttribute
 --- @return dr2c.ClientAttributeTrait trait
 function GNetworkClient.getPublicAttributeTrait(attribute)
 	return publicAttributeTraits[attribute] or GNetworkClient.AttributeTrait.Editable
 end
 
---- @param attribute dr2c.NetworkClientPrivateAttribute
+--- @param attribute dr2c.ClientPrivateAttribute
 --- @return dr2c.ClientAttributeTrait trait
 function GNetworkClient.getPrivateAttributeTrait(attribute)
 	return privateAttributeTraits[attribute] or GNetworkClient.AttributeTrait.Editable
 end
 
---- @type table<dr2c.NetworkClientPublicAttribute, fun(value: any): boolean?>
-local publicAttributeValidators = {
-	[PublicAttribute.ID] = Function.isTypeInteger,
-	[PublicAttribute.State] = Function.isTypeInteger,
-	[PublicAttribute.Platform] = Function.isTypeNumber,
-	[PublicAttribute.PlatformID] = Function.isTypeStringOrNil,
-	[PublicAttribute.Statistics] = Function.isTypeTable,
-	[PublicAttribute.DisplayName] = Function.isTypeString,
-	[PublicAttribute.Room] = Function.isTypeInteger,
-	[PublicAttribute.Version] = Function.isTypeString,
-	[PublicAttribute.ContentHash] = Function.isTypeNumber,
-	[PublicAttribute.ModsHash] = Function.isTypeNumber,
-}
+local proxyPublicAttributeProperties = GUtilsAttribute.newProperties({
+	[PublicAttribute.ID] = {
+		default = 0,
+		validator = Function.isTypeInteger,
+	},
+	[PublicAttribute.State] = {
+		default = State.Disconnected,
+		validator = Function.isTypeInteger,
+	},
+	[PublicAttribute.Permissions] = {
+		default = GNetworkClient.Permissions.None,
+		validator = Function.isTypeInteger,
+	},
+	[PublicAttribute.Platform] = {
+		default = GNetworkPlatform.Type.Standalone,
+		validator = Function.isTypeNumber,
+	},
+	[PublicAttribute.PlatformID] = {
+		validator = Function.isTypeStringOrNil,
+	},
+	[PublicAttribute.Statistics] = {
+		default = {},
+		validator = Function.isTypeTable,
+	},
+	[PublicAttribute.DisplayName] = {
+		default = "",
+		validator = Function.isTypeString,
+	},
+	[PublicAttribute.Room] = {
+		validator = Function.isTypeIntegerOrNil,
+	},
+	[PublicAttribute.Version] = {
+		validator = Function.isTypeString,
+	},
+	[PublicAttribute.ContentHash] = {
+		validator = Function.isTypeNumber,
+	},
+	[PublicAttribute.ModsHash] = {
+		validator = Function.isTypeNumber,
+	},
+})
 
---- @type table<dr2c.NetworkClientPrivateAttribute, dr2c.ValueValidator>
-local privateAttributeValidators = {
-	[PrivateAttribute.SecretToken] = Function.isTypeNumberOrNil,
-	[PrivateAttribute.SecretStatistics] = Function.isTypeTable,
-}
+local proxyPrivateAttributeProperties = GUtilsAttribute.newProperties({
+	[PrivateAttribute.SecretToken] = {
+		validator = Function.isTypeNumberOrNil,
+	},
+	[PrivateAttribute.SecretStatistics] = {
+		validator = Function.isTypeTable,
+	},
+})
 
---- @param attribute dr2c.NetworkClientPublicAttribute
---- @param value integer | string
---- @return boolean
-function GNetworkClient.validatePublicAttribute(attribute, value)
-	local validator = publicAttributeValidators[attribute]
-	if validator then
-		return not not validator(value)
-	else
-		return true
+--- @type fun(attribute: dr2c.ClientPublicAttribute): dr2c.AttributeProperty
+GNetworkClient.getPublicAttributeProperty = proxyPublicAttributeProperties.getAttributeProperty
+
+--- @type fun(attribute: dr2c.ClientPublicAttribute, args: dr2c.AttributePropertyArgs)
+GNetworkClient.setPublicAttributeProperty = proxyPublicAttributeProperties.setAttributeProperty
+
+--- @type fun(attribute: dr2c.ClientPublicAttribute, value?: Serializable): boolean
+GNetworkClient.validatePublicAttribute = proxyPublicAttributeProperties.validateAttribute
+
+--- @type fun(attributes: table<dr2c.ClientPublicAttribute, Serializable>)
+GNetworkClient.resetPublicAttributes = proxyPublicAttributeProperties.resetAttributes
+
+--- @type fun(attribute: dr2c.ClientPrivateAttribute): dr2c.AttributeProperty
+GNetworkClient.getPrivateAttributeProperty = proxyPrivateAttributeProperties.getAttributeProperty
+
+--- @type fun(attribute: dr2c.ClientPrivateAttribute, args: dr2c.AttributePropertyArgs)
+GNetworkClient.setPrivateAttributeProperty = proxyPrivateAttributeProperties.setAttributeProperty
+
+--- @type fun(attribute: dr2c.ClientPrivateAttribute, value: integer | string): boolean
+GNetworkClient.validatePrivateAttribute = proxyPrivateAttributeProperties.validateAttribute
+
+--- @type fun(attributes: table<dr2c.ClientPrivateAttribute, Serializable>)
+GNetworkClient.resetPrivateAttributes = proxyPrivateAttributeProperties.resetAttributes
+
+--- @param dest table<dr2c.ClientPublicAttribute, any>
+--- @param src table<dr2c.ClientPublicAttribute, any>
+function GNetworkClient.mergePublicAttributes(dest, src)
+	for attribute, value in pairs(src) do
+		if not Enum.hasValue(PublicAttribute, attribute) then
+			error(("Invalid public attribute %s"):format(attribute), 2)
+		elseif not GNetworkClient.validatePublicAttribute(attribute, value) then
+			error(("Invalid public attribute %s's value %s"):format(attribute, value), 2)
+		else
+			dest[attribute] = value
+		end
 	end
 end
 
---- @param attribute dr2c.NetworkClientPrivateAttribute
---- @param value integer | string
---- @return boolean
-function GNetworkClient.validatePrivateAttribute(attribute, value)
-	local validator = privateAttributeValidators[attribute]
-	if validator then
-		return not not validator(value)
-	else
-		return true
+--- @param dest table<dr2c.ClientPrivateAttribute, any>
+--- @param src table<dr2c.ClientPrivateAttribute, any>
+function GNetworkClient.mergePrivateAttributes(dest, src)
+	for attribute, value in pairs(src) do
+		if not Enum.hasValue(PrivateAttribute, attribute) then
+			error(("Invalid private attribute %s"):format(attribute), 2)
+		elseif not GNetworkClient.validatePrivateAttribute(attribute, value) then
+			error(("Invalid private attribute %s's value %s"):format(attribute, value), 2)
+		else
+			dest[attribute] = value
+		end
 	end
-end
-
---- @param attribute dr2c.NetworkClientPublicAttribute
---- @param validator dr2c.ValueValidator
-function GNetworkClient.setPublicAttributeValidator(attribute, validator)
-	publicAttributeValidators[attribute] = validator
-end
-
---- @param attribute dr2c.NetworkClientPrivateAttribute
---- @param validator dr2c.ValueValidator
-function GNetworkClient.setPrivateAttributeValidator(attribute, validator)
-	privateAttributeValidators[attribute] = validator
 end
 
 return GNetworkClient

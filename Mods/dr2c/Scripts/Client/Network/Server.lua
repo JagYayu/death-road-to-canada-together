@@ -29,8 +29,7 @@ TE.events:add(N_("CMessage"), function(e)
 		return
 	end
 
-	local fields = GNetworkMessageFields.ServerAttribute
-
+	local fields = GNetworkMessageFields.CServerAttribute
 	local attribute = e.content[fields.attribute]
 	local value = e.content[fields.value]
 	if type(attribute) ~= "string" then
@@ -42,6 +41,6 @@ TE.events:add(N_("CMessage"), function(e)
 	end
 
 	serverAttributes[attribute] = value
-end, "ClientReceiveServerAttribute", "Receive", GNetworkMessage.Type.ServerAttribute)
+end, "ClientReceiveServerAttribute", "Receive", GNetworkMessage.Type.CServerAttribute)
 
 return CNetworkServer

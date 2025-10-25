@@ -42,7 +42,7 @@ GWorldLevel.Type = Enum.sequence({
 	Tutorial = 18,
 })
 
---- @param worldSession dr2c.WorldSession
+--- @param worldSession dr2c.MWorldSession
 --- @return dr2c.WoldLevel module
 function GWorldLevel.new(worldSession)
 	local worldSession_getAttribute = worldSession.getAttribute

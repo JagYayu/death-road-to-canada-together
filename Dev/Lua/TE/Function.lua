@@ -12,6 +12,7 @@
 --- @class TE.Function
 local Function = {}
 
+local math_floor = math.floor
 local type = type
 
 function Function.empty() end
@@ -131,14 +132,19 @@ function Function.generateTableValidator(keyValueTypes)
 	end
 end
 
+--- @private
+--- @warn 内部函数，不要调用
 function Function._Enum(Enum)
+	local Enum_hasKey = Enum.hasKey
+	local Enum_hasValue = Enum.hasValue
+
 	Function._Enum = nil
 
 	--- @param value any?
 	--- @return boolean?
 	function Function.isTypeInteger(value)
 		if type(value) == "number" then
-			return math.floor(value) == value
+			return math_floor(value) == value
 		end
 	end
 
@@ -148,7 +154,7 @@ function Function._Enum(Enum)
 		if value == nil then
 			return true
 		elseif type(value) == "number" then
-			return math.floor(value) == value
+			return math_floor(value) == value
 		end
 	end
 
@@ -161,7 +167,7 @@ function Function._Enum(Enum)
 
 		--- @param key string
 		return function(key)
-			return Enum.hasKey(enum, key)
+			return Enum_hasKey(enum, key)
 		end
 	end
 
@@ -174,7 +180,7 @@ function Function._Enum(Enum)
 
 		--- @param value integer | string
 		return function(value)
-			return Enum.hasValue(enum, value)
+			return Enum_hasValue(enum, value)
 		end
 	end
 end

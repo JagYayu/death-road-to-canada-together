@@ -14,7 +14,7 @@ local SModule = {}
 
 SModule.eventSUpdate = TE.events:new(N_("SUpdate"), {
 	"Network",
-	"ClearCaches",
+	"Cleanup",
 })
 
 TE.events:add("TickUpdate", function(e)

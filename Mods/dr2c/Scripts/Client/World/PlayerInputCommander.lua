@@ -9,11 +9,13 @@
 --
 --]]
 
-local Math = require("TE.Math")
+local Table = require("TE.Table")
+local inspect = require("inspect")
 
-local CSystemInput = require("dr2c.Client.System.Input")
-local CNetworkPlayers = require("dr2c.Client.Network.Players")
 local CNetworkClient = require("dr2c.Client.Network.Client")
+local CNetworkClientUtils = require("dr2c.Client.Network.ClientUtils")
+local CNetworkPlayers = require("dr2c.Client.Network.Players")
+local CSystemInput = require("dr2c.Client.System.Input")
 local CWorldTick = require("dr2c.Client.World.Tick")
 local CWorldPlayerInputBuffers = require("dr2c.Client.World.PlayerInputBuffers")
 local CWorldSession = require("dr2c.Client.World.Session")
@@ -22,9 +24,10 @@ local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local GWorldPlayerInput = require("dr2c.Shared.World.PlayerInput")
 local GWorldTick = require("dr2c.Shared.World.Tick")
 
---- @class dr2c.CPlayerInput
-local CPlayerInput = {}
+--- @class dr2c.CPlayerInputCommander
+local CPlayerInputCommander = {}
 
+--- @type integer
 local previousInputTick = 0
 
 previousInputTick = persist("previousInputTick", function()
@@ -35,13 +38,13 @@ end)
 -- 	--
 -- end
 
-function CPlayerInput.reset()
+function CPlayerInputCommander.reset()
 	previousInputTick = 0
 end
 
 --- @param playerID dr2c.PlayerID
 --- @return any?
-function CPlayerInput.getPlayerMoveArg(playerID)
+function CPlayerInputCommander.getPlayerMoveArg(playerID)
 	local dx = 0
 	local dy = 0
 
@@ -102,7 +105,7 @@ TE.events:add(N_("CUpdate"), function(e)
 
 	for _, playerID in ipairs(CNetworkPlayers.getPlayers(clientID)) do
 		local inputID = GWorldPlayerInput.ID.Move
-		local inputArg = CPlayerInput.getPlayerMoveArg(playerID)
+		local inputArg = CPlayerInputCommander.getPlayerMoveArg(playerID)
 
 		messageContent[#messageContent + 1] = {
 			playerID = playerID,
@@ -143,32 +146,29 @@ TE.events:add(N_("CUpdate"), function(e)
 		local worldTick = previousInputTick + 1
 
 		for _, playerID in ipairs(CNetworkPlayers.getPlayers(clientID)) do
-			local fields = GNetworkMessageFields.PlayerInputs
-			local messageContent = {
-				[fields.worldTick] = worldTick,
-				[fields.playerID] = playerID,
-				[fields.playerInputs] = CWorldPlayerInputBuffers.getInputs(playerID, worldTick),
-			}
-
-			CNetworkClient.sendReliable(
-				GNetworkMessage.Type.PlayerInputs,
-				messageContent,
-				nil,
-				GNetworkMessageFields.PlayerInputs
-			)
+			local inputs = CWorldPlayerInputBuffers.getInputs(playerID, worldTick) or Table.empty
 
 			if canTrace then
-				log.trace(("Send player %d input"):format(playerID), messageContent)
+				log.trace(("Send player %d inputs: tick=%s, inputs=%s"):format(playerID, worldTick, inspect(inputs)))
 			end
+
+			local fields = GNetworkMessageFields.SPlayerInputs
+
+			CNetworkClient.sendReliable(GNetworkMessage.Type.SPlayerInputs, {
+				[fields.worldSessionID] = CWorldSession.getSessionID(),
+				[fields.worldTick] = worldTick,
+				[fields.playerID] = playerID,
+				[fields.playerInputs] = inputs,
+			})
 		end
 
 		previousInputTick = worldTick
 	end
 end, "SendPlayersInputs", "Inputs")
 
-TE.events:add(N_("CConnect"), CPlayerInput.reset, "ResetPlayerInputState", "Reset")
-TE.events:add(N_("CDisconnect"), CPlayerInput.reset, "ResetPlayerInputState", "Reset")
-TE.events:add(N_("CWorldSessionStart"), CPlayerInput.reset, "ResetPlayerInputState", "Reset")
-TE.events:add(N_("CWorldSessionFinish"), CPlayerInput.reset, "ResetPlayerInputState", "Reset")
+TE.events:add(N_("CConnect"), CPlayerInputCommander.reset, "ResetPlayerInputState", "Reset")
+TE.events:add(N_("CDisconnect"), CPlayerInputCommander.reset, "ResetPlayerInputState", "Reset")
+TE.events:add(N_("CWorldSessionStart"), CPlayerInputCommander.reset, "ResetPlayerInputState", "Reset")
+TE.events:add(N_("CWorldSessionFinish"), CPlayerInputCommander.reset, "ResetPlayerInputState", "Reset")
 
-return CPlayerInput
+return CPlayerInputCommander

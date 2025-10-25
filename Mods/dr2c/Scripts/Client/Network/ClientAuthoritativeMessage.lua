@@ -18,7 +18,7 @@ local CNetworkClientAuthoritativeMessage = {}
 -- 	return clientRegisteredAuthoritativeRequestsMap
 -- end)
 
---- @param messageType dr2c.NetworkMessageType
+--- @param messageType dr2c.MessageType
 --- @param response fun(requestID: integer, extras: any?): any?
 --- @deprecated
 function CNetworkClientAuthoritativeMessage.register(messageType, response)

@@ -167,8 +167,13 @@ void EventManager::EmplaceRuntimeEventFromLoadtimeEvent(const std::shared_ptr<Lo
 		if (e.scriptID != 0)
 		{
 			GetScriptErrors().AddLoadtimeError(e.scriptID, e.What());
-			// The event building failed due to a script error, so we need to add a dependency to the script which creates the event.
-			GetScriptLoader().AddReverseDependency(loadtimeEvent->GetScriptID(), e.scriptID);
+
+			ScriptID scriptID = loadtimeEvent->GetScriptID();
+			if (scriptID != e.scriptID)
+			{
+				// The event building failed due to a script error, so we need to add a dependency to the script which creates the event.
+				GetScriptLoader().AddReverseDependency(loadtimeEvent->GetScriptID(), e.scriptID);
+			}
 		}
 	}
 	catch (std::exception &e)

@@ -15,14 +15,10 @@ local table_new = require("table.new")
 local Table_find = Table.find
 local Table_findFirstIf = Table.findFirstIf
 local Table_findFirstIfV = Table.findFirstIfV
-local getmetatable = getmetatable
 local ipairs = ipairs
 local math_floor = math.floor
 local math_min = math.min
-local newproxy = newproxy
-local pairs = pairs
 local remove = table.remove
-local setmetatable = setmetatable
 local table_sort = table.sort
 local type = type
 
@@ -81,11 +77,25 @@ end
 
 --- @generic T
 --- @param list T[]
---- @param func fun(value: T, index: integer): boolean
+--- @param condition fun(value: T, index: integer): boolean
 --- @return integer? pos
-function List.fastRemoveFirstIf(list, func)
+function List.fastRemoveFirstIf(list, condition)
 	for pos, val in ipairs(list) do
-		if func(val, pos) then
+		if condition(val, pos) then
+			list[pos] = remove(list, #list)
+			return pos
+		end
+	end
+end
+
+--- @generic T
+--- @generic TArg...
+--- @param list T[]
+--- @param condition fun(value: T, index: integer, ...: TArg...): boolean
+--- @return integer? pos
+function List.fastRemoveFirstIfV(list, condition, ...)
+	for pos, val in ipairs(list) do
+		if condition(val, pos, ...) then
 			list[pos] = remove(list, #list)
 			return pos
 		end
@@ -120,11 +130,11 @@ end
 --- @generic T
 --- @generic TArgs
 --- @param list T[]
---- @param func fun(value: T, index: integer, ...: TArgs): boolean
+--- @param condition fun(value: T, index: integer, ...: TArgs): boolean
 --- @param ... TArgs
-function List.removeFirstIfV(list, func, ...)
+function List.removeFirstIfV(list, condition, ...)
 	for pos, val in ipairs(list) do
-		if func(val, pos, ...) then
+		if condition(val, pos, ...) then
 			return remove(list, pos)
 		end
 	end
@@ -198,13 +208,13 @@ end
 
 --- @generic T
 --- @param list T[]
---- @param func fun(value: T, index: integer): boolean
+--- @param condition fun(value: T, index: integer): boolean
 --- @return T[] list
-function List.removeIf(list, func)
+function List.removeIf(list, condition)
 	local l, r = 1, 1
 
 	while #list >= r do
-		if func(list[r], r) then
+		if condition(list[r], r) then
 			list[r] = nil
 		else
 			if l ~= r then
@@ -223,14 +233,14 @@ end
 
 --- @generic T, TArgs...
 --- @param list T[]
---- @param func fun(value: T, index: integer, ...: TArgs...): boolean
+--- @param condition fun(value: T, index: integer, ...: TArgs...): boolean
 --- @param ... TArgs...
 --- @return T[] list
-function List.removeIfV(list, func, ...)
+function List.removeIfV(list, condition, ...)
 	local l, r = 1, 1
 
 	while #list >= r do
-		if func(list[r], r, ...) then
+		if condition(list[r], r, ...) then
 			list[r] = nil
 		else
 			if l ~= r then
@@ -272,44 +282,44 @@ end
 
 --- @generic T
 --- @param list table<integer, T>
---- @param func fun(value: T, index: integer): boolean
+--- @param condition fun(value: T, index: integer): boolean
 --- @return integer? index
 --- @return T? value
 --- @nodiscard
-function List.findFirstIf(list, func)
-	return Table_findFirstIf(list, func, ipairs)
+function List.findFirstIf(list, condition)
+	return Table_findFirstIf(list, condition, ipairs)
 end
 
 --- @generic T, TArgs...
 --- @param list table<integer, T>
---- @param func fun(value: T, index: integer, ...: TArgs...): boolean
+--- @param condition fun(value: T, index: integer, ...: TArgs...): boolean
 --- @param ... TArgs...
 --- @return integer? index
 --- @return T? value
 --- @nodiscard
-function List.findFirstIfV(list, func, ...)
-	return Table_findFirstIfV(list, func, ipairs, ...)
+function List.findFirstIfV(list, condition, ...)
+	return Table_findFirstIfV(list, condition, ipairs, ...)
 end
 
 --- Same as `List.findFirstIf`, but only return a value instead of a pair.
 --- @generic TValue
 --- @param list table<integer, TValue>
---- @param func fun(value: TValue, index: integer): boolean
+--- @param condition fun(value: TValue, index: integer): boolean
 --- @return TValue? value
 --- @nodiscard
-function List.findFirstValueIf(list, func)
-	local _, value = Table_findFirstIf(list, func, ipairs)
+function List.findFirstValueIf(list, condition)
+	local _, value = Table_findFirstIf(list, condition, ipairs)
 	return value
 end
 
 --- @generic TValue, TArgs...
 --- @param list table<integer, TValue>
---- @param func fun(value: TValue, index: integer, ...: TArgs...): boolean
+--- @param condition fun(value: TValue, index: integer, ...: TArgs...): boolean
 --- @param ... TArgs...
 --- @return TValue? value
 --- @nodiscard
-function List.findFirstValueIfV(list, func, ...)
-	local _, value = Table_findFirstIfV(list, func, ipairs, ...)
+function List.findFirstValueIfV(list, condition, ...)
+	local _, value = Table_findFirstIfV(list, condition, ipairs, ...)
 	return value
 end
 
@@ -317,43 +327,43 @@ local List_reversedPairs
 
 --- @generic TValue
 --- @param list table<integer, TValue>
---- @param func fun(value: TValue, index: integer): boolean
+--- @param condition fun(value: TValue, index: integer): boolean
 --- @return integer? index
 --- @return TValue? value
 --- @nodiscard
-function List.findLastIf(list, func)
-	return Table_findFirstIf(list, func, List_reversedPairs)
+function List.findLastIf(list, condition)
+	return Table_findFirstIf(list, condition, List_reversedPairs)
 end
 
 --- @generic TValue, TArgs...
 --- @param list table<integer, TValue>
---- @param func fun(value: TValue, index: integer, ...: TArgs...): boolean
+--- @param condition fun(value: TValue, index: integer, ...: TArgs...): boolean
 --- @param ... TArgs...
 --- @return integer? index
 --- @return TValue? value
 --- @nodiscard
-function List.findLastIfV(list, func, ...)
-	return Table_findFirstIfV(list, func, List_reversedPairs, ...)
+function List.findLastIfV(list, condition, ...)
+	return Table_findFirstIfV(list, condition, List_reversedPairs, ...)
 end
 
 --- @generic TValue
 --- @param list table<integer, TValue>
---- @param func fun(value: TValue, index: integer): boolean
+--- @param condition fun(value: TValue, index: integer): boolean
 --- @return TValue? value
 --- @nodiscard
-function List.findLastValueIf(list, func)
-	local _, value = Table_findFirstIf(list, func, List_reversedPairs)
+function List.findLastValueIf(list, condition)
+	local _, value = Table_findFirstIf(list, condition, List_reversedPairs)
 	return value
 end
 
 --- @generic TValue, TArgs...
 --- @param list table<integer, TValue>
---- @param func fun(value: TValue, index: integer, ...: TArgs...): boolean
+--- @param condition fun(value: TValue, index: integer, ...: TArgs...): boolean
 --- @param ... TArgs...
 --- @return TValue? value
 --- @nodiscard
-function List.findLastValueIfV(list, func, ...)
-	local _, value = Table_findFirstIfV(list, func, List_reversedPairs, ...)
+function List.findLastValueIfV(list, condition, ...)
+	local _, value = Table_findFirstIfV(list, condition, List_reversedPairs, ...)
 	return value
 end
 

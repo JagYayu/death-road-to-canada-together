@@ -11,7 +11,7 @@
 
 local CClient = require("dr2c.Client.Network.Client")
 
-local CNetworkClient = require("dr2c.Client.Network.Client")
+local CNetworkClientUtils = require("dr2c.Client.Network.ClientUtils")
 local GNetworkMessage = require("dr2c.Shared.Network.Message")
 local GNetworkMessageFields = require("dr2c.Shared.Network.MessageFields")
 local GUtilsThrottle = require("dr2c.Shared.Utils.Throttle")
@@ -58,20 +58,32 @@ end
 --- 如果客户端有`GNetworkClient.Permission.Authority`权限，发送本地时钟给服务器。
 --- 否则发送请求并在之后接收时钟。
 function CNetworkClock.sync()
-	if CNetworkClient.hasPermissionAuthority() then
-		CClient.sendReliable(GNetworkMessage.Type.Clock, Time.getSystemTime())
+	if CNetworkClientUtils.hasPermissionAuthority() then
+		CClient.sendReliable(GNetworkMessage.Type.SClock, Time.getSystemTime())
 	else
-		CClient.sendReliable(GNetworkMessage.Type.Clock)
+		CClient.sendReliable(GNetworkMessage.Type.SClock)
 	end
 end
 
 TE.events:add(N_("CMessage"), function(e)
-	if CNetworkClient.hasPermissionAuthority() then
+	if CNetworkClientUtils.hasPermissionAuthority() then
+		if log.canDebug() then
+			log.debug("Received clock time from server, ignoring because of authoritative client.")
+		end
+
 		return
 	end
 
 	local serverSystemTime = tonumber(e.content)
 	if not serverSystemTime then
+		if log.canDebug() then
+			log.debug(
+				("Received clock time from server, ignoring because of invalid content type %s."):format(
+					serverSystemTime
+				)
+			)
+		end
+
 		return
 	end
 
@@ -86,15 +98,17 @@ TE.events:add(N_("CMessage"), function(e)
 			timeOffset
 		))
 	end
-end, "ReceiveClockTime", "Receive", GNetworkMessage.Type.Clock)
+end, "ReceiveClockTime", "Receive", GNetworkMessage.Type.CClock)
 
 TE.events:add(N_("CConnect"), function(e)
 	CNetworkClock.sync()
 end, "SyncClockTime", "Initialize")
 
+local throttle = GUtilsThrottle.newTime(60)
+
 --- @param e dr2c.E.CUpdate
 TE.events:add(N_("CUpdate"), function(e)
-	if e.networkThrottle then
+	if throttle() then
 		return
 	end
 

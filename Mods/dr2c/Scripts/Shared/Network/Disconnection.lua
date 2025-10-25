@@ -11,10 +11,10 @@
 
 local Enum = require("TE.Enum")
 
---- @alias dr2c.DisconnectionCode dr2c.GDisconnection.Code
-
 --- @class dr2c.GDisconnection
 local GDisconnection = {}
+
+--- @alias dr2c.DisconnectionCode dr2c.GDisconnection.Code
 
 GDisconnection.Code = Enum.sequence({
 	Unknown = EDisconnectionCode.Unknown,
@@ -25,5 +25,19 @@ GDisconnection.Code = Enum.sequence({
 	Kicked = 5,
 	Banned = 6,
 })
+
+local disconnectionCode2ReasonID = {}
+
+--- @param disconnectionCode dr2c.DisconnectionCode
+--- @param reasonID dr2c.NetworkReasonID
+function GDisconnection.setReason(disconnectionCode, reasonID)
+	disconnectionCode2ReasonID[disconnectionCode] = reasonID
+end
+
+--- @param disconnectionCode dr2c.DisconnectionCode
+--- @return dr2c.NetworkReasonID
+function GDisconnection.getReason(disconnectionCode)
+	return disconnectionCode2ReasonID[disconnectionCode]
+end
 
 return GDisconnection

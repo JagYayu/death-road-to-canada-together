@@ -20,13 +20,13 @@ end
 
 TE.events:add(N_("CCollectVerifyAttributes"), function(e)
 	e.attributes[#e.attributes + 1] = {
-		public = true,
+		isPublicOrPrivate = true,
 		attribute = GClient.PublicAttribute.Platform,
 		value = GPlatform.Type.Standalone,
 	}
 
 	e.attributes[#e.attributes + 1] = {
-		public = true,
+		isPublicOrPrivate = true,
 		attribute = GClient.PublicAttribute.PlatformID,
 		value = "1516249885",
 	}

@@ -1,4 +1,13 @@
-
+--[[
+-- @module dr2c.Shared.Utils.Algorithms
+-- @author JagYayu
+-- @brief
+-- @version 1.0
+-- @date 2025
+--
+-- @copyright Copyright (c) 2025 JagYayu. Licensed under MIT License.
+--
+--]]
 
 local Math = require("TE.Math")
 local Utility = require("TE.Utility")

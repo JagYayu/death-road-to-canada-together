@@ -12,15 +12,19 @@
 local Enum = require("TE.Enum")
 local Function = require("TE.Function")
 
---- @alias dr2c.ServerAttribute dr2c.GServer.Attribute
+local GUtilsAttribute = require("dr2c.Shared.Utils.Attribute")
+
+--- @alias dr2c.ServerAttribute dr2c.GNetworkServer.Attribute
 
 --- @alias dr2c.ServerAttributeRooms dr2c.NetworkRoomID[]
 
 --- @class dr2c.GServer
-local GServer = {}
+local GNetworkServer = {}
 
-GServer.Attribute = Enum.sequence({
-	-- 服务器名
+--- @alias dr2c.NetworkServerAttribute dr2c.GNetworkServer.Attribute
+
+GNetworkServer.Attribute = Enum.sequence({
+	-- 服务器显示名
 	DisplayName = 1,
 	-- 当前客户端数
 	Clients = 2,
@@ -42,20 +46,52 @@ GServer.Attribute = Enum.sequence({
 	HasServerOnlyMods = 10,
 })
 
---- @type table<dr2c.GNetworkClient.PrivateAttribute, fun(value: any): boolean?>
-local attributeValidators = {
-	[GServer.Attribute.DisplayName] = Function.isTypeString,
-	[GServer.Attribute.Clients] = Function.isTypeInteger,
-	[GServer.Attribute.MaxClients] = Function.isTypeInteger,
-	[GServer.Attribute.StartupTime] = Function.isTypeNumber,
-	[GServer.Attribute.Version] = Function.isTypeString,
-	[GServer.Attribute.Mods] = Function.isTypeTable,
-	[GServer.Attribute.HasPassword] = Function.isTypeBoolean,
-	[GServer.Attribute.Rooms] = Function.isTypeTable,
-}
+local proxyAttributeProperties = GUtilsAttribute.newProperties({
+	[GNetworkServer.Attribute.DisplayName] = {
+		default = "",
+		validator = Function.isTypeString,
+	},
+	[GNetworkServer.Attribute.Clients] = {
+		default = {},
+		validator = Function.isTypeInteger,
+	},
+	[GNetworkServer.Attribute.MaxClients] = {
+		default = 4,
+		validator = Function.isTypeInteger,
+	},
+	[GNetworkServer.Attribute.StartupTime] = {
+		default = Time.getSystemTime,
+		validator = Function.isTypeNumber,
+	},
+	[GNetworkServer.Attribute.Version] = {
+		default = function()
+			return "" -- TODO
+		end,
+		validator = Function.isTypeString,
+	},
+	[GNetworkServer.Attribute.Mods] = {
+		default = function()
+			return {} -- TODO
+		end,
+		validator = Function.isTypeTable,
+	},
+	[GNetworkServer.Attribute.HasPassword] = {
+		default = false,
+		validator = Function.isTypeBoolean,
+	},
+	[GNetworkServer.Attribute.Rooms] = {
+		default = {},
+		validator = Function.isTypeTable,
+	},
+})
 
-function GServer.validateAttribute(attribute, value)
-	return not not (attributeValidators[attribute] or Function.alwaysTrue)(value)
-end
+--- @type fun(attribute: dr2c.NetworkServerAttribute): dr2c.AttributeProperty
+GNetworkServer.getAttributeProperty = proxyAttributeProperties.getAttributeProperty
 
-return GServer
+--- @type fun(attribute: dr2c.NetworkServerAttribute, args: dr2c.AttributePropertyArgs)
+GNetworkServer.setAttributeProperty = proxyAttributeProperties.setAttributeProperty
+
+--- @type fun(attribute: dr2c.NetworkServerAttribute, value: any): boolean
+GNetworkServer.validateAttribute = proxyAttributeProperties.validateAttribute
+
+return GNetworkServer

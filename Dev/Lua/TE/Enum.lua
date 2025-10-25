@@ -15,6 +15,9 @@ local Table = require("TE.Table")
 local inspect = require("inspect")
 local List = require("TE.List")
 
+--- @alias TE.Enum.Key string
+--- @alias TE.Enum.Value integer | string
+
 --- @class TE.Enum.Defaults
 --- @field [integer] string
 --- @field [string] integer
@@ -24,7 +27,7 @@ local List = require("TE.List")
 --- @class TE.Enum
 local Enum = {}
 
-local scriptName = "#tudov.Enum"
+local scriptName = "#TE.Enum"
 
 local enumerationsMetadata = {}
 
@@ -120,11 +123,11 @@ local function makeIntegers(defaults, extend, valueCanBeString)
 			local might = String.didYouMean(k, metadata.keys)
 			if might then
 				local fmt = extend
-						and "Invalid enum key '%s'. Did you mean '%s'? Or are you try accessing an extended enum during load time?"
+						and "Invalid enum key '%s'. Did you mean '%s'? Or are you trying to access an extended enum during load time?"
 					or "Invalid enum key '%s'. Did you mean '%s'?"
 				error(fmt:format(k, might), 2)
 			else
-				local fmt = extend and "Invalid enum key '%s'. Are you try accessing an extended enum during load time?"
+				local fmt = extend and "Invalid enum key '%s'. Are you trying to access an extended enum during load time?"
 					or "Invalid enum key '%s'."
 				error(fmt:format(k), 2)
 			end
@@ -198,6 +201,8 @@ function Enum.isValid(enum)
 	return not not enumerationsMetadata[enum]
 end
 
+--- @param enum table
+--- @return table
 local function getMetadata(enum)
 	local metadata = enumerationsMetadata[enum]
 	if metadata then
@@ -208,9 +213,10 @@ local function getMetadata(enum)
 end
 
 --- @warn Wrap a `pcall` If you are extending bit flag enumerations, because an error will be thrown when the number of flags exceeds 52.
+--- @warn 拓展位标志枚举时使用`pcall`包裹，因为当位标志数量超过52时会报错
 --- @param enum table
---- @param key string
---- @return integer | string value
+--- @param key TE.Enum.Key
+--- @return TE.Enum.Value value
 function Enum.extend(enum, key)
 	local metadata = getMetadata(enum)
 	if not metadata.extend then
@@ -221,16 +227,18 @@ function Enum.extend(enum, key)
 end
 
 --- @param enum table
---- @param key string
+--- @param key TE.Enum.Key
 --- @return boolean
+--- @nodiscard
 function Enum.hasKey(enum, key)
 	local metadata = getMetadata(enum)
 	return not not metadata.key2value[key]
 end
 
 --- @param enum table
---- @param value integer | string
+--- @param value TE.Enum.Value
 --- @return boolean
+--- @nodiscard
 function Enum.hasValue(enum, value)
 	local metadata = getMetadata(enum)
 	return not not metadata.value2keys[value]
@@ -243,21 +251,24 @@ function Enum.iterateKeyValues(enum)
 end
 
 --- @param enum table
+--- @nodiscard
 function Enum.iterateKeys(enum)
 	local metadata = getMetadata(enum)
 	return ipairs(metadata.keys)
 end
 
 --- @param enum table
+--- @nodiscard
 function Enum.iterateValues(enum)
 	local metadata = getMetadata(enum)
 	return ipairs(metadata.values)
 end
 
 --- @param enum table
---- @param key string
---- @param fallback (integer | string)?
---- @return (integer | string)? value
+--- @param key TE.Enum.Key
+--- @param fallback TE.Enum.Value?
+--- @return TE.Enum.Value? value
+--- @nodiscard
 function Enum.resolveKey(enum, key, fallback)
 	local metadata = getMetadata(enum)
 	local value = metadata.key2value[key]
@@ -269,17 +280,20 @@ function Enum.resolveKey(enum, key, fallback)
 end
 
 --- @param enum table
---- @param value integer | string
---- @param fallback string?
---- @return string? key
+--- @param value TE.Enum.Value
+--- @param fallback TE.Enum.Key?
+--- @return TE.Enum.Key? key
+--- @nodiscard
 function Enum.resolveValue(enum, value, fallback)
 	local metadata = getMetadata(enum)
 	local keys = metadata.value2keys[value]
 	return keys and keys[1] or fallback
 end
 
+--- 从枚举表中提取枚举值数组，供事件的`keys`使用
 --- @param enum table
---- @return integer[]
+--- @return TE.Enum.Value[]
+--- @nodiscard
 function Enum.eventKeys(enum)
 	local eventKeys = eventKeysCache[enum]
 	if not eventKeys then
@@ -298,6 +312,7 @@ end
 
 --- @warn Do not modify returned table unless you know what you're doing
 --- @return table
+--- @nodiscard
 function Enum.getAllMetadata()
 	return enumerationsMetadata
 end
@@ -306,8 +321,10 @@ TE.events:add("DebugSnapshot", function(e)
 	e.enumerationsMetadata = enumerationsMetadata
 end, scriptName, nil, scriptName)
 
+--- @diagnostic disable: invisible
 if Function._Enum then
 	Function._Enum(Enum)
 end
+--- @diagnostic enable: invisible
 
 return Enum

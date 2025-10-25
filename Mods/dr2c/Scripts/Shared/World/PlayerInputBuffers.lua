@@ -10,16 +10,17 @@
 --]]
 
 local Table = require("TE.Table")
+local Utility = require("TE.Utility")
 
 local assert = assert
 local math_huge = math.huge
 local math_max = math.max
 local math_min = math.min
 
---- @class dr2c.GPlayerInputBuffers
-local GPlayerInputBuffers = {}
+--- @class dr2c.GWorldPlayerInputBuffers
+local GWorldPlayerInputBuffers = {}
 
---- @type table<string, dr2c.PlayerInputBuffers>
+--- @type table<string, dr2c.MPlayerInputBuffers>
 local modules = {}
 
 modules = persist("modules", function()
@@ -40,8 +41,9 @@ local function checkWorldTickValidation(worldTick)
 	end
 end
 
---- @return dr2c.PlayerInputBuffers module
-function GPlayerInputBuffers.new()
+--- @param roomID dr2c.NetworkRoomID?
+--- @return dr2c.MPlayerInputBuffers module
+function GWorldPlayerInputBuffers.new(roomID)
 	local GPlayerInput = require("dr2c.Shared.World.PlayerInput")
 	local GWorldTick = require("dr2c.Shared.World.Tick")
 
@@ -57,8 +59,8 @@ function GPlayerInputBuffers.new()
 	--- @class dr2c.PlayersTicksInputs
 	--- @field [dr2c.PlayerID] dr2c.PlayerTicksInputs
 
-	--- @class dr2c.PlayerInputBuffers
-	local PlayerInputBuffers = {}
+	--- @class dr2c.MPlayerInputBuffers
+	local MWorldPlayerInputBuffers = {}
 
 	--- @type dr2c.PlayersTicksInputs
 	local playersTicksInputsData = {}
@@ -66,34 +68,28 @@ function GPlayerInputBuffers.new()
 	--- @type dr2c.WorldTick
 	local playersTicksInputsArchivedTick = 0
 
-	local scriptName = TE.scriptLoader:getLoadingScriptName()
-	if scriptName ~= "" then -- 模块数据持久化
-		if modules[scriptName] then
-			playersTicksInputsData, playersTicksInputsArchivedTick = unpack(modules[scriptName])
-		else
-			modules[scriptName] = {
-				playersTicksInputsData,
-				playersTicksInputsArchivedTick,
-			}
-		end
-	end
+	Utility.persistModule(modules, function()
+		return { playersTicksInputsData, playersTicksInputsArchivedTick }
+	end, function(value)
+		playersTicksInputsData, playersTicksInputsArchivedTick = value[1], value[2]
+	end, roomID)
 
 	--- @warn Do not use this function unless you know what you're doing.
 	--- @return dr2c.PlayersTicksInputs data
 	--- @nodiscard
-	function PlayerInputBuffers.getData()
+	function MWorldPlayerInputBuffers.getData()
 		return playersTicksInputsData
 	end
 
 	--- 获取归档刻
 	--- @return dr2c.WorldTick archivedTick
 	--- @nodiscard
-	function PlayerInputBuffers.getArchivedTick()
+	function MWorldPlayerInputBuffers.getArchivedTick()
 		return playersTicksInputsArchivedTick
 	end
 
 	--- 清理所有玩家输入
-	function PlayerInputBuffers.clear()
+	function MWorldPlayerInputBuffers.clear()
 		for playerID in pairs(playersTicksInputsData) do
 			playersTicksInputsData[playerID] = { endTick = 0 }
 		end
@@ -105,13 +101,13 @@ function GPlayerInputBuffers.new()
 	--- @param playerID dr2c.PlayerID
 	--- @return boolean
 	--- @nodiscard
-	function PlayerInputBuffers.hasPlayer(playerID)
+	function MWorldPlayerInputBuffers.hasPlayer(playerID)
 		return not not playersTicksInputsData[playerID]
 	end
 
 	--- 添加某一个玩家
 	--- @param playerID dr2c.PlayerID
-	function PlayerInputBuffers.addPlayer(playerID)
+	function MWorldPlayerInputBuffers.addPlayer(playerID)
 		if playersTicksInputsData[playerID] then
 			error(("Player %s already exists"):format(playerID), 2)
 		end
@@ -121,7 +117,7 @@ function GPlayerInputBuffers.new()
 
 	--- 移除某一个玩家
 	--- @param playerID dr2c.PlayerID
-	function PlayerInputBuffers.removePlayer(playerID)
+	function MWorldPlayerInputBuffers.removePlayer(playerID)
 		if not playersTicksInputsData[playerID] then
 			throwPlayerNotFound(playerID)
 		end
@@ -133,7 +129,7 @@ function GPlayerInputBuffers.new()
 	--- @param playerID dr2c.PlayerID
 	--- @param worldTick dr2c.WorldTick
 	--- @return dr2c.PlayerTickInputs? tickInputs
-	function PlayerInputBuffers.getInputs(playerID, worldTick)
+	function MWorldPlayerInputBuffers.getInputs(playerID, worldTick)
 		local playerTicksInputs = playersTicksInputsData[playerID]
 		if not playerTicksInputs then
 			throwPlayerNotFound(playerID)
@@ -150,7 +146,7 @@ function GPlayerInputBuffers.new()
 	--- @param playerInputID dr2c.PlayerInputID
 	--- @param playerInputArg Serializable
 	--- @return boolean success @若该世界刻已归档，返回`false`，否则为`true`
-	function PlayerInputBuffers.addInput(playerID, worldTick, playerInputID, playerInputArg)
+	function MWorldPlayerInputBuffers.addInput(playerID, worldTick, playerInputID, playerInputArg)
 		-- if worldTick <= playersTicksInputsArchivedTick then
 		-- 	return false
 		-- end
@@ -234,7 +230,7 @@ function GPlayerInputBuffers.new()
 	--- @param worldTick dr2c.WorldTick
 	--- @param tickInputs dr2c.PlayerTickInputs
 	--- @return boolean? archived @设置了玩家的输入后，返回值表示该刻是否成为了归档刻，若该帧已归档则返回`nil`
-	function PlayerInputBuffers.setInputs(playerID, worldTick, tickInputs)
+	function MWorldPlayerInputBuffers.setInputs(playerID, worldTick, tickInputs)
 		-- if worldTick <= playersTicksInputsArchivedTick then
 		-- 	return
 		-- end
@@ -264,7 +260,7 @@ function GPlayerInputBuffers.new()
 	--- @param playerID dr2c.PlayerID
 	--- @param worldTick dr2c.WorldTick
 	--- @return boolean
-	function PlayerInputBuffers.removeInputs(playerID, worldTick)
+	function MWorldPlayerInputBuffers.removeInputs(playerID, worldTick)
 		local playerTicksInputs = playersTicksInputsData[playerID]
 		if not playerTicksInputs then
 			return false
@@ -301,7 +297,7 @@ function GPlayerInputBuffers.new()
 
 	--- 尝试丢弃所有玩家在目标刻及目标刻前的所有输入
 	--- @param targetTick number
-	function PlayerInputBuffers.discardInputs(targetTick)
+	function MWorldPlayerInputBuffers.discardInputs(targetTick)
 		--- @param playerID dr2c.PlayerID
 		--- @param playerTicksInputs dr2c.PlayerTicksInputs
 		for playerID, playerTicksInputs in pairs(playersTicksInputsData) do
@@ -318,11 +314,11 @@ function GPlayerInputBuffers.new()
 
 	--- @param worldTick dr2c.WorldTick
 	--- @return boolean
-	function PlayerInputBuffers.isArchived(worldTick)
+	function MWorldPlayerInputBuffers.isArchived(worldTick)
 		return worldTick <= playersTicksInputsArchivedTick
 	end
 
-	return PlayerInputBuffers
+	return MWorldPlayerInputBuffers
 end
 
-return GPlayerInputBuffers
+return GWorldPlayerInputBuffers

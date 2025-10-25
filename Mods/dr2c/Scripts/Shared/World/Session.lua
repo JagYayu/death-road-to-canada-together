@@ -11,6 +11,8 @@
 
 local Enum = require("TE.Enum")
 local Function = require("TE.Function")
+local Table = require("TE.Table")
+local Utility = require("TE.Utility")
 
 --- @alias dr2c.WorldSessionAttribute dr2c.GWorldSession.Attribute
 
@@ -31,6 +33,8 @@ GWorldSession.Attribute = Enum.sequence({
 	-- Framework
 	-- 框架
 
+	--- 当前会话ID
+	ID = 0,
 	--- 当前游戏状态
 	State = 1,
 	--- 开始的时间
@@ -59,6 +63,7 @@ GWorldSession.Attribute = Enum.sequence({
 	ZombieMultiplier = 15,
 })
 
+local GWorldSession_Attribute_ID = GWorldSession.Attribute.ID
 local GWorldSession_Attribute_State = GWorldSession.Attribute.State
 
 GWorldSession.Mode = Enum.sequence({
@@ -78,101 +83,125 @@ local GWorldSession_State_Inactive = GWorldSession.State.Inactive
 local GWorldSession_State_Paused = GWorldSession.State.Paused
 local GWorldSession_State_Playing = GWorldSession.State.Playing
 
---- @type table<string, dr2c.WorldSession>
-local worldSessionModules = setmetatable({}, { __mode = "v" })
+--- @type table<string, dr2c.MWorldSession>
+local modules = setmetatable({}, { __mode = "v" })
 
---- @type table<dr2c.WorldSessionAttribute, dr2c.ValueValidator>
-local attributeValidators = {
-	-- [GWorldSession.Attribute.State] = Function.generateTableValidator({
-	-- 	{ "state", "number" },
-	-- 	{ "timeStart", "number" },
-	-- 	{ "timePaused", "number" },
-	-- 	{ "elapsedPaused", "number" },
-	-- }),
+--- @type table<dr2c.WorldSessionAttribute, { default: any, validate: dr2c.ValueValidator }>
+local attributeProperties = {
+	[GWorldSession_Attribute_ID] = {
+		validate = Function.isTypeNumber,
+	},
+	[GWorldSession_Attribute_State] = {
+		default = GWorldSession_State_Inactive,
+		validate = Function.generateIsEnumValue(GWorldSession.State),
+	},
+	[GWorldSession.Attribute.TimeStart] = {
+		default = Time.getSystemTime,
+		validate = Function.isTypeNumber,
+	},
+	[GWorldSession.Attribute.TimePaused] = {
+		default = Time.getSystemTime,
+		validate = Function.isTypeNumber,
+	},
+	[GWorldSession.Attribute.ElapsedPaused] = {
+		default = 0,
+		validate = Function.isTypeNumber,
+	},
+	[GWorldSession.Attribute.Scenes] = {
+		default = {},
+		validate = Function.isTypeTable,
+	},
+	[GWorldSession.Attribute.Mode] = {
+		default = GWorldSession.Mode.None,
+		validate = Function.generateIsEnumValue(GWorldSession.Mode),
+	},
+	[GWorldSession.Attribute.DataLifetime] = {
+		default = 10,
+		validate = Function.isTypeNumber,
+	},
+	[GWorldSession.Attribute.RollbackLimit] = {
+		default = 1,
+		validate = Function.isTypeNumber,
+	},
 }
 
-worldSessionModules = persist("worldSessionModules", function()
-	return worldSessionModules
+modules = persist("modules", function()
+	return modules
 end)
-attributeValidators = persist("attributeValidators", function()
-	return attributeValidators
+attributeProperties = persist("attributeValidators", function()
+	return attributeProperties
 end)
 
 --- @param attribute dr2c.WorldSessionAttribute
 --- @param value any
 --- @return boolean
 function GWorldSession.validateAttribute(attribute, value)
-	local validate = attributeValidators[attribute]
-	if validate then
-		return not not validate(value)
+	local property = attributeProperties[attribute]
+	if property then
+		return not not property.validate(value)
 	else
 		return true
 	end
 end
 
+--- @warn 必须确保默认值能通过验证器的验证
 --- @param attribute dr2c.WorldSessionAttribute
 --- @param validate dr2c.ValueValidator
-function GWorldSession.setAttributeValidator(attribute, validate)
-	attributeValidators[attribute] = validate
+function GWorldSession.setAttributeProperty(attribute, default, validate)
+	attributeProperties[attribute] = {
+		default = default,
+		validate = validate or Function.alwaysTrue,
+	}
 end
 
---- @return dr2c.WorldSession WorldSession
-function GWorldSession.new()
-	TE.scriptLoader:addReverseDependency(TE.scriptLoader:getLoadingScriptID(), scriptID)
-
-	--- @class dr2c.WorldSession
-	local WorldSession
-
-	local scriptName = TE.scriptLoader:getLoadingScriptName()
-	if scriptName ~= "" then
-		if worldSessionModules[scriptName] then
-			return worldSessionModules[scriptName]
-		else
-			WorldSession = {}
-			worldSessionModules[scriptName] = WorldSession
-		end
-	else
-		WorldSession = {}
-	end
-
-	worldSessionModules[scriptName] = WorldSession
+--- @return dr2c.MWorldSession module
+function GWorldSession.new(roomID)
+	--- @class dr2c.MWorldSession
+	local MWorldSession = {}
 
 	--- @class dr2c.WorldSessionAttributes
 	--- @field [dr2c.WorldSessionAttribute] any
 	local worldSessionAttributes
 
-	function WorldSession.resetAttributes()
-		worldSessionAttributes = {
-			[GWorldSession_Attribute_State] = GWorldSession_State_Inactive,
-			[GWorldSession.Attribute.TimeStart] = Time.getSystemTime(),
-			[GWorldSession.Attribute.TimePaused] = Time.getSystemTime(),
-			[GWorldSession.Attribute.ElapsedPaused] = 0,
-			[GWorldSession.Attribute.Scenes] = {},
-			[GWorldSession.Attribute.Mode] = GWorldSession.Mode.None,
-			[GWorldSession.Attribute.DataLifetime] = 10,
-			[GWorldSession.Attribute.RollbackLimit] = 1,
-		}
+	Utility.persistModule(modules, function()
+		return worldSessionAttributes
+	end, function(t)
+		worldSessionAttributes = t
+	end, roomID)
+
+	function MWorldSession.resetAttributes()
+		worldSessionAttributes = {}
+
+		for attribute, property in pairs(attributeProperties) do
+			if type(property.default) == "table" then
+				worldSessionAttributes[attribute] = Table.fastCopy(property.default)
+			elseif type(property.default) == "function" then
+				worldSessionAttributes[attribute] = property.default()
+			elseif property.default ~= nil then
+				worldSessionAttributes[attribute] = property.default
+			end
+		end
 	end
 
 	--- @return dr2c.WorldSessionAttributes
-	function WorldSession.getAttributes()
+	function MWorldSession.getAttributes()
 		return worldSessionAttributes
 	end
 
 	--- @param attributes dr2c.WorldSessionAttributes
-	function WorldSession.setAttributes(attributes)
+	function MWorldSession.setAttributes(attributes)
 		worldSessionAttributes = attributes
 	end
 
 	--- @param attribute dr2c.WorldSessionAttribute
 	--- @return any
-	function WorldSession.getAttribute(attribute)
+	function MWorldSession.getAttribute(attribute)
 		return worldSessionAttributes[attribute]
 	end
 
 	--- @param attribute dr2c.WorldSessionAttribute
 	--- @param value any
-	function WorldSession.setAttribute(attribute, value)
+	function MWorldSession.setAttribute(attribute, value)
 		if not GWorldSession.validateAttribute(value) then
 			error("Attribute value is not valid", 2)
 		end
@@ -180,34 +209,45 @@ function GWorldSession.new()
 		worldSessionAttributes[attribute] = value
 	end
 
+	--- A short to `WorldSession.getAttribute(GWorldSession.Attribute.ID)`
+	--- @return integer
+	--- @nodiscard
+	function MWorldSession.getSessionID()
+		return worldSessionAttributes[GWorldSession_Attribute_ID]
+	end
+
+	function MWorldSession.nextSessionID()
+		worldSessionAttributes[GWorldSession_Attribute_ID] = worldSessionAttributes[GWorldSession_Attribute_ID] + 1
+	end
+
 	--- A short to `WorldSession.getAttribute(GWorldSession.Attribute.State) == GWorldSession.State.Inactive`
 	--- @return boolean
 	--- @nodiscard
-	function WorldSession.isInactive()
+	function MWorldSession.isInactive()
 		return worldSessionAttributes[GWorldSession_Attribute_State] == GWorldSession_State_Inactive
 	end
 
 	--- A short to `WorldSession.getAttribute(GWorldSession.Attribute.State) == GWorldSession.State.Playing`
 	--- @return boolean
 	--- @nodiscard
-	function WorldSession.isPlaying()
+	function MWorldSession.isPlaying()
 		return worldSessionAttributes[GWorldSession_Attribute_State] == GWorldSession_State_Playing
 	end
 
 	--- A short to `WorldSession.getAttribute(GWorldSession.Attribute.State) == GWorldSession.State.Paused`
 	--- @return boolean
 	--- @nodiscard
-	function WorldSession.isPaused()
+	function MWorldSession.isPaused()
 		return worldSessionAttributes[GWorldSession_Attribute_State] == GWorldSession_State_Paused
 	end
 
-	WorldSession.resetAttributes()
+	MWorldSession.resetAttributes()
 
-	return WorldSession
+	return MWorldSession
 end
 
 TE.events:add("DebugSnapshot", function(e)
-	e.worldSessionModules = worldSessionModules
+	e.worldSessionModules = modules
 end, scriptName, nil, scriptName)
 
 return GWorldSession

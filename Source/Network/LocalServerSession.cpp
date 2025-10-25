@@ -112,13 +112,13 @@ void LocalServerSession::Shutdown()
 	{
 	}
 
-	_hostInfo = nullptr;
-
 	EventLocalServerShutdownData data{
 	    .socketType = ESocketType::Local,
 	    .serverSlot = _serverSessionSlot,
 	};
 	GetEventManager().GetCoreEvents().ServerShutdown().Invoke(&data, nullptr, EEventInvocation::None);
+
+	_hostInfo = nullptr;
 
 	_sessionState = EServerSessionState::Shutdown;
 }
